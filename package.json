@@ -26,7 +26,11 @@
         "Programming Languages"
     ],
     "activationEvents": [
-        "onCommand:powerquery-sdk.helloWorld"
+        "onCommand:powerquery-sdk.helloWorld",
+		"onLanguage:powerquery"
+    ],
+	"extensionDependencies": [
+        "PowerQuery.vscode-powerquery"
     ],
 	"publisher": "PowerQuery",
     "main": "./dist/extension.js",
