@@ -35,6 +35,16 @@
     "publisher": "PowerQuery",
     "main": "./dist/extension.js",
     "contributes": {
+        "configuration": {
+            "title": "Power Query SDK",
+            "properties": {
+                "powerquery.sdk.pqtest.location": {
+                    "scope": "machine",
+                    "type": "string",
+                    "description": "Local path to PQTest installation folder."
+                }
+            }
+        },
         "commands": [
             {
                 "command": "powerquery-sdk.helloWorld",
