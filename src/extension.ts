@@ -3,30 +3,31 @@
 
 import * as vscode from "vscode";
 import { ExtensionSettings } from "./ExtensionSettings";
+import { PQTestTaskProvider } from "./PQTestTaskProvider";
 
-let currentSettings: ExtensionSettings;
+let pqTestTaskProvider: vscode.Disposable | undefined;
+//let currentSettings: ExtensionSettings | undefined;
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-    currentSettings = fetchExtensionSettings();
-
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with registerCommand
-    // The commandId parameter must match the command field in package.json
-    context.subscriptions.push(
-        vscode.commands.registerCommand("powerquery.sdk.pqtest.list-credentials", () => {
-            vscode.window.showInformationMessage(`PQTest location set to ${currentSettings?.PQTestLocation}`);
-        }),
+export function activate(_context: vscode.ExtensionContext) {
+    pqTestTaskProvider = vscode.tasks.registerTaskProvider(
+        PQTestTaskProvider.PQTestType,
+        new PQTestTaskProvider(fetchExtensionSettings),
     );
 
-    context.subscriptions.push(
-        vscode.workspace.onDidChangeConfiguration(event => {
-            if (event.affectsConfiguration("powerquery.sdk")) {
-                currentSettings = fetchExtensionSettings();
-            }
-        }),
-    );
+    // Listen for configuration changes
+    // context.subscriptions.push(
+    //     vscode.workspace.onDidChangeConfiguration(event => {
+    //         if (event.affectsConfiguration("powerquery.sdk")) {
+    //             currentSettings = fetchExtensionSettings();
+    //         }
+    //     }),
+    // );
+}
+
+export function deactivate(): void {
+    if (pqTestTaskProvider) {
+        pqTestTaskProvider.dispose();
+    }
 }
 
 function fetchExtensionSettings(): ExtensionSettings {

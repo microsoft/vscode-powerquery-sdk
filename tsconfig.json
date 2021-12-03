@@ -5,9 +5,17 @@
         "lib": ["ES2020"],
         "sourceMap": true,
         "rootDir": "src",
-        "strict": true /* enable all strict type-checking options */,
-        "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
-        "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */
+        "strict": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "forceConsistentCasingInFileNames": true,
+        "noEmitOnError": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "strictPropertyInitialization": true
     },
     "exclude": ["node_modules", ".vscode-test"]
 }

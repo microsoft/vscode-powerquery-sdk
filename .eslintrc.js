@@ -11,6 +11,6 @@ module.exports = {
     rules: {
         "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-        "prettier/prettier": ["error"],
+        "prettier/prettier": ["warn"],
     },
 };

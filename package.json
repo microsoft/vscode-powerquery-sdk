@@ -26,7 +26,7 @@
         "Programming Languages"
     ],
     "activationEvents": [
-        "onCommand:powerquery.sdk.pqtest.list-credentials",
+        "onCommand:workbench.action.tasks.runTask",
         "onLanguage:powerquery"
     ],
     "extensionDependencies": [
@@ -45,10 +45,11 @@
                 }
             }
         },
-        "commands": [
+        "taskDefinitions": [
             {
-                "command": "powerquery.sdk.pqtest.list-credentials",
-                "title": "PQTest: List Credentials"
+                "type": "pqtest",
+                "required": [],
+                "properties": {}
             }
         ]
     },
@@ -60,9 +61,7 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
-        "lint": "npm run lint:prettier && npm run lint:eslint",
-        "lint:prettier": ".\\node_modules\\.bin\\prettier --config \".prettierrc\" --list-different src\\**\\*.ts",
-        "lint:eslint": "eslint src --ext ts",
+        "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
