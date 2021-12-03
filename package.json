@@ -26,7 +26,7 @@
         "Programming Languages"
     ],
     "activationEvents": [
-        "onCommand:powerquery-sdk.helloWorld",
+        "onCommand:powerquery.sdk.pqtest.list-credentials",
         "onLanguage:powerquery"
     ],
     "extensionDependencies": [
@@ -47,8 +47,8 @@
         },
         "commands": [
             {
-                "command": "powerquery-sdk.helloWorld",
-                "title": "Hello World"
+                "command": "powerquery.sdk.pqtest.list-credentials",
+                "title": "PQTest: List Credentials"
             }
         ]
     },
