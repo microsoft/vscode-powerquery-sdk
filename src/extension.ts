@@ -3,15 +3,15 @@
 
 import * as vscode from "vscode";
 import { ExtensionSettings } from "./ExtensionSettings";
-import { PQTestTaskProvider } from "./PQTestTaskProvider";
+import { PowerQueryTaskProvider } from "./PowerQueryTaskProvider";
 
-let pqTestTaskProvider: vscode.Disposable | undefined;
+let pqTaskProvider: vscode.Disposable | undefined;
 //let currentSettings: ExtensionSettings | undefined;
 
 export function activate(_context: vscode.ExtensionContext) {
-    pqTestTaskProvider = vscode.tasks.registerTaskProvider(
-        PQTestTaskProvider.PQTestType,
-        new PQTestTaskProvider(fetchExtensionSettings),
+    pqTaskProvider = vscode.tasks.registerTaskProvider(
+        PowerQueryTaskProvider.TestType,
+        new PowerQueryTaskProvider(fetchExtensionSettings),
     );
 
     // Listen for configuration changes
@@ -25,8 +25,8 @@ export function activate(_context: vscode.ExtensionContext) {
 }
 
 export function deactivate(): void {
-    if (pqTestTaskProvider) {
-        pqTestTaskProvider.dispose();
+    if (pqTaskProvider) {
+        pqTaskProvider.dispose();
     }
 }
 

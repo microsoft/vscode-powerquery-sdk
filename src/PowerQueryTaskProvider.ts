@@ -6,10 +6,10 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { ExtensionSettings } from "./ExtensionSettings";
 
-const TaskSource: string = "powerquery.sdk";
+const TaskSource: string = "pqtest";
 
-export class PQTestTaskProvider implements vscode.TaskProvider {
-    static PQTestType = "pqtest";
+export class PowerQueryTaskProvider implements vscode.TaskProvider {
+    static TestType = "powerquery";
 
     private readonly fetchExtensionSettings: () => ExtensionSettings;
 
@@ -35,7 +35,7 @@ async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.Cancel
     const result: vscode.Task[] = [];
 
     const taskDef: PQTestTaskDefinition = {
-        type: PQTestTaskProvider.PQTestType,
+        type: PowerQueryTaskProvider.TestType,
         taskName: "list-credential",
     };
 
@@ -49,6 +49,7 @@ async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.Cancel
 
     const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, ["list-credential", "-p"]);
 
+    // TODO: Include problem matcher
     const task: vscode.Task = new vscode.Task(
         taskDef,
         vscode.TaskScope.Workspace,
