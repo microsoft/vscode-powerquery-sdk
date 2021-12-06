@@ -49,7 +49,13 @@ async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.Cancel
 
     const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, ["list-credential", "-p"]);
 
-    const task = new vscode.Task(taskDef, vscode.TaskScope.Workspace, taskDef.taskName, TaskSource, processExecution);
+    const task: vscode.Task = new vscode.Task(
+        taskDef,
+        vscode.TaskScope.Workspace,
+        taskDef.taskName,
+        TaskSource,
+        processExecution,
+    );
 
     result.push(task);
 
