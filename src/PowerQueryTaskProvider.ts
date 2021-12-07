@@ -20,6 +20,7 @@ function getOutputChannel(): vscode.OutputChannel {
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
     static TestType = "powerquery";
 
+    // TODO: Do we need to make fetching of settings an async operation?
     private readonly fetchExtensionSettings: () => ExtensionSettings;
 
     constructor(fetchSettings: () => ExtensionSettings) {
@@ -30,57 +31,86 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         return getPQTestTasks(this.fetchExtensionSettings(), token);
     }
 
-    public resolveTask(_task: vscode.Task, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
-        // TODO: implement!
+    public resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
+        const pqtestExe: string | undefined = calculatePQTestPath(this.fetchExtensionSettings());
+        if (pqtestExe && !token.isCancellationRequested) {
+            const taskDef: PQTestTaskDefinition = task.definition as PQTestTaskDefinition;
+            return getTaskForTaskDefinition(taskDef, pqtestExe);
+        }
+
         return undefined;
     }
 }
 
+// Properties that need to be persisted as part of the task definition should be
+// included in the taskDefinitions section of package.json.
 interface PQTestTaskDefinition extends vscode.TaskDefinition {
-    operation: string;
+    readonly operation: string;
+    readonly additionalArgs?: string[];
+    readonly label?: string;
 }
+
+// TODO: Figure out where/how to define this in an extensible way
+const pqTestOperations: PQTestTaskDefinition[] = [
+    { type: PowerQueryTaskProvider.TestType, operation: "list-credential", label: "List Credentials" },
+    {
+        type: PowerQueryTaskProvider.TestType,
+        operation: "delete-credential",
+        additionalArgs: ["--ALL"],
+        label: "Clear All Credentials",
+    },
+];
 
 async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.CancellationToken): Promise<vscode.Task[]> {
     const result: vscode.Task[] = [];
-
-    const taskDef: PQTestTaskDefinition = {
-        type: PowerQueryTaskProvider.TestType,
-        operation: "list-credential",
-    };
-
-    if (!settings?.PQTestLocation) {
-        getOutputChannel().appendLine("powerquery.sdk.pqtest.location configuration value is not set.");
+    const pqtestExe: string | undefined = calculatePQTestPath(settings);
+    if (!pqtestExe) {
         return result;
     }
 
-    if (!fs.existsSync(settings.PQTestLocation)) {
+    pqTestOperations.forEach(taskDef => {
+        result.push(getTaskForTaskDefinition(taskDef, pqtestExe));
+    });
+
+    return result;
+}
+
+function calculatePQTestPath(settings: ExtensionSettings): string | undefined {
+    if (!settings?.PQTestLocation) {
+        getOutputChannel().appendLine("powerquery.sdk.pqtest.location configuration value is not set.");
+        return undefined;
+    } else if (!fs.existsSync(settings.PQTestLocation)) {
         getOutputChannel().appendLine(
             `powerquery.sdk.pqtest.location set to '${settings.PQTestLocation}' but directory does not exist.`,
         );
-        return result;
+        return undefined;
     }
 
     const pqtestExe: string = path.resolve(settings.PQTestLocation, "pqtest.exe");
     if (!fs.existsSync(pqtestExe)) {
         getOutputChannel().appendLine(`pqtest.exe not found at ${pqtestExe}`);
-        return result;
+        return undefined;
     }
 
-    const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, [
-        taskDef.operation,
-        ...CommonArgs,
-    ]);
+    return pqtestExe;
+}
+
+function getTaskForTaskDefinition(taskDef: PQTestTaskDefinition, pqtestExe: string): vscode.Task {
+    const args: string[] = [taskDef.operation, ...CommonArgs];
+
+    if (taskDef.additionalArgs) {
+        args.push(...taskDef.additionalArgs);
+    }
+
+    const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);
 
     // TODO: Include problem matcher
-    const task: vscode.Task = new vscode.Task(
+    return new vscode.Task(
         taskDef,
         vscode.TaskScope.Workspace,
-        taskDef.operation,
+        taskDef.label ?? taskDef.operation,
         TaskSource,
         processExecution,
+        [] /* problemMatchers */,
     );
-
-    result.push(task);
-
-    return result;
 }

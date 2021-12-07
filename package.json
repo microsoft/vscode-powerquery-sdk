@@ -56,6 +56,10 @@
                     "operation": {
                         "type": "string",
                         "description": "The pqtest operation to run"
+                    },
+                    "additionalArgs": {
+                        "type": "array",
+                        "description": "Additional commandline arguments for the operation"
                     }
                 }
             }
