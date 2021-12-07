@@ -6,7 +6,16 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { ExtensionSettings } from "./ExtensionSettings";
 
+const CommonArgs: string[] = ["--prettyPrint"];
 const TaskSource: string = "pqtest";
+
+let _channel: vscode.OutputChannel;
+function getOutputChannel(): vscode.OutputChannel {
+    if (!_channel) {
+        _channel = vscode.window.createOutputChannel("Power Query SDK");
+    }
+    return _channel;
+}
 
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
     static TestType = "powerquery";
@@ -28,7 +37,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 }
 
 interface PQTestTaskDefinition extends vscode.TaskDefinition {
-    taskName: string;
+    operation: string;
 }
 
 async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.CancellationToken): Promise<vscode.Task[]> {
@@ -36,24 +45,37 @@ async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.Cancel
 
     const taskDef: PQTestTaskDefinition = {
         type: PowerQueryTaskProvider.TestType,
-        taskName: "list-credential",
+        operation: "list-credential",
     };
 
-    // TODO: Who validates the path for PQTest location?
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    if (!settings?.PQTestLocation || !fs.existsSync(settings.PQTestLocation)) {
+    if (!settings?.PQTestLocation) {
+        getOutputChannel().appendLine("powerquery.sdk.pqtest.location configuration value is not set.");
+        return result;
+    }
+
+    if (!fs.existsSync(settings.PQTestLocation)) {
+        getOutputChannel().appendLine(
+            `powerquery.sdk.pqtest.location set to '${settings.PQTestLocation}' but directory does not exist.`,
+        );
         return result;
     }
 
     const pqtestExe: string = path.resolve(settings.PQTestLocation, "pqtest.exe");
+    if (!fs.existsSync(pqtestExe)) {
+        getOutputChannel().appendLine(`pqtest.exe not found at ${pqtestExe}`);
+        return result;
+    }
 
-    const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, ["list-credential", "-p"]);
+    const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, [
+        taskDef.operation,
+        ...CommonArgs,
+    ]);
 
     // TODO: Include problem matcher
     const task: vscode.Task = new vscode.Task(
         taskDef,
         vscode.TaskScope.Workspace,
-        taskDef.taskName,
+        taskDef.operation,
         TaskSource,
         processExecution,
     );

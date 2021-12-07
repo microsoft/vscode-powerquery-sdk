@@ -20,5 +20,6 @@ module.exports = {
             },
         ],
         "prettier/prettier": ["warn"],
+        "security/detect-non-literal-fs-filename": "off",
     },
 };

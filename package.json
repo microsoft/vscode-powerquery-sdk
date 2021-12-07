@@ -19,7 +19,7 @@
     },
     "capabilities": {
         "untrustedWorkspaces": {
-            "supported": true
+            "supported": false
         }
     },
     "categories": [
@@ -47,9 +47,17 @@
         },
         "taskDefinitions": [
             {
-                "type": "pqtest",
-                "required": [],
-                "properties": {}
+                "type": "powerquery",
+                "when": "isWindows && processExecutionSupported",
+                "required": [
+                    "operation"
+                ],
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "description": "The pqtest operation to run"
+                    }
+                }
             }
         ]
     },
