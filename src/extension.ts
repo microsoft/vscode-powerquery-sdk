@@ -10,7 +10,7 @@ let pqTaskProvider: vscode.Disposable | undefined;
 
 export function activate(_context: vscode.ExtensionContext) {
     pqTaskProvider = vscode.tasks.registerTaskProvider(
-        PowerQueryTaskProvider.TestType,
+        PowerQueryTaskProvider.TaskType,
         new PowerQueryTaskProvider(fetchExtensionSettings),
     );
 

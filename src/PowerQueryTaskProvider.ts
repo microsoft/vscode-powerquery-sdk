@@ -18,7 +18,7 @@ function getOutputChannel(): vscode.OutputChannel {
 }
 
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
-    static TestType = "powerquery";
+    static TaskType = "powerquery";
 
     // TODO: Do we need to make fetching of settings an async operation?
     private readonly fetchExtensionSettings: () => ExtensionSettings;
@@ -52,9 +52,9 @@ interface PQTestTaskDefinition extends vscode.TaskDefinition {
 
 // TODO: Figure out where/how to define this in an extensible way
 const pqTestOperations: PQTestTaskDefinition[] = [
-    { type: PowerQueryTaskProvider.TestType, operation: "list-credential", label: "List Credentials" },
+    { type: PowerQueryTaskProvider.TaskType, operation: "list-credential", label: "List Credentials" },
     {
-        type: PowerQueryTaskProvider.TestType,
+        type: PowerQueryTaskProvider.TaskType,
         operation: "delete-credential",
         additionalArgs: ["--ALL"],
         label: "Clear All Credentials",
