@@ -5,6 +5,12 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ExtensionSettings } from "./ExtensionSettings";
+import {
+    ConnectorTaskDefinition,
+    PowerQueryTaskProviderName,
+    PQTestTaskDefinition,
+    SimpleTaskDefinition,
+} from "./PQTestTaskDefinition";
 
 const CommonArgs: string[] = ["--prettyPrint"];
 const TaskSource: string = "pqtest";
@@ -18,7 +24,7 @@ function getOutputChannel(): vscode.OutputChannel {
 }
 
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
-    static TaskType = "powerquery";
+    static TaskType: string = PowerQueryTaskProviderName;
 
     // TODO: Do we need to make fetching of settings an async operation?
     private readonly fetchExtensionSettings: () => ExtensionSettings;
@@ -42,23 +48,10 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     }
 }
 
-// Properties that need to be persisted as part of the task definition should be
-// included in the taskDefinitions section of package.json.
-interface PQTestTaskDefinition extends vscode.TaskDefinition {
-    readonly operation: string;
-    readonly additionalArgs?: string[];
-    readonly label?: string;
-}
-
-// TODO: Figure out where/how to define this in an extensible way
 const pqTestOperations: PQTestTaskDefinition[] = [
-    { type: PowerQueryTaskProvider.TaskType, operation: "list-credential", label: "List Credentials" },
-    {
-        type: PowerQueryTaskProvider.TaskType,
-        operation: "delete-credential",
-        additionalArgs: ["--ALL"],
-        label: "Clear All Credentials",
-    },
+    new SimpleTaskDefinition("list-credential", "List Credentials"),
+    new SimpleTaskDefinition("delete-credential", "Clear All Credentials", ["--ALL"]),
+    new ConnectorTaskDefinition("info", "Display Connector Info"),
 ];
 
 async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.CancellationToken): Promise<vscode.Task[]> {
@@ -100,6 +93,22 @@ function getTaskForTaskDefinition(taskDef: PQTestTaskDefinition, pqtestExe: stri
 
     if (taskDef.additionalArgs) {
         args.push(...taskDef.additionalArgs);
+    }
+
+    if (taskDef.includePathToConnector) {
+        args.push("--extension");
+
+        // TODO: Can we prompt for this if not already set?
+        const extensionPath: string = taskDef.pathToConnector ?? "${config:pathToMez}";
+        args.push(extensionPath);
+    }
+
+    if (taskDef.includePathToQueryFile) {
+        args.push("--queryFile");
+
+        // TODO: Can we prompt for this if not already set?
+        const queryFilePath: string = taskDef.pathToQueryFile ?? "";
+        args.push(queryFilePath);
     }
 
     const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);

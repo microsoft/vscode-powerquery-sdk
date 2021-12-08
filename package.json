@@ -50,7 +50,9 @@
                 "type": "powerquery",
                 "when": "isWindows && processExecutionSupported",
                 "required": [
-                    "operation"
+                    "operation",
+                    "includePathToConnector",
+                    "includePathToQueryFile"
                 ],
                 "properties": {
                     "operation": {
@@ -60,6 +62,18 @@
                     "additionalArgs": {
                         "type": "array",
                         "description": "Additional commandline arguments for the operation"
+                    },
+                    "includePathToConnector": {
+                        "type": "boolean"
+                    },
+                    "includePathToQueryFile": {
+                        "type": "boolean"
+                    },
+                    "pathToConnector": {
+                        "type": "string"
+                    },
+                    "pathToQueryFile": {
+                        "type": "string"
                     }
                 }
             }
