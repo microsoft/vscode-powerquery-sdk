@@ -50,9 +50,7 @@
                 "type": "powerquery",
                 "when": "isWindows && processExecutionSupported",
                 "required": [
-                    "operation",
-                    "includePathToConnector",
-                    "includePathToQueryFile"
+                    "operation"
                 ],
                 "properties": {
                     "operation": {

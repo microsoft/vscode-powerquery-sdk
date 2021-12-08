@@ -5,12 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ExtensionSettings } from "./ExtensionSettings";
-import {
-    ConnectorTaskDefinition,
-    PowerQueryTaskProviderName,
-    PQTestTaskDefinition,
-    SimpleTaskDefinition,
-} from "./PQTestTaskDefinition";
+import { PowerQueryTaskProviderName, PQTestTaskDefinition } from "./PQTestTaskDefinition";
 
 const CommonArgs: string[] = ["--prettyPrint"];
 const TaskSource: string = "pqtest";
@@ -49,9 +44,19 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 }
 
 const pqTestOperations: PQTestTaskDefinition[] = [
-    new SimpleTaskDefinition("list-credential", "List Credentials"),
-    new SimpleTaskDefinition("delete-credential", "Clear All Credentials", ["--ALL"]),
-    new ConnectorTaskDefinition("info", "Display Connector Info"),
+    { type: PowerQueryTaskProviderName, operation: "list-credential", label: "List credentials" },
+    {
+        type: PowerQueryTaskProviderName,
+        operation: "delete-credential",
+        label: "Clear ALL credentials",
+        additionalArgs: ["--ALL"],
+    },
+    {
+        type: PowerQueryTaskProviderName,
+        operation: "info",
+        label: "Connector info",
+        includePathToConnector: true,
+    },
 ];
 
 async function getPQTestTasks(settings: ExtensionSettings, _token: vscode.CancellationToken): Promise<vscode.Task[]> {
@@ -99,6 +104,7 @@ function getTaskForTaskDefinition(taskDef: PQTestTaskDefinition, pqtestExe: stri
         args.push("--extension");
 
         // TODO: Can we prompt for this if not already set?
+        // TODO: Figure out which configuration setting names we're going to use.
         const extensionPath: string = taskDef.pathToConnector ?? "${config:pathToMez}";
         args.push(extensionPath);
     }
