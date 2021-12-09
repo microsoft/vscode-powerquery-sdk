@@ -39,7 +39,7 @@
             "title": "Power Query SDK",
             "properties": {
                 "powerquery.sdk.pqtest.location": {
-                    "scope": "machine",
+                    "scope": "machine-overridable",
                     "type": "string",
                     "description": "Local path to PQTest installation folder."
                 }
