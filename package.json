@@ -61,17 +61,13 @@
                         "type": "array",
                         "description": "Additional commandline arguments for the operation"
                     },
-                    "includePathToConnector": {
-                        "type": "boolean"
-                    },
-                    "includePathToQueryFile": {
-                        "type": "boolean"
-                    },
                     "pathToConnector": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Path to the connector file (--extension)"
                     },
                     "pathToQueryFile": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Path to the query file (--queryFile)"
                     }
                 }
             }

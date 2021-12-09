@@ -4,8 +4,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
+import { Constants } from "./Constants";
 import { ExtensionSettings } from "./ExtensionSettings";
-import { PowerQueryTaskProviderName, PQTestTaskDefinition } from "./PQTestTaskDefinition";
+import { PQTestTaskDefinition } from "./PQTestTaskDefinition";
 
 const CommonArgs: string[] = ["--prettyPrint"];
 const TaskSource: string = "pqtest";
@@ -13,13 +14,13 @@ const TaskSource: string = "pqtest";
 let _channel: vscode.OutputChannel;
 function getOutputChannel(): vscode.OutputChannel {
     if (!_channel) {
-        _channel = vscode.window.createOutputChannel("Power Query SDK");
+        _channel = vscode.window.createOutputChannel(Constants.OutputChannelName);
     }
     return _channel;
 }
 
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
-    static TaskType: string = PowerQueryTaskProviderName;
+    static TaskType: string = Constants.PQTestTaskType;
 
     // TODO: Do we need to make fetching of settings an async operation?
     private readonly fetchExtensionSettings: () => ExtensionSettings;
@@ -44,18 +45,51 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 }
 
 const pqTestOperations: PQTestTaskDefinition[] = [
-    { type: PowerQueryTaskProviderName, operation: "list-credential", label: "List credentials" },
+    { type: Constants.PQTestTaskType, operation: "list-credential", label: "List credentials" },
+    // TODO: Can we prompt to confirm that user really wants to remove all credentials?
     {
-        type: PowerQueryTaskProviderName,
+        type: Constants.PQTestTaskType,
         operation: "delete-credential",
         label: "Clear ALL credentials",
         additionalArgs: ["--ALL"],
     },
     {
-        type: PowerQueryTaskProviderName,
+        type: Constants.PQTestTaskType,
         operation: "info",
         label: "Connector info",
-        includePathToConnector: true,
+        pathToConnector: Constants.ConfigPathToConnector,
+    },
+    // TODO: We need logic to determine which authentication kind to use (when there is more than one)
+    {
+        type: Constants.PQTestTaskType,
+        operation: "set-credential",
+        label: "Set credential",
+        additionalArgs: ["--interactive"],
+        pathToConnector: Constants.ConfigPathToConnector,
+        pathToQueryFile: Constants.ConfigPathToTestConnectionFile,
+    },
+    // TODO: This one should only be included for connectors with OAuth and Aad
+    {
+        type: Constants.PQTestTaskType,
+        operation: "refresh-credential",
+        label: "Refresh credential",
+        pathToConnector: Constants.ConfigPathToConnector,
+        pathToQueryFile: Constants.ConfigPathToTestConnectionFile,
+    },
+    // TODO: How can we format the output?
+    {
+        type: Constants.PQTestTaskType,
+        operation: "run-test",
+        label: "Evaluate current file",
+        pathToConnector: Constants.ConfigPathToConnector,
+        pathToQueryFile: "${file}",
+    },
+    {
+        type: Constants.PQTestTaskType,
+        operation: "test-connection",
+        label: "Test connection",
+        pathToConnector: Constants.ConfigPathToConnector,
+        pathToQueryFile: Constants.ConfigPathToTestConnectionFile,
     },
 ];
 
@@ -100,21 +134,14 @@ function getTaskForTaskDefinition(taskDef: PQTestTaskDefinition, pqtestExe: stri
         args.push(...taskDef.additionalArgs);
     }
 
-    if (taskDef.includePathToConnector) {
+    if (taskDef.pathToConnector) {
         args.push("--extension");
-
-        // TODO: Can we prompt for this if not already set?
-        // TODO: Figure out which configuration setting names we're going to use.
-        const extensionPath: string = taskDef.pathToConnector ?? "${config:pathToMez}";
-        args.push(extensionPath);
+        args.push(taskDef.pathToConnector);
     }
 
-    if (taskDef.includePathToQueryFile) {
+    if (taskDef.pathToQueryFile) {
         args.push("--queryFile");
-
-        // TODO: Can we prompt for this if not already set?
-        const queryFilePath: string = taskDef.pathToQueryFile ?? "";
-        args.push(queryFilePath);
+        args.push(taskDef.pathToQueryFile);
     }
 
     const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);
