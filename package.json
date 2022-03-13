@@ -27,6 +27,8 @@
     ],
     "activationEvents": [
         "onCommand:workbench.action.tasks.runTask",
+        "onView:powerquery.sdk.pqtest.LifeCycleTaskTreeView",
+        "onWebviewPanel:powerquery.sdk.pqtest.ResultWebView",
         "onLanguage:powerquery"
     ],
     "extensionDependencies": [
@@ -35,6 +37,14 @@
     "publisher": "PowerQuery",
     "main": "./dist/extension.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                "title": "Evaluate current power query script",
+                "category": "Power query",
+                "icon": "$(debug-console-evaluation-prompt)"
+            }
+        ],
         "configuration": {
             "title": "Power Query SDK",
             "properties": {
@@ -42,6 +52,16 @@
                     "scope": "machine-overridable",
                     "type": "string",
                     "description": "Local path to PQTest installation folder."
+                },
+                "powerquery.sdk.pqtest.extension": {
+                    "scope": "window",
+                    "type": "string",
+                    "description": "Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once."
+                },
+                "powerquery.sdk.pqtest.queryFile": {
+                    "scope": "window",
+                    "type": "string",
+                    "description": "Query file containing section document or M expression (.m/.pq)."
                 }
             }
         },
@@ -71,10 +91,40 @@
                     }
                 }
             }
-        ]
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "powerquery.sdk.pqtest.LifeCycleTaskTreeView",
+                    "name": "Power query SDK"
+                }
+            ]
+        },
+        "viewsWelcome": [
+            {
+                "view": "powerquery.sdk.pqtest.LifeCycleTaskTreeView",
+                "contents": "In order to use extension features, you need to create an Power query extension project.\n[Create an extension project](command:powerquery.sdk.pqtest.CreateNewProjectCommand)\nTo learn more about how to create an extension, [read our docs](https://docs.microsoft.com/en-us/powerquery-m/)."
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                    "when": "editorLangId == powerquery"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                    "when": "editorLangId == powerquery",
+                    "group": "1_powerquery@1"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
+        "postinstall": "node script/postinstall.js",
         "compile": "webpack",
         "watch": "webpack --watch",
         "package": "webpack --mode production --devtool hidden-source-map",
@@ -102,6 +152,7 @@
         "ts-loader": "^9.2.6",
         "typescript": "^4.5.2",
         "webpack": "^5.64.4",
-        "webpack-cli": "^4.9.1"
+        "webpack-cli": "^4.9.1",
+        "tsconfig-paths-webpack-plugin": "^3.5.2"
     }
 }
