@@ -11,7 +11,7 @@ const commonConfig = require("./webpack.common");
 
 const devConfig = {
     mode: "development",
-    devtool: "cheap-module-source-map",
+    devtool: "eval-source-map",
     output: {
         publicPath: "http://localhost:3001/",
     },

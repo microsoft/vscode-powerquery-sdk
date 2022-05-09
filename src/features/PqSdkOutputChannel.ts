@@ -13,6 +13,10 @@ export class PqSdkOutputChannel implements OutputChannel, IDisposable {
         this._channel = vscode.window.createOutputChannel(ExtensionConstants.OutputChannelName);
     }
 
+    replace(value: string): void {
+        this._channel.replace(value);
+    }
+
     dispose(): void {
         this._channel.dispose();
     }
@@ -34,8 +38,10 @@ export class PqSdkOutputChannel implements OutputChannel, IDisposable {
         this.appendLineWithTimeStamp(`[Debug]\t${value}`);
     }
 
-    public appendTraceLine(value: string): void {
-        this.appendLineWithTimeStamp(`[Trace]\t${value}`);
+    public appendTraceLine(_value: string): void {
+        // temporarily turn this off as it is too noisy
+        // noop for now
+        // this.appendLineWithTimeStamp(`[Trace]\t${_value}`);
     }
 
     public appendInfoLine(value: string): void {

@@ -1,11 +1,14 @@
+.idea/
 .vscode/**
 .vscode-test/**
 out/**
 node_modules/**
 src/**
+webviews/**
 .gitignore
 .yarnrc
 webpack.config.js
+webpack.config.dev.js
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/.eslintrc.json

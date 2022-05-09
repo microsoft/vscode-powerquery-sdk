@@ -5,7 +5,12 @@
 	"scripts": {
 		"clean": "rimraf ../../webviewDist/pq-test-result-view",
 		"start": "webpack serve --config config/webpack.dev.js",
-		"compile": "npm run clean && webpack --config config/webpack.prod.js"
+		"build": "npm run clean && webpack --config config/webpack.prod.js",
+		"audit": "npm audit"
+	},
+	"engines": {
+		"node": ">=16.13.2 <17",
+		"npm": "~8.5.5"
 	},
 	"dependencies": {
 		"classnames": "^2.3.1",
@@ -53,8 +58,5 @@
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "^4.7.4",
 		"webpack-merge": "^5.8.0"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC"
+	}
 }
