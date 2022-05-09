@@ -92,7 +92,7 @@ export class LifecycleCommands {
             [`${templateFileBaseName}.mproj`, `${projectName}.mproj`],
             [`${templateFileBaseName}.pq`, `${projectName}.pq`],
             [`${templateFileBaseName}.query.pq`, `${projectName}.query.pq`],
-            [`${templateFileBaseName}.sln`, `${projectName}.sln`],
+            // [`${templateFileBaseName}.sln`, `${projectName}.sln`],
             ["resources.resx", "resources.resx"],
         ].forEach(([templateFileName, targetFileName]) => {
             let content: string = fs.readFileSync(path.resolve(templateTargetFolder, templateFileName), {
@@ -256,7 +256,7 @@ export class LifecycleCommands {
             case "UsernamePassword":
             case "Windows":
                 // $$USERNAME$$
-                templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Username", "UsernamePassword");
+                templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Username", "$$USERNAME$$");
                 // $$PASSWORD$$
                 templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "password", "$$PASSWORD$$", {
                     password: true,
