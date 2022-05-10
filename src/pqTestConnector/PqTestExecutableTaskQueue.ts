@@ -4,13 +4,13 @@ import { FSWatcher, WatchEventType } from "fs";
 import * as vscode from "vscode";
 import { ExtensionContext, TextEditor } from "vscode";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
-import { ExtensionConfigurations } from "constants/power-query-sdk-configuration";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { SpawnedProcess, ProcessExit } from "common/SpawnedProcess";
 import { IDisposable, Disposable } from "common/Disposable";
 import { buildPqTestArgs, PQTestTaskBase, IPQTestService, GenericResult } from "common/PQTestService";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { pidIsRunning } from "utils/pids";
-import { covertStringToInteger } from "utils/numbers";
+import { convertStringToInteger } from "utils/numbers";
 import { ExtractEventTypes, DisposableEventEmitter } from "common/DisposableEventEmitter";
 import { resolveSubstitutedValues } from "utils/vscodes";
 
@@ -117,7 +117,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     private doSeizePQTestPidOfLockFile(thePidFileLocation: string = this.pidLockFileLocation): number | undefined {
         const pidString: string = fs.readFileSync(thePidFileLocation).toString("utf8");
-        const result: number | undefined = covertStringToInteger(pidString);
+        const result: number | undefined = convertStringToInteger(pidString);
         if (typeof result === "number") {
             this.outputChannel.appendTraceLine(`Read existing pqTest pid file content: ${pidString}, ${result}`);
         } else {
@@ -170,7 +170,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     {
                         stdinStr: pendingTask.stdinStr,
                         onSpawned: childProcess => {
-                            this.doWritePid("" + childProcess.pid || "nan");
+                            this.doWritePid("" + childProcess.pid ?? "nan");
                             this.outputChannel.appendTraceLine(
                                 `[Task began] Fork pqtask ${pendingTask.operation} executable of pid: ${childProcess.pid}`,
                             );
@@ -189,7 +189,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     this.outputChannel.appendErrorLine(`[Task exited abnormally] pqtest ${pendingTask.operation} pid(${
                         spawnProcess.pid
                     }) exit(${processExit.exitCode})
-\t\t\t\t stderr: ${processExit.stderr || processExit.stdout}`);
+\t\t\t\t stderr: ${processExit.stderr ?? processExit.stdout}`);
                     pendingTask.reject(new PqTestExecutableTaskError(pqTestExeFullPath, processArgs, processExit));
                 }
             }

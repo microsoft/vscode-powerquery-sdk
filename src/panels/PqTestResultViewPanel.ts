@@ -22,7 +22,7 @@ export class SimplePqTestResultViewBroker {
             });
         }
     }
-    public static emmitAll() {
+    public static emitAll() {
         for (const oneProperty in this.values) {
             // eslint-disable-next-line security/detect-object-injection
             this.values[oneProperty].emit();
@@ -83,7 +83,7 @@ export class PqTestResultViewPanel implements IDisposable {
     }
 
     public static createOrShow(extensionUri: vscode.Uri) {
-        // const column: ViewColumn | undefined = vscode.window.activeTextEditor?.viewColumn || undefined;
+        // const column: ViewColumn | undefined = vscode.window.activeTextEditor?.viewColumn ?? undefined;
         if (this.currentPanel) {
             // reveal currentPanel to current column
             this.currentPanel._panel.reveal();
@@ -126,7 +126,7 @@ export class PqTestResultViewPanel implements IDisposable {
             message => {
                 switch (message.type) {
                     case "onReady":
-                        SimplePqTestResultViewBroker.emmitAll();
+                        SimplePqTestResultViewBroker.emitAll();
                         return;
                 }
             },

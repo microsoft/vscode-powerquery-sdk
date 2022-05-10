@@ -15,7 +15,7 @@ function doResolveSubstitutedValue(valueName: string): string {
                 break;
         }
     }
-    return retVal || "";
+    return retVal ?? "";
 }
 
 // todo, need to think about it....these substituted values could be very annoying...should we support em
@@ -23,10 +23,10 @@ function doResolveSubstitutedValue(valueName: string): string {
 export function resolveSubstitutedValues(str: string | undefined): string | undefined {
     if (str) {
         let result: string = str;
-        let curMatch: RegExpExecArray | null = SubstitutedValueRegexp.exec(result || "");
+        let curMatch: RegExpExecArray | null = SubstitutedValueRegexp.exec(result ?? "");
         while (curMatch && result) {
             result = replaceAt(result, curMatch.index, curMatch[0].length, doResolveSubstitutedValue(curMatch[1]));
-            curMatch = SubstitutedValueRegexp.exec(result || "");
+            curMatch = SubstitutedValueRegexp.exec(result ?? "");
         }
         return result;
     }

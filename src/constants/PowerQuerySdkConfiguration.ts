@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ExtensionConstants } from "constants/power-query-sdk-extension";
+import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { ConfigurationTarget } from "vscode";
 
 // eslint-disable-next-line @typescript-eslint/typedef

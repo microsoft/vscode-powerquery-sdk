@@ -11,7 +11,7 @@ const TemplateSubstitutedValueRegexp: RegExp = /{{([A-Za-z0-9.]*)}}/g;
 
 function doResolveOneTemplateSubstitutedValue(valueName: string, context: Record<string, string>): string {
     // eslint-disable-next-line security/detect-object-injection
-    return context[valueName] || "";
+    return context[valueName] ?? "";
 }
 
 // todo, need to think about it....these substituted values could be very annoying...should we support em
@@ -19,7 +19,7 @@ function doResolveOneTemplateSubstitutedValue(valueName: string, context: Record
 export function resolveTemplateSubstitutedValues(str: string, context: Record<string, string>): string {
     if (str) {
         let result: string = str;
-        let curMatch: RegExpExecArray | null = TemplateSubstitutedValueRegexp.exec(result || "");
+        let curMatch: RegExpExecArray | null = TemplateSubstitutedValueRegexp.exec(result ?? "");
         while (curMatch && result) {
             result = replaceAt(
                 result,
@@ -27,7 +27,7 @@ export function resolveTemplateSubstitutedValues(str: string, context: Record<st
                 curMatch[0].length,
                 doResolveOneTemplateSubstitutedValue(curMatch[1], context),
             );
-            curMatch = TemplateSubstitutedValueRegexp.exec(result || "");
+            curMatch = TemplateSubstitutedValueRegexp.exec(result ?? "");
         }
         return result;
     }

@@ -3,7 +3,7 @@
 
 import * as vscode from "vscode";
 import { IPQTestService, PQTestTaskDefinition, buildPqTestArgs } from "common/PQTestService";
-import { ExtensionConstants } from "constants/power-query-sdk-extension";
+import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 
 const TaskSource: string = "pqtest";
 const pqTestOperations: PQTestTaskDefinition[] = [

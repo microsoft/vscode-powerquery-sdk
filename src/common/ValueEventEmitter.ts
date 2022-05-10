@@ -16,7 +16,7 @@ export class ValueEventEmitter<T = any> implements IDisposable {
     }
 
     emit(value?: T) {
-        this.value = value || this.value;
+        this.value = value ?? this.value;
         this._listeners.forEach(l => l(this.value));
     }
 

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { OutputChannel, ViewColumn } from "vscode";
 import { IDisposable } from "common/Disposable";
-import { ExtensionConstants } from "constants/power-query-sdk-extension";
+import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 
 // we can do write to file or log according to a log_level over here
 export class PqSdkOutputChannel implements OutputChannel, IDisposable {

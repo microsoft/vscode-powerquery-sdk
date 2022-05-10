@@ -7,10 +7,10 @@ interface VSCodeState {
 }
 
 const vscode = acquireVsCodeApi<VSCodeState>();
-const histState: VSCodeState = vscode.getState() || {};
+const histState: VSCodeState = vscode.getState() ?? {};
 
 const App: React.FC<{}> = React.memo(() => {
-    const [latestPqTestResult, setLatestPqTestResult] = useState<any>(histState.latestPqTestResult || "");
+    const [latestPqTestResult, setLatestPqTestResult] = useState<any>(histState.latestPqTestResult ?? "");
 
     useEffect(() => {
         window.addEventListener("message", event => {

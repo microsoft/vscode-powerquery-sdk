@@ -1,8 +1,8 @@
 import * as path from "path";
 import * as fs from "fs";
 import { workspace as vscWorkspace, ExtensionContext } from "vscode";
-import { ExtensionConstants } from "constants/power-query-sdk-extension";
-import { ExtensionConfigurations } from "constants/power-query-sdk-configuration";
+import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { formatPath, joinPath } from "utils/paths";

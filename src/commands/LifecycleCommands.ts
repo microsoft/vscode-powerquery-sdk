@@ -7,7 +7,7 @@ import PqSdkOutputChannel from "features/PqSdkOutputChannel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
 import { getFirstWorkspaceFolder } from "utils/vscodes";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
-import ExtensionConfigurations from "constants/power-query-sdk-configuration";
+import ExtensionConfigurations from "constants/PowerQuerySdkConfiguration";
 
 const CommandPrefix: string = `powerquery.sdk.pqtest`;
 
@@ -92,7 +92,6 @@ export class LifecycleCommands {
             [`${templateFileBaseName}.mproj`, `${projectName}.mproj`],
             [`${templateFileBaseName}.pq`, `${projectName}.pq`],
             [`${templateFileBaseName}.query.pq`, `${projectName}.query.pq`],
-            // [`${templateFileBaseName}.sln`, `${projectName}.sln`],
             ["resources.resx", "resources.resx"],
         ].forEach(([templateFileName, targetFileName]) => {
             let content: string = fs.readFileSync(path.resolve(templateTargetFolder, templateFileName), {
