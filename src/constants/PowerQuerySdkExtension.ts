@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 // todo: should we rename it into ms.vscode-powerquery-sdk which is more authentic?
 const ExtensionId: string = "vscode-powerquery-sdk";
 

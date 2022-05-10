@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 import * as cp from "child_process";
 import { SpawnOptionsWithoutStdio, ChildProcessWithoutNullStreams } from "child_process";
 

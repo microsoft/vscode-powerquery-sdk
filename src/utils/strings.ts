@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
+// todo replace it with splice?
 export function replaceAt(str: string, index: number, length: number, replacement: string) {
     return str.substring(0, index) + replacement + str.substring(index + length);
 }

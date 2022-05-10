@@ -3,6 +3,7 @@
 .vscode-test/**
 out/**
 node_modules/**
+resources/**
 src/**
 webviews/**
 .gitignore

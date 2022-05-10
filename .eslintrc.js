@@ -1,7 +1,7 @@
 module.exports = {
     root: true,
     parser: "@typescript-eslint/parser",
-    plugins: ["@typescript-eslint", "security", "prettier"],
+    plugins: ["@typescript-eslint", "security", "prettier", "license-header"],
     extends: [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
@@ -21,5 +21,6 @@ module.exports = {
         ],
         "prettier/prettier": ["warn"],
         "security/detect-non-literal-fs-filename": "off",
+        "license-header/header": ["error", "./resources/license-header.js"],
     },
 };
