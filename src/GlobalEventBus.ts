@@ -5,7 +5,6 @@ import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
-import { formatPath, joinPath } from "utils/paths";
 import * as vscode from "vscode";
 import { FSWatcher } from "fs";
 import { getFirstWorkspaceFolder } from "./utils/vscodes";
@@ -70,7 +69,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                     if (theFSPath.indexOf(".mez") > -1) {
                         const relativePath: string = vscWorkspace.asRelativePath(uri, false);
                         ExtensionConfigurations.setPQTestExtensionFileLocation(
-                            formatPath("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
+                            path.join("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
                         );
                         break;
                     }
@@ -79,11 +78,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         const dirname: string = path.dirname(relativePath);
                         const mezFileName: string = path.basename(relativePath).replace(".mproj", ".mez");
                         ExtensionConfigurations.setPQTestExtensionFileLocation(
-                            formatPath(
-                                "${workspaceFolder}",
-                                joinPath(dirname === "." ? "" : dirname, "bin", "Debug"),
-                                mezFileName,
-                            ),
+                            path.join("${workspaceFolder}", path.join(dirname, "bin", "Debug"), mezFileName),
                         );
                         // do not break, in case any *.mez found
                         // break;
@@ -99,7 +94,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                     if (theFSPath.indexOf(".m") > -1 || theFSPath.indexOf(".query.pq") > -1) {
                         const relativePath: string = vscWorkspace.asRelativePath(uri, false);
                         ExtensionConfigurations.setPQTestQueryFileLocation(
-                            formatPath("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
+                            path.join("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
                         );
                         break;
                     }
