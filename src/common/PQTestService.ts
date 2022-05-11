@@ -8,10 +8,10 @@
 import * as vscode from "vscode";
 
 export interface GenericResult {
-    Status: "Success" | "Failure";
-    Message: string;
+    readonly Status: "Success" | "Failure";
+    readonly Message: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Details: any;
+    readonly Details: any;
 }
 
 export type AuthenticationKind = "Anonymous" | "Key" | "Aad" | "OAuth2" | "UsernamePassword" | "Windows";
@@ -32,22 +32,22 @@ export interface PQTestTaskDefinition extends PQTestTaskBase, vscode.TaskDefinit
 }
 
 export interface IPQTestService {
-    pqTestReady: boolean;
-    pqTestLocation: string;
-    pqTestFullPath: string;
-    DeleteCredential: () => Promise<GenericResult>;
+    readonly pqTestReady: boolean;
+    readonly pqTestLocation: string;
+    readonly pqTestFullPath: string;
+    readonly DeleteCredential: () => Promise<GenericResult>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    DisplayExtensionInfo: () => Promise<any>;
+    readonly DisplayExtensionInfo: () => Promise<any>;
     // todo need to settle the credential types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ListCredentials: () => Promise<any[]>;
+    readonly ListCredentials: () => Promise<any[]>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    GenerateCredentialTemplate: () => Promise<any>;
-    SetCredential: (payloadStr: string) => Promise<GenericResult>;
-    RefreshCredential: () => Promise<GenericResult>;
+    readonly GenerateCredentialTemplate: () => Promise<any>;
+    readonly SetCredential: (payloadStr: string) => Promise<GenericResult>;
+    readonly RefreshCredential: () => Promise<GenericResult>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    RunTestBattery: (pathToQueryFile?: string) => Promise<any>;
-    TestConnection: () => Promise<GenericResult>;
+    readonly RunTestBattery: (pathToQueryFile?: string) => Promise<any>;
+    readonly TestConnection: () => Promise<GenericResult>;
 }
 
 const CommonArgs: string[] = ["--prettyPrint"];

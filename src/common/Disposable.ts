@@ -6,7 +6,7 @@
  */
 
 export interface IDisposable {
-    dispose: () => void;
+    readonly dispose: () => void;
 }
 
 export class Disposable implements IDisposable {

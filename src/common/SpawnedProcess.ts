@@ -37,9 +37,9 @@ export class SpawnedProcess {
         return this._promise;
     }
 
-    // get CpStream(){
-    //   return this._cpStream;
-    // }
+    get cpStream() {
+        return this._cpStream;
+    }
 
     get stdOut() {
         return this._stdout;

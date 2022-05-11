@@ -13,7 +13,7 @@ export type ExtractEventTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp extends Record<
     : EvtObjOrEvtProp;
 
 export class DisposableEventEmitter<Event extends string | symbol> extends EventEmitter implements IDisposable {
-    protected internalDisposables: IDisposable[] = [];
+    protected readonly internalDisposables: IDisposable[] = [];
 
     constructor(options?: {
         /**

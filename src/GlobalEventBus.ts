@@ -17,17 +17,17 @@ import { FSWatcher } from "fs";
 import { getFirstWorkspaceFolder } from "./utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
-export const GlobalEvents = {
-    workspaces: {
+export const GlobalEvents = Object.freeze({
+    workspaces: Object.freeze({
         filesChangedAtWorkspace: Symbol.for("filesChangedAtWorkspace"),
-    },
-    VSCodeEvents: {
+    }),
+    VSCodeEvents: Object.freeze({
         onDidChangeWorkspaceFolders: Symbol.for("onDidChangeWorkspaceFolders"),
         ConfigDidChangePowerQuerySDK: Symbol.for("ConfigDidChangePowerQuerySDK"),
         ConfigDidChangePQTestExtension: Symbol.for("ConfigDidChangePQTestExtension"),
         ConfigDidChangePQTestQuery: Symbol.for("ConfigDidChangePQTestQuery"),
-    },
-};
+    }),
+});
 type GlobalEventTypes = ExtractEventTypes<typeof GlobalEvents>;
 
 export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> implements IDisposable {

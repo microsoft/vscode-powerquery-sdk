@@ -28,6 +28,9 @@ export const PqTestExecutableTaskQueueEvents = {
 };
 type PqTestExecutableTaskQueueEventTypes = ExtractEventTypes<typeof PqTestExecutableTaskQueueEvents>;
 
+/**
+ * Internal interface within the module, we need not cast members as readonly
+ */
 interface PqTestExecutableTask extends PQTestTaskBase {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolve: (res: any) => void;
