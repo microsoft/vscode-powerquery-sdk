@@ -14,17 +14,17 @@ export class ValueEventEmitter<T = any> implements IDisposable {
 
     constructor(public value: T) {}
 
-    subscribe(listener: ValueUpdateListener<T>) {
+    subscribe(listener: ValueUpdateListener<T>): void {
         this._listeners.push(listener);
     }
 
-    unsubscribe(listener: ValueUpdateListener<T>) {
-        this._listeners = this._listeners.filter(l => l !== listener);
+    unsubscribe(listener: ValueUpdateListener<T>): void {
+        this._listeners = this._listeners.filter((l: ValueUpdateListener<T>) => l !== listener);
     }
 
-    emit(value?: T) {
+    emit(value?: T): void {
         this.value = value ?? this.value;
-        this._listeners.forEach(l => l(this.value));
+        this._listeners.forEach((l: ValueUpdateListener<T>) => l(this.value));
     }
 
     dispose(): void {

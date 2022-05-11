@@ -7,19 +7,22 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { FSWatcher, WatchEventType } from "fs";
 import * as vscode from "vscode";
+import { buildPqTestArgs, GenericResult, IPQTestService, PQTestTaskBase } from "common/PQTestService";
+import { Disposable, IDisposable } from "common/Disposable";
+import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { ExtensionContext, TextEditor } from "vscode";
+import { FSWatcher, WatchEventType } from "fs";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { SpawnedProcess, ProcessExit } from "common/SpawnedProcess";
-import { IDisposable, Disposable } from "common/Disposable";
-import { buildPqTestArgs, PQTestTaskBase, IPQTestService, GenericResult } from "common/PQTestService";
+import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { pidIsRunning } from "utils/pids";
+
 import { convertStringToInteger } from "utils/numbers";
-import { ExtractEventTypes, DisposableEventEmitter } from "common/DisposableEventEmitter";
+import { pidIsRunning } from "utils/pids";
 import { resolveSubstitutedValues } from "utils/vscodes";
+
+import { ChildProcessWithoutNullStreams } from "child_process";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {
@@ -49,8 +52,8 @@ export class PqTestExecutableTaskError extends Error {
 }
 
 export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
-    static readonly ExecutableName = "pqtest.exe";
-    static readonly ExecutablePidLockFileName = "pqTest.pid";
+    static readonly ExecutableName: string = "pqtest.exe";
+    static readonly ExecutablePidLockFileName: string = "pqTest.pid";
 
     private readonly eventBus: DisposableEventEmitter<PqTestExecutableTaskQueueEventTypes>;
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
@@ -76,6 +79,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         this.eventBus = new DisposableEventEmitter();
         this.subscribeOneEvent = this.eventBus.subscribeOneEvent.bind(this.eventBus);
         this._disposables.unshift(this.eventBus);
+
         this.pidLockFileLocation = path.resolve(
             this.vscExtCtx.extensionPath,
             PqTestExecutableTaskQueue.ExecutablePidLockFileName,
@@ -83,6 +87,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
         // watch pqTest pid lock file
         this.doSetupAndWatchPQTestExecutablePidLockFile();
+
         this._disposables.unshift(
             new Disposable(() => {
                 this.onPQTestExecutablePidChangedFsWatcher?.close();
@@ -96,6 +101,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 this.onPowerQuerySDKChanged.bind(this),
             ),
         );
+
         this.onPowerQuerySDKChanged();
     }
 
@@ -108,17 +114,21 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private calculatePQTestPath(nextPQTestLocation: string | undefined): string | undefined {
         if (!nextPQTestLocation) {
             this.outputChannel.appendErrorLine("powerquery.sdk.pqtest.location configuration value is not set.");
+
             return undefined;
         } else if (!fs.existsSync(nextPQTestLocation)) {
             this.outputChannel.appendErrorLine(
                 `powerquery.sdk.pqtest.location set to '${nextPQTestLocation}' but directory does not exist.`,
             );
+
             return undefined;
         }
 
         const pqtestExe: string = path.resolve(nextPQTestLocation, PqTestExecutableTaskQueue.ExecutableName);
+
         if (!fs.existsSync(pqtestExe)) {
             this.outputChannel.appendErrorLine(`pqtest.exe not found at ${pqtestExe}`);
+
             return undefined;
         }
 
@@ -128,25 +138,28 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private doSeizePQTestPidOfLockFile(thePidFileLocation: string = this.pidLockFileLocation): number | undefined {
         const pidString: string = fs.readFileSync(thePidFileLocation).toString("utf8");
         const result: number | undefined = convertStringToInteger(pidString);
+
         if (typeof result === "number") {
             this.outputChannel.appendTraceLine(`Read existing pqTest pid file content: ${pidString}, ${result}`);
         } else {
             this.outputChannel.appendTraceLine(`Read non-existing pqTest pid file. ${result}`);
         }
+
         return result;
     }
 
-    private doWritePid(pid: string) {
+    private doWritePid(pid: string): void {
         fs.writeFileSync(this.pidLockFileLocation, pid);
     }
 
-    private doSetupAndWatchPQTestExecutablePidLockFile(curPid: string = "") {
+    private doSetupAndWatchPQTestExecutablePidLockFile(curPid: string = ""): void {
         // create or wipe pidLockFile
         if (!fs.existsSync(this.pidLockFileLocation)) {
             this.doWritePid(curPid);
             this.outputChannel.appendTraceLine(`Create empty pqTest pid file: ${this.pidLockFileLocation}`);
         } else {
             const pidNumber: number | undefined = this.doSeizePQTestPidOfLockFile();
+
             if (typeof pidNumber === "number" && !pidIsRunning(pidNumber.valueOf())) {
                 this.doWritePid(curPid);
                 this.outputChannel.appendTraceLine(`Wipe out pqTest pid file: ${this.pidLockFileLocation}`);
@@ -154,8 +167,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 this.outputChannel.appendTraceLine(`Find running pqTest of pid ${pidNumber}`);
             }
         }
+
         // unwatch the previous one when it got renamed
         if (this.onPQTestExecutablePidChangedFsWatcher) this.onPQTestExecutablePidChangedFsWatcher.close();
+
         this.onPQTestExecutablePidChangedFsWatcher = fs.watch(
             this.pidLockFileLocation,
             {},
@@ -163,35 +178,42 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         );
     }
 
-    private async doCheckPidAndDequeueOneTaskIfAny() {
+    private async doCheckPidAndDequeueOneTaskIfAny(): Promise<void> {
         const pidNumber: number | undefined = this.doSeizePQTestPidOfLockFile();
+
         if (typeof pidNumber !== "number" && this.pqTestFullPath) {
             // alright we can queue another task
             const pendingTask: PqTestExecutableTask | undefined = this.pendingTasks.shift();
+
             if (pendingTask) {
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
                 const processArgs: string[] = buildPqTestArgs(pendingTask);
                 this.outputChannel.appendTraceLine(`[Task found] ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+
                 const spawnProcess: SpawnedProcess = new SpawnedProcess(
                     pqTestExeFullPath,
                     processArgs,
                     { cwd: this.pqTestLocation },
                     {
                         stdinStr: pendingTask.stdinStr,
-                        onSpawned: childProcess => {
-                            this.doWritePid("" + childProcess.pid ?? "nan");
+                        onSpawned: (childProcess: ChildProcessWithoutNullStreams): void => {
+                            this.doWritePid(`${childProcess.pid}` ?? "nan");
+
                             this.outputChannel.appendTraceLine(
                                 `[Task began] Fork pqtask ${pendingTask.operation} executable of pid: ${childProcess.pid}`,
                             );
                         },
                     },
                 );
+
                 const processExit: ProcessExit = await spawnProcess.deferred$;
                 this.doWritePid("");
+
                 this.outputChannel.appendTraceLine(
                     `[Task finished] Forked pqtask ${pendingTask.operation} executable pid(${spawnProcess.pid}) exited.`,
                 );
+
                 if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
                     // todo try catch the JSON parse
                     pendingTask.resolve(JSON.parse(spawnProcess.stdOut));
@@ -200,6 +222,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                         spawnProcess.pid
                     }) exit(${processExit.exitCode})
 \t\t\t\t stderr: ${processExit.stderr ?? processExit.stdout}`);
+
                     pendingTask.reject(new PqTestExecutableTaskError(pqTestExeFullPath, processArgs, processExit));
                 }
             }
@@ -207,21 +230,30 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private doEnqueueOneTask<T = any>(task: PQTestTaskBase) {
+    private doEnqueueOneTask<T = any>(task: PQTestTaskBase): Promise<T> {
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
-        const result: Promise<T> = new Promise<T>((resolve, reject) => {
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: Promise<T> = new Promise<T>((resolve: (value: T) => void, reject: (reason?: any) => void) => {
             theTask.resolve = resolve;
             theTask.reject = reject;
         });
+
         this.pendingTasks.push(theTask);
-        this.doCheckPidAndDequeueOneTaskIfAny();
+
+        this.doCheckPidAndDequeueOneTaskIfAny().catch(() => {
+            // noop
+            // todo log the err to the telemetry
+        });
+
         return result;
     }
 
-    protected onPowerQuerySDKChanged() {
+    protected onPowerQuerySDKChanged(): void {
         // PQTestLocation getter
         const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
         const pqTestExe: string | undefined = this.calculatePQTestPath(nextPQTestLocation);
+
         if (!pqTestExe) {
             this.pqTestReady = false;
             this.pqTestLocation = "";
@@ -233,22 +265,31 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             this.pqTestFullPath = pqTestExe;
             this.outputChannel.appendTraceLine(`pqtest.exe found at ${this.pqTestFullPath}`);
             // if no running pid found, dequeue and execute one pending tasks if any
-            this.doCheckPidAndDequeueOneTaskIfAny();
+
+            this.doCheckPidAndDequeueOneTaskIfAny().catch(() => {
+                // noop
+                // todo log the err to the telemetry
+            });
         }
     }
 
-    protected onPQTestExecutablePidChanged(event: WatchEventType, _filename: string) {
+    protected onPQTestExecutablePidChanged(event: WatchEventType, _filename: string): void {
         if (event === "change") {
             // it might be the pid changed
             // if no running pid found, dequeue and execute one pending tasks if any
             const pidNumber: number | undefined = this.doSeizePQTestPidOfLockFile();
+
             if (typeof pidNumber === "number") {
                 // noop, but emit an event
                 this.eventBus.emit(PqTestExecutableTaskQueueEvents.processCreated);
             } else {
                 this.eventBus.emit(PqTestExecutableTaskQueueEvents.processExited);
+
                 // alright we can queue another task
-                this.doCheckPidAndDequeueOneTaskIfAny();
+                this.doCheckPidAndDequeueOneTaskIfAny().catch(() => {
+                    // noop
+                    // todo log the err to the telemetry
+                });
             }
         } else if (event === "rename") {
             // create a new one and watch it
@@ -256,14 +297,15 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
     }
 
-    public async DeleteCredential() {
+    public DeleteCredential(): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "delete-credential",
             additionalArgs: [`--ALL`],
         });
     }
 
-    public async DisplayExtensionInfo() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public DisplayExtensionInfo(): Promise<any> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "info",
@@ -271,14 +313,16 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public async ListCredentials() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public ListCredentials(): Promise<any[]> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any[]>({
             operation: "list-credential",
         });
     }
 
-    public async GenerateCredentialTemplate() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public GenerateCredentialTemplate(): Promise<any[]> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "credential-template",
@@ -288,7 +332,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public SetCredential(payloadStr: string) {
+    public SetCredential(payloadStr: string): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "set-credential",
             // additionalArgs: [`${JSON.stringify(payload)}`],
@@ -298,7 +342,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public RefreshCredential() {
+    public RefreshCredential(): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "refresh-credential",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
@@ -306,18 +350,23 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public RunTestBattery(pathToQueryFile: string = "") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
+
         const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
             ExtensionConfigurations.PQTestQueryFileLocation,
         );
+
         // todo maybe we could export this lang id to from the lang svc extension
         if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
             pathToQueryFile = activeTextEditor.document.uri.fsPath;
         }
+
         if (!pathToQueryFile && configPQTestQueryFileLocation) {
             pathToQueryFile = configPQTestQueryFileLocation;
         }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "run-test",
@@ -326,7 +375,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public TestConnection() {
+    public TestConnection(): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "test-connection",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),

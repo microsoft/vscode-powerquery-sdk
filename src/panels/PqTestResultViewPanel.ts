@@ -6,8 +6,8 @@
  */
 
 import * as vscode from "vscode";
-import { Webview, WebviewPanel } from "vscode";
 import { Disposable, IDisposable } from "common/Disposable";
+import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vscode";
 import { ValueEventEmitter } from "common/ValueEventEmitter";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
@@ -18,10 +18,10 @@ export class SimplePqTestResultViewBroker {
     public static values: Readonly<Record<SimplePqTestResultViewBrokerValues, ValueEventEmitter>> = Object.freeze({
         latestPqTestResult: new ValueEventEmitter(undefined),
     });
-    public static activate() {
+    public static activate(): void {
         for (const oneProperty in this.values) {
-            // eslint-disable-next-line security/detect-object-injection
-            this.values[oneProperty].subscribe(nextValue => {
+            // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
+            this.values[oneProperty].subscribe((nextValue: any) => {
                 PqTestResultViewPanel.currentPanel?.postOneMessage("OnOneValueUpdated", {
                     property: oneProperty,
                     value: nextValue,
@@ -29,13 +29,13 @@ export class SimplePqTestResultViewBroker {
             });
         }
     }
-    public static emitAll() {
+    public static emitAll(): void {
         for (const oneProperty in this.values) {
             // eslint-disable-next-line security/detect-object-injection
             this.values[oneProperty].emit();
         }
     }
-    public static deActivate() {
+    public static deActivate(): void {
         for (const oneProperty in this.values) {
             // eslint-disable-next-line security/detect-object-injection
             this.values[oneProperty].dispose();
@@ -49,7 +49,7 @@ export class SimplePqTestResultViewBroker {
 
 export class PqTestResultViewPanel implements IDisposable {
     static ShowResultWebViewCommand: string = `${PqTestResultViewPanelPrefix}.ShowResultWebView`;
-    public static readonly viewType = `${PqTestResultViewPanelPrefix}.ResultWebView`;
+    public static readonly viewType: string = `${PqTestResultViewPanelPrefix}.ResultWebView`;
     public static readonly viewPaths: string[] = ["webviewDist", "pq-test-result-view"];
 
     public static currentPanel?: PqTestResultViewPanel;
@@ -67,14 +67,15 @@ export class PqTestResultViewPanel implements IDisposable {
 
     public static activate(vscExtCtx: vscode.ExtensionContext): IDisposable {
         vscExtCtx.subscriptions.push(
-            vscode.commands.registerCommand(PqTestResultViewPanel.ShowResultWebViewCommand, async () => {
+            vscode.commands.registerCommand(PqTestResultViewPanel.ShowResultWebViewCommand, () => {
                 PqTestResultViewPanel.createOrShow(vscExtCtx.extensionUri);
             }),
         );
+
         if (vscode.window.registerWebviewPanelSerializer) {
             // Make sure we register a serializer in activation event
             vscode.window.registerWebviewPanelSerializer(PqTestResultViewPanel.viewType, {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any,require-await
                 async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: any) {
                     // console.log(`Got state: ${state}`);
                     // Reset the webview options so we use latest uri for `localResourceRoots`.
@@ -83,32 +84,46 @@ export class PqTestResultViewPanel implements IDisposable {
                 },
             });
         }
+
         SimplePqTestResultViewBroker.activate();
+
         return new Disposable(() => {
             SimplePqTestResultViewBroker.deActivate();
         });
     }
 
-    public static createOrShow(extensionUri: vscode.Uri) {
+    public static createOrShow(extensionUri: vscode.Uri): void {
         // const column: ViewColumn | undefined = vscode.window.activeTextEditor?.viewColumn ?? undefined;
         if (this.currentPanel) {
             // reveal currentPanel to current column
             this.currentPanel._panel.reveal();
+
             return;
         }
 
         // Otherwise, create a new panel. workbench.action.editorLayoutTwoColumns
-        vscode.commands.executeCommand("workbench.action.editorLayoutTwoColumns");
+        vscode.commands.executeCommand("workbench.action.editorLayoutTwoColumns").then(
+            (_value: unknown) => {
+                // noop
+                // todo log into the telemetry
+            },
+            (_reason: unknown) => {
+                // noop
+                // todo log into the telemetry
+            },
+        );
+
         const panel: WebviewPanel = vscode.window.createWebviewPanel(
             PqTestResultViewPanel.viewType,
             "PQTest result",
             vscode.ViewColumn.Beside,
             PqTestResultViewPanel.getWebviewOptions(extensionUri),
         );
+
         this.currentPanel = new PqTestResultViewPanel(panel, extensionUri);
     }
 
-    public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+    public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri): void {
         this.currentPanel = new PqTestResultViewPanel(panel, extensionUri);
     }
 
@@ -117,9 +132,10 @@ export class PqTestResultViewPanel implements IDisposable {
     constructor(private readonly _panel: vscode.WebviewPanel, private readonly _extensionUri: vscode.Uri) {
         this._update();
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
         // Update the content based on view changes
         this._panel.onDidChangeViewState(
-            _e => {
+            (_e: WebviewPanelOnDidChangeViewStateEvent) => {
                 if (this._panel.visible) {
                     this._update();
                 }
@@ -130,11 +146,11 @@ export class PqTestResultViewPanel implements IDisposable {
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
-            message => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (message: any) => {
                 switch (message.type) {
                     case "onReady":
                         SimplePqTestResultViewBroker.emitAll();
-                        return;
                 }
             },
             null,
@@ -142,17 +158,19 @@ export class PqTestResultViewPanel implements IDisposable {
         );
     }
 
-    _update() {
+    _update(): void {
         // noop
         this._panel.title = "PQTest result webview";
         this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
     }
 
-    dispose() {
+    dispose(): void {
         PqTestResultViewPanel.currentPanel = undefined;
         this._panel.dispose();
+
         while (this._disposables.length) {
             const disposable: IDisposable | undefined = this._disposables.pop();
+
             if (disposable) {
                 disposable.dispose();
             }
@@ -160,14 +178,25 @@ export class PqTestResultViewPanel implements IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public postOneMessage(type: string, payload: any) {
-        this._panel.webview.postMessage({
-            type,
-            payload,
-        });
+    public postOneMessage(type: string, payload: any): void {
+        this._panel.webview
+            .postMessage({
+                type,
+                payload,
+            })
+            .then(
+                (_value: unknown) => {
+                    // noop
+                    // todo log into the telemetry
+                },
+                (_reason: unknown) => {
+                    // noop
+                    // todo log into the telemetry
+                },
+            );
     }
 
-    private _getHtmlForWebview(webview: Webview) {
+    private _getHtmlForWebview(webview: Webview): string {
         // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
         const scriptUri: vscode.Uri = webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths, "main.js"),

@@ -6,10 +6,11 @@
  */
 
 import * as vscode from "vscode";
-import { IPQTestService, PQTestTaskDefinition, buildPqTestArgs } from "common/PQTestService";
+import { buildPqTestArgs, IPQTestService, PQTestTaskDefinition } from "common/PQTestService";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 
 const TaskSource: string = "pqtest";
+
 const pqTestOperations: PQTestTaskDefinition[] = [
     { type: ExtensionConstants.PQTestTaskType, operation: "list-credential", label: "List credentials" },
     // TODO: Can we prompt to confirm that user really wants to remove all credentials?
@@ -82,11 +83,12 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 
     public provideTasks(_token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
         const result: vscode.Task[] = [];
+
         if (!this.pqTestService.pqTestReady) {
             return result;
         }
 
-        pqTestOperations.forEach(taskDef => {
+        pqTestOperations.forEach((taskDef: PQTestTaskDefinition) => {
             result.push(this.getTaskForTaskDefinition(taskDef, this.pqTestService.pqTestFullPath));
         });
 
@@ -95,10 +97,13 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 
     public resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
         const pqtestExe: string = this.pqTestService.pqTestFullPath;
+
         if (pqtestExe && !token.isCancellationRequested) {
             const taskDef: PQTestTaskDefinition = task.definition as PQTestTaskDefinition;
+
             return this.getTaskForTaskDefinition(taskDef, pqtestExe);
         }
+
         return undefined;
     }
 }

@@ -9,13 +9,13 @@ import * as vscode from "vscode";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
-import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
 import { LifeCycleTaskTreeView } from "features/LifeCycleTaskTreeView";
-import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
+import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
+import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQueue";
+import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
-export function activate(vscExtCtx: vscode.ExtensionContext) {
+export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // let's make extension::activate server as minimum as possible:
     // for now:
     //          it basically does the Dependency Injection,
@@ -23,6 +23,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext) {
     const globalEventBus: GlobalEventBus = new GlobalEventBus(vscExtCtx);
     const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
     const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
+
     const pqTestExecutableTaskQueue: PqTestExecutableTaskQueue = new PqTestExecutableTaskQueue(
         vscExtCtx,
         globalEventBus,

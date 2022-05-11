@@ -6,7 +6,7 @@
  */
 
 // todo replace it with splice?
-export function replaceAt(str: string, index: number, length: number, replacement: string) {
+export function replaceAt(str: string, index: number, length: number, replacement: string): string {
     return str.substring(0, index) + replacement + str.substring(index + length);
 }
 
@@ -28,6 +28,7 @@ export function resolveTemplateSubstitutedValues(str: string, context: Record<st
     if (str) {
         let result: string = str;
         let curMatch: RegExpExecArray | null = TemplateSubstitutedValueRegexp.exec(result ?? "");
+
         while (curMatch && result) {
             result = replaceAt(
                 result,
@@ -35,18 +36,23 @@ export function resolveTemplateSubstitutedValues(str: string, context: Record<st
                 curMatch[0].length,
                 doResolveOneTemplateSubstitutedValue(curMatch[1], context),
             );
+
             curMatch = TemplateSubstitutedValueRegexp.exec(result ?? "");
         }
+
         return result;
     }
+
     return str;
 }
 
-export function getNonce() {
+export function getNonce(): string {
     let text: string = "";
     const possible: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (let i: number = 0; i < 32; i++) {
+
+    for (let i: number = 0; i < 32; ++i) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
+
     return text;
 }

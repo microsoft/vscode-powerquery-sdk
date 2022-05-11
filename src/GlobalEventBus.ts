@@ -5,16 +5,24 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as path from "path";
 import * as fs from "fs";
-import { workspace as vscWorkspace, ExtensionContext } from "vscode";
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import * as path from "path";
+import * as vscode from "vscode";
+
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { getFirstWorkspaceFolder } from "./utils/vscodes";
+
+import {
+    ConfigurationChangeEvent,
+    ExtensionContext,
+    Uri,
+    workspace as vscWorkspace,
+    WorkspaceFoldersChangeEvent,
+} from "vscode";
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
-import * as vscode from "vscode";
-import { FSWatcher } from "fs";
-import { getFirstWorkspaceFolder } from "./utils/vscodes";
+import { FSWatcher, WatchEventType } from "fs";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const GlobalEvents = Object.freeze({
@@ -32,18 +40,23 @@ type GlobalEventTypes = ExtractEventTypes<typeof GlobalEvents>;
 
 export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> implements IDisposable {
     private firstWorkspaceRootFilesWatcher: FSWatcher | undefined = undefined;
-    private closeFirstWorkspaceRootFilesWatcherIfNeeded() {
+    private closeFirstWorkspaceRootFilesWatcherIfNeeded(): void {
         if (this.firstWorkspaceRootFilesWatcher) {
             this.firstWorkspaceRootFilesWatcher.close();
         }
     }
-    private reWatchFirstWorkspaceRootFilesWatcherIfCould() {
+    private reWatchFirstWorkspaceRootFilesWatcherIfCould(): void {
         const firstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
+
         if (firstWorkspace) {
             this.closeFirstWorkspaceRootFilesWatcherIfNeeded();
-            this.firstWorkspaceRootFilesWatcher = fs.watch(firstWorkspace.uri.fsPath, (_event, _filename) => {
-                this.emit(GlobalEvents.workspaces.filesChangedAtWorkspace);
-            });
+
+            this.firstWorkspaceRootFilesWatcher = fs.watch(
+                firstWorkspace.uri.fsPath,
+                (_event: WatchEventType, _filename: string) => {
+                    this.emit(GlobalEvents.workspaces.filesChangedAtWorkspace);
+                },
+            );
         }
     }
 
@@ -58,7 +71,8 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
     ) {
         super(options);
         this.reWatchFirstWorkspaceRootFilesWatcherIfCould();
-        vscode.workspace.onDidChangeWorkspaceFolders(_e => {
+
+        vscode.workspace.onDidChangeWorkspaceFolders((_e: WorkspaceFoldersChangeEvent) => {
             this.emit(GlobalEvents.VSCodeEvents.onDidChangeWorkspaceFolders);
             this.reWatchFirstWorkspaceRootFilesWatcherIfCould();
         });
@@ -70,47 +84,102 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
         );
 
         if (!ExtensionConfigurations.PQTestExtensionFileLocation) {
-            vscWorkspace.findFiles("*.{mez,mproj}", null, 10).then(uris => {
-                for (const uri of uris) {
-                    const theFSPath: string = uri.fsPath;
-                    if (theFSPath.indexOf(".mez") > -1) {
-                        const relativePath: string = vscWorkspace.asRelativePath(uri, false);
-                        ExtensionConfigurations.setPQTestExtensionFileLocation(
-                            path.join("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
-                        );
-                        break;
+            vscWorkspace.findFiles("*.{mez,mproj}", null, 10).then(
+                (uris: Uri[]) => {
+                    for (const uri of uris) {
+                        const theFSPath: string = uri.fsPath;
+
+                        if (theFSPath.indexOf(".mez") > -1) {
+                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+
+                            ExtensionConfigurations.setPQTestExtensionFileLocation(
+                                path.join(
+                                    "${workspaceFolder}",
+                                    path.dirname(relativePath),
+                                    path.basename(relativePath),
+                                ),
+                            ).then(
+                                () => {
+                                    // noop
+                                },
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (_reason: any) => {
+                                    // noop
+                                    // todo log into the telemetry latter
+                                },
+                            );
+
+                            break;
+                        }
+
+                        if (theFSPath.indexOf(".mproj") > -1) {
+                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+                            const dirname: string = path.dirname(relativePath);
+                            const mezFileName: string = path.basename(relativePath).replace(".mproj", ".mez");
+
+                            ExtensionConfigurations.setPQTestExtensionFileLocation(
+                                path.join("${workspaceFolder}", path.join(dirname, "bin", "Debug"), mezFileName),
+                            ).then(
+                                () => {
+                                    // noop
+                                },
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (_reason: any) => {
+                                    // noop
+                                    // todo log into the telemetry latter
+                                },
+                            );
+                            // do not break, in case any *.mez found
+                            // break;
+                        }
                     }
-                    if (theFSPath.indexOf(".mproj") > -1) {
-                        const relativePath: string = vscWorkspace.asRelativePath(uri, false);
-                        const dirname: string = path.dirname(relativePath);
-                        const mezFileName: string = path.basename(relativePath).replace(".mproj", ".mez");
-                        ExtensionConfigurations.setPQTestExtensionFileLocation(
-                            path.join("${workspaceFolder}", path.join(dirname, "bin", "Debug"), mezFileName),
-                        );
-                        // do not break, in case any *.mez found
-                        // break;
-                    }
-                }
-            });
+                },
+                () => {
+                    // noop
+                    // todo log into the telemetry latter
+                },
+            );
         }
 
         if (!ExtensionConfigurations.PQTestQueryFileLocation) {
-            vscWorkspace.findFiles("*.{m,pq}", null, 10).then(uris => {
-                for (const uri of uris) {
-                    const theFSPath: string = uri.fsPath;
-                    if (theFSPath.indexOf(".m") > -1 || theFSPath.indexOf(".query.pq") > -1) {
-                        const relativePath: string = vscWorkspace.asRelativePath(uri, false);
-                        ExtensionConfigurations.setPQTestQueryFileLocation(
-                            path.join("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
-                        );
-                        break;
+            vscWorkspace.findFiles("*.{m,pq}", null, 10).then(
+                (uris: Uri[]) => {
+                    for (const uri of uris) {
+                        const theFSPath: string = uri.fsPath;
+
+                        if (theFSPath.indexOf(".m") > -1 || theFSPath.indexOf(".query.pq") > -1) {
+                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+
+                            ExtensionConfigurations.setPQTestQueryFileLocation(
+                                path.join(
+                                    "${workspaceFolder}",
+                                    path.dirname(relativePath),
+                                    path.basename(relativePath),
+                                ),
+                            ).then(
+                                () => {
+                                    // noop
+                                },
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (_reason: any) => {
+                                    // noop
+                                    // todo log into the telemetry latter
+                                },
+                            );
+
+                            break;
+                        }
                     }
-                }
-            });
+                },
+                () => {
+                    // noop
+                    // todo log into the telemetry latter
+                },
+            );
         }
 
         this.vscExtCtx.subscriptions.push(
-            vscWorkspace.onDidChangeConfiguration(evt => {
+            vscWorkspace.onDidChangeConfiguration((evt: ConfigurationChangeEvent) => {
                 if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
                     if (
                         evt.affectsConfiguration(

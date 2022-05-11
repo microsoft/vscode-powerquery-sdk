@@ -7,19 +7,20 @@
 
 import * as vscode from "vscode";
 import {
+    Command,
+    Event,
+    EventEmitter,
+    ThemeIcon,
+    TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
-    TreeDataProvider,
-    Command,
     Uri,
-    ThemeIcon,
-    EventEmitter,
-    Event,
 } from "vscode";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
-import { LifecycleCommands } from "commands/LifecycleCommands";
-import { getAnyPqMProjFileBeneathTheFirstWorkspace } from "../utils/vscodes";
+
 import { debounce } from "utils/debounce";
+import { getAnyPqMProjFileBeneathTheFirstWorkspace } from "../utils/vscodes";
+import { LifecycleCommands } from "commands/LifecycleCommands";
 
 const TreeViewPrefix: string = `powerquery.sdk.pqtest`;
 
@@ -39,34 +40,38 @@ export class LifecycleTreeViewItem extends TreeItem {
 }
 
 export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeViewItem> {
-    public static TreeViewName = `${TreeViewPrefix}.LifeCycleTaskTreeView`;
+    public static TreeViewName: string = `${TreeViewPrefix}.LifeCycleTaskTreeView`;
 
     constructor(globalEventBus: GlobalEventBus) {
-        globalEventBus.on(GlobalEvents.workspaces.filesChangedAtWorkspace, _args => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        globalEventBus.on(GlobalEvents.workspaces.filesChangedAtWorkspace, (_args: any[]) => {
             this.debouncedRefresh();
         });
-        globalEventBus.on(GlobalEvents.VSCodeEvents.onDidChangeWorkspaceFolders, _args => {
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        globalEventBus.on(GlobalEvents.VSCodeEvents.onDidChangeWorkspaceFolders, (_args: any[]) => {
             this.debouncedRefresh();
         });
     }
 
-    private _onDidChangeTreeData = new EventEmitter<LifecycleTreeViewItem | undefined>();
+    private _onDidChangeTreeData: EventEmitter<LifecycleTreeViewItem | undefined> = new EventEmitter();
     get onDidChangeTreeData(): Event<void | LifecycleTreeViewItem | undefined | null> {
         return this._onDidChangeTreeData.event;
     }
-    public refresh() {
+    public refresh(): void {
         this._onDidChangeTreeData.fire(undefined);
     }
 
-    public debouncedRefresh = debounce(this.refresh.bind(this), 1e3);
+    public debouncedRefresh: () => void = debounce(this.refresh.bind(this), 1e3);
 
-    async isValidWorkspace() {
-        return (await getAnyPqMProjFileBeneathTheFirstWorkspace()).length;
+    async isValidWorkspace(): Promise<boolean> {
+        return Boolean((await getAnyPqMProjFileBeneathTheFirstWorkspace()).length);
     }
 
     async getChildren(element?: LifecycleTreeViewItem): Promise<LifecycleTreeViewItem[] | undefined> {
         // no collapsible item supported
         if (element) return undefined;
+
         if (await this.isValidWorkspace()) {
             // do create primary tasks
             return [
@@ -136,6 +141,7 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
                 ),
             ] as LifecycleTreeViewItem[];
         }
+
         // still return undefined if the workspace is not set up yet
         return undefined;
     }

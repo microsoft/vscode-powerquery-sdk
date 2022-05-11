@@ -7,11 +7,13 @@
 
 import * as vscode from "vscode";
 import { replaceAt } from "./strings";
+import { Uri } from "vscode";
 
 const SubstitutedValueRegexp: RegExp = /\${([A-Za-z0-9.]*)}/g;
 
 function doResolveSubstitutedValue(valueName: string): string {
     let retVal: string | undefined = vscode.workspace.getConfiguration().get(valueName);
+
     if (!retVal) {
         switch (valueName) {
             case "workspaceFolder":
@@ -22,6 +24,7 @@ function doResolveSubstitutedValue(valueName: string): string {
                 break;
         }
     }
+
     return retVal ?? "";
 }
 
@@ -31,23 +34,30 @@ export function resolveSubstitutedValues(str: string | undefined): string | unde
     if (str) {
         let result: string = str;
         let curMatch: RegExpExecArray | null = SubstitutedValueRegexp.exec(result ?? "");
+
         while (curMatch && result) {
             result = replaceAt(result, curMatch.index, curMatch[0].length, doResolveSubstitutedValue(curMatch[1]));
             curMatch = SubstitutedValueRegexp.exec(result ?? "");
         }
+
         return result;
     }
+
     return str;
 }
 
-export function getFirstWorkspaceFolder() {
+export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return vscode.workspace.workspaceFolders?.[0];
 }
 
-export async function getAnyPqMProjFileBeneathTheFirstWorkspace() {
+// require-await is redundant over here
+// eslint-disable-next-line require-await
+export async function getAnyPqMProjFileBeneathTheFirstWorkspace(): Promise<Uri[]> {
     const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
+
     if (theFirstWorkspace) {
         return vscode.workspace.findFiles("*.{pq,mproj}", null, 10);
     }
+
     return [];
 }

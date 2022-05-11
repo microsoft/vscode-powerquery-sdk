@@ -5,8 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { EventEmitter } from "events";
 import { Disposable, IDisposable } from "common/Disposable";
+import { EventEmitter } from "events";
 
 export type ExtractEventTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp extends Record<string | number | symbol, infer Value>
     ? ExtractEventTypes<Value>
@@ -30,6 +30,7 @@ export class DisposableEventEmitter<Event extends string | symbol> extends Event
         listener: (...args: any[]) => void,
     ): IDisposable {
         this.on(eventName, listener);
+
         return new Disposable(() => {
             this.off(eventName, listener);
         });
@@ -38,10 +39,12 @@ export class DisposableEventEmitter<Event extends string | symbol> extends Event
     dispose(): void {
         while (this.internalDisposables.length) {
             const disposable: IDisposable | undefined = this.internalDisposables.pop();
+
             if (disposable) {
                 disposable.dispose();
             }
         }
+
         for (const evtName of this.eventNames()) {
             this.removeAllListeners(evtName);
         }

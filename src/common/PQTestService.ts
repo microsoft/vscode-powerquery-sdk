@@ -70,5 +70,6 @@ export function buildPqTestArgs(pqTestTaskBase: PQTestTaskBase): string[] {
     }
 
     args.unshift(pqTestTaskBase.operation);
+
     return args;
 }

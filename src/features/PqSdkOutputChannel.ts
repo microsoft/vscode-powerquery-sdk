@@ -7,8 +7,8 @@
 
 import * as vscode from "vscode";
 import { OutputChannel, ViewColumn } from "vscode";
-import { IDisposable } from "common/Disposable";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { IDisposable } from "common/Disposable";
 
 // we can do write to file or log according to a log_level over here
 export class PqSdkOutputChannel implements OutputChannel, IDisposable {
@@ -36,7 +36,7 @@ export class PqSdkOutputChannel implements OutputChannel, IDisposable {
         this._channel.appendLine(value);
     }
 
-    public appendLineWithTimeStamp(line: string) {
+    public appendLineWithTimeStamp(line: string): void {
         const now: Date = new Date();
         this.appendLine(`[${now.toLocaleTimeString()}]\t${line}`);
     }

@@ -24,10 +24,12 @@ const ConfigPathToConnector: string =
     "${config:" +
     `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation}` +
     "}";
+
 const ConfigPathToTestConnectionFile: string =
     "${config:" +
     `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation}` +
     "}";
+
 const OutputChannelName: string = "Power Query SDK";
 const PQTestTaskType: string = "powerquery";
 
