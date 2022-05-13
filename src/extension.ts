@@ -1,38 +1,63 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
 
 import * as vscode from "vscode";
-import { ExtensionSettings } from "./ExtensionSettings";
-import { PowerQueryTaskProvider } from "./PowerQueryTaskProvider";
+import { GlobalEventBus } from "GlobalEventBus";
+import { IDisposable } from "common/Disposable";
+import { LifecycleCommands } from "commands/LifecycleCommands";
+import { LifeCycleTaskTreeView } from "features/LifeCycleTaskTreeView";
+import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
+import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
+import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQueue";
+import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
-let pqTaskProvider: vscode.Disposable | undefined;
-//let currentSettings: ExtensionSettings | undefined;
+export function activate(vscExtCtx: vscode.ExtensionContext): void {
+    // let's make extension::activate server as minimum as possible:
+    // for now:
+    //          it basically does the Dependency Injection,
+    //          which could be replaced by *inversify* if we later really need to
+    const globalEventBus: GlobalEventBus = new GlobalEventBus(vscExtCtx);
+    const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
+    const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
 
-export function activate(_context: vscode.ExtensionContext) {
-    pqTaskProvider = vscode.tasks.registerTaskProvider(
-        PowerQueryTaskProvider.TaskType,
-        new PowerQueryTaskProvider(fetchExtensionSettings),
+    const pqTestExecutableTaskQueue: PqTestExecutableTaskQueue = new PqTestExecutableTaskQueue(
+        vscExtCtx,
+        globalEventBus,
+        pqSdkOutputChannel,
     );
 
-    // Listen for configuration changes
-    // context.subscriptions.push(
-    //     vscode.workspace.onDidChangeConfiguration(event => {
-    //         if (event.affectsConfiguration("powerquery.sdk")) {
-    //             currentSettings = fetchExtensionSettings();
-    //         }
-    //     }),
-    // );
+    const pqTaskProvider: IDisposable = vscode.tasks.registerTaskProvider(
+        PowerQueryTaskProvider.TaskType,
+        new PowerQueryTaskProvider(pqTestExecutableTaskQueue),
+    );
+
+    // okay, LifecycleCommands instance has not become a disposable yet
+    new LifecycleCommands(vscExtCtx, pqTestExecutableTaskQueue, pqSdkOutputChannel);
+
+    const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);
+
+    const lifeCycleTaskTreeView: IDisposable = vscode.window.createTreeView(LifeCycleTaskTreeView.TreeViewName, {
+        treeDataProvider: lifeCycleTaskTreeViewDataProvider,
+    });
+
+    vscExtCtx.subscriptions.push(
+        ...[
+            globalEventBus,
+            pqTestResultViewPanelDisposable,
+            pqSdkOutputChannel,
+            pqTestExecutableTaskQueue,
+            pqTaskProvider,
+            lifeCycleTaskTreeView,
+        ].reverse(),
+    );
 }
 
-export function deactivate(): void {
-    if (pqTaskProvider) {
-        pqTaskProvider.dispose();
-    }
-}
-
-function fetchExtensionSettings(): ExtensionSettings {
-    const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("powerquery.sdk");
-    return {
-        PQTestLocation: config?.get("pqtest.location") as string,
-    };
-}
+// we need not explicitly invoke deactivate callbacks for now
+// vscExtCtx.subscriptions would help us do that
+// export function deactivate(): void {
+//     // noop
+// }

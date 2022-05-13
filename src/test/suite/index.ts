@@ -1,9 +1,13 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
 
-import * as path from "path";
-import * as Mocha from "mocha";
 import * as glob from "glob";
+import * as Mocha from "mocha";
+import * as path from "path";
 
 export function run(): Promise<void> {
     // Create the mocha test

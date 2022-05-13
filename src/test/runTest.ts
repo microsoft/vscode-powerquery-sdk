@@ -1,11 +1,15 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
 
 import * as path from "path";
 
 import { runTests } from "@vscode/test-electron";
 
-async function main() {
+async function main(): Promise<void> {
     try {
         // The folder containing the Extension Manifest package.json
         // Passed to `--extensionDevelopmentPath`
