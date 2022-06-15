@@ -102,7 +102,7 @@ export class LifecycleCommands {
 
         // template files
         [
-            [`${templateFileBaseName}.mproj`, `${projectName}.mproj`],
+            [`${templateFileBaseName}.proj`, `${projectName}.proj`],
             [`${templateFileBaseName}.pq`, `${projectName}.pq`],
             [`${templateFileBaseName}.query.pq`, `${projectName}.query.pq`],
             ["resources.resx", "resources.resx"],
