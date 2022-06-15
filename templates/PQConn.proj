@@ -3,21 +3,21 @@
   <PropertyGroup>
     <OutputPath Condition="'$(OutputPath)' == ''">$(MSBuildProjectDirectory)\bin\</OutputPath>
     <IntermediateOutputPath Condition="'$(IntermediateOutputPath)' == ''">$(MSBuildProjectDirectory)\obj\</IntermediateOutputPath>
-    <MEZIntermediatePath>$(IntermediateOutputPath)MEZ\</MEZIntermediatePath>
-    <MEZOutputPath>$(OutputPath)$(MsBuildProjectName).mez</MEZOutputPath>
+    <MezIntermediatePath>$(IntermediateOutputPath)MEZ\</MezIntermediatePath>
+    <MezOutputPath>$(OutputPath)$(MsBuildProjectName).mez</MezOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <MezContent Include="*" Exclude="*.query.pq;*.TestConnection.pq;*.test.pq;$(MSBuildProjectFile)" />
   </ItemGroup>
   <Target Name="BuildMez" DependsOnTargets="CopyMezContent" AfterTargets="Build">
     <MakeDir Directories="$(OutputPath)" Condition="!Exists('$(OutputPath)')" />
-    <ZipDirectory SourceDirectory="$(MEZIntermediatePath)" DestinationFile="$(MEZOutputPath)" Overwrite="true" />
+    <ZipDirectory SourceDirectory="$(MezIntermediatePath)" DestinationFile="$(MezOutputPath)" Overwrite="true" />
   </Target>
   <Target Name="CopyMezContent" AfterTargets="BeforeBuild">
-    <Copy SourceFiles="@(MezContent)" DestinationFolder="$(MEZIntermediatePath)" />
+    <Copy SourceFiles="@(MezContent)" DestinationFolder="$(MezIntermediatePath)" />
   </Target>
   <Target Name="Clean">
-    <RemoveDir Directories="$(MEZIntermediatePath)" />
-    <Delete Files="$(MEZOutputPath)" />
+    <RemoveDir Directories="$(MezIntermediatePath)" />
+    <Delete Files="$(MezOutputPath)" />
   </Target>
 </Project>
