@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Clean;BuildMez">
+  <PropertyGroup>
+    <OutputPath Condition="'$(OutputPath)' == ''">$(MSBuildProjectDirectory)\bin\</OutputPath>
+    <IntermediateOutputPath Condition="'$(IntermediateOutputPath)' == ''">$(MSBuildProjectDirectory)\obj\</IntermediateOutputPath>
+    <MEZIntermediatePath>$(IntermediateOutputPath)MEZ\</MEZIntermediatePath>
+    <MEZOutputPath>$(OutputPath)$(MsBuildProjectName).mez</MEZOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <MezContent Include="*" Exclude="*.query.pq;*.TestConnection.pq;*.test.pq;$(MSBuildProjectFile)" />
+  </ItemGroup>
+  <Target Name="BuildMez" DependsOnTargets="CopyMezContent" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)" Condition="!Exists('$(OutputPath)')" />
+    <ZipDirectory SourceDirectory="$(MEZIntermediatePath)" DestinationFile="$(MEZOutputPath)" Overwrite="true" />
+  </Target>
+  <Target Name="CopyMezContent" AfterTargets="BeforeBuild">
+    <Copy SourceFiles="@(MezContent)" DestinationFolder="$(MEZIntermediatePath)" />
+  </Target>
+  <Target Name="Clean">
+    <RemoveDir Directories="$(MEZIntermediatePath)" />
+    <Delete Files="$(MEZOutputPath)" />
+  </Target>
+</Project>
