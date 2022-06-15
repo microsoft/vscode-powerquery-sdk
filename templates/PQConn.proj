@@ -7,7 +7,16 @@
     <MezOutputPath>$(OutputPath)$(MsBuildProjectName).mez</MezOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <MezContent Include="*" Exclude="*.query.pq;*.TestConnection.pq;*.test.pq;$(MSBuildProjectFile)" />
+    <MezContent Include="{{ProjectName}}.pq" />
+    <MezContent Include="{{ProjectName}}16.png" />
+    <MezContent Include="{{ProjectName}}20.png" />
+    <MezContent Include="{{ProjectName}}24.png" />
+    <MezContent Include="{{ProjectName}}32.png" />
+    <MezContent Include="{{ProjectName}}40.png" />
+    <MezContent Include="{{ProjectName}}48.png" />
+    <MezContent Include="{{ProjectName}}64.png" />
+    <MezContent Include="{{ProjectName}}80.png" />
+    <MezContent Include="resources.resx" />
   </ItemGroup>
   <Target Name="BuildMez" DependsOnTargets="CopyMezContent" AfterTargets="Build">
     <MakeDir Directories="$(OutputPath)" Condition="!Exists('$(OutputPath)')" />
