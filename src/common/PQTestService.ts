@@ -35,6 +35,7 @@ export interface IPQTestService {
     readonly pqTestReady: boolean;
     readonly pqTestLocation: string;
     readonly pqTestFullPath: string;
+    readonly onPowerQueryTestLocationChanged: () => void;
     readonly DeleteCredential: () => Promise<GenericResult>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly DisplayExtensionInfo: () => Promise<any>;

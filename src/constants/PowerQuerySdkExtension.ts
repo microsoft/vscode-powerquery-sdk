@@ -11,11 +11,11 @@ const ExtensionId: string = "vscode-powerquery-sdk";
 // eslint-disable-next-line @typescript-eslint/typedef
 const ConfigNames = {
     PowerQuerySdk: {
-        name: "powerquery.sdk",
+        name: "powerquery.sdk" as const,
         properties: {
-            pqTestLocation: "pqtest.location",
-            pqTestExtensionFileLocation: "pqtest.extension",
-            pqTestQueryFileLocation: "pqtest.queryFile",
+            pqTestLocation: "pqtest.location" as const,
+            pqTestExtensionFileLocation: "pqtest.extension" as const,
+            pqTestQueryFileLocation: "pqtest.queryFile" as const,
         },
     },
 };
@@ -33,6 +33,14 @@ const ConfigPathToTestConnectionFile: string =
 const OutputChannelName: string = "Power Query SDK";
 const PQTestTaskType: string = "powerquery";
 
+const DotNetRuntimeVersion: string = "6.0" as const;
+const NugetBaseFolder: string = ".nuget" as const;
+const NugetConfigFileName: string = "nuget-staging.config" as const;
+const PqTestNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
+const PqTestNugetVersion: string = "2.106.2" as const;
+
+const PqTestSubPath: string[] = [`${PqTestNugetName}.${PqTestNugetVersion}`, "tools", "PQTest.exe"];
+
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConstants = {
     ExtensionId,
@@ -40,7 +48,11 @@ export const ExtensionConstants = {
     ConfigPathToTestConnectionFile,
     OutputChannelName,
     PQTestTaskType,
+    DotNetRuntimeVersion,
+    NugetBaseFolder,
+    NugetConfigFileName,
+    PqTestNugetName,
+    PqTestNugetVersion,
+    PqTestSubPath,
     ConfigNames,
 };
-
-export default ExtensionConstants;

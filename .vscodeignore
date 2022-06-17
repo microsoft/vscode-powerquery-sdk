@@ -1,3 +1,4 @@
+.nuget/
 .idea/
 .vscode/**
 .vscode-test/**

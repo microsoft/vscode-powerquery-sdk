@@ -28,6 +28,7 @@
         "Programming Languages"
     ],
     "activationEvents": [
+        "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
         "onView:powerquery.sdk.pqtest.LifeCycleTaskTreeView",
         "onWebviewPanel:powerquery.sdk.pqtest.ResultWebView",
@@ -125,7 +126,7 @@
         }
     },
     "scripts": {
-        "clean": "rimraf dist && rimraf webviewDist",
+        "clean": "rimraf out && rimraf dist && rimraf webviewDist",
         "vscode:prepublish": "npm run package",
         "install:pq-test-result-view": "cd webviews/pq-test-result-view && npm ci",
         "postinstall": "npm run install:pq-test-result-view",
@@ -136,12 +137,13 @@
         "package": "npm run clean && npm run build && webpack --mode production",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "audit": "npm audit",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
+        "@types/chai": "^4.3.1",
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.0.0",
         "@types/node": "16.x",
@@ -149,6 +151,7 @@
         "@typescript-eslint/eslint-plugin": "^5.5.0",
         "@typescript-eslint/parser": "^5.5.0",
         "@vscode/test-electron": "^1.6.2",
+        "chai": "^4.3.6",
         "eslint": "^8.3.0",
         "eslint-config-prettier": "^8.3.0",
         "eslint-plugin-prettier": "^4.0.0",

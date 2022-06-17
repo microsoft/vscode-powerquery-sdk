@@ -11,13 +11,20 @@ import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
-    setPQTestLocation(pqTestLocation: string | undefined): Thenable<void> {
+    setPQTestLocation(
+        pqTestLocation: string | undefined,
+        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+    ): Thenable<void> {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config.update(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation, pqTestLocation);
+        return config.update(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation,
+            pqTestLocation,
+            configurationTarget,
+        );
     },
     get PQTestLocation(): string | undefined {
         // we should not cache it
@@ -72,5 +79,3 @@ export const ExtensionConfigurations = {
         return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation);
     },
 };
-
-export default ExtensionConfigurations;

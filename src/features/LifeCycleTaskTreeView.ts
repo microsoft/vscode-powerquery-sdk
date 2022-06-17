@@ -76,6 +76,15 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
             // do create primary tasks
             return [
                 new LifecycleTreeViewItem(
+                    "Seize PQ SDK",
+                    {
+                        title: "Seize PQ SDK",
+                        command: `${LifecycleCommands.SeizePqTestCommand}`,
+                        arguments: [],
+                    },
+                    new ThemeIcon("cloud-download"),
+                ),
+                new LifecycleTreeViewItem(
                     "Create one credential",
                     {
                         title: "Create one credential",
@@ -150,5 +159,3 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
         return element;
     }
 }
-
-export default LifeCycleTaskTreeView;

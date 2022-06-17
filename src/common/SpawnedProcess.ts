@@ -93,5 +93,3 @@ export class SpawnedProcess {
         });
     }
 }
-
-export default SpawnedProcess;

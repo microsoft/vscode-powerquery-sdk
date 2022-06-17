@@ -73,5 +73,3 @@ export class PqSdkOutputChannel implements OutputChannel, IDisposable {
         this._channel.show(...(args as Parameters<OutputChannel["show"]>));
     }
 }
-
-export default PqSdkOutputChannel;
