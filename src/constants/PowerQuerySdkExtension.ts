@@ -33,11 +33,10 @@ const ConfigPathToTestConnectionFile: string =
 const OutputChannelName: string = "Power Query SDK";
 const PQTestTaskType: string = "powerquery";
 
-const DotNetRuntimeVersion: string = "6.0" as const;
 const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
 const PqTestNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
-const PqTestNugetVersion: string = "2.106.2" as const;
+const PqTestNugetVersion: string = "2.107.1" as const;
 
 const PqTestSubPath: string[] = [`${PqTestNugetName}.${PqTestNugetVersion}`, "tools", "PQTest.exe"];
 
@@ -48,7 +47,6 @@ export const ExtensionConstants = {
     ConfigPathToTestConnectionFile,
     OutputChannelName,
     PQTestTaskType,
-    DotNetRuntimeVersion,
     NugetBaseFolder,
     NugetConfigFileName,
     PqTestNugetName,

@@ -43,7 +43,7 @@ export class LifecycleCommands {
         private readonly outputChannel: PqSdkOutputChannel,
     ) {
         vscExtCtx.subscriptions.push(
-            vscode.commands.registerCommand(LifecycleCommands.SeizePqTestCommand, this.manuallySeizePqTest.bind(this)),
+            vscode.commands.registerCommand(LifecycleCommands.SeizePqTestCommand, this.manuallyUpdatePqTest.bind(this)),
             vscode.commands.registerCommand(
                 LifecycleCommands.CreateNewProjectCommand,
                 this.generateOneNewProject.bind(this),
@@ -78,7 +78,7 @@ export class LifecycleCommands {
             ),
         );
 
-        void this.checkAndTryToSeizePqTest(true);
+        void this.checkAndTryToUpdatePqTest(true);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,7 +88,7 @@ export class LifecycleCommands {
             let pqTestServiceReady: boolean = this.pqTestService.pqTestReady;
 
             if (!pqTestServiceReady) {
-                const curPqTestPath: string | undefined = await this.checkAndTryToSeizePqTest();
+                const curPqTestPath: string | undefined = await this.checkAndTryToUpdatePqTest();
                 pqTestServiceReady = Boolean(curPqTestPath);
             }
 
@@ -131,7 +131,7 @@ export class LifecycleCommands {
         return fs.existsSync(pqTestFullPath);
     }
 
-    private async doSeizePqTestFromNuget(): Promise<string | undefined> {
+    private async doUpdatePqTestFromNuget(): Promise<string | undefined> {
         // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
         // dotnet tool install Microsoft.PowerQuery.SdkTools
         //  --configfile <FILE> --tool-path . --verbosity diag --version
@@ -180,15 +180,11 @@ export class LifecycleCommands {
         return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
     }
 
-    private async checkAndTryToSeizePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
+    private async checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
         if (!pqTestLocation || !this.pqTestService.pqTestReady || !this.nugetPqTestExistsSync()) {
-            const pqTestLocationFromNuget: string | undefined = await this.doSeizePqTestFromNuget();
-
-            if (!pqTestLocation || !this.pqTestService.pqTestReady) {
-                pqTestLocation = pqTestLocationFromNuget;
-            }
+            pqTestLocation = await this.doUpdatePqTestFromNuget();
 
             if (!pqTestLocation && !skipQueryDialog) {
                 const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
@@ -207,8 +203,10 @@ export class LifecycleCommands {
             }
 
             if (pqTestLocation) {
+                // convert pqTestLocation of exe to its dirname
+                pqTestLocation = path.dirname(pqTestLocation);
                 const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-                const newPqTestLocation: string = path.dirname(pqTestLocation);
+                const newPqTestLocation: string = pqTestLocation;
 
                 await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
 
@@ -222,12 +220,12 @@ export class LifecycleCommands {
         return pqTestLocation;
     }
 
-    public async manuallySeizePqTest(): Promise<string | undefined> {
+    public async manuallyUpdatePqTest(): Promise<string | undefined> {
         let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
         // determine whether we should trigger to seize or not
         if (!this.nugetPqTestExistsSync()) {
-            const pqTestLocationFromNuget: string | undefined = await this.doSeizePqTestFromNuget();
+            const pqTestLocationFromNuget: string | undefined = await this.doUpdatePqTestFromNuget();
 
             if (!pqTestLocation || !this.pqTestService.pqTestReady) {
                 pqTestLocation = pqTestLocationFromNuget;
@@ -271,7 +269,7 @@ export class LifecycleCommands {
     }
 
     public async generateOneNewProject(): Promise<void> {
-        const pqTestLocation: string | undefined = await this.checkAndTryToSeizePqTest();
+        const pqTestLocation: string | undefined = await this.checkAndTryToUpdatePqTest();
 
         const newProjName: string | undefined = await vscode.window.showInputBox({
             title: "New project name",

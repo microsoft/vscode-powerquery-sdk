@@ -76,9 +76,9 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
             // do create primary tasks
             return [
                 new LifecycleTreeViewItem(
-                    "Seize PQ SDK",
+                    "Update SDK Tool",
                     {
-                        title: "Seize PQ SDK",
+                        title: "Update SDK Tool",
                         command: `${LifecycleCommands.SeizePqTestCommand}`,
                         arguments: [],
                     },
