@@ -19,8 +19,10 @@ import {
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
 import { debounce } from "utils/debounce";
-import { getAnyPqMProjFileBeneathTheFirstWorkspace } from "../utils/vscodes";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { getAnyPqMProjFileBeneathTheFirstWorkspace } from "utils/vscodes";
 import { LifecycleCommands } from "commands/LifecycleCommands";
+import { NugetVersions } from "utils/NugetVersions";
 
 const TreeViewPrefix: string = `powerquery.sdk.pqtest`;
 
@@ -52,6 +54,11 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
         globalEventBus.on(GlobalEvents.VSCodeEvents.onDidChangeWorkspaceFolders, (_args: any[]) => {
             this.debouncedRefresh();
         });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation, (_args: any[]) => {
+            this.debouncedRefresh();
+        });
     }
 
     private _onDidChangeTreeData: EventEmitter<LifecycleTreeViewItem | undefined> = new EventEmitter();
@@ -73,17 +80,21 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
         if (element) return undefined;
 
         if (await this.isValidWorkspace()) {
+            const updateSdkToolItem: LifecycleTreeViewItem = new LifecycleTreeViewItem(
+                "Update SDK Tool",
+                {
+                    title: `Update SDK Tool`,
+                    command: `${LifecycleCommands.SeizePqTestCommand}`,
+                    arguments: [],
+                },
+                new ThemeIcon("cloud-download"),
+            );
+
+            updateSdkToolItem.description = this.currentPqSdkVersion();
+
             // do create primary tasks
             return [
-                new LifecycleTreeViewItem(
-                    "Update SDK Tool",
-                    {
-                        title: "Update SDK Tool",
-                        command: `${LifecycleCommands.SeizePqTestCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("cloud-download"),
-                ),
+                updateSdkToolItem,
                 new LifecycleTreeViewItem(
                     "Create one credential",
                     {
@@ -157,5 +168,14 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
 
     getTreeItem(element: LifecycleTreeViewItem): TreeItem | Thenable<TreeItem> {
         return element;
+    }
+
+    private currentPqSdkVersion(): string | undefined {
+        const currentPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+        const currentPqSdkNugetVersion: NugetVersions = NugetVersions.createFromPath(currentPqTestLocation);
+
+        return currentPqSdkNugetVersion.isZero()
+            ? undefined
+            : `Current version: ${currentPqSdkNugetVersion.toString()}`;
     }
 }

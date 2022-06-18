@@ -36,9 +36,13 @@ const PQTestTaskType: string = "powerquery";
 const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
 const PqTestNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
-const PqTestNugetVersion: string = "2.107.1" as const;
+const SuggestedPqTestNugetVersion: string = "2.106.2" as const;
 
-const PqTestSubPath: string[] = [`${PqTestNugetName}.${PqTestNugetVersion}`, "tools", "PQTest.exe"];
+const PqTestSubPath: string[] = [`${PqTestNugetName}.${SuggestedPqTestNugetVersion}`, "tools", "PQTest.exe"];
+
+function buildPqTestSubPath(pqTestVersion: string): string[] {
+    return [`${PqTestNugetName}.${pqTestVersion}`, "tools", "PQTest.exe"];
+}
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConstants = {
@@ -50,7 +54,8 @@ export const ExtensionConstants = {
     NugetBaseFolder,
     NugetConfigFileName,
     PqTestNugetName,
-    PqTestNugetVersion,
+    SuggestedPqTestNugetVersion,
     PqTestSubPath,
+    buildPqTestSubPath,
     ConfigNames,
 };
