@@ -48,7 +48,9 @@ export class SimplePqTestResultViewBroker {
 }
 
 export class PqTestResultViewPanel implements IDisposable {
-    static ShowResultWebViewCommand: string = `${PqTestResultViewPanelPrefix}.ShowResultWebView`;
+    // commands
+    public static readonly ShowResultWebViewCommand: string = `${PqTestResultViewPanelPrefix}.ShowResultWebView`;
+    // view constants
     public static readonly viewType: string = `${PqTestResultViewPanelPrefix}.ResultWebView`;
     public static readonly viewPaths: string[] = ["webviewDist", "pq-test-result-view"];
 
@@ -59,7 +61,6 @@ export class PqTestResultViewPanel implements IDisposable {
             // Enable javascript in the webview
             enableScripts: true,
             // retainContextWhenHidden: true,
-
             // And restrict the webview to only loading content from our extension's `main` directory.
             localResourceRoots: [vscode.Uri.joinPath(extensionUri, ...PqTestResultViewPanel.viewPaths)],
         };

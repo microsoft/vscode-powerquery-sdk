@@ -31,5 +31,3 @@ export class ValueEventEmitter<T = any> implements IDisposable {
         this._listeners = [];
     }
 }
-
-export default ValueEventEmitter;

@@ -22,5 +22,3 @@ export class Disposable implements IDisposable {
         this.onDispose();
     };
 }
-
-export default Disposable;

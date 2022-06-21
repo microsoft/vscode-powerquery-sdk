@@ -26,8 +26,8 @@ import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {
-    processCreated: Symbol.for("PqTestExecutable.processCreated"),
-    processExited: Symbol.for("PqTestExecutable.processExited"),
+    processCreated: "PqTestExecutable.processCreated" as const,
+    processExited: "PqTestExecutable.processExited" as const,
 };
 type PqTestExecutableTaskQueueEventTypes = ExtractEventTypes<typeof PqTestExecutableTaskQueueEvents>;
 
@@ -52,23 +52,17 @@ export class PqTestExecutableTaskError extends Error {
 }
 
 export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
-    static readonly ExecutableName: string = "pqtest.exe";
-    static readonly ExecutablePidLockFileName: string = "pqTest.pid";
+    public static readonly ExecutableName: string = "pqtest.exe";
+    public static readonly ExecutablePidLockFileName: string = "pqTest.pid";
 
     private readonly eventBus: DisposableEventEmitter<PqTestExecutableTaskQueueEventTypes>;
+    private readonly pidLockFileLocation: string;
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
     protected _disposables: Array<IDisposable> = [];
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
     pqTestFullPath: string = "";
-    readonly pidLockFileLocation: string;
-
-    public subscribeOneEvent: (
-        eventName: PqTestExecutableTaskQueueEventTypes,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        listener: (...args: any[]) => void,
-    ) => IDisposable;
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
@@ -77,7 +71,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     ) {
         // init instance fields
         this.eventBus = new DisposableEventEmitter();
-        this.subscribeOneEvent = this.eventBus.subscribeOneEvent.bind(this.eventBus);
         this._disposables.unshift(this.eventBus);
 
         this.pidLockFileLocation = path.resolve(
@@ -97,12 +90,20 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         // watch vsc ConfigDidChangePowerQuerySDK changes
         this._disposables.unshift(
             this.globalEventBus.subscribeOneEvent(
-                GlobalEvents.VSCodeEvents.ConfigDidChangePowerQuerySDK,
-                this.onPowerQuerySDKChanged.bind(this),
+                GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation,
+                this.onPowerQueryTestLocationChanged.bind(this),
             ),
         );
 
-        this.onPowerQuerySDKChanged();
+        this.onPowerQueryTestLocationChanged();
+    }
+
+    public subscribeOneEvent(
+        eventName: PqTestExecutableTaskQueueEventTypes,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        listener: (...args: any[]) => void,
+    ): IDisposable {
+        return this.eventBus.subscribeOneEvent(eventName, listener);
     }
 
     public dispose = (): void => {
@@ -111,7 +112,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
     };
 
-    private calculatePQTestPath(nextPQTestLocation: string | undefined): string | undefined {
+    private resolvePQTestPath(nextPQTestLocation: string | undefined): string | undefined {
         if (!nextPQTestLocation) {
             this.outputChannel.appendErrorLine("powerquery.sdk.pqtest.location configuration value is not set.");
 
@@ -135,7 +136,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return pqtestExe;
     }
 
-    private doSeizePQTestPidOfLockFile(thePidFileLocation: string = this.pidLockFileLocation): number | undefined {
+    private doSeizePQTestPidFromLockFile(thePidFileLocation: string = this.pidLockFileLocation): number | undefined {
         const pidString: string = fs.readFileSync(thePidFileLocation).toString("utf8");
         const result: number | undefined = convertStringToInteger(pidString);
 
@@ -158,7 +159,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             this.doWritePid(curPid);
             this.outputChannel.appendTraceLine(`Create empty pqTest pid file: ${this.pidLockFileLocation}`);
         } else {
-            const pidNumber: number | undefined = this.doSeizePQTestPidOfLockFile();
+            const pidNumber: number | undefined = this.doSeizePQTestPidFromLockFile();
 
             if (typeof pidNumber === "number" && !pidIsRunning(pidNumber.valueOf())) {
                 this.doWritePid(curPid);
@@ -179,7 +180,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     private async doCheckPidAndDequeueOneTaskIfAny(): Promise<void> {
-        const pidNumber: number | undefined = this.doSeizePQTestPidOfLockFile();
+        const pidNumber: number | undefined = this.doSeizePQTestPidFromLockFile();
 
         if (typeof pidNumber !== "number" && this.pqTestFullPath) {
             // alright we can queue another task
@@ -249,27 +250,23 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return result;
     }
 
-    protected onPowerQuerySDKChanged(): void {
+    public onPowerQueryTestLocationChanged(): void {
         // PQTestLocation getter
         const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-        const pqTestExe: string | undefined = this.calculatePQTestPath(nextPQTestLocation);
+        const pqTestExe: string | undefined = this.resolvePQTestPath(nextPQTestLocation);
 
-        if (!pqTestExe) {
+        if (!pqTestExe || !nextPQTestLocation) {
             this.pqTestReady = false;
             this.pqTestLocation = "";
             this.pqTestFullPath = "";
         } else {
             this.pqTestReady = true;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pqTestLocation = nextPQTestLocation!;
+            this.pqTestLocation = nextPQTestLocation;
             this.pqTestFullPath = pqTestExe;
-            this.outputChannel.appendTraceLine(`pqtest.exe found at ${this.pqTestFullPath}`);
+            this.outputChannel.appendInfoLine(`pqtest.exe found at ${this.pqTestFullPath}`);
             // if no running pid found, dequeue and execute one pending tasks if any
 
-            this.doCheckPidAndDequeueOneTaskIfAny().catch(() => {
-                // noop
-                // todo log the err to the telemetry
-            });
+            void this.doCheckPidAndDequeueOneTaskIfAny();
         }
     }
 
@@ -277,7 +274,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         if (event === "change") {
             // it might be the pid changed
             // if no running pid found, dequeue and execute one pending tasks if any
-            const pidNumber: number | undefined = this.doSeizePQTestPidOfLockFile();
+            const pidNumber: number | undefined = this.doSeizePQTestPidFromLockFile();
 
             if (typeof pidNumber === "number") {
                 // noop, but emit an event

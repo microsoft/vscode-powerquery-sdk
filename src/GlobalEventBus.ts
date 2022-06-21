@@ -27,13 +27,13 @@ import { FSWatcher, WatchEventType } from "fs";
 // eslint-disable-next-line @typescript-eslint/typedef
 export const GlobalEvents = Object.freeze({
     workspaces: Object.freeze({
-        filesChangedAtWorkspace: Symbol.for("filesChangedAtWorkspace"),
+        filesChangedAtWorkspace: "filesChangedAtWorkspace" as const,
     }),
     VSCodeEvents: Object.freeze({
-        onDidChangeWorkspaceFolders: Symbol.for("onDidChangeWorkspaceFolders"),
-        ConfigDidChangePowerQuerySDK: Symbol.for("ConfigDidChangePowerQuerySDK"),
-        ConfigDidChangePQTestExtension: Symbol.for("ConfigDidChangePQTestExtension"),
-        ConfigDidChangePQTestQuery: Symbol.for("ConfigDidChangePQTestQuery"),
+        onDidChangeWorkspaceFolders: "onDidChangeWorkspaceFolders" as const,
+        ConfigDidChangePowerQueryTestLocation: "ConfigDidChangePowerQueryTestLocation" as const,
+        ConfigDidChangePQTestExtension: "ConfigDidChangePQTestExtension" as const,
+        ConfigDidChangePQTestQuery: "ConfigDidChangePQTestQuery" as const,
     }),
 });
 type GlobalEventTypes = ExtractEventTypes<typeof GlobalEvents>;
@@ -66,7 +66,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
             /**
              * Enables automatic capturing of promise rejection.
              */
-            captureRejections?: boolean | undefined;
+            readonly captureRejections?: boolean | undefined;
         },
     ) {
         super(options);
@@ -186,7 +186,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                             `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation}`,
                         )
                     ) {
-                        this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePowerQuerySDK);
+                        this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation);
                     } else if (
                         evt.affectsConfiguration(
                             `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation}`,
@@ -205,5 +205,3 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
         );
     }
 }
-
-export default GlobalEventBus;

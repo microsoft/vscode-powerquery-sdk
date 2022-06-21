@@ -50,5 +50,3 @@ export class DisposableEventEmitter<Event extends string | symbol> extends Event
         }
     }
 }
-
-export default DisposableEventEmitter;

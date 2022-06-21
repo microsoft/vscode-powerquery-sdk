@@ -350,6 +350,7 @@ MigrationBackup/
 .ionide/
 
 # VSCode Extension
+.nuget
 out
 dist
 webviewDist
