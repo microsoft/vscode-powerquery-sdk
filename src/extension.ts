@@ -6,6 +6,7 @@
  */
 
 import * as vscode from "vscode";
+import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
@@ -54,6 +55,8 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
             lifeCycleTaskTreeView,
         ].reverse(),
     );
+
+    activateMQueryDebug(vscExtCtx, "server");
 }
 
 // we need not explicitly invoke deactivate callbacks for now

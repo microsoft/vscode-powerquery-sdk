@@ -242,10 +242,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
         this.pendingTasks.push(theTask);
 
-        this.doCheckPidAndDequeueOneTaskIfAny().catch(() => {
-            // noop
-            // todo log the err to the telemetry
-        });
+        void this.doCheckPidAndDequeueOneTaskIfAny();
 
         return result;
     }
