@@ -132,13 +132,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
     public async run(program: string, task: PQTestTaskBase): Promise<void> {
         try {
-            this._pathToQueryFile = task.pathToQueryFile;
             task = this.populateTestTaskPayload(program, task);
-            this.handleTaskCreated();
+            this._pathToQueryFile = task.pathToQueryFile;
             // do fork one process and execute the task
             const pqTestExeFullPath: string = this.pqTestFullPath;
             const processArgs: string[] = buildPqTestArgs(task);
 
+            this.handleTaskCreated();
             this.handleOutputStr(`[Debug task found] ${pqTestExeFullPath} ${processArgs.join(" ")}`);
 
             const spawnProcess: SpawnedProcess = new SpawnedProcess(

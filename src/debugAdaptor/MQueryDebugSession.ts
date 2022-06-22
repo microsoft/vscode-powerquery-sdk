@@ -8,8 +8,8 @@
 import * as path from "path";
 import {
     InitializedEvent,
-    Logger,
     logger,
+    Logger,
     LoggingDebugSession,
     OutputEvent,
     Source,
@@ -21,6 +21,7 @@ import {
     PqTestExecutableOnceTask,
     PqTestExecutableOnceTaskQueueEvents,
 } from "pqTestConnector/PqTestExecutableOnceTask";
+import { DeferredValue } from "common/DeferredValue";
 import { WaitNotify } from "common/WaitNotify";
 
 /**
@@ -44,6 +45,7 @@ interface ILaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
 export class MQueryDebugSession extends LoggingDebugSession {
     private readonly _configurationDone: WaitNotify = new WaitNotify();
+    private readonly _processForked: DeferredValue<boolean> = new DeferredValue<boolean>(false);
     private readonly _pqTestExecutableOnceTask: PqTestExecutableOnceTask;
 
     constructor() {
@@ -51,6 +53,10 @@ export class MQueryDebugSession extends LoggingDebugSession {
         this.setDebuggerLinesStartAt1(false);
         this.setDebuggerColumnsStartAt1(false);
         this._pqTestExecutableOnceTask = new PqTestExecutableOnceTask();
+
+        this._pqTestExecutableOnceTask.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processCreated, () => {
+            this._processForked.resolve(true);
+        });
 
         this._pqTestExecutableOnceTask.eventBus.on(
             PqTestExecutableOnceTaskQueueEvents.onOutput,
@@ -103,6 +109,9 @@ export class MQueryDebugSession extends LoggingDebugSession {
         // the adapter implements the configurationDone request.
         response.body.supportsConfigurationDoneRequest = true;
 
+        // The debug adapter supports the 'loadedSources' request.
+        response.body.supportsLoadedSourcesRequest = true;
+
         this.sendResponse(response);
 
         // since this debug adapter can accept configuration requests like 'setBreakpoint' at any time,
@@ -132,13 +141,27 @@ export class MQueryDebugSession extends LoggingDebugSession {
         logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
         // wait 1 second until configuration has finished (and configurationDoneRequest has been called)
-        await this._configurationDone.wait(1e3);
+        await this._configurationDone.wait(2e3);
 
         // start the program in the runtime, do not await here
         void this._pqTestExecutableOnceTask.run(args.program, {
             operation: args.operation ?? "run-test",
             additionalArgs: args.additionalArgs,
         });
+
+        this.sendResponse(response);
+    }
+
+    protected override async loadedSourcesRequest(
+        response: DebugProtocol.LoadedSourcesResponse,
+        _args: DebugProtocol.LoadedSourcesArguments,
+        _request?: DebugProtocol.Request,
+    ): Promise<void> {
+        await this._processForked.deferred$;
+
+        response.body = {
+            sources: [this.createSource(this._pqTestExecutableOnceTask.pathToQueryFile)],
+        };
 
         this.sendResponse(response);
     }
