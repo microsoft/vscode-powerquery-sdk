@@ -9,8 +9,17 @@ import * as vscode from "vscode";
 import { ConfigurationTarget } from "vscode";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 
+let nugetPath: string | undefined = undefined;
+
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
+    // in-memory nuget path found while activating
+    setNugetPath(nugetFullPath: string | undefined): void {
+        nugetPath = nugetFullPath;
+    },
+    get nugetPath(): string | undefined {
+        return nugetPath;
+    },
     setPQTestLocation(
         pqTestLocation: string | undefined,
         configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,

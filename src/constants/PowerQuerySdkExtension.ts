@@ -47,7 +47,7 @@ function buildPqTestSubPath(pqTestVersion: string): string[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/typedef
-export const ExtensionConstants = {
+export const ExtensionConstants = Object.freeze({
     ExtensionId,
     ConfigPathToConnector,
     ConfigPathToTestConnectionFile,
@@ -62,4 +62,4 @@ export const ExtensionConstants = {
     PqTestSubPath,
     buildPqTestSubPath,
     ConfigNames,
-};
+});
