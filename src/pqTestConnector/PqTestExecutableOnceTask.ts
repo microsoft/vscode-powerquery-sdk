@@ -159,10 +159,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
             const processExit: ProcessExit = await spawnProcess.deferred$;
 
-            this.handleOutputStr(
-                `[Debug task began] Fork pqtask ${task.operation} executable of pid: ${spawnProcess.pid}`,
-            );
-
             if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
                 this.handleOutputStr(spawnProcess.stdOut);
 
@@ -183,14 +179,15 @@ export class PqTestExecutableOnceTask implements IDisposable {
                     }
                 }
             } else {
-                this.handleErrorStr(`[Debug task exited abnormally] pqtest ${task.operation} pid(${
-                    spawnProcess.pid
-                }) exit(${processExit.exitCode})
-\t\t\t\t stderr: ${processExit.stderr ?? processExit.stdout}`);
+                this.handleErrorStr(
+                    `[Debug task exited abnormally] pqtest ${task.operation} pid(${spawnProcess.pid}) exit(${
+                        processExit.exitCode
+                    }) stderr: ${processExit.stderr ?? processExit.stdout}`,
+                );
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
-            this.handleOutputStr(typeof err === "string" ? err : err.toString());
+            this.handleErrorStr(typeof err === "string" ? err : err.toString());
         } finally {
             this.handleTaskExited();
         }
