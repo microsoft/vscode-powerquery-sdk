@@ -84,11 +84,17 @@ export function activateMQueryDebug(vscExtCtx: vscode.ExtensionContext, mode: "i
     vscExtCtx.subscriptions.push(
         vscode.commands.registerCommand(
             `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.getMQueryFileName`,
-            (_config: unknown) =>
-                vscode.window.showInputBox({
-                    placeHolder: "Please enter the name of a query file in the workspace folder",
-                    value: "Connector.query.pq",
-                }),
+            async (_config: unknown) => {
+                const allPqTestFiles: vscode.Uri[] = await vscode.workspace.findFiles(
+                    "*.{query.pq,test.pq}",
+                    null,
+                    1e2,
+                );
+
+                return vscode.window.showQuickPick(
+                    allPqTestFiles.map((oneUrl: vscode.Uri) => vscode.workspace.asRelativePath(oneUrl, false)),
+                );
+            },
         ),
     );
 

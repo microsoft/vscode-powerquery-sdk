@@ -142,7 +142,7 @@
                             "program": {
                                 "type": "string",
                                 "description": "Absolute path to a power query file.",
-                                "default": "${workspaceFolder}/${command:AskForQueryName}"
+                                "default": "${workspaceFolder}/${command:AskForPowerQueryFileName}"
                             },
                             "trace": {
                                 "type": "boolean",
