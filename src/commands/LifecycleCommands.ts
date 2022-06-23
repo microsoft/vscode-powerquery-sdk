@@ -256,7 +256,7 @@ export class LifecycleCommands {
             NugetVersions.compare,
         ) as [NugetVersions, NugetVersions];
 
-        if (!sortedVersions[1].isZero() && sortedVersions[0].toString() !== sortedVersions[1].toString()) {
+        if (!sortedVersions[1].isZero()) {
             // we found a new version, thus we need to check with users first and update to the latest
             return sortedVersions[1].toString();
         } else {
