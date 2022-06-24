@@ -15,9 +15,19 @@ export interface GenericResult {
 }
 
 export type AuthenticationKind = "Anonymous" | "Key" | "Aad" | "OAuth2" | "UsernamePassword" | "Windows";
+export type OperationType =
+    | "delete-credential"
+    | "info"
+    | "list-credential"
+    | "credential-template"
+    | "set-credential"
+    | "refresh-credential"
+    | "run-test"
+    | "test-connection"
+    | string;
 
 export interface PQTestTaskBase {
-    readonly operation: string;
+    readonly operation: OperationType;
     readonly additionalArgs?: string[];
     readonly pathToConnector?: string;
     readonly pathToQueryFile?: string;

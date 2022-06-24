@@ -84,98 +84,51 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
         );
 
         if (!ExtensionConfigurations.PQTestExtensionFileLocation) {
-            vscWorkspace.findFiles("*.{mez,mproj}", null, 10).then(
-                (uris: Uri[]) => {
-                    for (const uri of uris) {
-                        const theFSPath: string = uri.fsPath;
+            void vscWorkspace.findFiles("*.{mez,proj}", null, 10).then((uris: Uri[]) => {
+                for (const uri of uris) {
+                    const theFSPath: string = uri.fsPath;
 
-                        if (theFSPath.indexOf(".mez") > -1) {
-                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+                    if (theFSPath.indexOf(".mez") > -1) {
+                        const relativePath: string = vscWorkspace.asRelativePath(uri, false);
 
-                            ExtensionConfigurations.setPQTestExtensionFileLocation(
-                                path.join(
-                                    "${workspaceFolder}",
-                                    path.dirname(relativePath),
-                                    path.basename(relativePath),
-                                ),
-                            ).then(
-                                () => {
-                                    // noop
-                                },
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                (_reason: any) => {
-                                    // noop
-                                    // todo log into the telemetry latter
-                                },
-                            );
+                        void ExtensionConfigurations.setPQTestExtensionFileLocation(
+                            path.join("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
+                        );
 
-                            break;
-                        }
-
-                        if (theFSPath.indexOf(".mproj") > -1) {
-                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
-                            const dirname: string = path.dirname(relativePath);
-                            const mezFileName: string = path.basename(relativePath).replace(".mproj", ".mez");
-
-                            ExtensionConfigurations.setPQTestExtensionFileLocation(
-                                path.join("${workspaceFolder}", path.join(dirname, "bin", "Debug"), mezFileName),
-                            ).then(
-                                () => {
-                                    // noop
-                                },
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                (_reason: any) => {
-                                    // noop
-                                    // todo log into the telemetry latter
-                                },
-                            );
-                            // do not break, in case any *.mez found
-                            // break;
-                        }
+                        break;
                     }
-                },
-                () => {
-                    // noop
-                    // todo log into the telemetry latter
-                },
-            );
+
+                    if (theFSPath.indexOf(".proj") > -1) {
+                        const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+                        const dirname: string = path.dirname(relativePath);
+                        const mezFileName: string = path.basename(relativePath).replace(".proj", ".mez");
+
+                        void ExtensionConfigurations.setPQTestExtensionFileLocation(
+                            path.join("${workspaceFolder}", path.join(dirname, "bin"), mezFileName),
+                        );
+                        // do not break, in case any *.mez found
+                        // break;
+                    }
+                }
+            });
         }
 
         if (!ExtensionConfigurations.PQTestQueryFileLocation) {
-            vscWorkspace.findFiles("*.{m,pq}", null, 10).then(
-                (uris: Uri[]) => {
-                    for (const uri of uris) {
-                        const theFSPath: string = uri.fsPath;
+            void vscWorkspace.findFiles("*.{m,pq}", null, 10).then((uris: Uri[]) => {
+                for (const uri of uris) {
+                    const theFSPath: string = uri.fsPath;
 
-                        if (theFSPath.indexOf(".m") > -1 || theFSPath.indexOf(".query.pq") > -1) {
-                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+                    if (theFSPath.indexOf(".m") > -1 || theFSPath.indexOf(".query.pq") > -1) {
+                        const relativePath: string = vscWorkspace.asRelativePath(uri, false);
 
-                            ExtensionConfigurations.setPQTestQueryFileLocation(
-                                path.join(
-                                    "${workspaceFolder}",
-                                    path.dirname(relativePath),
-                                    path.basename(relativePath),
-                                ),
-                            ).then(
-                                () => {
-                                    // noop
-                                },
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                (_reason: any) => {
-                                    // noop
-                                    // todo log into the telemetry latter
-                                },
-                            );
+                        void ExtensionConfigurations.setPQTestQueryFileLocation(
+                            path.join("${workspaceFolder}", path.dirname(relativePath), path.basename(relativePath)),
+                        );
 
-                            break;
-                        }
+                        break;
                     }
-                },
-                () => {
-                    // noop
-                    // todo log into the telemetry latter
-                },
-            );
+                }
+            });
         }
 
         this.vscExtCtx.subscriptions.push(

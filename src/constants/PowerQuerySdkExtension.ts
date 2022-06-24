@@ -30,8 +30,10 @@ const ConfigPathToTestConnectionFile: string =
     `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation}` +
     "}";
 
+const PQLanguageId: string = "powerquery";
 const OutputChannelName: string = "Power Query SDK";
-const PQTestTaskType: string = "powerquery";
+const PQTestTaskType: string = PQLanguageId;
+const PQDebugType: string = PQTestTaskType;
 
 const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
@@ -45,12 +47,14 @@ function buildPqTestSubPath(pqTestVersion: string): string[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/typedef
-export const ExtensionConstants = {
+export const ExtensionConstants = Object.freeze({
     ExtensionId,
     ConfigPathToConnector,
     ConfigPathToTestConnectionFile,
+    PQLanguageId,
     OutputChannelName,
     PQTestTaskType,
+    PQDebugType,
     NugetBaseFolder,
     NugetConfigFileName,
     PqTestNugetName,
@@ -58,4 +62,4 @@ export const ExtensionConstants = {
     PqTestSubPath,
     buildPqTestSubPath,
     ConfigNames,
-};
+});

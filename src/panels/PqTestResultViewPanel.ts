@@ -50,6 +50,7 @@ export class SimplePqTestResultViewBroker {
 export class PqTestResultViewPanel implements IDisposable {
     // commands
     public static readonly ShowResultWebViewCommand: string = `${PqTestResultViewPanelPrefix}.ShowResultWebView`;
+    public static readonly UpdateResultWebViewCommand: string = `${PqTestResultViewPanelPrefix}.UpdateResultWebView`;
     // view constants
     public static readonly viewType: string = `${PqTestResultViewPanelPrefix}.ResultWebView`;
     public static readonly viewPaths: string[] = ["webviewDist", "pq-test-result-view"];
@@ -70,6 +71,14 @@ export class PqTestResultViewPanel implements IDisposable {
         vscExtCtx.subscriptions.push(
             vscode.commands.registerCommand(PqTestResultViewPanel.ShowResultWebViewCommand, () => {
                 PqTestResultViewPanel.createOrShow(vscExtCtx.extensionUri);
+            }),
+        );
+
+        vscExtCtx.subscriptions.push(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            vscode.commands.registerCommand(PqTestResultViewPanel.UpdateResultWebViewCommand, (nextResult: any) => {
+                PqTestResultViewPanel.createOrShow(vscExtCtx.extensionUri);
+                SimplePqTestResultViewBroker.values.latestPqTestResult.emit(nextResult);
             }),
         );
 

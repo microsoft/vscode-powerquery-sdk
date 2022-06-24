@@ -141,7 +141,32 @@ export class LifecycleCommands {
         return fs.existsSync(expectedPqTestPath);
     }
 
+    private async assertNugetExistInThePath(shouldThrow: boolean = false): Promise<boolean> {
+        const currentNugetPath: string | undefined = ExtensionConfigurations.nugetPath;
+
+        if (!currentNugetPath) {
+            const result: string | undefined = await vscode.window.showWarningMessage(
+                "PowerQuery SDK needs nuget existing in the path",
+                "Download nuget",
+            );
+
+            if (result) {
+                void vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.nuget.org/downloads"));
+            }
+
+            if (shouldThrow) {
+                throw new Error("Nuget.exe doesn't exist in the PATH");
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private async doListPqTestFromNuget(): Promise<string> {
+        await this.assertNugetExistInThePath(true);
+
         // nuget list Microsoft.PowerQuery.SdkTools -ConfigFile ./etc/nuget-staging.config
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
 
@@ -170,6 +195,7 @@ export class LifecycleCommands {
     }
 
     private async doUpdatePqTestFromNuget(maybeNextVersion?: string | undefined): Promise<string | undefined> {
+        await this.assertNugetExistInThePath(true);
         // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
         // dotnet tool install Microsoft.PowerQuery.SdkTools
         //  --configfile <FILE> --tool-path . --verbosity diag --version
@@ -230,7 +256,7 @@ export class LifecycleCommands {
             NugetVersions.compare,
         ) as [NugetVersions, NugetVersions];
 
-        if (!sortedVersions[1].isZero() && sortedVersions[0].toString() !== sortedVersions[1].toString()) {
+        if (!sortedVersions[1].isZero()) {
             // we found a new version, thus we need to check with users first and update to the latest
             return sortedVersions[1].toString();
         } else {
