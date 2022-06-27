@@ -32,8 +32,8 @@ const ConfigPathToTestConnectionFile: string =
 
 const PQLanguageId: string = "powerquery";
 const OutputChannelName: string = "Power Query SDK";
-const PQTestTaskType: string = PQLanguageId;
-const PQDebugType: string = PQTestTaskType;
+const PowerQueryTaskType: string = PQLanguageId;
+const PQDebugType: string = PowerQueryTaskType;
 
 const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
@@ -53,7 +53,7 @@ export const ExtensionConstants = Object.freeze({
     ConfigPathToTestConnectionFile,
     PQLanguageId,
     OutputChannelName,
-    PQTestTaskType,
+    PowerQueryTaskType,
     PQDebugType,
     NugetBaseFolder,
     NugetConfigFileName,
