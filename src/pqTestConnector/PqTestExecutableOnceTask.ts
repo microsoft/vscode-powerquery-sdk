@@ -9,13 +9,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { buildPqTestArgs, PQTestTaskBase } from "common/PQTestService";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
+import { buildPqTestArgs } from "common/PQTestService";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { IDisposable } from "common/Disposable";
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
+import { PQTestTask } from "common/PowerQueryTask";
 import { resolveSubstitutedValues } from "utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
@@ -96,8 +97,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
         return pqtestExe;
     }
 
-    private populateTestTaskPayload(program: string, task: PQTestTaskBase): PQTestTaskBase {
-        let result: PQTestTaskBase = task;
+    private populateTestTaskPayload(program: string, task: PQTestTask): PQTestTask {
+        let result: PQTestTask = task;
 
         // even though not all operations would be run within this OnceTask, it makes no harm we support them all
         switch (task.operation) {
@@ -130,7 +131,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
         return result;
     }
 
-    public async run(program: string, task: PQTestTaskBase): Promise<void> {
+    public async run(program: string, task: PQTestTask): Promise<void> {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;

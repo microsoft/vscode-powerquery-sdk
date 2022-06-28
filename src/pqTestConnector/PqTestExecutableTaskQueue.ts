@@ -8,7 +8,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { buildPqTestArgs, GenericResult, IPQTestService, PQTestTaskBase } from "common/PQTestService";
+import { buildPqTestArgs, GenericResult, IPQTestService } from "common/PQTestService";
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { ExtensionContext, TextEditor } from "vscode";
@@ -23,6 +23,7 @@ import { resolveSubstitutedValues } from "utils/vscodes";
 
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { PQTestTask } from "common/PowerQueryTask";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {
@@ -34,7 +35,7 @@ type PqTestExecutableTaskQueueEventTypes = ExtractEventTypes<typeof PqTestExecut
 /**
  * Internal interface within the module, we need not cast members as readonly
  */
-interface PqTestExecutableTask extends PQTestTaskBase {
+interface PqTestExecutableTask extends PQTestTask {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolve: (res: any) => void;
     reject: (reason: Error | string) => void;
@@ -231,7 +232,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private doEnqueueOneTask<T = any>(task: PQTestTaskBase): Promise<T> {
+    private doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

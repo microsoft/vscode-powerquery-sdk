@@ -5,7 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as vscode from "vscode";
+import { PQTestTask } from "./PowerQueryTask";
 
 export interface GenericResult {
     readonly Status: "Success" | "Failure";
@@ -15,31 +15,6 @@ export interface GenericResult {
 }
 
 export type AuthenticationKind = "Anonymous" | "Key" | "Aad" | "OAuth2" | "UsernamePassword" | "Windows";
-export type OperationType =
-    | "delete-credential"
-    | "info"
-    | "list-credential"
-    | "credential-template"
-    | "set-credential"
-    | "refresh-credential"
-    | "run-test"
-    | "test-connection"
-    | string;
-
-export interface PQTestTaskBase {
-    readonly operation: OperationType;
-    readonly additionalArgs?: string[];
-    readonly pathToConnector?: string;
-    readonly pathToQueryFile?: string;
-    readonly stdinStr?: string;
-}
-
-// Properties that need to be persisted as part of the task definition should be
-// included in the taskDefinitions section of package.json.
-// TODO: Are we using "Connector" or "Extension" terminology?
-export interface PQTestTaskDefinition extends PQTestTaskBase, vscode.TaskDefinition {
-    readonly label?: string;
-}
 
 export interface IPQTestService {
     readonly pqTestReady: boolean;
@@ -63,24 +38,24 @@ export interface IPQTestService {
 
 const CommonArgs: string[] = ["--prettyPrint"];
 
-export function buildPqTestArgs(pqTestTaskBase: PQTestTaskBase): string[] {
+export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {
     const args: string[] = CommonArgs.slice();
 
-    if (pqTestTaskBase.additionalArgs) {
-        args.push(...pqTestTaskBase.additionalArgs);
+    if (pqTestTask.additionalArgs) {
+        args.push(...pqTestTask.additionalArgs);
     }
 
-    if (pqTestTaskBase.pathToQueryFile) {
-        args.unshift(pqTestTaskBase.pathToQueryFile);
+    if (pqTestTask.pathToQueryFile) {
+        args.unshift(pqTestTask.pathToQueryFile);
         args.unshift("--queryFile");
     }
 
-    if (pqTestTaskBase.pathToConnector) {
-        args.unshift(pqTestTaskBase.pathToConnector);
+    if (pqTestTask.pathToConnector) {
+        args.unshift(pqTestTask.pathToConnector);
         args.unshift("--extension");
     }
 
-    args.unshift(pqTestTaskBase.operation);
+    args.unshift(pqTestTask.operation);
 
     return args;
 }

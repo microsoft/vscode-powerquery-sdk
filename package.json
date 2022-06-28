@@ -78,7 +78,7 @@
                 "properties": {
                     "operation": {
                         "type": "string",
-                        "description": "The pqtest operation to run"
+                        "description": "The operation to run"
                     },
                     "additionalArgs": {
                         "type": "array",
