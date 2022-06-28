@@ -10,9 +10,10 @@
 	},
 	"engines": {
 		"node": ">=16.13.2 <17",
-		"npm": "~8.5.5"
+		"npm": "~8.5.0"
 	},
 	"dependencies": {
+		"@fluentui/react": "^8.77.1",
 		"classnames": "^2.3.1",
 		"react": "17.0.2",
 		"react-dom": "17.0.2"

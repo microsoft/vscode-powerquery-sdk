@@ -17,6 +17,18 @@ const devConfig = {
     },
     devServer: {
         port: 3001,
+        // client: {
+        //     webSocketURL: {
+        //         hostname: "127.0.0.1",
+        //         pathname: "/ws",
+        //         // password: 'dev-server',
+        //         port: 3001,
+        //         protocol: "ws",
+        //         // username: 'webpack',
+        //     },
+        // },
+        client: false,
+        webSocketServer: false,
         historyApiFallback: {
             index: "index.html",
         },

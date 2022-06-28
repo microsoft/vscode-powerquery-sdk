@@ -14,6 +14,17 @@
             "preLaunchTask": "${defaultBuildTask}"
         },
         {
+            "name": "Run Extension [Dev Mode]",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "preLaunchTask": "Develop_Extensions",
+            "env": {
+                "WEBVIEW_DEV_MODE": "true"
+            }
+        },
+        {
             "name": "Extension Tests",
             "type": "extensionHost",
             "request": "launch",

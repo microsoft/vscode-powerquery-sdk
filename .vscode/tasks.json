@@ -3,7 +3,8 @@
 {
     "version": "2.0.0",
     "tasks": [
-        {
+        {            
+            "label": "Watch_VSC_PQ_SDK",
             "type": "npm",
             "script": "watch",
             "problemMatcher": ["$ts-webpack-watch", "$tslint-webpack-watch"],
@@ -27,6 +28,45 @@
                 "group": "watchers"
             },
             "group": "build"
+        },
+        {
+            "label": "Dev_PQTest_Result_WebView",
+            "type": "npm",
+            "script": "start",
+            "promptOnClose": true,
+            "isBackground": true,
+            "problemMatcher": {
+              "owner": "webpack",
+              "severity": "error",
+              "fileLocation": "absolute",
+              "pattern": [
+                {
+                  "regexp": "ERROR in (.*)",
+                  "file": 1
+                },
+                {
+                  "regexp": "\\((\\d+),(\\d+)\\):(.*)",
+                  "line": 1,
+                  "column": 2,
+                  "message": 3
+                }
+              ],
+              "background": {
+                "activeOnStart": true,
+                "beginsPattern": "Compiling\\.\\.\\.",
+                "endsPattern": "compiled successfully in"
+              }
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/webviews/pq-test-result-view"
+            }
+        },
+        {
+            "label": "Develop_Extensions",
+            "dependsOn": [
+                "Watch_VSC_PQ_SDK",
+                "Dev_PQTest_Result_WebView"
+            ]
         },
         {
             "label": "tasks: watch-tests",

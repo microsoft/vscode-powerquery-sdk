@@ -6,6 +6,13 @@
  */
 
 import { IDisposable } from "common/Disposable";
+
+export type ExtractValueEventEmitterTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp extends Record<infer Key, infer Value>
+    ? Value extends ValueEventEmitter
+        ? Key
+        : ExtractValueEventEmitterTypes<Value>
+    : unknown;
+
 type ValueUpdateListener<T> = (value: T) => void;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

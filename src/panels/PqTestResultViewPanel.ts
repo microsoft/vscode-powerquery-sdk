@@ -6,22 +6,32 @@
  */
 
 import * as vscode from "vscode";
-import { Disposable, IDisposable } from "common/Disposable";
 import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vscode";
-import { ValueEventEmitter } from "common/ValueEventEmitter";
+
+import { Disposable, IDisposable } from "common/Disposable";
+import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "common/ValueEventEmitter";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
 
-type SimplePqTestResultViewBrokerValues = "latestPqTestResult" | string;
-// todo replace this SimplePqTestResultViewBroker with a more fancier one
+// eslint-disable-next-line @typescript-eslint/typedef
+const SimpleBrokerValues = Object.freeze({
+    activeColorTheme: new ValueEventEmitter<vscode.ColorTheme>(vscode.window.activeColorTheme),
+    // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
+    latestPqTestResult: new ValueEventEmitter<any>(undefined),
+});
+
+type SimplePqTestResultViewBrokerValues = ExtractValueEventEmitterTypes<typeof SimpleBrokerValues>;
+// todo replace this SimplePqTestResultViewBroker with a more fancy one
 export class SimplePqTestResultViewBroker {
-    public static values: Readonly<Record<SimplePqTestResultViewBrokerValues, ValueEventEmitter>> = Object.freeze({
-        latestPqTestResult: new ValueEventEmitter(undefined),
-    });
+    public static values: Readonly<Record<SimplePqTestResultViewBrokerValues, ValueEventEmitter>> = SimpleBrokerValues;
     public static activate(): void {
+        vscode.window.onDidChangeActiveColorTheme((nextColor: vscode.ColorTheme) => {
+            this.values.activeColorTheme.emit(nextColor);
+        });
+
         for (const oneProperty in this.values) {
             // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
-            this.values[oneProperty].subscribe((nextValue: any) => {
+            this.values[oneProperty as SimplePqTestResultViewBrokerValues].subscribe((nextValue: any) => {
                 PqTestResultViewPanel.currentPanel?.postOneMessage("OnOneValueUpdated", {
                     property: oneProperty,
                     value: nextValue,
@@ -32,13 +42,13 @@ export class SimplePqTestResultViewBroker {
     public static emitAll(): void {
         for (const oneProperty in this.values) {
             // eslint-disable-next-line security/detect-object-injection
-            this.values[oneProperty].emit();
+            this.values[oneProperty as SimplePqTestResultViewBrokerValues].emit();
         }
     }
     public static deActivate(): void {
         for (const oneProperty in this.values) {
             // eslint-disable-next-line security/detect-object-injection
-            this.values[oneProperty].dispose();
+            this.values[oneProperty as SimplePqTestResultViewBrokerValues].dispose();
         }
     }
     // noinspection JSUnusedLocalSymbols
@@ -46,6 +56,8 @@ export class SimplePqTestResultViewBroker {
         // noop
     }
 }
+
+const isDevWebView: boolean = process.env.WEBVIEW_DEV_MODE === "true";
 
 export class PqTestResultViewPanel implements IDisposable {
     // commands
@@ -112,16 +124,7 @@ export class PqTestResultViewPanel implements IDisposable {
         }
 
         // Otherwise, create a new panel. workbench.action.editorLayoutTwoColumns
-        vscode.commands.executeCommand("workbench.action.editorLayoutTwoColumns").then(
-            (_value: unknown) => {
-                // noop
-                // todo log into the telemetry
-            },
-            (_reason: unknown) => {
-                // noop
-                // todo log into the telemetry
-            },
-        );
+        void vscode.commands.executeCommand("workbench.action.editorLayoutTwoColumns");
 
         const panel: WebviewPanel = vscode.window.createWebviewPanel(
             PqTestResultViewPanel.viewType,
@@ -170,8 +173,11 @@ export class PqTestResultViewPanel implements IDisposable {
 
     _update(): void {
         // noop
-        this._panel.title = "PQTest result webview";
-        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+        this._panel.title = "PQTest result";
+
+        this._panel.webview.html = isDevWebView
+            ? this._getDevHtmlForWebview()
+            : this._getHtmlForWebview(this._panel.webview);
     }
 
     dispose(): void {
@@ -189,21 +195,10 @@ export class PqTestResultViewPanel implements IDisposable {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public postOneMessage(type: string, payload: any): void {
-        this._panel.webview
-            .postMessage({
-                type,
-                payload,
-            })
-            .then(
-                (_value: unknown) => {
-                    // noop
-                    // todo log into the telemetry
-                },
-                (_reason: unknown) => {
-                    // noop
-                    // todo log into the telemetry
-                },
-            );
+        void this._panel.webview.postMessage({
+            type,
+            payload,
+        });
     }
 
     private _getHtmlForWebview(webview: Webview): string {
@@ -230,6 +225,28 @@ export class PqTestResultViewPanel implements IDisposable {
         <div id="root"></div>
 				<script src="${scriptUri}"></script>
 			</body>
+			</html>`;
+    }
+
+    private _getDevHtmlForWebview(): string {
+        return `<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+    
+            <!--
+              Use a content security policy to only allow loading images from https or from our extension directory,
+              and only allow scripts that have a specific nonce.
+            -->
+    
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            
+            <title>PQTest result</title>
+            <script defer src="http://localhost:3001/main.js"></script>
+          </head>
+          <body>
+            <div id="root"></div>
+          </body>
 			</html>`;
     }
 }
