@@ -1,4 +1,5 @@
 ﻿// This file contains your Data Connector logic
+[Version = "1.0.0"]
 section {{ProjectName}};
 
 [DataSource.Kind="{{ProjectName}}", Publish="{{ProjectName}}.Publish"]
@@ -15,9 +16,8 @@ shared {{ProjectName}}.Contents = (optional message as text) =>
         // Key = [],
         // UsernamePassword = [],
         // Windows = [],
-        Implicit = []
-    ],
-    Label = Extension.LoadString("DataSourceLabel")
+        Anonymous = []
+    ]
 ];
 
 // Data Source UI publishing description

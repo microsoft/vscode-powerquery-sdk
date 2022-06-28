@@ -123,7 +123,4 @@
   <data name="ButtonTitle" xml:space="preserve">
     <value>{{ProjectName}}</value>
   </data>
-  <data name="DataSourceLabel" xml:space="preserve">
-    <value>{{ProjectName}}</value>
-  </data>
 </root>
