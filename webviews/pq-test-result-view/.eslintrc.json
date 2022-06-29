@@ -1,9 +1,11 @@
 {
+  "plugins": ["license-header"],
   "extends": [
     "react-app",
     "react-app/jest"
   ],
   "rules": {
+    "license-header/header": ["error", "../../resources/license-header.js"],
     "no-console": "warn"
   }
 }

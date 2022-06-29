@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 export function getCssVariable(variableName: string, defaultValue: string): string {
     // do not use nullish coalescing here, as getPropertyValue would return empty string
     // "" ?? "yoo" -> ""
