@@ -1,7 +1,26 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 *{
   box-sizing: border-box;
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-editor-font-size);
+  font-weight: var(--vscode-editor-font-weight);
+  color: var(--vscode-editor-foreground);
 }
 
 body{
-  overflow: hidden;
+  width: calc( 100vw - 40px );
+  height: 100vh;
+}
+
+
+.entry-container{
+  overflow: auto;
+  min-width: calc( 100vw - 40px );
+  min-height: 100vh;
 }

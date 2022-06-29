@@ -1,33 +1,38 @@
-import React, { useState, useEffect } from "react";
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
+import React from "react";
+import { ThemeProvider } from "@fluentui/react/lib/Theme";
+
+import { useVSCodeContextProps, VSCodeContextProvider } from "./contexts/VscodeContexts";
+import { TestBatteryResultView } from "./views/TestBatteryResultView";
 
 import "./App.scss";
 
-interface VSCodeState {
-    latestPqTestResult?: any;
-}
+const Entry: React.FC<{}> = React.memo(() => {
+    const { latestPqTestResult, fluentTheme } = useVSCodeContextProps();
 
-const vscode = acquireVsCodeApi<VSCodeState>();
-const histState: VSCodeState = vscode.getState() ?? {};
+    return (
+        <div className="entry-container">
+            <ThemeProvider theme={fluentTheme}>
+                {!!latestPqTestResult && Array.isArray(latestPqTestResult) && latestPqTestResult.length ? (
+                    <TestBatteryResultView testRunExecution={latestPqTestResult[0]} />
+                ) : null}
+            </ThemeProvider>
+        </div>
+    );
+});
 
 const App: React.FC<{}> = React.memo(() => {
-    const [latestPqTestResult, setLatestPqTestResult] = useState<any>(histState.latestPqTestResult ?? "");
-
-    useEffect(() => {
-        window.addEventListener("message", event => {
-            const message = event.data;
-            switch (message.type) {
-                case "OnOneValueUpdated":
-                    if (message.payload.property === "latestPqTestResult") {
-                        const theVal = message.payload.value;
-                        setLatestPqTestResult(theVal);
-                        vscode.setState({ ...histState, latestPqTestResult: theVal });
-                    }
-                    break;
-            }
-        });
-    }, []);
-
-    return <pre>{JSON.stringify(latestPqTestResult, null, 2)}</pre>;
+    return (
+        <VSCodeContextProvider>
+            <Entry />
+        </VSCodeContextProvider>
+    );
 });
 
 export default App;

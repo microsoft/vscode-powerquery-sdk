@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ESLintPlugin = require("eslint-webpack-plugin");

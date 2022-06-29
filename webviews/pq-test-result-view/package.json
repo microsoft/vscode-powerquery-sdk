@@ -6,13 +6,15 @@
 		"clean": "rimraf ../../webviewDist/pq-test-result-view",
 		"start": "webpack serve --config config/webpack.dev.js",
 		"build": "npm run clean && webpack --config config/webpack.prod.js",
+		"lint": "eslint src --ext ts",
 		"audit": "npm audit"
 	},
 	"engines": {
 		"node": ">=16.13.2 <17",
-		"npm": "~8.5.5"
+		"npm": "~8.5.0"
 	},
 	"dependencies": {
+		"@fluentui/react": "^8.77.1",
 		"classnames": "^2.3.1",
 		"react": "17.0.2",
 		"react-dom": "17.0.2"
@@ -45,6 +47,7 @@
 		"eslint-plugin-react": "^7.29.4",
 		"eslint-plugin-react-hooks": "^4.3.0",
 		"eslint-plugin-testing-library": "^5.1.0",
+		"eslint-plugin-license-header": "^0.4.0",
 		"eslint-webpack-plugin": "^3.1.1",
 		"file-loader": "^6.2.0",
 		"html-webpack-plugin": "^5.5.0",
