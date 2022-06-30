@@ -97,7 +97,11 @@ export class LifecycleCommands {
         };
     }
 
-    private doGenerateOneProjectIntoOneFolderFromTemplates(folder: string, projectName: string): void {
+    private doGenerateOneProjectIntoOneFolderFromTemplates(inputFolder: string, projectName: string): string {
+        const folder: string = inputFolder.endsWith(projectName) ? inputFolder : path.join(inputFolder, projectName);
+
+        fs.mkdirSync(folder, { recursive: true });
+
         const templateTargetFolder: string = path.resolve(this.vscExtCtx.extensionPath, "templates");
 
         // copy pngs
@@ -123,6 +127,8 @@ export class LifecycleCommands {
             content = resolveTemplateSubstitutedValues(content, { ProjectName: projectName });
             fs.writeFileSync(path.resolve(folder, targetFileName), content, { encoding: "utf8" });
         });
+
+        return folder;
     }
 
     private expectedPqTestPath(maybeNextVersion?: string): string {
@@ -354,8 +360,6 @@ export class LifecycleCommands {
     }
 
     public async generateOneNewProject(): Promise<void> {
-        const pqTestLocation: string | undefined = await this.checkAndTryToUpdatePqTest();
-
         const newProjName: string | undefined = await vscode.window.showInputBox({
             title: "New project name",
             placeHolder: "Only lower cases or upper cases characters are allowed",
@@ -370,7 +374,7 @@ export class LifecycleCommands {
             },
         });
 
-        if (pqTestLocation && newProjName) {
+        if (newProjName) {
             const firstWorkspaceFolder: WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
             if (firstWorkspaceFolder) {
@@ -386,8 +390,11 @@ export class LifecycleCommands {
                 });
 
                 if (selectedFolders?.[0].fsPath) {
-                    this.doGenerateOneProjectIntoOneFolderFromTemplates(selectedFolders[0].fsPath, newProjName);
-                    await vscode.commands.executeCommand("vscode.openFolder", selectedFolders[0]);
+                    const targetFolder: string = this.doGenerateOneProjectIntoOneFolderFromTemplates(
+                        selectedFolders[0].fsPath,
+                        newProjName,
+                    );
+                    await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(targetFolder));
                 }
             }
         }

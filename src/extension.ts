@@ -21,7 +21,7 @@ import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
     ExtensionConfigurations.setNugetPath(findExecutable("nuget", [".exe", ""]));
 
-    // let's make extension::activate server as minimum as possible:
+    // let's make extension::activate serves as minimum as possible:
     // for now:
     //          it basically does the Dependency Injection,
     //          which could be replaced by *inversify* if we later really need to
@@ -40,7 +40,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         new PowerQueryTaskProvider(pqTestExecutableTaskQueue),
     );
 
-    // okay, LifecycleCommands instance has not become a disposable yet
+    // lifecycleCommands instance has not been a disposable yet
     new LifecycleCommands(vscExtCtx, pqTestExecutableTaskQueue, pqSdkOutputChannel);
 
     const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);
