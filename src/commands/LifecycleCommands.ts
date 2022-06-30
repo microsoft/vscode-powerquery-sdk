@@ -360,8 +360,6 @@ export class LifecycleCommands {
     }
 
     public async generateOneNewProject(): Promise<void> {
-        const pqTestLocation: string | undefined = await this.checkAndTryToUpdatePqTest();
-
         const newProjName: string | undefined = await vscode.window.showInputBox({
             title: "New project name",
             placeHolder: "Only lower cases or upper cases characters are allowed",
@@ -376,7 +374,7 @@ export class LifecycleCommands {
             },
         });
 
-        if (pqTestLocation && newProjName) {
+        if (newProjName) {
             const firstWorkspaceFolder: WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
             if (firstWorkspaceFolder) {
