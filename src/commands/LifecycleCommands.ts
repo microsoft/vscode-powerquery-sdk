@@ -12,10 +12,13 @@ import * as vscode from "vscode";
 import { ExtensionContext, InputBoxOptions, Progress, ProgressLocation, Uri, WorkspaceFolder } from "vscode";
 
 import { AuthenticationKind, GenericResult, IPQTestService } from "common/PQTestService";
+import {
+    ExtensionConfigurations,
+    promptWarningMessageForExternalDependency,
+} from "constants/PowerQuerySdkConfiguration";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
 
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { getFirstWorkspaceFolder } from "utils/vscodes";
 import { NugetVersions } from "utils/NugetVersions";
@@ -147,31 +150,8 @@ export class LifecycleCommands {
         return fs.existsSync(expectedPqTestPath);
     }
 
-    private async assertNugetExistInThePath(shouldThrow: boolean = false): Promise<boolean> {
-        const currentNugetPath: string | undefined = ExtensionConfigurations.nugetPath;
-
-        if (!currentNugetPath) {
-            const result: string | undefined = await vscode.window.showWarningMessage(
-                "PowerQuery SDK needs nuget existing in the path",
-                "Download nuget",
-            );
-
-            if (result) {
-                void vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.nuget.org/downloads"));
-            }
-
-            if (shouldThrow) {
-                throw new Error("Nuget.exe doesn't exist in the PATH");
-            } else {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private async doListPqTestFromNuget(): Promise<string> {
-        await this.assertNugetExistInThePath(true);
+        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
 
         // nuget list Microsoft.PowerQuery.SdkTools -ConfigFile ./etc/nuget-staging.config
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
@@ -187,7 +167,7 @@ export class LifecycleCommands {
             path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
         ];
 
-        const seizingProcess: SpawnedProcess = new SpawnedProcess("nuget", args, {
+        const seizingProcess: SpawnedProcess = new SpawnedProcess(ExtensionConfigurations.nugetPath ?? "nuget", args, {
             cwd: baseNugetFolder,
             env: {
                 ...process.env,
@@ -201,7 +181,7 @@ export class LifecycleCommands {
     }
 
     private async doUpdatePqTestFromNuget(maybeNextVersion?: string | undefined): Promise<string | undefined> {
-        await this.assertNugetExistInThePath(true);
+        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
         // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
         // dotnet tool install Microsoft.PowerQuery.SdkTools
         //  --configfile <FILE> --tool-path . --verbosity diag --version
@@ -224,7 +204,7 @@ export class LifecycleCommands {
         ];
 
         const seizingProcess: SpawnedProcess = new SpawnedProcess(
-            "nuget",
+            ExtensionConfigurations.nugetPath ?? "nuget",
             args,
             {
                 cwd: baseNugetFolder,
@@ -394,6 +374,7 @@ export class LifecycleCommands {
                         selectedFolders[0].fsPath,
                         newProjName,
                     );
+
                     await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(targetFolder));
                 }
             }

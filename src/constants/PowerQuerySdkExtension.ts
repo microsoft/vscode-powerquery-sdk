@@ -13,6 +13,8 @@ const ConfigNames = {
     PowerQuerySdk: {
         name: "powerquery.sdk" as const,
         properties: {
+            externalsMsbuildPath: "externals.msbuildPath" as const,
+            externalsNugetPath: "externals.nugetPath" as const,
             pqTestLocation: "pqtest.location" as const,
             pqTestExtensionFileLocation: "pqtest.extension" as const,
             pqTestQueryFileLocation: "pqtest.queryFile" as const,
@@ -38,13 +40,16 @@ const PQDebugType: string = PowerQueryTaskType;
 const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
 const PqTestNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
-const SuggestedPqTestNugetVersion: string = "2.106.2" as const;
+const SuggestedPqTestNugetVersion: string = "2.107.2" as const;
 
 const PqTestSubPath: string[] = [`${PqTestNugetName}.${SuggestedPqTestNugetVersion}`, "tools", "PQTest.exe"];
 
 function buildPqTestSubPath(pqTestVersion: string): string[] {
     return [`${PqTestNugetName}.${pqTestVersion}`, "tools", "PQTest.exe"];
 }
+
+const NugetDownloadUrl: string = "https://www.nuget.org/downloads" as const;
+const MSBuildDownloadUrl: string = "https://visualstudio.microsoft.com/downloads/?q=build+tools" as const;
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConstants = Object.freeze({
@@ -62,4 +67,6 @@ export const ExtensionConstants = Object.freeze({
     PqTestSubPath,
     buildPqTestSubPath,
     ConfigNames,
+    NugetDownloadUrl,
+    MSBuildDownloadUrl,
 });
