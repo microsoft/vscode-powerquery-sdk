@@ -41,6 +41,82 @@ export class LifecycleTreeViewItem extends TreeItem {
     }
 }
 
+const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
+    new LifecycleTreeViewItem(
+        "Setup workspace",
+        {
+            title: "Setup workspace",
+            command: `${LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("pencil"),
+    ),
+    new LifecycleTreeViewItem(
+        "Create one credential",
+        {
+            title: "Create one credential",
+            command: `${LifecycleCommands.GenerateAndSetCredentialCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("key"),
+    ),
+    new LifecycleTreeViewItem(
+        "List credentials",
+        {
+            title: "List credentials",
+            command: `${LifecycleCommands.ListCredentialCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("library"),
+    ),
+    new LifecycleTreeViewItem(
+        "Refresh credentials",
+        {
+            title: "Refresh credentials",
+            command: `${LifecycleCommands.RefreshCredentialCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("refresh"),
+    ),
+    new LifecycleTreeViewItem(
+        "Delete all credentials",
+        {
+            title: "Delete all credentials",
+            command: `${LifecycleCommands.DeleteCredentialCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("terminal-kill"),
+    ),
+    new LifecycleTreeViewItem(
+        "Evaluate the currently opened file",
+        {
+            title: "Evaluate the currently focused file",
+            command: `${LifecycleCommands.RunTestBatteryCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("debug-console-evaluation-prompt"),
+    ),
+    new LifecycleTreeViewItem(
+        "Test connection",
+        {
+            title: "Test connection",
+            command: `${LifecycleCommands.TestConnectionCommand}`,
+            arguments: [],
+        },
+
+        new ThemeIcon("test-view-icon"),
+    ),
+    new LifecycleTreeViewItem(
+        "Display extension info",
+        {
+            title: "Display extension info",
+            command: `${LifecycleCommands.DisplayExtensionInfoCommand}`,
+            arguments: [],
+        },
+        new ThemeIcon("extensions-info-message"),
+    ),
+];
+
 export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeViewItem> {
     public static TreeViewName: string = `${TreeViewPrefix}.LifeCycleTaskTreeView`;
 
@@ -93,73 +169,7 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
             updateSdkToolItem.description = this.currentPqSdkVersion();
 
             // do create primary tasks
-            return [
-                updateSdkToolItem,
-                new LifecycleTreeViewItem(
-                    "Create one credential",
-                    {
-                        title: "Create one credential",
-                        command: `${LifecycleCommands.GenerateAndSetCredentialCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("key"),
-                ),
-                new LifecycleTreeViewItem(
-                    "List credentials",
-                    {
-                        title: "List credentials",
-                        command: `${LifecycleCommands.ListCredentialCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("library"),
-                ),
-                new LifecycleTreeViewItem(
-                    "Refresh credentials",
-                    {
-                        title: "Refresh credentials",
-                        command: `${LifecycleCommands.RefreshCredentialCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("refresh"),
-                ),
-                new LifecycleTreeViewItem(
-                    "Delete all credentials",
-                    {
-                        title: "Delete all credentials",
-                        command: `${LifecycleCommands.DeleteCredentialCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("terminal-kill"),
-                ),
-                new LifecycleTreeViewItem(
-                    "Evaluate the currently opened file",
-                    {
-                        title: "Evaluate the currently focused file",
-                        command: `${LifecycleCommands.RunTestBatteryCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("debug-console-evaluation-prompt"),
-                ),
-                new LifecycleTreeViewItem(
-                    "Test connection",
-                    {
-                        title: "Test connection",
-                        command: `${LifecycleCommands.TestConnectionCommand}`,
-                        arguments: [],
-                    },
-
-                    new ThemeIcon("test-view-icon"),
-                ),
-                new LifecycleTreeViewItem(
-                    "Display extension info",
-                    {
-                        title: "Display extension info",
-                        command: `${LifecycleCommands.DisplayExtensionInfoCommand}`,
-                        arguments: [],
-                    },
-                    new ThemeIcon("extensions-info-message"),
-                ),
-            ] as LifecycleTreeViewItem[];
+            return [updateSdkToolItem, ...staticLifecycleTreeViewItem] as LifecycleTreeViewItem[];
         }
 
         // still return undefined if the workspace is not set up yet
