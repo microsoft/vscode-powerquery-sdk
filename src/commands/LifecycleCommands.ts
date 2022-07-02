@@ -9,15 +9,31 @@ import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
-import { ExtensionContext, InputBoxOptions, Progress, ProgressLocation, Uri, WorkspaceFolder } from "vscode";
+import {
+    ExtensionContext,
+    InputBoxOptions,
+    Progress,
+    ProgressLocation,
+    Uri,
+    workspace as vscWorkspace,
+    WorkspaceFolder,
+} from "vscode";
 
 import { AuthenticationKind, GenericResult, IPQTestService } from "common/PQTestService";
+import {
+    ExtensionConfigurations,
+    promptWarningMessageForExternalDependency,
+} from "constants/PowerQuerySdkConfiguration";
+import {
+    getAnyPqMProjFileBeneathTheFirstWorkspace,
+    getFirstWorkspaceFolder,
+    resolveSubstitutedValues,
+    substitutedWorkspaceFolderBasenameIfNeeded,
+} from "utils/vscodes";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
 
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
-import { getFirstWorkspaceFolder } from "utils/vscodes";
 import { NugetVersions } from "utils/NugetVersions";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { SpawnedProcess } from "common/SpawnedProcess";
@@ -29,6 +45,7 @@ const templateFileBaseName: string = "PQConn";
 
 export class LifecycleCommands {
     static SeizePqTestCommand: string = `${CommandPrefix}.SeizePqTestCommand`;
+    static SetupCurrentlyOpenedWorkspaceCommand: string = `${CommandPrefix}.SetupCurrentlyOpenedWorkspaceCommand`;
     static CreateNewProjectCommand: string = `${CommandPrefix}.CreateNewProjectCommand`;
     static DeleteCredentialCommand: string = `${CommandPrefix}.DeleteCredentialCommand`;
     static DisplayExtensionInfoCommand: string = `${CommandPrefix}.DisplayExtensionInfoCommand`;
@@ -38,6 +55,8 @@ export class LifecycleCommands {
     static RunTestBatteryCommand: string = `${CommandPrefix}.RunTestBatteryCommand`;
     static TestConnectionCommand: string = `${CommandPrefix}.TestConnectionCommand`;
 
+    private isSuggestingSetupCurrentWorkspace: boolean = false;
+
     constructor(
         private readonly vscExtCtx: ExtensionContext,
         private readonly pqTestService: IPQTestService,
@@ -45,6 +64,10 @@ export class LifecycleCommands {
     ) {
         vscExtCtx.subscriptions.push(
             vscode.commands.registerCommand(LifecycleCommands.SeizePqTestCommand, this.manuallyUpdatePqTest.bind(this)),
+            vscode.commands.registerCommand(
+                LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand,
+                this.setupCurrentlyOpenedWorkspaceCommand.bind(this),
+            ),
             vscode.commands.registerCommand(
                 LifecycleCommands.CreateNewProjectCommand,
                 this.generateOneNewProject.bind(this),
@@ -80,6 +103,36 @@ export class LifecycleCommands {
         );
 
         void this.checkAndTryToUpdatePqTest(true);
+
+        void this.promptToSetupCurrentWorkspaceIfNeeded();
+    }
+
+    public async promptToSetupCurrentWorkspaceIfNeeded(): Promise<void> {
+        const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
+
+        if (theFirstWorkspace && !this.isSuggestingSetupCurrentWorkspace) {
+            this.isSuggestingSetupCurrentWorkspace = true;
+            const anyPqFiles: Uri[] = await getAnyPqMProjFileBeneathTheFirstWorkspace();
+
+            if (
+                anyPqFiles.length &&
+                !ExtensionConfigurations.PQTestQueryFileLocation &&
+                !ExtensionConfigurations.PQTestExtensionFileLocation
+            ) {
+                // we need to suggest setup for newly opened folder
+                const result: string | undefined = await vscode.window.showInformationMessage(
+                    "We noticed the currently opened workspace has not been setup but of MQuery files, Would you like to setup?",
+                    "Setup",
+                    "Cancel",
+                );
+
+                if (result === "Setup") {
+                    void vscode.commands.executeCommand(LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand);
+                }
+            }
+
+            this.isSuggestingSetupCurrentWorkspace = false;
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,6 +148,88 @@ export class LifecycleCommands {
 
             return pqTestServiceReady ? await cb.apply(this, [...args]) : undefined;
         };
+    }
+
+    public setupCurrentlyOpenedWorkspaceCommand(): void {
+        const tasks: Array<Promise<void>> = [];
+
+        let hasPQTestExtensionFileLocation: boolean = false;
+
+        if (ExtensionConfigurations.PQTestExtensionFileLocation) {
+            const resolvedPQTestExtensionFileLocation: string | undefined = resolveSubstitutedValues(
+                ExtensionConfigurations.PQTestExtensionFileLocation,
+            );
+
+            hasPQTestExtensionFileLocation = Boolean(
+                resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation),
+            );
+        }
+
+        if (!hasPQTestExtensionFileLocation) {
+            tasks.push(
+                (async (): Promise<void> => {
+                    const mezUrlsBeneathBin: Uri[] = await vscWorkspace.findFiles("bin/**/*.{mez}", null, 1);
+
+                    let mezExtensionPath: string = path.join(
+                        "${workspaceFolder}",
+                        "bin",
+                        "AnyCPU",
+                        "Debug",
+                        "${workspaceFolderBasename}.mez",
+                    );
+
+                    if (mezUrlsBeneathBin.length) {
+                        const relativePath: string = vscWorkspace.asRelativePath(mezUrlsBeneathBin[0], false);
+
+                        mezExtensionPath = path.join(
+                            "${workspaceFolder}",
+                            path.dirname(relativePath),
+                            substitutedWorkspaceFolderBasenameIfNeeded(path.basename(relativePath)),
+                        );
+                    }
+
+                    if (ExtensionConfigurations.PQTestExtensionFileLocation !== mezExtensionPath) {
+                        void ExtensionConfigurations.setPQTestExtensionFileLocation(mezExtensionPath);
+
+                        this.outputChannel.appendInfoLine(
+                            `Set ${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation} to ${mezExtensionPath}`,
+                        );
+                    }
+                })(),
+            );
+        }
+
+        if (!ExtensionConfigurations.PQTestQueryFileLocation) {
+            tasks.push(
+                (async (): Promise<void> => {
+                    const connectorQueryUrls: Uri[] = await vscWorkspace.findFiles("*.{m,pq}", null, 10);
+
+                    for (const uri of connectorQueryUrls) {
+                        const theFSPath: string = uri.fsPath;
+
+                        if (theFSPath.indexOf(".m") > -1 || theFSPath.indexOf(".query.pq") > -1) {
+                            const relativePath: string = vscWorkspace.asRelativePath(uri, false);
+
+                            const primaryConnQueryLocation: string = path.join(
+                                "${workspaceFolder}",
+                                path.dirname(relativePath),
+                                substitutedWorkspaceFolderBasenameIfNeeded(path.basename(relativePath)),
+                            );
+
+                            void ExtensionConfigurations.setPQTestQueryFileLocation(primaryConnQueryLocation);
+
+                            this.outputChannel.appendInfoLine(
+                                `Set ${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation} to ${primaryConnQueryLocation}`,
+                            );
+
+                            break;
+                        }
+                    }
+                })(),
+            );
+        }
+
+        void Promise.all(tasks);
     }
 
     private doGenerateOneProjectIntoOneFolderFromTemplates(inputFolder: string, projectName: string): string {
@@ -147,31 +282,8 @@ export class LifecycleCommands {
         return fs.existsSync(expectedPqTestPath);
     }
 
-    private async assertNugetExistInThePath(shouldThrow: boolean = false): Promise<boolean> {
-        const currentNugetPath: string | undefined = ExtensionConfigurations.nugetPath;
-
-        if (!currentNugetPath) {
-            const result: string | undefined = await vscode.window.showWarningMessage(
-                "PowerQuery SDK needs nuget existing in the path",
-                "Download nuget",
-            );
-
-            if (result) {
-                void vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://www.nuget.org/downloads"));
-            }
-
-            if (shouldThrow) {
-                throw new Error("Nuget.exe doesn't exist in the PATH");
-            } else {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private async doListPqTestFromNuget(): Promise<string> {
-        await this.assertNugetExistInThePath(true);
+        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
 
         // nuget list Microsoft.PowerQuery.SdkTools -ConfigFile ./etc/nuget-staging.config
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
@@ -187,7 +299,7 @@ export class LifecycleCommands {
             path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
         ];
 
-        const seizingProcess: SpawnedProcess = new SpawnedProcess("nuget", args, {
+        const seizingProcess: SpawnedProcess = new SpawnedProcess(ExtensionConfigurations.nugetPath ?? "nuget", args, {
             cwd: baseNugetFolder,
             env: {
                 ...process.env,
@@ -201,7 +313,7 @@ export class LifecycleCommands {
     }
 
     private async doUpdatePqTestFromNuget(maybeNextVersion?: string | undefined): Promise<string | undefined> {
-        await this.assertNugetExistInThePath(true);
+        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
         // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
         // dotnet tool install Microsoft.PowerQuery.SdkTools
         //  --configfile <FILE> --tool-path . --verbosity diag --version
@@ -224,7 +336,7 @@ export class LifecycleCommands {
         ];
 
         const seizingProcess: SpawnedProcess = new SpawnedProcess(
-            "nuget",
+            ExtensionConfigurations.nugetPath ?? "nuget",
             args,
             {
                 cwd: baseNugetFolder,
@@ -384,7 +496,7 @@ export class LifecycleCommands {
                 // we need to open a folder and generate into it
                 const selectedFolders: Uri[] | undefined = await vscode.window.showOpenDialog({
                     canSelectMany: false,
-                    openLabel: "Select one workspace to create a new Power Query connector",
+                    openLabel: "Select workspace",
                     canSelectFiles: false,
                     canSelectFolders: true,
                 });
@@ -394,6 +506,7 @@ export class LifecycleCommands {
                         selectedFolders[0].fsPath,
                         newProjName,
                     );
+
                     await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(targetFolder));
                 }
             }

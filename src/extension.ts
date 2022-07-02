@@ -6,9 +6,8 @@
  */
 
 import * as vscode from "vscode";
+import { activateExternalConfiguration } from "constants/PowerQuerySdkConfiguration";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { findExecutable } from "utils/executables";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
@@ -19,8 +18,7 @@ import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQ
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
-    ExtensionConfigurations.setNugetPath(findExecutable("nuget", [".exe", ""]));
-
+    activateExternalConfiguration(true);
     // let's make extension::activate serves as minimum as possible:
     // for now:
     //          it basically does the Dependency Injection,

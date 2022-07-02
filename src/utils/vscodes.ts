@@ -212,8 +212,23 @@ export async function getAnyPqMProjFileBeneathTheFirstWorkspace(): Promise<vscod
     const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
     if (theFirstWorkspace) {
-        return vscode.workspace.findFiles("*.{pq,mproj}", null, 10);
+        return vscode.workspace.findFiles("*.{m,pq,mproj,proj}", null, 10);
     }
 
     return [];
+}
+
+export function substitutedWorkspaceFolderBasenameIfNeeded(str: string): string {
+    const firstWorksapce: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
+
+    if (firstWorksapce) {
+        const workspaceFolderBaseName: string = firstWorksapce.name;
+        const startingIndex: number = str.indexOf(workspaceFolderBaseName);
+
+        if (startingIndex > -1) {
+            str = replaceAt(str, startingIndex, workspaceFolderBaseName.length, "${workspaceFolderBasename}");
+        }
+    }
+
+    return str;
 }

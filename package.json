@@ -51,6 +51,16 @@
         "configuration": {
             "title": "Power Query SDK",
             "properties": {
+                "powerquery.sdk.externals.msbuildPath": {
+                    "scope": "machine-overridable",
+                    "type": "string",
+                    "description": "Local path to PQTest installation folder."
+                },
+                "powerquery.sdk.externals.nugetPath": {
+                    "scope": "machine-overridable",
+                    "type": "string",
+                    "description": "Local path to PQTest installation folder."
+                },
                 "powerquery.sdk.pqtest.location": {
                     "scope": "machine-overridable",
                     "type": "string",
