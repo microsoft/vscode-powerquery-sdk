@@ -8,7 +8,14 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { buildPqTestArgs, GenericResult, IPQTestService } from "common/PQTestService";
+import {
+    buildPqTestArgs,
+    CreateAuthState,
+    Credential,
+    ExtensionInfo,
+    GenericResult,
+    IPQTestService,
+} from "common/PQTestService";
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { ExtensionContext, TextEditor } from "vscode";
@@ -16,6 +23,7 @@ import { FSWatcher, WatchEventType } from "fs";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
+import { ValueEventEmitter } from "common/ValueEventEmitter";
 
 import { convertStringToInteger } from "utils/numbers";
 import { pidIsRunning } from "utils/pids";
@@ -64,6 +72,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
     pqTestFullPath: string = "";
+    public readonly currentExtensionInfos: ValueEventEmitter<ExtensionInfo[]> = new ValueEventEmitter<ExtensionInfo[]>(
+        [],
+    );
+    public readonly currentCredentials: ValueEventEmitter<Credential[]> = new ValueEventEmitter<Credential[]>([]);
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
@@ -111,6 +123,9 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         for (const oneDisposable of this._disposables) {
             oneDisposable.dispose();
         }
+
+        this.currentExtensionInfos.dispose();
+        this.currentCredentials.dispose();
     };
 
     private resolvePQTestPath(nextPQTestLocation: string | undefined): string | undefined {
@@ -217,13 +232,28 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 );
 
                 if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
-                    // todo try catch the JSON parse
-                    pendingTask.resolve(JSON.parse(spawnProcess.stdOut));
+                    // no need to catch the JSON parse, we trusted pqtest
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    let resultJson: any = spawnProcess.stdOut;
+
+                    try {
+                        resultJson = JSON.parse(spawnProcess.stdOut);
+                    } catch (e) {
+                        // noop
+                    }
+
+                    if (pendingTask.operation === "info") {
+                        this.currentExtensionInfos.emit(resultJson);
+                    } else if (pendingTask.operation === "list-credential") {
+                        this.currentCredentials.emit(resultJson);
+                    }
+
+                    pendingTask.resolve(resultJson);
                 } else {
                     this.outputChannel.appendErrorLine(`[Task exited abnormally] pqtest ${pendingTask.operation} pid(${
                         spawnProcess.pid
                     }) exit(${processExit.exitCode})
-\t\t\t\t stderr: ${processExit.stderr ?? processExit.stdout}`);
+\t\t\t\t stderr: ${processExit.stderr || processExit.stdout}`);
 
                     pendingTask.reject(new PqTestExecutableTaskError(pqTestExeFullPath, processArgs, processExit));
                 }
@@ -281,10 +311,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 this.eventBus.emit(PqTestExecutableTaskQueueEvents.processExited);
 
                 // alright we can queue another task
-                this.doCheckPidAndDequeueOneTaskIfAny().catch(() => {
-                    // noop
-                    // todo log the err to the telemetry
-                });
+                void this.doCheckPidAndDequeueOneTaskIfAny();
             }
         } else if (event === "rename") {
             // create a new one and watch it
@@ -299,8 +326,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public DisplayExtensionInfo(): Promise<any> {
+    public DisplayExtensionInfo(): Promise<ExtensionInfo> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "info",
@@ -308,8 +334,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public ListCredentials(): Promise<any[]> {
+    public ListCredentials(): Promise<Credential[]> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any[]>({
             operation: "list-credential",
@@ -333,6 +358,91 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             // additionalArgs: [`${JSON.stringify(payload)}`],
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
             pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            stdinStr: payloadStr,
+        });
+    }
+
+    public SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
+        // it feels like set-credential task has to wait for the std input
+        let payloadStr: string = "";
+
+        let additionalArgs: string[] | undefined = [];
+        let theAuthKind: string = createAuthState.AuthenticationKind;
+
+        if (theAuthKind.toLowerCase() === "key") {
+            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
+            payloadStr = `{
+                "AuthenticationKind": "Key",
+                "AuthenticationProperties": {
+                    "Key": "${createAuthState.$$KEY$$!}"
+                },
+                "PrivacySetting": "None",
+                "Permissions": []
+            }`;
+            /* eslint-enable*/
+        } else if (theAuthKind.toLowerCase() === "usernamepassword") {
+            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
+            payloadStr = `{
+                "AuthenticationKind": "UsernamePassword",
+                "AuthenticationProperties": {
+                    "Username": "${createAuthState.$$USERNAME$$!}",
+                    "Password": "${createAuthState.$$PASSWORD$$!}"
+                },
+                "PrivacySetting": "None",
+                "Permissions": []
+            }`;
+            /* eslint-enable*/
+        } else if (theAuthKind.toLowerCase() === "oauth2") {
+            payloadStr = `{
+                "AuthenticationKind": "OAuth2",
+                "AuthenticationProperties": {},
+                "PrivacySetting": "None",
+                "Permissions": []
+            }`;
+
+            additionalArgs.unshift("--interactive");
+        } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {
+            theAuthKind = "anonymous";
+
+            payloadStr = `{
+                "AuthenticationKind": "Anonymous",
+                "AuthenticationProperties": {},
+                "PrivacySetting": "None",
+                "Permissions": []
+            }`;
+        } else if (theAuthKind.toLowerCase() === "windows") {
+            payloadStr = `{
+                "AuthenticationKind": "Windows",
+                "AuthenticationProperties": {},
+                "PrivacySetting": "None",
+                "Permissions": []
+            }`;
+        } else if (theAuthKind.toLowerCase() === "aad") {
+            payloadStr = `{
+                "AuthenticationKind": "Aad",
+                "AuthenticationProperties": {},
+                "PrivacySetting": "None",
+                "Permissions": []
+            }`;
+        }
+
+        additionalArgs.unshift(`-ak=${theAuthKind}`);
+
+        additionalArgs.unshift(
+            `-dsp=${path.basename(createAuthState.pathToConnFile, path.extname(createAuthState.pathToConnFile))}`,
+        );
+
+        additionalArgs.unshift(`-dsk=${createAuthState.DataSourceKind}`);
+
+        // in case latter we turn additionalArgs an empty array, we should set it undefined at that moment
+        if (Array.isArray(additionalArgs) && additionalArgs.length === 0) {
+            additionalArgs = undefined;
+        }
+
+        return this.doEnqueueOneTask<GenericResult>({
+            operation: "set-credential",
+            additionalArgs,
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
             stdinStr: payloadStr,
         });
     }

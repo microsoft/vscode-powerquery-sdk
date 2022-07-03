@@ -39,7 +39,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     );
 
     // lifecycleCommands instance has not been a disposable yet
-    new LifecycleCommands(vscExtCtx, pqTestExecutableTaskQueue, pqSdkOutputChannel);
+    new LifecycleCommands(vscExtCtx, globalEventBus, pqTestExecutableTaskQueue, pqSdkOutputChannel);
 
     const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);
 

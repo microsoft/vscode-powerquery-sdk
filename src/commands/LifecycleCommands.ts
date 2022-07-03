@@ -9,6 +9,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
+
 import {
     ExtensionContext,
     InputBoxOptions,
@@ -18,8 +19,17 @@ import {
     workspace as vscWorkspace,
     WorkspaceFolder,
 } from "vscode";
+import { FSWatcher, WatchEventType } from "fs";
 
-import { AuthenticationKind, GenericResult, IPQTestService } from "common/PQTestService";
+import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
+
+import {
+    AuthenticationKind,
+    CreateAuthState,
+    ExtensionInfo,
+    GenericResult,
+    IPQTestService,
+} from "common/PQTestService";
 import {
     ExtensionConfigurations,
     promptWarningMessageForExternalDependency,
@@ -30,9 +40,11 @@ import {
     resolveSubstitutedValues,
     substitutedWorkspaceFolderBasenameIfNeeded,
 } from "utils/vscodes";
+import { InputStep, MultiStepInput } from "common/MultiStepInput";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
 
+import { debounce } from "utils/debounce";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { NugetVersions } from "utils/NugetVersions";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
@@ -59,6 +71,7 @@ export class LifecycleCommands {
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
+        readonly globalEventBus: GlobalEventBus,
         private readonly pqTestService: IPQTestService,
         private readonly outputChannel: PqSdkOutputChannel,
     ) {
@@ -86,7 +99,7 @@ export class LifecycleCommands {
             ),
             vscode.commands.registerCommand(
                 LifecycleCommands.GenerateAndSetCredentialCommand,
-                this.commandGuard(this.generateAndSetCredentialCommand).bind(this),
+                this.commandGuard(this.generateAndSetCredentialCommandV2).bind(this),
             ),
             vscode.commands.registerCommand(
                 LifecycleCommands.RefreshCredentialCommand,
@@ -102,10 +115,78 @@ export class LifecycleCommands {
             ),
         );
 
-        void this.checkAndTryToUpdatePqTest(true);
+        globalEventBus.subscribeOneEvent(GlobalEvents.workspaces.filesChangedAtWorkspace, () => {
+            if (!this.mezFilesWatcher) {
+                this.watchMezFileIfNeeded();
+            }
+        });
 
+        globalEventBus.subscribeOneEvent(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestExtension, () => {
+            this.watchMezFileIfNeeded();
+        });
+
+        // this.pqTestService.currentExtensionInfos.subscribe(this.handleCurrentExtensionInfoChanged.bind(this));
+
+        // this.pqTestService.currentCredentials.subscribe(
+        //     this.handleCurrentExtensionInfoAndCredentialsChanged.bind(this),
+        // );
+
+        this.watchMezFileIfNeeded();
+
+        void this.checkAndTryToUpdatePqTest(true);
         void this.promptToSetupCurrentWorkspaceIfNeeded();
     }
+
+    private mezFilesWatcher: FSWatcher | undefined = undefined;
+    private debouncedDisplayExtensionInfoCommand: () => Promise<void> = this.commandGuard(
+        this.displayExtensionInfoCommand,
+        3e3,
+    ).bind(this);
+    private watchMezFileIfNeeded(): void {
+        const currentPQTestExtensionFileLocation: string | undefined =
+            ExtensionConfigurations.PQTestExtensionFileLocation;
+
+        const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
+            ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
+            : undefined;
+
+        if (this.mezFilesWatcher) {
+            this.mezFilesWatcher.close();
+            this.mezFilesWatcher = undefined;
+        }
+
+        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+            void this.debouncedDisplayExtensionInfoCommand();
+            const theBaseFolder: string = path.dirname(resolvedPQTestExtensionFileLocation);
+            const theFileName: string = path.basename(resolvedPQTestExtensionFileLocation);
+
+            this.mezFilesWatcher = fs.watch(
+                path.dirname(resolvedPQTestExtensionFileLocation),
+                (event: WatchEventType, filename: string) => {
+                    if (filename === theFileName && event === "change") {
+                        void this.debouncedDisplayExtensionInfoCommand();
+                    }
+
+                    if (!fs.existsSync(theBaseFolder)) {
+                        this.mezFilesWatcher?.close();
+                        this.mezFilesWatcher = undefined;
+
+                        setTimeout(() => {
+                            this.watchMezFileIfNeeded();
+                        }, 1e3);
+                    }
+                },
+            );
+        }
+    }
+
+    // private handleCurrentExtensionInfoChanged(_extensionInfo: ExtensionInfo[]): void {
+    //     void vscode.commands.executeCommand(LifecycleCommands.ListCredentialCommand);
+    // }
+
+    // private handleCurrentExtensionInfoAndCredentialsChanged(_credentials: Credential[]): void {
+    //     // latter check whether we need to suggest a info msg box and ask users input credentials
+    // }
 
     public async promptToSetupCurrentWorkspaceIfNeeded(): Promise<void> {
         const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
@@ -135,10 +216,14 @@ export class LifecycleCommands {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private commandGuard(cb: (...args: any[]) => Promise<any>) {
+    private commandGuard(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return async (...args: any[]): Promise<any> => {
+        cb: (...args: any[]) => Promise<any>,
+        debouncedTime: number = 250,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ): (...args: any[]) => Promise<any> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return debounce(async (...args: any[]): Promise<any> => {
             let pqTestServiceReady: boolean = this.pqTestService.pqTestReady;
 
             if (!pqTestServiceReady) {
@@ -147,7 +232,8 @@ export class LifecycleCommands {
             }
 
             return pqTestServiceReady ? await cb.apply(this, [...args]) : undefined;
-        };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }, debouncedTime).bind(this) as (...args: any[]) => Promise<any>;
     }
 
     public setupCurrentlyOpenedWorkspaceCommand(): void {
@@ -650,9 +736,279 @@ export class LifecycleCommands {
                 const result: any = await this.pqTestService.SetCredential(credentialPayloadStr);
                 this.outputChannel.appendInfoLine(`SetCredential result ${prettifyJson(result)}`);
 
-                await vscode.window.showInformationMessage(
+                void vscode.window.showInformationMessage(
                     `New ${credentialPayload.AuthenticationKind} credential has been generated successfully`,
                 );
+
+                progress.report({ increment: 100 });
+            },
+        );
+    }
+
+    /**
+     * Validate createAuthState and return an error message if any
+     * @param createAuthState
+     */
+    public validateCreateAuthState(createAuthState: CreateAuthState): string | undefined {
+        if (!createAuthState.DataSourceKind || !createAuthState.AuthenticationKind || !createAuthState.pathToConnFile) {
+            return `Invalid credentials missing DataSourceKind, AuthenticationKind or the Connector file`;
+        }
+
+        if (
+            createAuthState.AuthenticationKind.toLowerCase() === "usernamepassword" &&
+            (!createAuthState.$$PASSWORD$$ || !createAuthState.$$USERNAME$$)
+        ) {
+            return `Invalid ${createAuthState.AuthenticationKind} credentials missing username or password property`;
+        }
+
+        if (createAuthState.AuthenticationKind.toLowerCase() === "key" && !createAuthState.$$KEY$$) {
+            return `Invalid ${createAuthState.AuthenticationKind} credentials missing key property`;
+        }
+
+        return undefined;
+    }
+
+    public async generateAndSetCredentialCommandV2(): Promise<void> {
+        const title: string = "Generating one credential";
+
+        await vscode.window.withProgress(
+            {
+                title,
+                location: ProgressLocation.Window,
+            },
+            async (progress: Progress<{ increment?: number; message?: string }>) => {
+                progress.report({ increment: 0 });
+
+                const currentExtensionInfos: ExtensionInfo[] =
+                    this.pqTestService.currentExtensionInfos.value ?? (await this.pqTestService.DisplayExtensionInfo());
+
+                const dataSourceKinds: string[] = Array.from(
+                    new Set(
+                        currentExtensionInfos
+                            .map((oneInfo: ExtensionInfo) =>
+                                oneInfo.DataSources.map(
+                                    (oneDataSource: ExtensionInfo["DataSources"][number]) =>
+                                        oneDataSource.DataSourceKind,
+                                ),
+                            )
+                            .flat(),
+                    ),
+                );
+
+                const authenticationKindMap: Map<string, Set<string>> = new Map();
+
+                currentExtensionInfos.forEach((currentExtensionInfo: ExtensionInfo) => {
+                    currentExtensionInfo.DataSources.forEach((oneDataSource: ExtensionInfo["DataSources"][number]) => {
+                        const currentSetOfTheDataSource: Set<string> =
+                            authenticationKindMap.get(oneDataSource.DataSourceKind) ?? new Set();
+
+                        if (!authenticationKindMap.has(oneDataSource.DataSourceKind)) {
+                            authenticationKindMap.set(oneDataSource.DataSourceKind, currentSetOfTheDataSource);
+                        }
+
+                        oneDataSource.AuthenticationInfos.forEach(
+                            (oneAuthInfo: ExtensionInfo["DataSources"][number]["AuthenticationInfos"][number]) => {
+                                currentSetOfTheDataSource.add(oneAuthInfo.Kind);
+                            },
+                        );
+                    });
+                });
+
+                let connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
+                    "**/*.pq",
+                    "**/{bin,obj}/**",
+                    1e2,
+                );
+
+                connectorQueryFiles = connectorQueryFiles.filter(
+                    (one: vscode.Uri) => one.fsPath.indexOf("query.pq") === -1,
+                );
+
+                async function collectInputs(): Promise<CreateAuthState> {
+                    const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
+                    await MultiStepInput.run((input: MultiStepInput) => populateDataSourceKinds(input, state));
+
+                    return state as CreateAuthState;
+                }
+
+                async function populateDataSourceKinds(
+                    input: MultiStepInput,
+                    state: Partial<CreateAuthState>,
+                ): Promise<InputStep | void> {
+                    if (dataSourceKinds.length) {
+                        const items: vscode.QuickPickItem[] = dataSourceKinds.map((one: string) => ({
+                            label: one,
+                        }));
+
+                        const picked: vscode.QuickPickItem = await input.showQuickPick({
+                            title,
+                            step: 1,
+                            totalSteps: 3,
+                            placeholder: "Choose the data source kind",
+                            activeItem: items[0],
+                            items,
+                        });
+
+                        state.DataSourceKind = picked.label;
+                    } else {
+                        // we did not get a list of data source candidates, thus have to allow users inputting freely
+                        state.DataSourceKind = await input.showInputBox({
+                            title,
+                            step: 1,
+                            totalSteps: 3,
+                            value: "",
+                            prompt: "Data source kind",
+                            validate: (key: string) =>
+                                Promise.resolve(key.length ? undefined : "Data source kind cannot be empty"),
+                        });
+                    }
+
+                    progress.report({ increment: 10 });
+
+                    return (input: MultiStepInput) => populateQueryFile(input, state);
+                }
+
+                async function populateQueryFile(
+                    input: MultiStepInput,
+                    state: Partial<CreateAuthState>,
+                ): Promise<InputStep | void> {
+                    const items: vscode.QuickPickItem[] = connectorQueryFiles.map((one: vscode.Uri) => ({
+                        label: vscode.workspace.asRelativePath(one),
+                        detail: one.fsPath,
+                    }));
+
+                    const picked: vscode.QuickPickItem = await input.showQuickPick({
+                        title,
+                        step: 2,
+                        totalSteps: 3,
+                        placeholder: "Choose a connector file",
+                        activeItem: items[0],
+                        items,
+                    });
+
+                    // eslint-disable-next-line require-atomic-updates
+                    state.pathToConnFile = picked.detail;
+
+                    progress.report({ increment: 10 });
+
+                    return (input: MultiStepInput) => pickAuthenticationKind(input, state);
+                }
+
+                async function pickAuthenticationKind(
+                    input: MultiStepInput,
+                    state: Partial<CreateAuthState>,
+                ): Promise<InputStep | void> {
+                    let currentAuthCandidates: string[] = state.DataSourceKind
+                        ? Array.from(authenticationKindMap.get(state.DataSourceKind) ?? new Set())
+                        : [];
+
+                    // ensure we do got a candidate list
+                    if (currentAuthCandidates.length === 0) {
+                        currentAuthCandidates = ["Anonymous", "Key", "OAuth2", "UsernamePassword", "Windows"];
+                    }
+
+                    const items: vscode.QuickPickItem[] = currentAuthCandidates.map((one: string) => ({
+                        label: one,
+                    }));
+
+                    const picked: vscode.QuickPickItem = await input.showQuickPick({
+                        title,
+                        step: 3,
+                        totalSteps: 3,
+                        placeholder: "Choose a authentication method",
+                        activeItem: items[0],
+                        items,
+                    });
+
+                    // eslint-disable-next-line require-atomic-updates
+                    state.AuthenticationKind = picked.label;
+
+                    progress.report({ increment: 10 });
+
+                    // Key / UserNamePassword needs template
+                    if (state.AuthenticationKind.toLowerCase() === "key") {
+                        return (input: MultiStepInput) => populateKey(input, state);
+                    } else if (state.AuthenticationKind.toLowerCase() === "usernamepassword") {
+                        return (input: MultiStepInput) => populateUsername(input, state);
+                    }
+                }
+
+                async function populateKey(
+                    input: MultiStepInput,
+                    state: Partial<CreateAuthState>,
+                ): Promise<InputStep | void> {
+                    // eslint-disable-next-line require-atomic-updates
+                    state.$$KEY$$ = await input.showInputBox({
+                        title,
+                        step: 4,
+                        totalSteps: 4,
+                        value: "",
+                        prompt: "Authentication key value",
+                        validate: (key: string) =>
+                            Promise.resolve(key.length ? undefined : "Key value cannot be empty"),
+                    });
+
+                    progress.report({ increment: 10 });
+                }
+
+                async function populateUsername(
+                    input: MultiStepInput,
+                    state: Partial<CreateAuthState>,
+                ): Promise<InputStep | void> {
+                    // eslint-disable-next-line require-atomic-updates
+                    state.$$USERNAME$$ = await input.showInputBox({
+                        title,
+                        step: 4,
+                        totalSteps: 5,
+                        value: "",
+                        prompt: "Authentication username value",
+                        validate: (username: string) =>
+                            Promise.resolve(username.length ? undefined : "Username cannot be empty"),
+                    });
+
+                    progress.report({ increment: 10 });
+
+                    return (input: MultiStepInput) => populatePassword(input, state);
+                }
+
+                async function populatePassword(
+                    input: MultiStepInput,
+                    state: Partial<CreateAuthState>,
+                ): Promise<InputStep | void> {
+                    // eslint-disable-next-line require-atomic-updates
+                    state.$$PASSWORD$$ = await input.showInputBox({
+                        title,
+                        step: 5,
+                        totalSteps: 5,
+                        value: "",
+                        prompt: "Authentication password value",
+                        password: true,
+                        validate: (_pw: string) => Promise.resolve(undefined),
+                    });
+
+                    progress.report({ increment: 10 });
+                }
+
+                const createAuthState: CreateAuthState = await collectInputs();
+                const maybeErrorMessage: string | undefined = this.validateCreateAuthState(createAuthState);
+
+                progress.report({ increment: 10 });
+
+                if (maybeErrorMessage) {
+                    void vscode.window.showWarningMessage(maybeErrorMessage);
+                } else {
+                    this.outputChannel.show();
+
+                    const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
+                        createAuthState,
+                    );
+
+                    this.outputChannel.appendInfoLine(`CreateAuthState result ${prettifyJson(result)}`);
+
+                    void vscode.window.showInformationMessage(
+                        `New ${createAuthState.AuthenticationKind} credential has been generated successfully`,
+                    );
+                }
 
                 progress.report({ increment: 100 });
             },

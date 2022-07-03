@@ -63,7 +63,7 @@ export class SpawnedProcess {
             this._cpStream = cp.spawn(command, args, { timeout: DEFAULT_TIMEOUT, ...options });
             additionalOption?.onSpawned && additionalOption?.onSpawned(this._cpStream);
 
-            if (additionalOption?.stdinStr) {
+            if (typeof additionalOption?.stdinStr === "string") {
                 this._cpStream.stdin.write(additionalOption.stdinStr);
                 this._cpStream.stdin.destroy();
             }
