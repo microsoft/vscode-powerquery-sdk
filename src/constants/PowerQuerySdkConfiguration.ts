@@ -6,6 +6,7 @@
  */
 
 import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
 import { ConfigurationTarget } from "vscode";
 
@@ -23,6 +24,10 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
+        if (msbuildFullPath && msbuildFullPath.indexOf(ExtensionConstants.MSBuildExecutableName) !== -1) {
+            msbuildFullPath = path.dirname(msbuildFullPath);
+        }
+
         return config.update(
             ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsMsbuildPath,
             msbuildFullPath,
@@ -34,7 +39,15 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsMsbuildPath);
+        let result: string | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsMsbuildPath,
+        );
+
+        if (result) {
+            result = path.join(result, ExtensionConstants.MSBuildExecutableName);
+        }
+
+        return result;
     },
     setNugetPath(
         nugetFullPath: string | undefined,
@@ -44,6 +57,10 @@ export const ExtensionConfigurations = {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
+
+        if (nugetFullPath && nugetFullPath.indexOf(ExtensionConstants.NugetExecutableName) !== -1) {
+            nugetFullPath = path.dirname(nugetFullPath);
+        }
 
         return config.update(
             ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetPath,
@@ -56,7 +73,15 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetPath);
+        let result: string | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetPath,
+        );
+
+        if (result) {
+            result = path.join(result, ExtensionConstants.NugetExecutableName);
+        }
+
+        return result;
     },
     setPQTestLocation(
         pqTestLocation: string | undefined,
@@ -185,7 +210,7 @@ export function activateExternalConfiguration(promptWarningMessage: boolean = fa
     let hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
 
     if (!hasNugetFromCurConfig) {
-        const nugetFromThePath: string | undefined = findExecutable("nuget", [".exe", ""]);
+        const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
         hasNugetFromCurConfig = Boolean(nugetFromThePath);
         void ExtensionConfigurations.setNugetPath(nugetFromThePath);
     }
