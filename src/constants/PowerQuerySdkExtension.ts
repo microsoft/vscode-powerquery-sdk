@@ -5,6 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as os from "os";
+
 // todo: should we rename it into ms.vscode-powerquery-sdk which is more authentic?
 const ExtensionId: string = "vscode-powerquery-sdk";
 
@@ -51,6 +53,14 @@ function buildPqTestSubPath(pqTestVersion: string): string[] {
 const NugetDownloadUrl: string = "https://www.nuget.org/downloads" as const;
 const MSBuildDownloadUrl: string = "https://visualstudio.microsoft.com/downloads/?q=build+tools" as const;
 
+/**
+ * It might be bash script like:
+ *     `exec /usr/bin/memo /usr/lib/mono/nuget/Nuget.exe`
+ */
+const NugetExecutableName: string = os.type() === "Windows_NT" ? "Nuget.exe" : "nuget";
+
+const MSBuildExecutableName: string = "MSBuild.exe" as const;
+
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConstants = Object.freeze({
     ExtensionId,
@@ -69,4 +79,6 @@ export const ExtensionConstants = Object.freeze({
     ConfigNames,
     NugetDownloadUrl,
     MSBuildDownloadUrl,
+    NugetExecutableName,
+    MSBuildExecutableName,
 });
