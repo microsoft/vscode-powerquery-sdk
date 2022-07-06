@@ -29,7 +29,7 @@ import { convertStringToInteger } from "utils/numbers";
 import { pidIsRunning } from "utils/pids";
 import { resolveSubstitutedValues } from "utils/vscodes";
 
-import { ChildProcessWithoutNullStreams } from "child_process";
+import { ChildProcess } from "child_process";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { PQTestTask } from "common/PowerQueryTask";
 
@@ -206,7 +206,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
                 const processArgs: string[] = buildPqTestArgs(pendingTask);
-                this.outputChannel.appendTraceLine(`[Task found] ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+                this.outputChannel.appendInfoLine(`[Task found] ${pqTestExeFullPath} ${processArgs.join(" ")}`);
 
                 const spawnProcess: SpawnedProcess = new SpawnedProcess(
                     pqTestExeFullPath,
@@ -214,7 +214,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     { cwd: this.pqTestLocation },
                     {
                         stdinStr: pendingTask.stdinStr,
-                        onSpawned: (childProcess: ChildProcessWithoutNullStreams): void => {
+                        onSpawned: (childProcess: ChildProcess): void => {
                             this.doWritePid(`${childProcess.pid}` ?? "nan");
 
                             this.outputChannel.appendTraceLine(
@@ -364,7 +364,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     public SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
         // it feels like set-credential task has to wait for the std input
-        let payloadStr: string = "";
+        let payloadStr: string | undefined = undefined;
 
         let additionalArgs: string[] | undefined = [];
         let theAuthKind: string = createAuthState.AuthenticationKind;
@@ -402,7 +402,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
             additionalArgs.unshift("--interactive");
         } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {
-            theAuthKind = "anonymous";
+            theAuthKind = "Anonymous";
 
             payloadStr = `{
                 "AuthenticationKind": "Anonymous",
@@ -426,13 +426,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             }`;
         }
 
-        additionalArgs.unshift(`-ak=${theAuthKind}`);
+        additionalArgs.unshift(`${theAuthKind}`);
+        additionalArgs.unshift(`-ak`);
 
-        additionalArgs.unshift(
-            `-dsp=${path.basename(createAuthState.pathToConnFile, path.extname(createAuthState.pathToConnFile))}`,
-        );
-
-        additionalArgs.unshift(`-dsk=${createAuthState.DataSourceKind}`);
+        // additionalArgs.unshift(`-dsk=${createAuthState.DataSourceKind}`);
 
         // in case latter we turn additionalArgs an empty array, we should set it undefined at that moment
         if (Array.isArray(additionalArgs) && additionalArgs.length === 0) {
@@ -443,6 +440,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             operation: "set-credential",
             additionalArgs,
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+            pathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
             stdinStr: payloadStr,
         });
     }

@@ -750,8 +750,12 @@ export class LifecycleCommands {
      * @param createAuthState
      */
     public validateCreateAuthState(createAuthState: CreateAuthState): string | undefined {
-        if (!createAuthState.DataSourceKind || !createAuthState.AuthenticationKind || !createAuthState.pathToConnFile) {
-            return `Invalid credentials missing DataSourceKind, AuthenticationKind or the Connector file`;
+        if (
+            !createAuthState.DataSourceKind ||
+            !createAuthState.AuthenticationKind ||
+            !createAuthState.PathToQueryFile
+        ) {
+            return `Invalid credentials missing DataSourceKind, AuthenticationKind or the Query file`;
         }
 
         if (
@@ -814,14 +818,10 @@ export class LifecycleCommands {
                     });
                 });
 
-                let connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-                    "**/*.pq",
+                const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
+                    "**/*.query.pq",
                     "**/{bin,obj}/**",
                     1e2,
-                );
-
-                connectorQueryFiles = connectorQueryFiles.filter(
-                    (one: vscode.Uri) => one.fsPath.indexOf("query.pq") === -1,
                 );
 
                 async function collectInputs(): Promise<CreateAuthState> {
@@ -887,7 +887,7 @@ export class LifecycleCommands {
                     });
 
                     // eslint-disable-next-line require-atomic-updates
-                    state.pathToConnFile = picked.detail;
+                    state.PathToQueryFile = picked.detail;
 
                     progress.report({ increment: 10 });
 
@@ -961,7 +961,7 @@ export class LifecycleCommands {
                         step: 4,
                         totalSteps: 5,
                         value: "",
-                        prompt: "Authentication username value",
+                        prompt: "Username",
                         validate: (username: string) =>
                             Promise.resolve(username.length ? undefined : "Username cannot be empty"),
                     });
@@ -981,7 +981,7 @@ export class LifecycleCommands {
                         step: 5,
                         totalSteps: 5,
                         value: "",
-                        prompt: "Authentication password value",
+                        prompt: "Password",
                         password: true,
                         validate: (_pw: string) => Promise.resolve(undefined),
                     });

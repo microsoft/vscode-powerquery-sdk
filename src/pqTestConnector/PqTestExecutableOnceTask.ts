@@ -12,7 +12,7 @@ import * as vscode from "vscode";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
 import { buildPqTestArgs } from "common/PQTestService";
-import { ChildProcessWithoutNullStreams } from "child_process";
+import { ChildProcess } from "child_process";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { IDisposable } from "common/Disposable";
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
@@ -148,7 +148,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 { cwd: path.dirname(pqTestExeFullPath) },
                 {
                     stdinStr: task.stdinStr,
-                    onSpawned: (childProcess: ChildProcessWithoutNullStreams): void => {
+                    onSpawned: (childProcess: ChildProcess): void => {
                         this._threadId = childProcess.pid ?? NaN;
 
                         this.handleOutputStr(

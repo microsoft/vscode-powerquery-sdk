@@ -20,19 +20,7 @@ export interface DataSource {
     path: string;
 }
 
-export type AuthenticationKind =
-    | "Anonymous"
-    | "Key"
-    | "Aad"
-    | "OAuth2"
-    | "UsernamePassword"
-    | "Windows"
-    | "anonymous"
-    | "key"
-    | "aad"
-    | "oauth2"
-    | "usernamepassword"
-    | "windows";
+export type AuthenticationKind = "Anonymous" | "Key" | "Aad" | "OAuth2" | "UsernamePassword" | "Windows";
 
 export interface Credential {
     DataSource: DataSource;
@@ -82,12 +70,9 @@ export interface ExtensionInfo {
 }
 
 export interface CreateAuthState {
-    title: string;
-    step: number;
-    totalSteps: number;
     DataSourceKind: string;
     AuthenticationKind: string;
-    pathToConnFile: string;
+    PathToQueryFile: string;
     // for the key template
     $$KEY$$?: string;
     // for the username password template

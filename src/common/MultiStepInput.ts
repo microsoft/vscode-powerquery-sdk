@@ -5,16 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import {
-    Disposable,
-    InputBox,
-    QuickInput,
-    QuickInputButton,
-    QuickInputButtons,
-    QuickPick,
-    QuickPickItem,
-    window,
-} from "vscode";
+import * as vscode from "vscode";
 
 enum InputFlowAction {
     BACK,
@@ -24,14 +15,14 @@ enum InputFlowAction {
 
 export type InputStep = (input: MultiStepInput) => Thenable<InputStep | void>;
 
-interface QuickPickParameters<T extends QuickPickItem> {
+interface QuickPickParameters<T extends vscode.QuickPickItem> {
     title: string;
     step: number;
     totalSteps: number;
     items: T[];
     activeItem?: T;
     placeholder: string;
-    buttons?: QuickInputButton[];
+    buttons?: vscode.QuickInputButton[];
     shouldResume?: () => Thenable<boolean>;
 }
 
@@ -43,7 +34,7 @@ interface InputBoxParameters {
     prompt: string;
     password?: boolean;
     validate: (value: string) => Promise<string | undefined>;
-    buttons?: QuickInputButton[];
+    buttons?: vscode.QuickInputButton[];
     shouldResume?: () => Thenable<boolean>;
 }
 
@@ -54,7 +45,7 @@ export class MultiStepInput {
         return input.stepThrough(start);
     }
 
-    private current?: QuickInput;
+    private current?: vscode.QuickInput;
     private steps: InputStep[] = [];
 
     private async stepThrough(start: InputStep): Promise<void> {
@@ -90,7 +81,7 @@ export class MultiStepInput {
         }
     }
 
-    async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({
+    async showQuickPick<T extends vscode.QuickPickItem, P extends QuickPickParameters<T>>({
         title,
         step,
         totalSteps,
@@ -100,7 +91,7 @@ export class MultiStepInput {
         buttons,
         shouldResume,
     }: P): Promise<T | (P extends { buttons: (infer I)[] } ? I : never)> {
-        const disposables: Disposable[] = [];
+        const disposables: vscode.Disposable[] = [];
 
         try {
             return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>(
@@ -109,7 +100,7 @@ export class MultiStepInput {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     reject: (reason?: any) => void,
                 ) => {
-                    const input: QuickPick<T> = window.createQuickPick<T>();
+                    const input: vscode.QuickPick<T> = vscode.window.createQuickPick<T>();
                     input.title = title;
                     input.step = step;
                     input.totalSteps = totalSteps;
@@ -120,11 +111,14 @@ export class MultiStepInput {
                         input.activeItems = [activeItem];
                     }
 
-                    input.buttons = [...(this.steps.length > 1 ? [QuickInputButtons.Back] : []), ...(buttons || [])];
+                    input.buttons = [
+                        ...(this.steps.length > 1 ? [vscode.QuickInputButtons.Back] : []),
+                        ...(buttons || []),
+                    ];
 
                     disposables.push(
-                        input.onDidTriggerButton((item: QuickInputButton) => {
-                            if (item === QuickInputButtons.Back) {
+                        input.onDidTriggerButton((item: vscode.QuickInputButton) => {
+                            if (item === vscode.QuickInputButtons.Back) {
                                 reject(InputFlowAction.BACK);
                             } else {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,7 +146,7 @@ export class MultiStepInput {
                 },
             );
         } finally {
-            disposables.forEach((d: Disposable) => d.dispose());
+            disposables.forEach((d: vscode.Disposable) => d.dispose());
         }
     }
 
@@ -167,7 +161,7 @@ export class MultiStepInput {
         password,
         shouldResume,
     }: P): Promise<string | (P extends { buttons: (infer I)[] } ? I : never)> {
-        const disposables: Disposable[] = [];
+        const disposables: vscode.Disposable[] = [];
 
         try {
             return await new Promise<string | (P extends { buttons: (infer I)[] } ? I : never)>(
@@ -176,21 +170,27 @@ export class MultiStepInput {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     reject: (reason?: any) => void,
                 ) => {
-                    const input: InputBox = window.createInputBox();
+                    const input: vscode.InputBox = vscode.window.createInputBox();
                     input.title = title;
                     input.step = step;
                     input.totalSteps = totalSteps;
                     input.value = value || "";
                     input.prompt = prompt;
                     input.password = Boolean(password);
-                    input.buttons = [...(this.steps.length > 1 ? [QuickInputButtons.Back] : []), ...(buttons || [])];
+
+                    input.buttons = [
+                        ...(this.steps.length > 1 ? [vscode.QuickInputButtons.Back] : []),
+                        ...(buttons || []),
+                    ];
+
                     let validating: Promise<string | undefined> = validate("");
 
                     disposables.push(
-                        input.onDidTriggerButton((item: QuickInputButton) => {
-                            if (item === QuickInputButtons.Back) {
+                        input.onDidTriggerButton((item: vscode.QuickInputButton) => {
+                            if (item === vscode.QuickInputButtons.Back) {
                                 reject(InputFlowAction.BACK);
                             } else {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 resolve(<any>item);
                             }
                         }),
@@ -237,7 +237,7 @@ export class MultiStepInput {
                 },
             );
         } finally {
-            disposables.forEach((d: Disposable) => d.dispose());
+            disposables.forEach((d: vscode.Disposable) => d.dispose());
         }
     }
 }
