@@ -858,6 +858,7 @@ export class LifecycleCommands {
                             totalSteps: 3,
                             value: "",
                             prompt: "Data source kind",
+                            ignoreFocusOut: true,
                             validate: (key: string) =>
                                 Promise.resolve(key.length ? undefined : "Data source kind cannot be empty"),
                         });
@@ -944,6 +945,7 @@ export class LifecycleCommands {
                         totalSteps: 4,
                         value: "",
                         prompt: "Authentication key value",
+                        ignoreFocusOut: true,
                         validate: (key: string) =>
                             Promise.resolve(key.length ? undefined : "Key value cannot be empty"),
                     });
@@ -962,6 +964,7 @@ export class LifecycleCommands {
                         totalSteps: 5,
                         value: "",
                         prompt: "Username",
+                        ignoreFocusOut: true,
                         validate: (username: string) =>
                             Promise.resolve(username.length ? undefined : "Username cannot be empty"),
                     });
@@ -981,6 +984,7 @@ export class LifecycleCommands {
                         step: 5,
                         totalSteps: 5,
                         value: "",
+                        ignoreFocusOut: true,
                         prompt: "Password",
                         password: true,
                         validate: (_pw: string) => Promise.resolve(undefined),

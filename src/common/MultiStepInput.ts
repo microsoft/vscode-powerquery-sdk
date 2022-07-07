@@ -22,6 +22,7 @@ interface QuickPickParameters<T extends vscode.QuickPickItem> {
     items: T[];
     activeItem?: T;
     placeholder: string;
+    canSelectMany?: boolean;
     buttons?: vscode.QuickInputButton[];
     shouldResume?: () => Thenable<boolean>;
 }
@@ -32,6 +33,7 @@ interface InputBoxParameters {
     totalSteps: number;
     value: string;
     prompt: string;
+    ignoreFocusOut?: boolean;
     password?: boolean;
     validate: (value: string) => Promise<string | undefined>;
     buttons?: vscode.QuickInputButton[];
@@ -87,6 +89,7 @@ export class MultiStepInput {
         totalSteps,
         items,
         activeItem,
+        canSelectMany,
         placeholder,
         buttons,
         shouldResume,
@@ -104,6 +107,7 @@ export class MultiStepInput {
                     input.title = title;
                     input.step = step;
                     input.totalSteps = totalSteps;
+                    input.canSelectMany = Boolean(canSelectMany);
                     input.placeholder = placeholder;
                     input.items = items;
 
@@ -156,6 +160,7 @@ export class MultiStepInput {
         totalSteps,
         value,
         prompt,
+        ignoreFocusOut,
         validate,
         buttons,
         password,
@@ -176,6 +181,7 @@ export class MultiStepInput {
                     input.totalSteps = totalSteps;
                     input.value = value || "";
                     input.prompt = prompt;
+                    input.ignoreFocusOut = Boolean(ignoreFocusOut);
                     input.password = Boolean(password);
 
                     input.buttons = [

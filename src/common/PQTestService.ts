@@ -88,10 +88,7 @@ export interface IPQTestService {
     readonly currentCredentials: ValueEventEmitter<Credential[]>;
     readonly onPowerQueryTestLocationChanged: () => void;
     readonly DeleteCredential: () => Promise<GenericResult>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly DisplayExtensionInfo: () => Promise<ExtensionInfo>;
-    // todo need to settle the credential types
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly ListCredentials: () => Promise<Credential[]>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly GenerateCredentialTemplate: () => Promise<any>;
