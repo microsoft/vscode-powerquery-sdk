@@ -237,7 +237,23 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     let resultJson: any = spawnProcess.stdOut;
 
                     try {
-                        resultJson = JSON.parse(spawnProcess.stdOut);
+                        let stdOutStr: string = spawnProcess.stdOut;
+
+                        // preserve newlines, etc - use valid JSON
+                        stdOutStr = stdOutStr
+                            .replace(/\\n/g, "\\n")
+                            .replace(/\\'/g, "\\'")
+                            .replace(/\\"/g, '\\"')
+                            .replace(/\\&/g, "\\&")
+                            .replace(/\\r/g, "\\r")
+                            .replace(/\\t/g, "\\t")
+                            .replace(/\\b/g, "\\b")
+                            .replace(/\\f/g, "\\f");
+
+                        // remove non-printable and other non-valid JSON chars
+                        // eslint-disable-next-line no-control-regex
+                        stdOutStr = stdOutStr.replace(/[\u0000-\u0019]+/g, "");
+                        resultJson = JSON.parse(stdOutStr);
                     } catch (e) {
                         // noop
                     }
