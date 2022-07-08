@@ -212,7 +212,7 @@ export async function getAnyPqMProjFileBeneathTheFirstWorkspace(): Promise<vscod
     const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
     if (theFirstWorkspace) {
-        return vscode.workspace.findFiles("*.{m,pq,mproj,proj}", null, 10);
+        return vscode.workspace.findFiles("*.{m,pq,mproj,proj}", "**/bin/**", 10);
     }
 
     return [];

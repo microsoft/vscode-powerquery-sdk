@@ -6,7 +6,7 @@
  */
 
 import * as cp from "child_process";
-import { ChildProcessWithoutNullStreams, SpawnOptionsWithoutStdio } from "child_process";
+import { ChildProcess, SpawnOptionsWithoutStdio } from "child_process";
 
 export interface ProcessExit {
     stdout: string;
@@ -17,7 +17,7 @@ export interface ProcessExit {
 
 export interface AdditionalOption {
     stdinStr?: string;
-    onSpawned?: (childProcess: ChildProcessWithoutNullStreams) => void;
+    onSpawned?: (childProcess: ChildProcess) => void;
     onStdOut?: (data: Buffer) => void;
     onStdErr?: (data: Buffer) => void;
     onExit?: (code: number | null, signal: NodeJS.Signals | null, stdErr: string, stdOut: string) => void;
@@ -27,7 +27,7 @@ const DEFAULT_TIMEOUT: number = 3e5; // 5mins
 
 export class SpawnedProcess {
     private readonly _promise: Promise<ProcessExit>;
-    private _cpStream: ChildProcessWithoutNullStreams | undefined;
+    private _cpStream: ChildProcess | undefined;
     private _stdout: string = "";
     private _stderr: string = "";
     private _exitCode: number | null = null;
@@ -37,7 +37,7 @@ export class SpawnedProcess {
         return this._promise;
     }
 
-    get cpStream(): ChildProcessWithoutNullStreams | undefined {
+    get cpStream(): ChildProcess | undefined {
         return this._cpStream;
     }
 
@@ -60,25 +60,30 @@ export class SpawnedProcess {
         additionalOption?: AdditionalOption,
     ) {
         this._promise = new Promise<ProcessExit>((res: (value: PromiseLike<ProcessExit> | ProcessExit) => void) => {
-            this._cpStream = cp.spawn(command, args, { timeout: DEFAULT_TIMEOUT, ...options });
-            additionalOption?.onSpawned && additionalOption?.onSpawned(this._cpStream);
+            const theCpStream: ChildProcess = cp.spawn(command, args ?? [], {
+                timeout: DEFAULT_TIMEOUT,
+                ...options,
+                stdio: [typeof additionalOption?.stdinStr === "string" ? "pipe" : "ignore", "pipe", "pipe"],
+            });
 
-            if (additionalOption?.stdinStr) {
-                this._cpStream.stdin.write(additionalOption.stdinStr);
-                this._cpStream.stdin.destroy();
+            additionalOption?.onSpawned && additionalOption?.onSpawned(theCpStream);
+
+            if (typeof additionalOption?.stdinStr === "string") {
+                theCpStream.stdin?.write(additionalOption.stdinStr);
+                theCpStream.stdin?.destroy();
             }
 
-            this._cpStream.stdout.on("data", (data: Buffer) => {
+            theCpStream.stdout?.on("data", (data: Buffer) => {
                 additionalOption?.onStdOut && additionalOption?.onStdOut(data);
                 this._stdout = this._stdout.concat(data.toString("utf8"));
             });
 
-            this._cpStream.stderr.on("data", (data: Buffer) => {
+            theCpStream.stderr?.on("data", (data: Buffer) => {
                 additionalOption?.onStdErr && additionalOption?.onStdErr(data);
                 this._stderr = this._stderr.concat(data.toString("utf8"));
             });
 
-            this._cpStream.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+            theCpStream.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                 this._exitCode = code;
                 this._signal = signal;
                 additionalOption?.onExit && additionalOption?.onExit(code, signal, this._stderr, this._stdout);
@@ -90,6 +95,8 @@ export class SpawnedProcess {
                     signal: this._signal,
                 });
             });
+
+            this._cpStream = theCpStream;
         });
     }
 }

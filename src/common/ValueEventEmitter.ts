@@ -15,11 +15,25 @@ export type ExtractValueEventEmitterTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp ext
 
 type ValueUpdateListener<T> = (value: T) => void;
 
+interface Options {
+    initOnFirstEmit: boolean;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ValueEventEmitter<T = any> implements IDisposable {
     private _listeners: ValueUpdateListener<T>[] = [];
+    private resolveInit: ((value: T) => void) | undefined = undefined;
+    public readonly init: Promise<T>;
 
-    constructor(public value: T) {}
+    constructor(public value: T, private readonly options: Partial<Options> = {}) {
+        if (this.options.initOnFirstEmit) {
+            this.init = new Promise((resolve: (value: T) => void) => {
+                this.resolveInit = resolve;
+            });
+        } else {
+            this.init = Promise.resolve(value);
+        }
+    }
 
     subscribe(listener: ValueUpdateListener<T>): void {
         this._listeners.push(listener);
@@ -31,6 +45,12 @@ export class ValueEventEmitter<T = any> implements IDisposable {
 
     emit(value?: T): void {
         this.value = value ?? this.value;
+
+        if (this.resolveInit) {
+            this.resolveInit(this.value);
+            this.resolveInit = undefined;
+        }
+
         this._listeners.forEach((l: ValueUpdateListener<T>) => l(this.value));
     }
 
