@@ -23,6 +23,7 @@ export class NugetVersions {
 
         let result: NugetVersions = NugetVersions.ZERO_VERSION;
 
+        NugetStdOutputOfVersionRegExp.lastIndex = 0;
         const matched: RegExpMatchArray | null = NugetStdOutputOfVersionRegExp.exec(stdOutput);
 
         if (matched && matched.length === 5) {

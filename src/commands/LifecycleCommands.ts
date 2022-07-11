@@ -468,11 +468,19 @@ export class LifecycleCommands {
         }
     }
 
+    /**
+     * check and only update pqTest if needed like: not ready, not existing, the latest one doesn't exist either
+     * @param skipQueryDialog
+     * @private
+     */
     private async checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
         const maybeNewVersion: string | undefined = await this.findMaybeNewPqSdkVersion();
 
+        // we should not update to the latest unless the latest nuget doesn't exist on start
+        // users might just want to use the previous one purposely
+        // therefore do not try to update when, like, pqTestLocation.indexOf(maybeNewVersion) === -1
         if (!pqTestLocation || !this.pqTestService.pqTestReady || !this.nugetPqTestExistsSync(maybeNewVersion)) {
             const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(maybeNewVersion);
 
@@ -510,6 +518,10 @@ export class LifecycleCommands {
         return pqTestLocation;
     }
 
+    /**
+     * eagerly update the pqTest as long as currently it is not configured to the latest
+     * @param maybeNextVersion
+     */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
         if (!maybeNextVersion) {
             maybeNextVersion = await this.findMaybeNewPqSdkVersion();
@@ -518,7 +530,15 @@ export class LifecycleCommands {
         let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
         // determine whether we should trigger to seize or not
-        if (!this.nugetPqTestExistsSync(maybeNextVersion)) {
+        if (
+            !this.nugetPqTestExistsSync(maybeNextVersion) ||
+            !pqTestLocation ||
+            // when manually update, we should eagerly update as long as current path is not of the latest version
+            //  like,
+            //      users might want to switch back to the latest some time after
+            //      they temporarily switch back to the previous version
+            (maybeNextVersion && pqTestLocation.indexOf(maybeNextVersion) === -1)
+        ) {
             const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(maybeNextVersion);
 
             if (pqTestExecutableFullPath) {
