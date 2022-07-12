@@ -255,14 +255,11 @@ export class LifecycleCommands {
             tasks.push(
                 (async (): Promise<void> => {
                     const mezUrlsBeneathBin: Uri[] = await vscWorkspace.findFiles("bin/**/*.{mez}", null, 1);
+                    const oldMProjFiles: Uri[] = await vscWorkspace.findFiles("*.{mproj}", null, 1);
 
-                    let mezExtensionPath: string = path.join(
-                        "${workspaceFolder}",
-                        "bin",
-                        "AnyCPU",
-                        "Debug",
-                        "${workspaceFolderBasename}.mez",
-                    );
+                    let mezExtensionPath: string = oldMProjFiles.length
+                        ? path.join("${workspaceFolder}", "bin", "Debug", "${workspaceFolderBasename}.mez")
+                        : path.join("${workspaceFolder}", "bin", "AnyCPU", "Debug", "${workspaceFolderBasename}.mez");
 
                     if (mezUrlsBeneathBin.length) {
                         const relativePath: string = vscWorkspace.asRelativePath(mezUrlsBeneathBin[0], false);
