@@ -6,8 +6,11 @@
  */
 
 import * as vscode from "vscode";
+
+import { covertExtensionInfoToLibraryJson, ExtensionInfo } from "common/PQTestService";
 import { activateExternalConfiguration } from "constants/PowerQuerySdkConfiguration";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
+import { getFirstWorkspaceFolder } from "utils/vscodes";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
@@ -18,6 +21,9 @@ import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQ
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
+
     activateExternalConfiguration(true);
     // let's make extension::activate serves as minimum as possible:
     // for now:
@@ -32,6 +38,18 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         globalEventBus,
         pqSdkOutputChannel,
     );
+
+    pqTestExecutableTaskQueue.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {
+        const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
+
+        if (theUri) {
+            vscPowerQuery.onModuleLibraryUpdated(theUri.toString(), covertExtensionInfoToLibraryJson(infos));
+        }
+    });
+
+    if (pqTestExecutableTaskQueue.currentExtensionInfos.value.length) {
+        pqTestExecutableTaskQueue.currentExtensionInfos.emit();
+    }
 
     const pqTaskProvider: IDisposable = vscode.tasks.registerTaskProvider(
         PowerQueryTaskProvider.TaskType,

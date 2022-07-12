@@ -30,6 +30,14 @@ export interface Credential {
     Properties: Record<string, any>;
 }
 
+export interface FunctionParametersField {
+    FiledName: string;
+    Type: string;
+    IsRequired?: string;
+    FieldCaption?: string;
+    FieldDescription?: string;
+}
+
 export interface ExtensionInfo {
     Source: string;
     LibraryId: string;
@@ -41,7 +49,7 @@ export interface ExtensionInfo {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [key: string]: any;
     };
-    Members: Array<{
+    Members: ReadonlyArray<{
         Name: string;
         Type: string;
         DataSourceKind: string;
@@ -57,28 +65,19 @@ export interface ExtensionInfo {
             LongDescription?: string;
             Category?: string;
         };
-        FunctionParameters: Array<{
+        FunctionParameters?: ReadonlyArray<{
             Name: string;
             ParameterType: string;
             IsRequired: boolean;
             IsNullable: boolean;
-            Caption: boolean;
+            Caption?: boolean;
             Description?: string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            SampleValues?: Array<any>;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            AllowedValues?: Array<any>;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            DefaultValue?: any;
-            Fields?: Array<{
-                FiledName: string;
-                Type: string;
-                IsRequired?: string;
-                FieldCaption?: string;
-                FieldDescription?: string;
-            }>;
-            EnumNames?: Array<string>;
-            EnumCaptions?: Array<string>;
+            SampleValues?: ReadonlyArray<string | number>;
+            AllowedValues?: ReadonlyArray<string | number>;
+            DefaultValue?: string | number;
+            Fields?: Array<FunctionParametersField>;
+            EnumNames?: ReadonlyArray<string>;
+            EnumCaptions?: ReadonlyArray<string | null>;
         }>;
         CompletionItemType: number;
         IsDataSource: boolean;
@@ -132,6 +131,78 @@ export interface IPQTestService {
 }
 
 const CommonArgs: string[] = ["--prettyPrint"];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function covertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[]): any[] {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result: any[] = [];
+
+    for (const oneInfo of extensionInfos) {
+        if (oneInfo.Members && Array.isArray(oneInfo.Members)) {
+            for (const oneInfoMemeber of oneInfo.Members) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const one: any = {};
+
+                one.name = oneInfoMemeber.Name;
+                one.completionItemType = oneInfoMemeber.CompletionItemType;
+                one.isDataSource = oneInfoMemeber.IsDataSource;
+                one.dataType = oneInfoMemeber.DataTypeOrReturnType;
+
+                if (oneInfoMemeber.Documentation && Array.isArray(oneInfoMemeber.Documentation)) {
+                    one.documentation = [];
+
+                    for (const oneInfoMemberDoc of oneInfoMemeber.Documentation) {
+                        one.documentation.push({
+                            description: oneInfoMemberDoc.Description ?? null,
+                            longDescription: oneInfoMemberDoc.LongDescription ?? null,
+                            category: oneInfoMemberDoc.Category ?? null,
+                        });
+                    }
+                } else {
+                    one.documentation = null;
+                }
+
+                if (oneInfoMemeber.FunctionParameters && Array.isArray(oneInfoMemeber.FunctionParameters)) {
+                    one.functionParameters = [];
+
+                    for (const oneInfoMemberPara of oneInfoMemeber.FunctionParameters) {
+                        one.functionParameters.push({
+                            name: oneInfoMemberPara.Name,
+                            parameterType: oneInfoMemberPara.ParameterType,
+                            isRequired: oneInfoMemberPara.IsRequired,
+                            isNullable: oneInfoMemberPara.IsNullable,
+                            caption: oneInfoMemberPara.Caption ?? null,
+                            description: oneInfoMemberPara.Description ?? null,
+                            sampleValues: oneInfoMemberPara.SampleValues ?? null,
+                            allowedValues: oneInfoMemberPara.AllowedValues ?? null,
+                            defaultValue: oneInfoMemberPara.DefaultValue ?? null,
+                            fields:
+                                oneInfoMemberPara.Fields && Array.isArray(oneInfoMemberPara.Fields)
+                                    ? oneInfoMemberPara.Fields.map(
+                                          (oneInfoMemberParaField: FunctionParametersField) => ({
+                                              fieldName: oneInfoMemberParaField.FiledName,
+                                              type: oneInfoMemberParaField.Type,
+                                              isRequired: Boolean(oneInfoMemberParaField.IsRequired),
+                                              fieldCaption: oneInfoMemberParaField.FieldCaption ?? null,
+                                              fieldDescription: oneInfoMemberParaField.FieldDescription ?? null,
+                                          }),
+                                      )
+                                    : null,
+                            enumNames: oneInfoMemberPara.EnumNames ?? null,
+                            enumCaptions: oneInfoMemberPara.EnumCaptions ?? null,
+                        });
+                    }
+                } else {
+                    one.functionParameters = null;
+                }
+
+                result.push(one);
+            }
+        }
+    }
+
+    return result;
+}
 
 export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {
     const args: string[] = CommonArgs.slice();
