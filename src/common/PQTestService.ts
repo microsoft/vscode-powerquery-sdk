@@ -52,6 +52,37 @@ export interface ExtensionInfo {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [key: string]: any;
         };
+        Documentation?: {
+            Description?: string;
+            LongDescription?: string;
+            Category?: string;
+        };
+        FunctionParameters: Array<{
+            Name: string;
+            ParameterType: string;
+            IsRequired: boolean;
+            IsNullable: boolean;
+            Caption: boolean;
+            Description?: string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            SampleValues?: Array<any>;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            AllowedValues?: Array<any>;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            DefaultValue?: any;
+            Fields?: Array<{
+                FiledName: string;
+                Type: string;
+                IsRequired?: string;
+                FieldCaption?: string;
+                FieldDescription?: string;
+            }>;
+            EnumNames?: Array<string>;
+            EnumCaptions?: Array<string>;
+        }>;
+        CompletionItemType: number;
+        IsDataSource: boolean;
+        DataTypeOrReturnType: string;
     }>;
     DataSources: Array<{
         DataSourceKind: string;
