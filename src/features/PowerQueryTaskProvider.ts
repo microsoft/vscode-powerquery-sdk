@@ -7,6 +7,7 @@
 
 import * as vscode from "vscode";
 import { buildPqTestArgs, IPQTestService } from "common/PQTestService";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { PowerQueryTaskDefinition } from "common/PowerQueryTask";
 
@@ -82,7 +83,12 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         const result: vscode.Task[] = [];
 
         buildTasks.forEach((taskDef: PowerQueryTaskDefinition) => {
-            result.push(PowerQueryTaskProvider.getTaskForBuildTaskDefinition(taskDef));
+            result.push(
+                PowerQueryTaskProvider.getTaskForBuildTaskDefinition(
+                    taskDef,
+                    ExtensionConfigurations.msbuildPath ?? "msbuild",
+                ),
+            );
         });
 
         if (!this.pqTestService.pqTestReady) {
@@ -102,7 +108,13 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         const taskDef: PowerQueryTaskDefinition = task.definition as PowerQueryTaskDefinition;
 
         if (taskDef.operation === "msbuild") {
-            return PowerQueryTaskProvider.getTaskForBuildTaskDefinition(taskDef);
+            const msbuildFullPath: string | undefined = ExtensionConfigurations.msbuildPath;
+
+            if (msbuildFullPath && !token.isCancellationRequested) {
+                return PowerQueryTaskProvider.getTaskForBuildTaskDefinition(taskDef, msbuildFullPath);
+            }
+
+            return undefined;
         }
 
         const pqtestExe: string = this.pqTestService.pqTestFullPath;
@@ -129,12 +141,12 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         );
     }
 
-    private static getTaskForBuildTaskDefinition(taskDef: PowerQueryTaskDefinition): vscode.Task {
+    private static getTaskForBuildTaskDefinition(taskDef: PowerQueryTaskDefinition, msbuildExe: string): vscode.Task {
         // TODO: To support SDK based build we'll need to:
         // - Check the kind on the taskDef
         // - Change ShellExecution to CustomExecution
         // - Update the problem matcher
-        const execution: vscode.ShellExecution = new vscode.ShellExecution("msbuild");
+        const execution: vscode.ProcessExecution = new vscode.ProcessExecution(msbuildExe);
 
         if (taskDef.additionalArgs && taskDef.additionalArgs.length > 0) {
             execution.args.push(...taskDef.additionalArgs);

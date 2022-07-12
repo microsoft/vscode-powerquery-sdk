@@ -202,12 +202,12 @@ export class LifecycleCommands {
             ) {
                 // we need to suggest setup for newly opened folder
                 const result: string | undefined = await vscode.window.showInformationMessage(
-                    "We noticed the currently opened workspace has not been setup but of MQuery files, Would you like to setup?",
-                    "Setup",
+                    "Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?",
+                    "Enable",
                     "Cancel",
                 );
 
-                if (result === "Setup") {
+                if (result === "Enable") {
                     void vscode.commands.executeCommand(LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand);
                 }
             }
@@ -255,14 +255,11 @@ export class LifecycleCommands {
             tasks.push(
                 (async (): Promise<void> => {
                     const mezUrlsBeneathBin: Uri[] = await vscWorkspace.findFiles("bin/**/*.{mez}", null, 1);
+                    const oldMProjFiles: Uri[] = await vscWorkspace.findFiles("*.{mproj}", null, 1);
 
-                    let mezExtensionPath: string = path.join(
-                        "${workspaceFolder}",
-                        "bin",
-                        "AnyCPU",
-                        "Debug",
-                        "${workspaceFolderBasename}.mez",
-                    );
+                    let mezExtensionPath: string = oldMProjFiles.length
+                        ? path.join("${workspaceFolder}", "bin", "Debug", "${workspaceFolderBasename}.mez")
+                        : path.join("${workspaceFolder}", "bin", "AnyCPU", "Debug", "${workspaceFolderBasename}.mez");
 
                     if (mezUrlsBeneathBin.length) {
                         const relativePath: string = vscWorkspace.asRelativePath(mezUrlsBeneathBin[0], false);
