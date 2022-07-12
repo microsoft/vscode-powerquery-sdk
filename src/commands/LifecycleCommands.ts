@@ -202,12 +202,12 @@ export class LifecycleCommands {
             ) {
                 // we need to suggest setup for newly opened folder
                 const result: string | undefined = await vscode.window.showInformationMessage(
-                    "We noticed the currently opened workspace has not been setup but of MQuery files, Would you like to setup?",
-                    "Setup",
+                    "Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?",
+                    "Enable",
                     "Cancel",
                 );
 
-                if (result === "Setup") {
+                if (result === "Enable") {
                     void vscode.commands.executeCommand(LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand);
                 }
             }
