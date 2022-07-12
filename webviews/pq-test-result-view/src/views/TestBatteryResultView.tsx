@@ -43,14 +43,13 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
             }
         });
 
-        ["StartTime", "EndTime"].forEach(key => {
-            if (testRunExecution[key]) {
-                const theDate = new Date(testRunExecution[key]);
-                result.push({
-                    Item: key,
-                    Value: `${theDate.toLocaleDateString()} ${theDate.toLocaleTimeString()}`,
-                });
-            }
+        const startTime: Date = addFormattedDate(testRunExecution, "StartTime", result);
+        const endTime: Date = addFormattedDate(testRunExecution, "EndTime", result);
+        const duration = new Date(endTime.valueOf() - startTime.valueOf());
+
+        result.push({
+            Item: "Duration",
+            Value: duration.toISOString().substring(11, 23), // display HH:mm:ss.sss
         });
 
         return result;
@@ -91,3 +90,13 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         </>
     );
 });
+
+function addFormattedDate(testRunExecution: any, dateKey: string, items: GeneralDetailItem[]): Date {
+    const theDate: Date = new Date(testRunExecution[dateKey]);
+    items.push({
+        Item: dateKey,
+        Value: `${theDate.toLocaleDateString()} ${theDate.toLocaleTimeString()}`,
+    });
+
+    return theDate;
+}
