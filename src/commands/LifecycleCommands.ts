@@ -701,7 +701,7 @@ export class LifecycleCommands {
                 templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Credential key", "$$KEY$$");
                 break;
             case "Aad":
-            case "OAuth2":
+            case "OAuth":
                 // $$ACCESS_TOKEN$$
                 templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Access token", "$$ACCESS_TOKEN$$");
 

@@ -408,9 +408,9 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "Permissions": []
             }`;
             /* eslint-enable*/
-        } else if (theAuthKind.toLowerCase() === "oauth2") {
+        } else if (theAuthKind.toLowerCase() === "oauth") {
             payloadStr = `{
-                "AuthenticationKind": "OAuth2",
+                "AuthenticationKind": "OAuth",
                 "AuthenticationProperties": {},
                 "PrivacySetting": "None",
                 "Permissions": []
@@ -440,6 +440,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
+            additionalArgs.unshift("--interactive");
         }
 
         additionalArgs.unshift(`${theAuthKind}`);
