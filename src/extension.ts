@@ -7,7 +7,7 @@
 
 import * as vscode from "vscode";
 
-import { covertExtensionInfoToLibraryJson, ExtensionInfo } from "common/PQTestService";
+import { convertExtensionInfoToLibraryJson, ExtensionInfo } from "common/PQTestService";
 import { activateExternalConfiguration } from "constants/PowerQuerySdkConfiguration";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
 import { getFirstWorkspaceFolder } from "utils/vscodes";
@@ -43,7 +43,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
         if (theUri) {
-            vscPowerQuery.onModuleLibraryUpdated(theUri.toString(), covertExtensionInfoToLibraryJson(infos));
+            vscPowerQuery.onModuleLibraryUpdated(theUri.toString(), convertExtensionInfoToLibraryJson(infos));
         }
     });
 

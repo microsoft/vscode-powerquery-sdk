@@ -70,7 +70,7 @@ export interface ExtensionInfo {
             ParameterType: string;
             IsRequired: boolean;
             IsNullable: boolean;
-            Caption?: boolean;
+            Caption?: string;
             Description?: string;
             SampleValues?: ReadonlyArray<string | number>;
             AllowedValues?: ReadonlyArray<string | number>;
@@ -133,7 +133,7 @@ export interface IPQTestService {
 const CommonArgs: string[] = ["--prettyPrint"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function covertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[]): any[] {
+export function convertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[]): any[] {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: any[] = [];
 
