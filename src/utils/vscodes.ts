@@ -208,11 +208,11 @@ export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
 
 // require-await is redundant over here
 // eslint-disable-next-line require-await
-export async function getAnyPqMProjFileBeneathTheFirstWorkspace(): Promise<vscode.Uri[]> {
+export async function getAnyPqFileBeneathTheFirstWorkspace(): Promise<vscode.Uri[]> {
     const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
     if (theFirstWorkspace) {
-        return vscode.workspace.findFiles("*.{m,pq,mproj,proj}", "**/bin/**", 10);
+        return vscode.workspace.findFiles("*.{pq}", "**/bin/**", 10);
     }
 
     return [];
