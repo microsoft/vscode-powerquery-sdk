@@ -20,7 +20,7 @@ export interface DataSource {
     path: string;
 }
 
-export type AuthenticationKind = "Anonymous" | "Key" | "Aad" | "OAuth2" | "UsernamePassword" | "Windows";
+export type AuthenticationKind = "Anonymous" | "Key" | "Aad" | "OAuth" | "UsernamePassword" | "Windows";
 
 export interface Credential {
     DataSource: DataSource;
