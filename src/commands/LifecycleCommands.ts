@@ -35,7 +35,7 @@ import {
     promptWarningMessageForExternalDependency,
 } from "constants/PowerQuerySdkConfiguration";
 import {
-    getAnyPqMProjFileBeneathTheFirstWorkspace,
+    getAnyPqFileBeneathTheFirstWorkspace,
     getFirstWorkspaceFolder,
     resolveSubstitutedValues,
     substitutedWorkspaceFolderBasenameIfNeeded,
@@ -193,7 +193,7 @@ export class LifecycleCommands {
 
         if (theFirstWorkspace && !this.isSuggestingSetupCurrentWorkspace) {
             this.isSuggestingSetupCurrentWorkspace = true;
-            const anyPqFiles: Uri[] = await getAnyPqMProjFileBeneathTheFirstWorkspace();
+            const anyPqFiles: Uri[] = await getAnyPqFileBeneathTheFirstWorkspace();
 
             if (
                 anyPqFiles.length &&
@@ -1065,7 +1065,6 @@ export class LifecycleCommands {
                 progress.report({ increment: 0 });
                 result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
                 this.outputChannel.appendInfoLine(`RunTestBattery result ${prettifyJson(result)}`);
-                // todo we need to show and populate the webview
                 progress.report({ increment: 100 });
             },
         );

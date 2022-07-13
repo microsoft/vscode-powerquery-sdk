@@ -20,7 +20,7 @@ import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
 import { debounce } from "utils/debounce";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { getAnyPqMProjFileBeneathTheFirstWorkspace } from "utils/vscodes";
+import { getAnyPqFileBeneathTheFirstWorkspace } from "utils/vscodes";
 import { LifecycleCommands } from "commands/LifecycleCommands";
 import { NugetVersions } from "utils/NugetVersions";
 
@@ -148,7 +148,7 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
     public debouncedRefresh: () => void = debounce(this.refresh.bind(this), 1e3);
 
     async isValidWorkspace(): Promise<boolean> {
-        return Boolean((await getAnyPqMProjFileBeneathTheFirstWorkspace()).length);
+        return Boolean((await getAnyPqFileBeneathTheFirstWorkspace()).length);
     }
 
     async getChildren(element?: LifecycleTreeViewItem): Promise<LifecycleTreeViewItem[] | undefined> {
