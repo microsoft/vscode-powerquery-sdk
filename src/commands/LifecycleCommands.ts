@@ -322,6 +322,16 @@ export class LifecycleCommands {
 
         const templateTargetFolder: string = path.resolve(this.vscExtCtx.extensionPath, "templates");
 
+        // settings.json
+        if (!fs.existsSync(path.join(folder, ".vscode"))) {
+            fs.mkdirSync(path.join(folder, ".vscode"));
+        }
+
+        fs.copyFileSync(
+            path.resolve(templateTargetFolder, "settings.json"),
+            path.resolve(folder, ".vscode", "settings.json"),
+        );
+
         // copy pngs
         ["16", "20", "24", "32", "40", "48", "64", "80"].forEach((onePngSize: string) => {
             fs.copyFileSync(
