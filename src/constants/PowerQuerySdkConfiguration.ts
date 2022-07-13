@@ -15,6 +15,32 @@ import { findExecutable } from "utils/executables";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
+    setAutoDetection(
+        autoDetection: boolean,
+        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+    ): Thenable<void> {
+        // we should not cache it
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.update(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.autoDetection,
+            autoDetection,
+            configurationTarget,
+        );
+    },
+    get autoDetection(): boolean {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const result: boolean | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.autoDetection,
+        );
+
+        return Boolean(result);
+    },
     setMsbuildPath(
         msbuildFullPath: string | undefined,
         configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,

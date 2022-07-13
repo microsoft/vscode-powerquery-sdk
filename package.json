@@ -51,6 +51,12 @@
         "configuration": {
             "title": "Power Query SDK",
             "properties": {
+                "powerquery.sdk.project.autoDetection": {
+                    "scope": "machine-overridable",
+                    "type": "boolean",
+                    "description": "When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.",
+                    "default": true
+                },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
                     "type": "string",
