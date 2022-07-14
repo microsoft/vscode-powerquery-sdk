@@ -57,7 +57,7 @@ const templateFileBaseName: string = "PQConn";
 
 export class LifecycleCommands {
     static SeizePqTestCommand: string = `${CommandPrefix}.SeizePqTestCommand`;
-    static SetupCurrentlyOpenedWorkspaceCommand: string = `${CommandPrefix}.SetupCurrentlyOpenedWorkspaceCommand`;
+    static SetupCurrentWorkspaceCommand: string = `${CommandPrefix}.SetupCurrentWorkspaceCommand`;
     static CreateNewProjectCommand: string = `${CommandPrefix}.CreateNewProjectCommand`;
     static DeleteCredentialCommand: string = `${CommandPrefix}.DeleteCredentialCommand`;
     static DisplayExtensionInfoCommand: string = `${CommandPrefix}.DisplayExtensionInfoCommand`;
@@ -78,7 +78,7 @@ export class LifecycleCommands {
         vscExtCtx.subscriptions.push(
             vscode.commands.registerCommand(LifecycleCommands.SeizePqTestCommand, this.manuallyUpdatePqTest.bind(this)),
             vscode.commands.registerCommand(
-                LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand,
+                LifecycleCommands.SetupCurrentWorkspaceCommand,
                 this.setupCurrentlyOpenedWorkspaceCommand.bind(this),
             ),
             vscode.commands.registerCommand(
@@ -208,7 +208,7 @@ export class LifecycleCommands {
                 );
 
                 if (result === "Enable") {
-                    void vscode.commands.executeCommand(LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand);
+                    void vscode.commands.executeCommand(LifecycleCommands.SetupCurrentWorkspaceCommand);
                 }
             }
 

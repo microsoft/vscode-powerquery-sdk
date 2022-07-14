@@ -46,7 +46,7 @@ const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
         "Setup workspace",
         {
             title: "Setup workspace",
-            command: `${LifecycleCommands.SetupCurrentlyOpenedWorkspaceCommand}`,
+            command: `${LifecycleCommands.SetupCurrentWorkspaceCommand}`,
             arguments: [],
         },
         new ThemeIcon("pencil"),

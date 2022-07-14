@@ -30,6 +30,8 @@
     "activationEvents": [
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
+        "onCommand:powerquery.sdk.pqtest.RunTestBatteryCommand",
+        "onCommand:powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
         "onView:powerquery.sdk.pqtest.LifeCycleTaskTreeView",
         "onWebviewPanel:powerquery.sdk.pqtest.ResultWebView",
         "onLanguage:powerquery"
@@ -46,6 +48,12 @@
                 "title": "Evaluate current power query script",
                 "category": "Power query",
                 "icon": "$(debug-console-evaluation-prompt)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
+                "title": "Setup workspace",
+                "category": "Power query",
+                "icon": "$(pencil)"
             }
         ],
         "configuration": {
