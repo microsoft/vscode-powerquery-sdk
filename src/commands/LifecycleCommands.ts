@@ -191,7 +191,7 @@ export class LifecycleCommands {
     public async promptToSetupCurrentWorkspaceIfNeeded(): Promise<void> {
         const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
-        if (theFirstWorkspace && !this.isSuggestingSetupCurrentWorkspace) {
+        if (theFirstWorkspace && !this.isSuggestingSetupCurrentWorkspace && ExtensionConfigurations.autoDetection) {
             this.isSuggestingSetupCurrentWorkspace = true;
             const anyPqFiles: Uri[] = await getAnyPqFileBeneathTheFirstWorkspace();
 
