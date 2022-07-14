@@ -6,7 +6,7 @@
  */
 
 import React from "react";
-import { DetailsList, DetailsListLayoutMode, SelectionMode } from "@fluentui/react/lib/DetailsList";
+import { DetailsList, DetailsListLayoutMode, SelectionMode, ConstrainMode } from "@fluentui/react/lib/DetailsList";
 import { mergeStyles } from "@fluentui/react/lib/Styling";
 
 interface TestBatteryOutputGridProps {
@@ -14,19 +14,23 @@ interface TestBatteryOutputGridProps {
 }
 
 const testBatteryGeneralGrid = mergeStyles({
-    minHeight: "calc( 100vh - 44px)",
+    height: "calc( 100vh - 44px)",
+    overflow: "auto",
 });
 
 export const TestBatteryGeneralGrid: React.FC<TestBatteryOutputGridProps> = React.memo(props => {
     const { items } = props;
 
     return (
-        <DetailsList
-            className={testBatteryGeneralGrid}
-            compact={true}
-            selectionMode={SelectionMode.none}
-            layoutMode={DetailsListLayoutMode.fixedColumns}
-            items={items}
-        />
+        <div className={testBatteryGeneralGrid}>
+            <DetailsList
+                compact={true}
+                // viewport={viewPort}
+                constrainMode={ConstrainMode.unconstrained}
+                selectionMode={SelectionMode.none}
+                layoutMode={DetailsListLayoutMode.fixedColumns}
+                items={items}
+            />
+        </div>
     );
 });
