@@ -101,6 +101,23 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         )
                     ) {
                         this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestQuery);
+                    } else if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featuresUseDaemon}`,
+                        )
+                    ) {
+                        void (async (): Promise<void> => {
+                            const reloadAction: string = "Reload Window";
+
+                            if (
+                                (await vscode.window.showInformationMessage(
+                                    "To activate a new feature, reloading the windows is required",
+                                    reloadAction,
+                                )) === reloadAction
+                            ) {
+                                void vscode.commands.executeCommand("workbench.action.reloadWindow");
+                            }
+                        })();
                     }
                 }
             }),
