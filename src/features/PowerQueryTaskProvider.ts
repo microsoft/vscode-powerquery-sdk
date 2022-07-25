@@ -7,8 +7,8 @@
 
 import * as vscode from "vscode";
 import { buildPqTestArgs, IPQTestService } from "common/PQTestService";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PowerQueryTaskDefinition } from "common/PowerQueryTask";
 
 const enum TaskLabelPrefix {
@@ -66,11 +66,17 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
 ];
 
 const buildTasks: PowerQueryTaskDefinition[] = [
+    // {
+    //     type: ExtensionConstants.PowerQueryTaskType,
+    //     operation: "msbuild",
+    //     label: "Build connector project using MSBuild",
+    //     additionalArgs: ["/restore", "/consoleloggerparameters:NoSummary", "/property:GenerateFullPaths=true"],
+    // },
     {
         type: ExtensionConstants.PowerQueryTaskType,
-        operation: "msbuild",
-        label: "Build connector project using MSBuild",
-        additionalArgs: ["/restore", "/consoleloggerparameters:NoSummary", "/property:GenerateFullPaths=true"],
+        operation: "build",
+        label: "Build connector project using PQTest",
+        additionalArgs: ["--prettyPrint"],
     },
 ];
 
@@ -82,18 +88,15 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     public provideTasks(_token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
         const result: vscode.Task[] = [];
 
-        buildTasks.forEach((taskDef: PowerQueryTaskDefinition) => {
-            result.push(
-                PowerQueryTaskProvider.getTaskForBuildTaskDefinition(
-                    taskDef,
-                    ExtensionConfigurations.msbuildPath ?? "msbuild",
-                ),
-            );
-        });
-
         if (!this.pqTestService.pqTestReady) {
             return result;
         }
+
+        buildTasks.forEach((taskDef: PowerQueryTaskDefinition) => {
+            result.push(
+                PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
+            );
+        });
 
         pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
             result.push(
@@ -107,17 +110,29 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     public resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
         const taskDef: PowerQueryTaskDefinition = task.definition as PowerQueryTaskDefinition;
 
-        if (taskDef.operation === "msbuild") {
-            const msbuildFullPath: string | undefined = ExtensionConfigurations.msbuildPath;
+        const pqtestExe: string = this.pqTestService.pqTestFullPath;
 
-            if (msbuildFullPath && !token.isCancellationRequested) {
-                return PowerQueryTaskProvider.getTaskForBuildTaskDefinition(taskDef, msbuildFullPath);
+        if (taskDef.operation === "build") {
+            const currentWorkingFolder: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
+
+            if (currentWorkingFolder && !token.isCancellationRequested) {
+                const args: string[] = buildPqTestArgs(taskDef);
+                args.push("--sourceDirectory");
+                args.push(currentWorkingFolder);
+                const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);
+
+                return new vscode.Task(
+                    taskDef,
+                    vscode.TaskScope.Workspace,
+                    taskDef.label ?? taskDef.operation,
+                    TaskLabelPrefix.Build,
+                    processExecution,
+                    [] /* problemMatchers */,
+                );
             }
 
             return undefined;
         }
-
-        const pqtestExe: string = this.pqTestService.pqTestFullPath;
 
         if (pqtestExe && !token.isCancellationRequested) {
             return PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, pqtestExe);
@@ -131,42 +146,49 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);
 
         // TODO: Include problem matcher
-        return new vscode.Task(
+        const vscTask: vscode.Task = new vscode.Task(
             taskDef,
             vscode.TaskScope.Workspace,
             taskDef.label ?? taskDef.operation,
-            TaskLabelPrefix.PQTest,
+            taskDef.operation === "build" ? TaskLabelPrefix.Build : TaskLabelPrefix.PQTest,
             processExecution,
-            [] /* problemMatchers */,
+            [] /* no problemMatchers */,
         );
-    }
 
-    private static getTaskForBuildTaskDefinition(taskDef: PowerQueryTaskDefinition, msbuildExe: string): vscode.Task {
-        // TODO: To support SDK based build we'll need to:
-        // - Check the kind on the taskDef
-        // - Change ShellExecution to CustomExecution
-        // - Update the problem matcher
-        const execution: vscode.ProcessExecution = new vscode.ProcessExecution(msbuildExe);
-
-        if (taskDef.additionalArgs && taskDef.additionalArgs.length > 0) {
-            execution.args.push(...taskDef.additionalArgs);
+        if (taskDef.operation === "build") {
+            vscTask.group = vscode.TaskGroup.Build;
         }
 
-        const task: vscode.Task = new vscode.Task(
-            taskDef,
-            vscode.TaskScope.Workspace,
-            taskDef.label ?? taskDef.operation,
-            TaskLabelPrefix.Build,
-            execution,
-            ["$msCompile"],
-        );
-
-        task.group = vscode.TaskGroup.Build;
-
-        task.presentationOptions = {
-            reveal: vscode.TaskRevealKind.Silent,
-        };
-
-        return task;
+        return vscTask;
     }
+
+    // private static getTaskForBuildTaskDefinition(
+    // taskDef: PowerQueryTaskDefinition, msbuildExe: string): vscode.Task {
+    //     // TODO: To support SDK based build we'll need to:
+    //     // - Check the kind on the taskDef
+    //     // - Change ShellExecution to CustomExecution
+    //     // - Update the problem matcher
+    //     const execution: vscode.ProcessExecution = new vscode.ProcessExecution(msbuildExe);
+    //
+    //     if (taskDef.additionalArgs && taskDef.additionalArgs.length > 0) {
+    //         execution.args.push(...taskDef.additionalArgs);
+    //     }
+    //
+    //     const task: vscode.Task = new vscode.Task(
+    //         taskDef,
+    //         vscode.TaskScope.Workspace,
+    //         taskDef.label ?? taskDef.operation,
+    //         TaskLabelPrefix.Build,
+    //         execution,
+    //         ["$msCompile"],
+    //     );
+    //
+    //     task.group = vscode.TaskGroup.Build;
+    //
+    //     task.presentationOptions = {
+    //         reveal: vscode.TaskRevealKind.Silent,
+    //     };
+    //
+    //     return task;
+    // }
 }
