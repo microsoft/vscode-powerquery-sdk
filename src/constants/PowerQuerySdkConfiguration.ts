@@ -233,7 +233,7 @@ export function activateExternalConfiguration(promptWarningMessage: boolean = fa
     const nugetFromCurConfig: string | undefined = ExtensionConfigurations.nugetPath;
     const msbuildFromCurConfig: string | undefined = ExtensionConfigurations.msbuildPath;
     let hasNugetFromCurConfig: boolean = Boolean(nugetFromCurConfig && fs.existsSync(nugetFromCurConfig));
-    let hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
+    const hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
 
     if (!hasNugetFromCurConfig) {
         const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
@@ -243,11 +243,11 @@ export function activateExternalConfiguration(promptWarningMessage: boolean = fa
 
     if (!hasMsbuildFromCurConfig) {
         const msbuildFromThePath: string | undefined = findExecutable("MSBuild", [".exe", ""]);
-        hasMsbuildFromCurConfig = Boolean(msbuildFromThePath);
+        // hasMsbuildFromCurConfig = Boolean(msbuildFromThePath);
         void ExtensionConfigurations.setMsbuildPath(msbuildFromThePath);
     }
 
     if (promptWarningMessage) {
-        void promptWarningMessageForExternalDependency(hasNugetFromCurConfig, hasMsbuildFromCurConfig);
+        void promptWarningMessageForExternalDependency(hasNugetFromCurConfig, true);
     }
 }
