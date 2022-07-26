@@ -5,7 +5,9 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as path from "path";
 import * as vscode from "vscode";
+
 import { buildPqTestArgs, IPQTestService } from "common/PQTestService";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
@@ -74,8 +76,8 @@ const buildTasks: PowerQueryTaskDefinition[] = [
     // },
     {
         type: ExtensionConstants.PowerQueryTaskType,
-        operation: "build",
-        label: "Build connector project using PQTest",
+        operation: "compile",
+        label: "Build connector project using MakePQX",
         additionalArgs: [],
     },
 ];
@@ -94,7 +96,10 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 
         buildTasks.forEach((taskDef: PowerQueryTaskDefinition) => {
             result.push(
-                PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
+                PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(
+                    taskDef,
+                    path.join(this.pqTestService.pqTestLocation, ExtensionConstants.MakePQXExecutableName),
+                ),
             );
         });
 
@@ -112,14 +117,18 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 
         const pqtestExe: string = this.pqTestService.pqTestFullPath;
 
-        if (taskDef.operation === "build") {
+        if (taskDef.operation === "compile") {
             const currentWorkingFolder: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
 
-            if (currentWorkingFolder && !token.isCancellationRequested) {
+            const makePQXExe: string = path.join(
+                this.pqTestService.pqTestLocation,
+                ExtensionConstants.MakePQXExecutableName,
+            );
+
+            if (currentWorkingFolder && this.pqTestService.pqTestLocation && !token.isCancellationRequested) {
                 const args: string[] = buildPqTestArgs(taskDef);
-                args.push("--sourceDirectory");
                 args.push(currentWorkingFolder);
-                const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);
+                const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(makePQXExe, args);
 
                 return new vscode.Task(
                     taskDef,
@@ -141,21 +150,24 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         return undefined;
     }
 
-    private static getTaskForPQTestTaskDefinition(taskDef: PowerQueryTaskDefinition, pqtestExe: string): vscode.Task {
+    private static getTaskForPQTestTaskDefinition(
+        taskDef: PowerQueryTaskDefinition,
+        executablePath: string,
+    ): vscode.Task {
         const args: string[] = buildPqTestArgs(taskDef);
-        const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(pqtestExe, args);
+        const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(executablePath, args);
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(
             taskDef,
             vscode.TaskScope.Workspace,
             taskDef.label ?? taskDef.operation,
-            taskDef.operation === "build" ? TaskLabelPrefix.Build : TaskLabelPrefix.PQTest,
+            taskDef.operation === "compile" ? TaskLabelPrefix.Build : TaskLabelPrefix.PQTest,
             processExecution,
             [] /* no problemMatchers */,
         );
 
-        if (taskDef.operation === "build") {
+        if (taskDef.operation === "compile") {
             vscTask.group = vscode.TaskGroup.Build;
         }
 
