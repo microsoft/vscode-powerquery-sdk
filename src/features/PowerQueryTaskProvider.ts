@@ -76,7 +76,7 @@ const buildTasks: PowerQueryTaskDefinition[] = [
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "build",
         label: "Build connector project using PQTest",
-        additionalArgs: ["--prettyPrint"],
+        additionalArgs: [],
     },
 ];
 
