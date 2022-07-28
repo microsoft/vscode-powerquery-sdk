@@ -5,6 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
@@ -231,4 +232,22 @@ export function substitutedWorkspaceFolderBasenameIfNeeded(str: string): string 
     }
 
     return str;
+}
+
+export function openDefaultPqFileIfNeeded(): void {
+    const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
+
+    if (maybeFirstWorkspaceUri) {
+        const baseDirectory: string = path.basename(maybeFirstWorkspaceUri.fsPath);
+        const expectedRootPqPath: string = path.join(maybeFirstWorkspaceUri.fsPath, `${baseDirectory}.pq`);
+
+        if (fs.existsSync(expectedRootPqPath)) {
+            const expectedRootPqPathStat: fs.Stats = fs.statSync(expectedRootPqPath);
+
+            // open it only if it just got created
+            if (Math.abs(expectedRootPqPathStat.ctime.getTime() - Date.now()) < 6e3) {
+                void vscode.commands.executeCommand("vscode.open", vscode.Uri.file(expectedRootPqPath));
+            }
+        }
+    }
 }
