@@ -604,7 +604,27 @@ export class LifecycleCommands {
 
             if (firstWorkspaceFolder) {
                 // we gotta workspace and let's generate files into the first workspace
-                this.doGenerateOneProjectIntoOneFolderFromTemplates(firstWorkspaceFolder.uri.fsPath, newProjName);
+                const targetFolder: string = this.doGenerateOneProjectIntoOneFolderFromTemplates(
+                    firstWorkspaceFolder.uri.fsPath,
+                    newProjName,
+                );
+
+                if (targetFolder === firstWorkspaceFolder.uri.fsPath) {
+                    // show the info message box telling users that
+                    // extension files have been generated for the current folder
+                    await vscode.commands.executeCommand(
+                        "vscode.open",
+                        vscode.Uri.file(path.join(targetFolder, `${newProjName}.pq`)),
+                    );
+
+                    void vscode.window.showInformationMessage(
+                        `New ${newProjName}.pq and other files have been created at ${targetFolder}`,
+                    );
+                } else {
+                    // open the sub folder as the current workspace
+                    await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(targetFolder));
+                }
+                //
             } else {
                 // we need to open a folder and generate into it
                 const selectedFolders: Uri[] | undefined = await vscode.window.showOpenDialog({
