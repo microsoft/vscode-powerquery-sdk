@@ -46,6 +46,7 @@ import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
 
 import { debounce } from "utils/debounce";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { NugetHttpService } from "common/NugetHttpService";
 import { NugetVersions } from "utils/NugetVersions";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { SpawnedProcess } from "common/SpawnedProcess";
@@ -72,6 +73,7 @@ export class LifecycleCommands {
     constructor(
         private readonly vscExtCtx: ExtensionContext,
         readonly globalEventBus: GlobalEventBus,
+        private readonly nugetHttpService: NugetHttpService,
         private readonly pqTestService: IPQTestService,
         private readonly outputChannel: PqSdkOutputChannel,
     ) {
@@ -387,7 +389,7 @@ export class LifecycleCommands {
 
         const args: string[] = [
             "list",
-            ExtensionConstants.PqTestNugetName,
+            ExtensionConstants.InternalMsftPqSdkToolsNugetName,
             "-ConfigFile",
             path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
         ];
@@ -406,72 +408,123 @@ export class LifecycleCommands {
     }
 
     private async doUpdatePqTestFromNuget(maybeNextVersion?: string | undefined): Promise<string | undefined> {
-        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
-        // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
-        // dotnet tool install Microsoft.PowerQuery.SdkTools
-        //  --configfile <FILE> --tool-path . --verbosity diag --version
-        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
-        const pqTestFullPath: string = this.expectedPqTestPath(maybeNextVersion);
+        if (ExtensionConfigurations.nugetPath) {
+            // if we got nuget path set, we could seize it from devops feed
+            await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
 
-        if (!fs.existsSync(baseNugetFolder)) {
-            fs.mkdirSync(baseNugetFolder);
+            // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
+            // dotnet tool install Microsoft.PowerQuery.SdkTools
+            //  --configfile <FILE> --tool-path . --verbosity diag --version
+            const baseNugetFolder: string = path.resolve(
+                this.vscExtCtx.extensionPath,
+                ExtensionConstants.NugetBaseFolder,
+            );
+
+            const pqTestFullPath: string = this.expectedPqTestPath(maybeNextVersion);
+
+            if (!fs.existsSync(baseNugetFolder)) {
+                fs.mkdirSync(baseNugetFolder);
+            }
+
+            const args: string[] = [
+                "install",
+                ExtensionConstants.InternalMsftPqSdkToolsNugetName,
+                "-Version",
+                maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion,
+                "-ConfigFile",
+                path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
+                "-OutputDirectory",
+                baseNugetFolder,
+            ];
+
+            const seizingProcess: SpawnedProcess = new SpawnedProcess(
+                ExtensionConfigurations.nugetPath ?? "nuget",
+                args,
+                {
+                    cwd: baseNugetFolder,
+                    env: {
+                        ...process.env,
+                        FORCE_NUGET_EXE_INTERACTIVE: "true",
+                    },
+                },
+                {
+                    onStdOut: (data: Buffer): void => {
+                        this.outputChannel.appendInfoLine(data.toString("utf8"));
+                    },
+                    onStdErr: (data: Buffer): void => {
+                        this.outputChannel.appendErrorLine(data.toString("utf8"));
+                    },
+                },
+            );
+
+            this.outputChannel.show();
+
+            await seizingProcess.deferred$;
+
+            return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
+        } else {
+            // we gonna seize the pqSkdTools from the public feed
+            const baseNugetFolder: string = path.resolve(
+                this.vscExtCtx.extensionPath,
+                ExtensionConstants.NugetBaseFolder,
+            );
+
+            const pqTestFullPath: string = this.expectedPqTestPath(maybeNextVersion);
+
+            if (!fs.existsSync(baseNugetFolder)) {
+                fs.mkdirSync(baseNugetFolder);
+            }
+
+            if (fs.existsSync(pqTestFullPath)) return pqTestFullPath;
+
+            await this.nugetHttpService.downloadAndExtractNugetPackage(
+                ExtensionConstants.PublicMsftPqSdkToolsNugetName,
+                maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion,
+                path.join(
+                    baseNugetFolder,
+                    `${ExtensionConstants.PublicMsftPqSdkToolsNugetName}.${
+                        maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion
+                    }`,
+                ),
+            );
+
+            return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
         }
-
-        const args: string[] = [
-            "install",
-            ExtensionConstants.PqTestNugetName,
-            "-Version",
-            maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion,
-            "-ConfigFile",
-            path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
-            "-OutputDirectory",
-            baseNugetFolder,
-        ];
-
-        const seizingProcess: SpawnedProcess = new SpawnedProcess(
-            ExtensionConfigurations.nugetPath ?? "nuget",
-            args,
-            {
-                cwd: baseNugetFolder,
-                env: {
-                    ...process.env,
-                    FORCE_NUGET_EXE_INTERACTIVE: "true",
-                },
-            },
-            {
-                onStdOut: (data: Buffer): void => {
-                    this.outputChannel.appendInfoLine(data.toString("utf8"));
-                },
-                onStdErr: (data: Buffer): void => {
-                    this.outputChannel.appendErrorLine(data.toString("utf8"));
-                },
-            },
-        );
-
-        this.outputChannel.show();
-
-        await seizingProcess.deferred$;
-
-        return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
     }
 
     private async findMaybeNewPqSdkVersion(): Promise<string | undefined> {
-        const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-        const curVersion: NugetVersions = NugetVersions.createFromPath(pqTestLocation);
+        if (ExtensionConfigurations.nugetPath) {
+            // we got nuget executable path set, thus we use nuget.exe to query the devops feed
+            const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+            const curVersion: NugetVersions = NugetVersions.createFromPath(pqTestLocation);
 
-        const latestVersion: NugetVersions = NugetVersions.createFromNugetListOutput(
-            await this.doListPqTestFromNuget(),
-        );
+            const latestVersion: NugetVersions = NugetVersions.createFromNugetListOutput(
+                await this.doListPqTestFromNuget(),
+            );
 
-        const sortedVersions: [NugetVersions, NugetVersions] = [curVersion, latestVersion].sort(
-            NugetVersions.compare,
-        ) as [NugetVersions, NugetVersions];
+            const sortedVersions: [NugetVersions, NugetVersions] = [curVersion, latestVersion].sort(
+                NugetVersions.compare,
+            ) as [NugetVersions, NugetVersions];
 
-        if (!sortedVersions[1].isZero()) {
-            // we found a new version, thus we need to check with users first and update to the latest
-            return sortedVersions[1].toString();
+            if (!sortedVersions[1].isZero()) {
+                // we found a new version, thus we need to check with users first and update to the latest
+                return sortedVersions[1].toString();
+            } else {
+                return undefined;
+            }
         } else {
-            return undefined;
+            // we gonna use http endpoint to query the public feed
+            const sortedNugetVersions: NugetVersions[] = (
+                await this.nugetHttpService.getPackageReleasedVersions(ExtensionConstants.PublicMsftPqSdkToolsNugetName)
+            ).versions
+                .map((releasedVersion: string) => NugetVersions.createFromReleasedVersionString(releasedVersion))
+                .sort(NugetVersions.compare);
+
+            if (sortedNugetVersions.length && !sortedNugetVersions[sortedNugetVersions.length - 1].isZero()) {
+                return sortedNugetVersions[sortedNugetVersions.length - 1].toString();
+            } else {
+                return undefined;
+            }
         }
     }
 
@@ -618,7 +671,7 @@ export class LifecycleCommands {
                     );
 
                     void vscode.window.showInformationMessage(
-                        `New ${newProjName}.pq and other files have been created at ${targetFolder}`,
+                        `New ${newProjName}.pq and  other files have been created at ${targetFolder}`,
                     );
                 } else {
                     // open the sub folder as the current workspace

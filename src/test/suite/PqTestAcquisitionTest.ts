@@ -11,6 +11,8 @@ import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
 
+import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+
 import { NugetVersions } from "../../utils/NugetVersions";
 import { SpawnedProcess } from "../../common/SpawnedProcess";
 
@@ -19,7 +21,6 @@ import {
     extensionDevelopmentPath,
     NugetBaseFolder,
     NugetConfigFileName,
-    PqTestNugetName,
     PqTestSubPath,
 } from "./common";
 import { delay } from "./utils";
@@ -39,7 +40,7 @@ async function doListPqTestFromNuget(): Promise<string> {
 
     const args: string[] = [
         "list",
-        PqTestNugetName,
+        ExtensionConstants.InternalMsftPqSdkToolsNugetName,
         "-ConfigFile",
         path.resolve(extensionDevelopmentPath, "etc", NugetConfigFileName),
     ];

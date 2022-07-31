@@ -232,7 +232,12 @@
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "audit": "npm audit",
         "lint": "eslint src --ext ts",
+        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
         "test": "node ./out/test/runTest.js"
+    },
+    "dependencies": {
+        "axios": "^0.27.2",
+        "node-stream-zip": "^1.15.0"
     },
     "devDependencies": {
         "@types/chai": "^4.3.1",
@@ -258,6 +263,7 @@
         "prettier": "^2.5.0",
         "rimraf": "^3.0.2",
         "ts-loader": "^9.2.6",
+        "ts-node": "^10.9.1",
         "typescript": "^4.5.2",
         "webpack": "^5.64.4",
         "webpack-cli": "^4.9.1",

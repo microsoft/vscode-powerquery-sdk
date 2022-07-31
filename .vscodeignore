@@ -6,6 +6,7 @@ out/**
 node_modules/**
 resources/**
 src/**
+unit-tests/**
 webviews/**
 .gitignore
 .yarnrc

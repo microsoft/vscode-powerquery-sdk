@@ -1,0 +1,15 @@
+{
+  "env": {
+    "browser": true,
+    "node": true,
+    "commonjs": true,
+    "es6": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "rules": {
+    "@typescript-eslint/ban-ts-comment": 0,
+    "@typescript-eslint/typedef": 0,
+    "license-header/header": ["error", "../resources/license-header.js"],
+    "prefer-const": 0
+  }
+}
