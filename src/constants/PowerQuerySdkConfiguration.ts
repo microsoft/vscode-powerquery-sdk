@@ -229,25 +229,21 @@ export async function promptWarningMessageForExternalDependency(
     }
 }
 
-export function activateExternalConfiguration(promptWarningMessage: boolean = false): void {
-    const nugetFromCurConfig: string | undefined = ExtensionConfigurations.nugetPath;
+export function activateExternalConfiguration(): void {
+    // const nugetFromCurConfig: string | undefined = ExtensionConfigurations.nugetPath;
     const msbuildFromCurConfig: string | undefined = ExtensionConfigurations.msbuildPath;
-    let hasNugetFromCurConfig: boolean = Boolean(nugetFromCurConfig && fs.existsSync(nugetFromCurConfig));
+    // let hasNugetFromCurConfig: boolean = Boolean(nugetFromCurConfig && fs.existsSync(nugetFromCurConfig));
     const hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
 
-    if (!hasNugetFromCurConfig) {
-        const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
-        hasNugetFromCurConfig = Boolean(nugetFromThePath);
-        void ExtensionConfigurations.setNugetPath(nugetFromThePath);
-    }
+    // if (!hasNugetFromCurConfig) {
+    //     const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
+    //     hasNugetFromCurConfig = Boolean(nugetFromThePath);
+    //     void ExtensionConfigurations.setNugetPath(nugetFromThePath);
+    // }
 
     if (!hasMsbuildFromCurConfig) {
         const msbuildFromThePath: string | undefined = findExecutable("MSBuild", [".exe", ""]);
         // hasMsbuildFromCurConfig = Boolean(msbuildFromThePath);
         void ExtensionConfigurations.setMsbuildPath(msbuildFromThePath);
-    }
-
-    if (promptWarningMessage) {
-        void promptWarningMessageForExternalDependency(hasNugetFromCurConfig, true);
     }
 }

@@ -18,5 +18,5 @@
         "noUnusedLocals": true,
         "strictPropertyInitialization": true
     },
-    "exclude": ["node_modules", ".vscode-test", "webviews"]
+    "exclude": ["node_modules", ".vscode-test", "webviews", "unit-tests"]
 }

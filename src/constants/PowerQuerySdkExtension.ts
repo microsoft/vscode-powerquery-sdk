@@ -42,15 +42,22 @@ const PQDebugType: string = PowerQueryTaskType;
 
 const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
-const PqTestNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
+const InternalMsftPqSdkToolsNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
+// const PublicMsftPqSdkToolsNugetName: string = PqTestNugetName;
+// for testing
+const PublicMsftPqSdkToolsNugetName: string = "Newtonsoft.Json" as const;
 const SuggestedPqTestNugetVersion: string = "2.107.2" as const;
 
-const PqTestSubPath: string[] = [`${PqTestNugetName}.${SuggestedPqTestNugetVersion}`, "tools", "PQTest.exe"];
+const PqTestSubPath: string[] = [
+    `${InternalMsftPqSdkToolsNugetName}.${SuggestedPqTestNugetVersion}`,
+    "tools",
+    "PQTest.exe",
+];
 
 const MakePQXExecutableName: string = "MakePQX.exe" as const;
 
 function buildPqTestSubPath(pqTestVersion: string): string[] {
-    return [`${PqTestNugetName}.${pqTestVersion}`, "tools", "PQTest.exe"];
+    return [`${InternalMsftPqSdkToolsNugetName}.${pqTestVersion}`, "tools", "PQTest.exe"];
 }
 
 const NugetDownloadUrl: string = "https://www.nuget.org/downloads" as const;
@@ -75,7 +82,8 @@ export const ExtensionConstants = Object.freeze({
     PQDebugType,
     NugetBaseFolder,
     NugetConfigFileName,
-    PqTestNugetName,
+    InternalMsftPqSdkToolsNugetName,
+    PublicMsftPqSdkToolsNugetName,
     SuggestedPqTestNugetVersion,
     PqTestSubPath,
     MakePQXExecutableName,
