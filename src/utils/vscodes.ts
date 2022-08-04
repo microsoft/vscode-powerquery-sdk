@@ -245,7 +245,7 @@ export function openDefaultPqFileIfNeeded(): void {
             const expectedRootPqPathStat: fs.Stats = fs.statSync(expectedRootPqPath);
 
             // open it only if it just got created
-            if (Math.abs(expectedRootPqPathStat.ctime.getTime() - Date.now()) < 6e3) {
+            if (Math.abs(expectedRootPqPathStat.ctime.getTime() - Date.now()) < 6e4) {
                 void vscode.commands.executeCommand("vscode.open", vscode.Uri.file(expectedRootPqPath));
             }
         }
