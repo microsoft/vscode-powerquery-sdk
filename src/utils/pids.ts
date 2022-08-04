@@ -5,6 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as net from "net";
 import * as process from "process";
 
 /**
@@ -20,4 +21,29 @@ export function pidIsRunning(pid: number): boolean {
     } catch (e) {
         return false;
     }
+}
+
+export function delay(ms: number): Promise<void> {
+    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
+}
+
+export function isPortBusy(port: number): Promise<boolean> {
+    return new Promise((resolve: (value: boolean | PromiseLike<boolean>) => void) => {
+        const theServer: net.Server = net.createServer((socket: net.Socket) => {
+            // write something to activate the socket
+            socket.write("dummy echo");
+            socket.pipe(socket);
+        });
+
+        theServer.on("error", (_err: Error) => {
+            resolve(true);
+        });
+
+        theServer.on("listening", () => {
+            theServer.close();
+            resolve(false);
+        });
+
+        theServer.listen(port, "127.0.0.1");
+    });
 }

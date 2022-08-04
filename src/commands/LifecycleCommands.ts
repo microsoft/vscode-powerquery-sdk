@@ -1048,17 +1048,24 @@ export class LifecycleCommands {
                 if (maybeErrorMessage) {
                     void vscode.window.showWarningMessage(maybeErrorMessage);
                 } else {
-                    this.outputChannel.show();
+                    try {
+                        const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
+                            createAuthState,
+                        );
 
-                    const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
-                        createAuthState,
-                    );
+                        this.outputChannel.appendInfoLine(`CreateAuthState result ${prettifyJson(result)}`);
 
-                    this.outputChannel.appendInfoLine(`CreateAuthState result ${prettifyJson(result)}`);
+                        void vscode.window.showInformationMessage(
+                            `New ${createAuthState.AuthenticationKind} credential has been generated successfully`,
+                        );
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } catch (error: any | string) {
+                        const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showInformationMessage(
-                        `New ${createAuthState.AuthenticationKind} credential has been generated successfully`,
-                    );
+                        void vscode.window.showErrorMessage(
+                            `Fail to create ${createAuthState.AuthenticationKind} credential due to ${errorMessage}`,
+                        );
+                    }
                 }
 
                 progress.report({ increment: 100 });
