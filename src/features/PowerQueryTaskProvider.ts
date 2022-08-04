@@ -68,12 +68,6 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
 ];
 
 const buildTasks: PowerQueryTaskDefinition[] = [
-    // {
-    //     type: ExtensionConstants.PowerQueryTaskType,
-    //     operation: "msbuild",
-    //     label: "Build connector project using MSBuild",
-    //     additionalArgs: ["/restore", "/consoleloggerparameters:NoSummary", "/property:GenerateFullPaths=true"],
-    // },
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "compile",
@@ -173,34 +167,4 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 
         return vscTask;
     }
-
-    // private static getTaskForBuildTaskDefinition(
-    // taskDef: PowerQueryTaskDefinition, msbuildExe: string): vscode.Task {
-    //     // TODO: To support SDK based build we'll need to:
-    //     // - Check the kind on the taskDef
-    //     // - Change ShellExecution to CustomExecution
-    //     // - Update the problem matcher
-    //     const execution: vscode.ProcessExecution = new vscode.ProcessExecution(msbuildExe);
-    //
-    //     if (taskDef.additionalArgs && taskDef.additionalArgs.length > 0) {
-    //         execution.args.push(...taskDef.additionalArgs);
-    //     }
-    //
-    //     const task: vscode.Task = new vscode.Task(
-    //         taskDef,
-    //         vscode.TaskScope.Workspace,
-    //         taskDef.label ?? taskDef.operation,
-    //         TaskLabelPrefix.Build,
-    //         execution,
-    //         ["$msCompile"],
-    //     );
-    //
-    //     task.group = vscode.TaskGroup.Build;
-    //
-    //     task.presentationOptions = {
-    //         reveal: vscode.TaskRevealKind.Silent,
-    //     };
-    //
-    //     return task;
-    // }
 }

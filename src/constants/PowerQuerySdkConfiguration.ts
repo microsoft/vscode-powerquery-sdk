@@ -243,7 +243,6 @@ export function activateExternalConfiguration(promptWarningMessage: boolean = fa
 
     if (!hasMsbuildFromCurConfig) {
         const msbuildFromThePath: string | undefined = findExecutable("MSBuild", [".exe", ""]);
-        // hasMsbuildFromCurConfig = Boolean(msbuildFromThePath);
         void ExtensionConfigurations.setMsbuildPath(msbuildFromThePath);
     }
 
