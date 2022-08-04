@@ -23,6 +23,8 @@ import { FSWatcher, WatchEventType } from "fs";
 
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
+import type { PqDaemonClient } from "pqTestConnector/PqDaemonClient";
+
 import {
     AuthenticationKind,
     CreateAuthState,
@@ -1100,7 +1102,15 @@ export class LifecycleCommands {
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
-                result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
+
+                if (ExtensionConfigurations.featuresUseDaemon) {
+                    result = await (this.pqTestService as PqDaemonClient).RunTestBatteryFromContent(
+                        pathToQueryFile?.fsPath,
+                    );
+                } else {
+                    result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
+                }
+
                 this.outputChannel.appendInfoLine(`RunTestBattery result ${prettifyJson(result)}`);
                 progress.report({ increment: 100 });
             },

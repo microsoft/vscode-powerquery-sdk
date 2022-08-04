@@ -24,13 +24,13 @@ import { TextEditor } from "vscode";
 
 import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "common/PQTestService";
 import { delay, isPortBusy, pidIsRunning } from "utils/pids";
+import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "utils/vscodes";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
 import { convertStringToInteger } from "utils/numbers";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { IDisposable } from "common/Disposable";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { resolveSubstitutedValues } from "utils/vscodes";
 import { SpawnedProcess } from "common/SpawnedProcess";
 import { ValueEventEmitter } from "common/ValueEventEmitter";
 
@@ -268,7 +268,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
 
             setTimeout(() => {
                 this.onPowerQueryTestLocationChanged();
-            }, 1e3);
+            }, 250);
         });
 
         reader.listen((data: Message) => {
@@ -563,6 +563,55 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                         SessionId: this.sessionId,
                         PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
                         PathToQueryFile: pathToQueryFile,
+                    },
+                ],
+            };
+
+            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+        } else {
+            throw new PqDaemonServerNotReady();
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    RunTestBatteryFromContent(pathToQueryFile: string | undefined): Promise<any> {
+        if (this.serverTransportTuple) {
+            const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
+            const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
+                ExtensionConfigurations.PQTestQueryFileLocation,
+            );
+
+            // todo, maybe we could export this lang id to from the lang svc extension
+            if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
+                pathToQueryFile = activeTextEditor.document.uri.fsPath;
+            }
+
+            if (!pathToQueryFile && configPQTestQueryFileLocation) {
+                pathToQueryFile = configPQTestQueryFileLocation;
+            }
+
+            if (!pathToQueryFile || !fs.existsSync(pathToQueryFile)) return Promise.resolve();
+
+            let currentContent: string = fs.readFileSync(pathToQueryFile, { encoding: "utf8" });
+
+            vscode.window.visibleTextEditors.forEach((oneEditor: vscode.TextEditor) => {
+                if (
+                    oneEditor?.document.languageId === "powerquery" &&
+                    oneEditor.document.uri.fsPath === pathToQueryFile
+                ) {
+                    currentContent = oneEditor.document.getText();
+                }
+            });
+
+            const theRequestMessage: PqDaemonRequest = {
+                jsonrpc: JSON_RPC_VERSION,
+                id: this.nextSequenceId,
+                method: "RunTestBatteryFromContent",
+                params: [
+                    {
+                        SessionId: this.sessionId,
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToQueryFile: currentContent,
                     },
                 ],
             };
