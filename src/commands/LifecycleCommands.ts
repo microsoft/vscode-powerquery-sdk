@@ -657,8 +657,16 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
-                const result: GenericResult = await this.pqTestService.DeleteCredential();
-                this.outputChannel.appendInfoLine(`DeleteCredential result ${prettifyJson(result)}`);
+
+                try {
+                    const result: GenericResult = await this.pqTestService.DeleteCredential();
+                    this.outputChannel.appendInfoLine(`DeleteCredential result ${prettifyJson(result)}`);
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to delete credentials due to ${errorMessage}`);
+                }
+
                 progress.report({ increment: 100 });
             },
         );
@@ -673,8 +681,17 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
-                const result: unknown = await this.pqTestService.DisplayExtensionInfo();
-                this.outputChannel.appendInfoLine(`DisplayExtensionInfo result ${prettifyJson(result)}`);
+
+                try {
+                    const result: unknown = await this.pqTestService.DisplayExtensionInfo();
+                    this.outputChannel.appendInfoLine(`DisplayExtensionInfo result ${prettifyJson(result)}`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to display extension info due to ${errorMessage}`);
+                }
+
                 progress.report({ increment: 100 });
             },
         );
@@ -689,8 +706,17 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
-                const result: unknown[] = await this.pqTestService.ListCredentials();
-                this.outputChannel.appendInfoLine(`ListCredentials result ${prettifyJson(result)}`);
+
+                try {
+                    const result: unknown[] = await this.pqTestService.ListCredentials();
+                    this.outputChannel.appendInfoLine(`ListCredentials result ${prettifyJson(result)}`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to list credentials due to ${errorMessage}`);
+                }
+
                 progress.report({ increment: 100 });
             },
         );
@@ -773,21 +799,29 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const credentialPayload: any = await this.pqTestService.GenerateCredentialTemplate();
 
-                this.outputChannel.appendInfoLine(
-                    `GenerateCredentialTemplate result ${prettifyJson(credentialPayload)}`,
-                );
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const credentialPayload: any = await this.pqTestService.GenerateCredentialTemplate();
 
-                const credentialPayloadStr: string = await this.populateCredentialTemplate(credentialPayload);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const result: any = await this.pqTestService.SetCredential(credentialPayloadStr);
-                this.outputChannel.appendInfoLine(`SetCredential result ${prettifyJson(result)}`);
+                    this.outputChannel.appendInfoLine(
+                        `GenerateCredentialTemplate result ${prettifyJson(credentialPayload)}`,
+                    );
 
-                void vscode.window.showInformationMessage(
-                    `New ${credentialPayload.AuthenticationKind} credential has been generated successfully`,
-                );
+                    const credentialPayloadStr: string = await this.populateCredentialTemplate(credentialPayload);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const result: any = await this.pqTestService.SetCredential(credentialPayloadStr);
+                    this.outputChannel.appendInfoLine(`SetCredential result ${prettifyJson(result)}`);
+
+                    void vscode.window.showInformationMessage(
+                        `New ${credentialPayload.AuthenticationKind} credential has been generated successfully`,
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to set credentials due to ${errorMessage}`);
+                }
 
                 progress.report({ increment: 100 });
             },
@@ -832,242 +866,262 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
 
-                const currentExtensionInfos: ExtensionInfo[] =
-                    this.pqTestService.currentExtensionInfos.value ?? (await this.pqTestService.DisplayExtensionInfo());
+                try {
+                    const currentExtensionInfos: ExtensionInfo[] =
+                        this.pqTestService.currentExtensionInfos.value ??
+                        (await this.pqTestService.DisplayExtensionInfo());
 
-                const dataSourceKinds: string[] = Array.from(
-                    new Set(
-                        currentExtensionInfos
-                            .map((oneInfo: ExtensionInfo) =>
-                                oneInfo.DataSources.map(
-                                    (oneDataSource: ExtensionInfo["DataSources"][number]) =>
-                                        oneDataSource.DataSourceKind,
-                                ),
-                            )
-                            .flat(),
-                    ),
-                );
+                    const dataSourceKinds: string[] = Array.from(
+                        new Set(
+                            currentExtensionInfos
+                                .map((oneInfo: ExtensionInfo) =>
+                                    oneInfo.DataSources.map(
+                                        (oneDataSource: ExtensionInfo["DataSources"][number]) =>
+                                            oneDataSource.DataSourceKind,
+                                    ),
+                                )
+                                .flat(),
+                        ),
+                    );
 
-                const authenticationKindMap: Map<string, Set<string>> = new Map();
+                    const authenticationKindMap: Map<string, Set<string>> = new Map();
 
-                currentExtensionInfos.forEach((currentExtensionInfo: ExtensionInfo) => {
-                    currentExtensionInfo.DataSources.forEach((oneDataSource: ExtensionInfo["DataSources"][number]) => {
-                        const currentSetOfTheDataSource: Set<string> =
-                            authenticationKindMap.get(oneDataSource.DataSourceKind) ?? new Set();
+                    currentExtensionInfos.forEach((currentExtensionInfo: ExtensionInfo) => {
+                        currentExtensionInfo.DataSources.forEach(
+                            (oneDataSource: ExtensionInfo["DataSources"][number]) => {
+                                const currentSetOfTheDataSource: Set<string> =
+                                    authenticationKindMap.get(oneDataSource.DataSourceKind) ?? new Set();
 
-                        if (!authenticationKindMap.has(oneDataSource.DataSourceKind)) {
-                            authenticationKindMap.set(oneDataSource.DataSourceKind, currentSetOfTheDataSource);
-                        }
+                                if (!authenticationKindMap.has(oneDataSource.DataSourceKind)) {
+                                    authenticationKindMap.set(oneDataSource.DataSourceKind, currentSetOfTheDataSource);
+                                }
 
-                        oneDataSource.AuthenticationInfos.forEach(
-                            (oneAuthInfo: ExtensionInfo["DataSources"][number]["AuthenticationInfos"][number]) => {
-                                currentSetOfTheDataSource.add(oneAuthInfo.Kind);
+                                oneDataSource.AuthenticationInfos.forEach(
+                                    (
+                                        oneAuthInfo: ExtensionInfo["DataSources"][number]["AuthenticationInfos"][number],
+                                    ) => {
+                                        currentSetOfTheDataSource.add(oneAuthInfo.Kind);
+                                    },
+                                );
                             },
                         );
                     });
-                });
 
-                const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-                    "**/*.query.pq",
-                    "**/{bin,obj}/**",
-                    1e2,
-                );
+                    const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
+                        "**/*.query.pq",
+                        "**/{bin,obj}/**",
+                        1e2,
+                    );
 
-                async function collectInputs(): Promise<CreateAuthState> {
-                    const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
-                    await MultiStepInput.run((input: MultiStepInput) => populateDataSourceKinds(input, state));
+                    // eslint-disable-next-line no-inner-declarations
+                    async function collectInputs(): Promise<CreateAuthState> {
+                        const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
+                        await MultiStepInput.run((input: MultiStepInput) => populateDataSourceKinds(input, state));
 
-                    return state as CreateAuthState;
-                }
+                        return state as CreateAuthState;
+                    }
 
-                async function populateDataSourceKinds(
-                    input: MultiStepInput,
-                    state: Partial<CreateAuthState>,
-                ): Promise<InputStep | void> {
-                    if (dataSourceKinds.length) {
-                        const items: vscode.QuickPickItem[] = dataSourceKinds.map((one: string) => ({
+                    // eslint-disable-next-line no-inner-declarations
+                    async function populateDataSourceKinds(
+                        input: MultiStepInput,
+                        state: Partial<CreateAuthState>,
+                    ): Promise<InputStep | void> {
+                        if (dataSourceKinds.length) {
+                            const items: vscode.QuickPickItem[] = dataSourceKinds.map((one: string) => ({
+                                label: one,
+                            }));
+
+                            const picked: vscode.QuickPickItem = await input.showQuickPick({
+                                title,
+                                step: 1,
+                                totalSteps: 3,
+                                placeholder: "Choose the data source kind",
+                                activeItem: items[0],
+                                items,
+                            });
+
+                            state.DataSourceKind = picked.label;
+                        } else {
+                            // we did not get a list of data source candidates,
+                            // thus have to allow users inputting freely
+                            state.DataSourceKind = await input.showInputBox({
+                                title,
+                                step: 1,
+                                totalSteps: 3,
+                                value: "",
+                                prompt: "Data source kind",
+                                ignoreFocusOut: true,
+                                validate: (key: string) =>
+                                    Promise.resolve(key.length ? undefined : "Data source kind cannot be empty"),
+                            });
+                        }
+
+                        progress.report({ increment: 10 });
+
+                        return (input: MultiStepInput) => populateQueryFile(input, state);
+                    }
+
+                    // eslint-disable-next-line no-inner-declarations
+                    async function populateQueryFile(
+                        input: MultiStepInput,
+                        state: Partial<CreateAuthState>,
+                    ): Promise<InputStep | void> {
+                        const items: vscode.QuickPickItem[] = connectorQueryFiles.map((one: vscode.Uri) => ({
+                            label: vscode.workspace.asRelativePath(one),
+                            detail: one.fsPath,
+                        }));
+
+                        const picked: vscode.QuickPickItem = await input.showQuickPick({
+                            title,
+                            step: 2,
+                            totalSteps: 3,
+                            placeholder: "Choose a connector file",
+                            activeItem: items[0],
+                            items,
+                        });
+
+                        // eslint-disable-next-line require-atomic-updates
+                        state.PathToQueryFile = picked.detail;
+
+                        progress.report({ increment: 10 });
+
+                        return (input: MultiStepInput) => pickAuthenticationKind(input, state);
+                    }
+
+                    // eslint-disable-next-line no-inner-declarations
+                    async function pickAuthenticationKind(
+                        input: MultiStepInput,
+                        state: Partial<CreateAuthState>,
+                    ): Promise<InputStep | void> {
+                        let currentAuthCandidates: string[] = state.DataSourceKind
+                            ? Array.from(authenticationKindMap.get(state.DataSourceKind) ?? new Set())
+                            : [];
+
+                        // ensure we do got a candidate list
+                        if (currentAuthCandidates.length === 0) {
+                            currentAuthCandidates = ["Anonymous", "Key", "OAuth2", "UsernamePassword", "Windows"];
+                        }
+
+                        const items: vscode.QuickPickItem[] = currentAuthCandidates.map((one: string) => ({
                             label: one,
                         }));
 
                         const picked: vscode.QuickPickItem = await input.showQuickPick({
                             title,
-                            step: 1,
+                            step: 3,
                             totalSteps: 3,
-                            placeholder: "Choose the data source kind",
+                            placeholder: "Choose a authentication method",
                             activeItem: items[0],
                             items,
                         });
 
-                        state.DataSourceKind = picked.label;
-                    } else {
-                        // we did not get a list of data source candidates, thus have to allow users inputting freely
-                        state.DataSourceKind = await input.showInputBox({
+                        // eslint-disable-next-line require-atomic-updates
+                        state.AuthenticationKind = picked.label;
+
+                        progress.report({ increment: 10 });
+
+                        // Key / UserNamePassword needs template
+                        if (state.AuthenticationKind.toLowerCase() === "key") {
+                            return (input: MultiStepInput) => populateKey(input, state);
+                        } else if (state.AuthenticationKind.toLowerCase() === "usernamepassword") {
+                            return (input: MultiStepInput) => populateUsername(input, state);
+                        }
+                    }
+
+                    // eslint-disable-next-line no-inner-declarations
+                    async function populateKey(
+                        input: MultiStepInput,
+                        state: Partial<CreateAuthState>,
+                    ): Promise<InputStep | void> {
+                        // eslint-disable-next-line require-atomic-updates
+                        state.$$KEY$$ = await input.showInputBox({
                             title,
-                            step: 1,
-                            totalSteps: 3,
+                            step: 4,
+                            totalSteps: 4,
                             value: "",
-                            prompt: "Data source kind",
+                            prompt: "Authentication key value",
                             ignoreFocusOut: true,
                             validate: (key: string) =>
-                                Promise.resolve(key.length ? undefined : "Data source kind cannot be empty"),
+                                Promise.resolve(key.length ? undefined : "Key value cannot be empty"),
                         });
+
+                        progress.report({ increment: 10 });
                     }
 
-                    progress.report({ increment: 10 });
+                    // eslint-disable-next-line no-inner-declarations
+                    async function populateUsername(
+                        input: MultiStepInput,
+                        state: Partial<CreateAuthState>,
+                    ): Promise<InputStep | void> {
+                        // eslint-disable-next-line require-atomic-updates
+                        state.$$USERNAME$$ = await input.showInputBox({
+                            title,
+                            step: 4,
+                            totalSteps: 5,
+                            value: "",
+                            prompt: "Username",
+                            ignoreFocusOut: true,
+                            validate: (username: string) =>
+                                Promise.resolve(username.length ? undefined : "Username cannot be empty"),
+                        });
 
-                    return (input: MultiStepInput) => populateQueryFile(input, state);
-                }
+                        progress.report({ increment: 10 });
 
-                async function populateQueryFile(
-                    input: MultiStepInput,
-                    state: Partial<CreateAuthState>,
-                ): Promise<InputStep | void> {
-                    const items: vscode.QuickPickItem[] = connectorQueryFiles.map((one: vscode.Uri) => ({
-                        label: vscode.workspace.asRelativePath(one),
-                        detail: one.fsPath,
-                    }));
-
-                    const picked: vscode.QuickPickItem = await input.showQuickPick({
-                        title,
-                        step: 2,
-                        totalSteps: 3,
-                        placeholder: "Choose a connector file",
-                        activeItem: items[0],
-                        items,
-                    });
-
-                    // eslint-disable-next-line require-atomic-updates
-                    state.PathToQueryFile = picked.detail;
-
-                    progress.report({ increment: 10 });
-
-                    return (input: MultiStepInput) => pickAuthenticationKind(input, state);
-                }
-
-                async function pickAuthenticationKind(
-                    input: MultiStepInput,
-                    state: Partial<CreateAuthState>,
-                ): Promise<InputStep | void> {
-                    let currentAuthCandidates: string[] = state.DataSourceKind
-                        ? Array.from(authenticationKindMap.get(state.DataSourceKind) ?? new Set())
-                        : [];
-
-                    // ensure we do got a candidate list
-                    if (currentAuthCandidates.length === 0) {
-                        currentAuthCandidates = ["Anonymous", "Key", "OAuth2", "UsernamePassword", "Windows"];
+                        return (input: MultiStepInput) => populatePassword(input, state);
                     }
 
-                    const items: vscode.QuickPickItem[] = currentAuthCandidates.map((one: string) => ({
-                        label: one,
-                    }));
+                    // eslint-disable-next-line no-inner-declarations
+                    async function populatePassword(
+                        input: MultiStepInput,
+                        state: Partial<CreateAuthState>,
+                    ): Promise<InputStep | void> {
+                        // eslint-disable-next-line require-atomic-updates
+                        state.$$PASSWORD$$ = await input.showInputBox({
+                            title,
+                            step: 5,
+                            totalSteps: 5,
+                            value: "",
+                            ignoreFocusOut: true,
+                            prompt: "Password",
+                            password: true,
+                            validate: (_pw: string) => Promise.resolve(undefined),
+                        });
 
-                    const picked: vscode.QuickPickItem = await input.showQuickPick({
-                        title,
-                        step: 3,
-                        totalSteps: 3,
-                        placeholder: "Choose a authentication method",
-                        activeItem: items[0],
-                        items,
-                    });
-
-                    // eslint-disable-next-line require-atomic-updates
-                    state.AuthenticationKind = picked.label;
-
-                    progress.report({ increment: 10 });
-
-                    // Key / UserNamePassword needs template
-                    if (state.AuthenticationKind.toLowerCase() === "key") {
-                        return (input: MultiStepInput) => populateKey(input, state);
-                    } else if (state.AuthenticationKind.toLowerCase() === "usernamepassword") {
-                        return (input: MultiStepInput) => populateUsername(input, state);
+                        progress.report({ increment: 10 });
                     }
-                }
 
-                async function populateKey(
-                    input: MultiStepInput,
-                    state: Partial<CreateAuthState>,
-                ): Promise<InputStep | void> {
-                    // eslint-disable-next-line require-atomic-updates
-                    state.$$KEY$$ = await input.showInputBox({
-                        title,
-                        step: 4,
-                        totalSteps: 4,
-                        value: "",
-                        prompt: "Authentication key value",
-                        ignoreFocusOut: true,
-                        validate: (key: string) =>
-                            Promise.resolve(key.length ? undefined : "Key value cannot be empty"),
-                    });
-
-                    progress.report({ increment: 10 });
-                }
-
-                async function populateUsername(
-                    input: MultiStepInput,
-                    state: Partial<CreateAuthState>,
-                ): Promise<InputStep | void> {
-                    // eslint-disable-next-line require-atomic-updates
-                    state.$$USERNAME$$ = await input.showInputBox({
-                        title,
-                        step: 4,
-                        totalSteps: 5,
-                        value: "",
-                        prompt: "Username",
-                        ignoreFocusOut: true,
-                        validate: (username: string) =>
-                            Promise.resolve(username.length ? undefined : "Username cannot be empty"),
-                    });
+                    const createAuthState: CreateAuthState = await collectInputs();
+                    const maybeErrorMessage: string | undefined = this.validateCreateAuthState(createAuthState);
 
                     progress.report({ increment: 10 });
 
-                    return (input: MultiStepInput) => populatePassword(input, state);
-                }
+                    if (maybeErrorMessage) {
+                        void vscode.window.showWarningMessage(maybeErrorMessage);
+                    } else {
+                        try {
+                            const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
+                                createAuthState,
+                            );
 
-                async function populatePassword(
-                    input: MultiStepInput,
-                    state: Partial<CreateAuthState>,
-                ): Promise<InputStep | void> {
-                    // eslint-disable-next-line require-atomic-updates
-                    state.$$PASSWORD$$ = await input.showInputBox({
-                        title,
-                        step: 5,
-                        totalSteps: 5,
-                        value: "",
-                        ignoreFocusOut: true,
-                        prompt: "Password",
-                        password: true,
-                        validate: (_pw: string) => Promise.resolve(undefined),
-                    });
+                            this.outputChannel.appendInfoLine(`CreateAuthState result ${prettifyJson(result)}`);
 
-                    progress.report({ increment: 10 });
-                }
+                            void vscode.window.showInformationMessage(
+                                `New ${createAuthState.AuthenticationKind} credential has been generated successfully`,
+                            );
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        } catch (error: any | string) {
+                            const errorMessage: string = error instanceof Error ? error.message : error;
 
-                const createAuthState: CreateAuthState = await collectInputs();
-                const maybeErrorMessage: string | undefined = this.validateCreateAuthState(createAuthState);
-
-                progress.report({ increment: 10 });
-
-                if (maybeErrorMessage) {
-                    void vscode.window.showWarningMessage(maybeErrorMessage);
-                } else {
-                    try {
-                        const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
-                            createAuthState,
-                        );
-
-                        this.outputChannel.appendInfoLine(`CreateAuthState result ${prettifyJson(result)}`);
-
-                        void vscode.window.showInformationMessage(
-                            `New ${createAuthState.AuthenticationKind} credential has been generated successfully`,
-                        );
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } catch (error: any | string) {
-                        const errorMessage: string = error instanceof Error ? error.message : error;
-
-                        void vscode.window.showErrorMessage(
-                            `Fail to create ${createAuthState.AuthenticationKind} credential due to ${errorMessage}`,
-                        );
+                            void vscode.window.showErrorMessage(
+                                `Fail to create ${createAuthState.AuthenticationKind} credential due to ${errorMessage}`,
+                            );
+                        }
                     }
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to create credential due to ${errorMessage}`);
                 }
 
                 progress.report({ increment: 100 });
@@ -1084,8 +1138,17 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
-                const result: GenericResult = await this.pqTestService.RefreshCredential();
-                this.outputChannel.appendInfoLine(`RefreshCredential result ${prettifyJson(result)}`);
+
+                try {
+                    const result: GenericResult = await this.pqTestService.RefreshCredential();
+                    this.outputChannel.appendInfoLine(`RefreshCredential result ${prettifyJson(result)}`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to refresh credentials due to ${errorMessage}`);
+                }
+
                 progress.report({ increment: 100 });
             },
         );
@@ -1103,15 +1166,23 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
 
-                if (ExtensionConfigurations.featuresUseDaemon) {
-                    result = await (this.pqTestService as PqDaemonClient).RunTestBatteryFromContent(
-                        pathToQueryFile?.fsPath,
-                    );
-                } else {
-                    result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
+                try {
+                    if (ExtensionConfigurations.featuresUseDaemon) {
+                        result = await (this.pqTestService as PqDaemonClient).RunTestBatteryFromContent(
+                            pathToQueryFile?.fsPath,
+                        );
+                    } else {
+                        result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
+                    }
+
+                    this.outputChannel.appendInfoLine(`RunTestBattery result ${prettifyJson(result)}`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to run the query due to ${errorMessage}`);
                 }
 
-                this.outputChannel.appendInfoLine(`RunTestBattery result ${prettifyJson(result)}`);
                 progress.report({ increment: 100 });
             },
         );
@@ -1131,8 +1202,17 @@ export class LifecycleCommands {
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
-                const result: GenericResult = await this.pqTestService.TestConnection();
-                this.outputChannel.appendInfoLine(`TestConnection result ${prettifyJson(result)}`);
+
+                try {
+                    const result: GenericResult = await this.pqTestService.TestConnection();
+                    this.outputChannel.appendInfoLine(`TestConnection result ${prettifyJson(result)}`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any | string) {
+                    const errorMessage: string = error instanceof Error ? error.message : error;
+
+                    void vscode.window.showErrorMessage(`Fail to run the query due to ${errorMessage}`);
+                }
+
                 progress.report({ increment: 100 });
             },
         );
