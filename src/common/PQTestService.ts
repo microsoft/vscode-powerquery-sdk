@@ -205,7 +205,7 @@ export function convertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[
 }
 
 export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {
-    const args: string[] = CommonArgs.slice();
+    let args: string[] = CommonArgs.slice();
 
     if (pqTestTask.additionalArgs) {
         args.push(...pqTestTask.additionalArgs);
@@ -222,6 +222,11 @@ export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {
     }
 
     args.unshift(pqTestTask.operation);
+
+    if (pqTestTask.operation === "compile") {
+        // remove --prettyPrint for compile task
+        args = args.filter((arg: string) => arg !== "--prettyPrint");
+    }
 
     return args;
 }
