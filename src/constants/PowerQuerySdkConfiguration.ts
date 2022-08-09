@@ -176,6 +176,17 @@ export const ExtensionConfigurations = {
 
         return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation);
     },
+    get featuresUseDaemon(): boolean {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const result: boolean | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featuresUseDaemon,
+        );
+
+        return Boolean(result);
+    },
 };
 
 const NugetDownloadVscUrl: vscode.Uri = vscode.Uri.parse(ExtensionConstants.NugetDownloadUrl);
