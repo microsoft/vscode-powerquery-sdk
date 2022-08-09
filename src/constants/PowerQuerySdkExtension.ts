@@ -47,6 +47,8 @@ const SuggestedPqTestNugetVersion: string = "2.107.2" as const;
 
 const PqTestSubPath: string[] = [`${PqTestNugetName}.${SuggestedPqTestNugetVersion}`, "tools", "PQTest.exe"];
 
+const MakePQXExecutableName: string = "MakePQX.exe" as const;
+
 function buildPqTestSubPath(pqTestVersion: string): string[] {
     return [`${PqTestNugetName}.${pqTestVersion}`, "tools", "PQTest.exe"];
 }
@@ -76,6 +78,7 @@ export const ExtensionConstants = Object.freeze({
     PqTestNugetName,
     SuggestedPqTestNugetVersion,
     PqTestSubPath,
+    MakePQXExecutableName,
     buildPqTestSubPath,
     ConfigNames,
     NugetDownloadUrl,

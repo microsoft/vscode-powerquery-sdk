@@ -12,6 +12,7 @@ export type BuildOperationType = "msbuild";
 export type PQTestOperationType =
     | "delete-credential"
     | "info"
+    | "compile"
     | "list-credential"
     | "credential-template"
     | "set-credential"
