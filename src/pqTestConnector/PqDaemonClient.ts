@@ -48,6 +48,7 @@ interface PqDaemonRequestParamBase {
     SessionId: string;
     PathToConnector?: string;
     PathToQueryFile?: string;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 }
@@ -170,6 +171,30 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
         );
 
         this.onPowerQueryTestLocationChanged();
+
+        vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
+            if (
+                ((textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
+                    textDocument.uri.fsPath.indexOf(".m") > -1) &&
+                this.pqDaemonConnected
+            ) {
+                void this.HandleOneDocumentSaved([textDocument.uri.fsPath]);
+            }
+        });
+
+        vscode.workspace.onDidCreateFiles((evt: vscode.FileCreateEvent) => {
+            const filteredPaths: string[] = evt.files
+                .filter(
+                    (oneUri: vscode.Uri) =>
+                        (oneUri.fsPath.indexOf(".pq") > -1 && oneUri.fsPath.indexOf(".query.pq") === -1) ||
+                        oneUri.fsPath.indexOf(".m") > -1,
+                )
+                .map((oneUri: vscode.Uri) => oneUri.fsPath);
+
+            if (filteredPaths.length && this.pqDaemonConnected) {
+                void this.HandleOneDocumentSaved(filteredPaths);
+            }
+        });
     }
 
     private handleRpcMessage(message: Message): void {
@@ -441,7 +466,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         AllCredentials: true,
                     },
                 ],
@@ -462,7 +487,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                     },
                 ],
             };
@@ -483,7 +508,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
                     },
                 ],
@@ -524,7 +549,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
                     },
                 ],
@@ -561,7 +586,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: pathToQueryFile,
                     },
                 ],
@@ -635,7 +660,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
                         InputTemplateString: payloadStr,
                     },
@@ -657,7 +682,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
                         // DataSourceKind: createAuthState.DataSourceKind,
                         AuthenticationKind: createAuthState.AuthenticationKind,
@@ -683,8 +708,28 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                    },
+                ],
+            };
+
+            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+        } else {
+            throw new PqDaemonServerNotReady();
+        }
+    }
+
+    HandleOneDocumentSaved(documentFullPaths: string[]): Promise<GenericResult> {
+        if (this.serverTransportTuple) {
+            const theRequestMessage: PqDaemonRequest = {
+                jsonrpc: JSON_RPC_VERSION,
+                id: this.nextSequenceId,
+                method: "v1/EventService/HandleOneDocumentSaved",
+                params: [
+                    {
+                        SessionId: this.sessionId,
+                        Content: documentFullPaths,
                     },
                 ],
             };
