@@ -9,6 +9,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { buildPqTestArgs, IPQTestService } from "common/PQTestService";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PowerQueryTaskDefinition } from "common/PowerQueryTask";
@@ -70,6 +71,12 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
 const buildTasks: PowerQueryTaskDefinition[] = [
     {
         type: ExtensionConstants.PowerQueryTaskType,
+        operation: "msbuild",
+        label: "Build connector project using MSBuild",
+        additionalArgs: ["/restore", "/consoleloggerparameters:NoSummary", "/property:GenerateFullPaths=true"],
+    },
+    {
+        type: ExtensionConstants.PowerQueryTaskType,
         operation: "compile",
         label: "Build connector project using MakePQX",
         additionalArgs: [],
@@ -89,12 +96,21 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         }
 
         buildTasks.forEach((taskDef: PowerQueryTaskDefinition) => {
-            result.push(
-                PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(
-                    taskDef,
-                    path.join(this.pqTestService.pqTestLocation, ExtensionConstants.MakePQXExecutableName),
-                ),
-            );
+            if (taskDef.operation === "msbuild") {
+                result.push(
+                    PowerQueryTaskProvider.getTaskForBuildTaskDefinition(
+                        taskDef,
+                        ExtensionConfigurations.msbuildPath ?? "msbuild",
+                    ),
+                );
+            } else {
+                result.push(
+                    PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(
+                        taskDef,
+                        path.join(this.pqTestService.pqTestLocation, ExtensionConstants.MakePQXExecutableName),
+                    ),
+                );
+            }
         });
 
         pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
@@ -110,6 +126,16 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         const taskDef: PowerQueryTaskDefinition = task.definition as PowerQueryTaskDefinition;
 
         const pqtestExe: string = this.pqTestService.pqTestFullPath;
+
+        if (taskDef.operation === "msbuild") {
+            const msbuildFullPath: string | undefined = ExtensionConfigurations.msbuildPath;
+
+            if (msbuildFullPath && !token.isCancellationRequested) {
+                return PowerQueryTaskProvider.getTaskForBuildTaskDefinition(taskDef, msbuildFullPath);
+            }
+
+            return undefined;
+        }
 
         if (taskDef.operation === "compile") {
             const currentWorkingFolder: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
@@ -166,5 +192,34 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         }
 
         return vscTask;
+    }
+
+    private static getTaskForBuildTaskDefinition(taskDef: PowerQueryTaskDefinition, msbuildExe: string): vscode.Task {
+        // TODO: To support SDK based build we'll need to:
+        // - Check the kind on the taskDef
+        // - Change ShellExecution to CustomExecution
+        // - Update the problem matcher
+        const execution: vscode.ProcessExecution = new vscode.ProcessExecution(msbuildExe);
+
+        if (taskDef.additionalArgs && taskDef.additionalArgs.length > 0) {
+            execution.args.push(...taskDef.additionalArgs);
+        }
+
+        const task: vscode.Task = new vscode.Task(
+            taskDef,
+            vscode.TaskScope.Workspace,
+            taskDef.label ?? taskDef.operation,
+            TaskLabelPrefix.Build,
+            execution,
+            ["$msCompile"],
+        );
+
+        task.group = vscode.TaskGroup.Build;
+
+        task.presentationOptions = {
+            reveal: vscode.TaskRevealKind.Silent,
+        };
+
+        return task;
     }
 }
