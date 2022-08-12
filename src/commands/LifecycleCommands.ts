@@ -23,7 +23,7 @@ import { FSWatcher, WatchEventType } from "fs";
 
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
-import type { PqDaemonClient } from "pqTestConnector/PqDaemonClient";
+import type { PqServiceHostClient } from "pqTestConnector/PqServiceHostClient";
 
 import {
     AuthenticationKind,
@@ -661,6 +661,7 @@ export class LifecycleCommands {
                 try {
                     const result: GenericResult = await this.pqTestService.DeleteCredential();
                     this.outputChannel.appendInfoLine(`DeleteCredential result ${prettifyJson(result)}`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
@@ -1167,8 +1168,8 @@ export class LifecycleCommands {
                 progress.report({ increment: 0 });
 
                 try {
-                    if (ExtensionConfigurations.featuresUseDaemon) {
-                        result = await (this.pqTestService as PqDaemonClient).RunTestBatteryFromContent(
+                    if (ExtensionConfigurations.featureUseServiceHost) {
+                        result = await (this.pqTestService as PqServiceHostClient).RunTestBatteryFromContent(
                             pathToQueryFile?.fsPath,
                         );
                     } else {

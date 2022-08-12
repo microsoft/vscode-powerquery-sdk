@@ -16,8 +16,8 @@ import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
 import { LifeCycleTaskTreeView } from "features/LifeCycleTaskTreeView";
 import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
-import { PqDaemonClient } from "./pqTestConnector/PqDaemonClient";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
+import { PqServiceHostClient } from "pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
@@ -26,7 +26,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
 
     activateExternalConfiguration(true);
-    const useDaemon: boolean = ExtensionConfigurations.featuresUseDaemon;
+    const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
     // let's make extension::activate serves as minimum as possible:
     // for now:
@@ -36,8 +36,8 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
     const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
 
-    const disposablePqTestServices: IPQTestService & IDisposable = useDaemon
-        ? new PqDaemonClient(globalEventBus, pqSdkOutputChannel)
+    const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
+        ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
         : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
 
     disposablePqTestServices.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {

@@ -103,7 +103,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestQuery);
                     } else if (
                         evt.affectsConfiguration(
-                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featuresUseDaemon}`,
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featureUseServiceHost}`,
                         )
                     ) {
                         void (async (): Promise<void> => {

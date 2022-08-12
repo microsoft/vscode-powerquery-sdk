@@ -21,7 +21,7 @@ const ConfigNames = {
             pqTestLocation: "pqtest.location" as const,
             pqTestExtensionFileLocation: "pqtest.extension" as const,
             pqTestQueryFileLocation: "pqtest.queryFile" as const,
-            featuresUseDaemon: "features.useDaemon" as const,
+            featureUseServiceHost: "features.useServiceHost" as const,
         },
     },
 };

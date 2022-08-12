@@ -90,11 +90,11 @@
                     "type": "string",
                     "description": "Query file containing section document or M expression (.m/.pq)."
                 },
-                "powerquery.sdk.features.useDaemon": {
+                "powerquery.sdk.features.useServiceHost": {
                     "scope": "machine-overridable",
                     "type": "boolean",
                     "default": false,
-                    "description": "Try the new feature using a reusable engine server other than the command lines"
+                    "description": "Try the new feature using a reusable engine service host other than the command lines"
                 }
             }
         },

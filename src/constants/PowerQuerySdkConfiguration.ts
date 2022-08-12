@@ -176,13 +176,13 @@ export const ExtensionConfigurations = {
 
         return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation);
     },
-    get featuresUseDaemon(): boolean {
+    get featureUseServiceHost(): boolean {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
         const result: boolean | undefined = config.get(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featuresUseDaemon,
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featureUseServiceHost,
         );
 
         return Boolean(result);

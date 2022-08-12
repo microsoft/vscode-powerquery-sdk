@@ -44,7 +44,7 @@ interface ServerTransportTuple {
     readonly writer: SocketMessageWriter;
 }
 
-interface PqDaemonRequestParamBase {
+interface PqServiceHostRequestParamBase {
     SessionId: string;
     PathToConnector?: string;
     PathToQueryFile?: string;
@@ -53,7 +53,8 @@ interface PqDaemonRequestParamBase {
     [key: string]: any;
 }
 
-interface PqDaemonRequest<T extends PqDaemonRequestParamBase = PqDaemonRequestParamBase> extends RequestMessage {
+interface PqServiceHostRequest<T extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase>
+    extends RequestMessage {
     /**
      * The request id.
      */
@@ -75,7 +76,7 @@ enum ResponseStatus {
     Failure = 3,
 }
 
-interface PqDaemonResponseBase<T = string> extends ResponseMessage {
+interface PqServiceHostResponseBase<T = string> extends ResponseMessage {
     id: string;
     result: {
         SessionId: string;
@@ -90,8 +91,8 @@ interface PqDaemonResponseBase<T = string> extends ResponseMessage {
  * Internal interface within the module, we need not cast members as readonly
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface PqDaemonTask<Req extends PqDaemonRequestParamBase = PqDaemonRequestParamBase, Res = any> {
-    request: PqDaemonRequest<Req>;
+interface PqServiceHostTask<Req extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase, Res = any> {
+    request: PqServiceHostRequest<Req>;
     options: {
         shouldParsePayload?: boolean;
     };
@@ -101,9 +102,9 @@ interface PqDaemonTask<Req extends PqDaemonRequestParamBase = PqDaemonRequestPar
 
 const JSON_RPC_VERSION: string = "2.0";
 
-export class PqDaemonServerNotReady extends Error {
+export class PqServiceHostServerNotReady extends Error {
     constructor() {
-        super("Cannot connect to the pqDaemon");
+        super("Cannot connect to the pqServiceHost");
     }
 }
 
@@ -133,10 +134,10 @@ function getInternalErrorMessage(innerError: any): string {
     return JSON.stringify(innerError);
 }
 
-export class PqDaemonClient implements IPQTestService, IDisposable {
-    public static readonly ExecutableName: string = "PqDaemon.exe";
-    public static readonly ExecutablePidLockFileName: string = "PqDaemon.pid";
-    public static readonly ExecutablePortLockFileName: string = "PqDaemon.port";
+export class PqServiceHostClient implements IPQTestService, IDisposable {
+    public static readonly ExecutableName: string = "PQServiceHost.exe";
+    public static readonly ExecutablePidLockFileName: string = "PQServiceHost.pid";
+    public static readonly ExecutablePortLockFileName: string = "PQServiceHost.port";
 
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
@@ -144,11 +145,11 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
 
     private _sequenceSeed: number = Date.now();
     private readonly sessionId: string = vscode.env.sessionId;
-    private pendingTaskMap: Map<string, PqDaemonTask> = new Map();
+    private pendingTaskMap: Map<string, PqServiceHostTask> = new Map();
     private serverTransportTuple: ServerTransportTuple | undefined = undefined;
     protected _disposables: Array<IDisposable> = [];
 
-    public get pqDaemonConnected(): boolean {
+    public get pqServiceHostConnected(): boolean {
         return Boolean(this.serverTransportTuple);
     }
 
@@ -176,7 +177,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
             if (
                 ((textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
                     textDocument.uri.fsPath.indexOf(".m") > -1) &&
-                this.pqDaemonConnected
+                this.pqServiceHostConnected
             ) {
                 void this.HandleOneDocumentSaved([textDocument.uri.fsPath]);
             }
@@ -191,7 +192,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 )
                 .map((oneUri: vscode.Uri) => oneUri.fsPath);
 
-            if (filteredPaths.length && this.pqDaemonConnected) {
+            if (filteredPaths.length && this.pqServiceHostConnected) {
                 void this.HandleOneDocumentSaved(filteredPaths);
             }
         });
@@ -200,9 +201,9 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
     private handleRpcMessage(message: Message): void {
         if (message.jsonrpc === JSON_RPC_VERSION && this.pendingTaskMap.has(`${(message as ResponseMessage).id}`)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const responseMessage: PqDaemonResponseBase = message as PqDaemonResponseBase<any>;
+            const responseMessage: PqServiceHostResponseBase = message as PqServiceHostResponseBase<any>;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const maybePendingTask: PqDaemonTask<any> | undefined = this.pendingTaskMap.get(responseMessage.id);
+            const maybePendingTask: PqServiceHostTask<any> | undefined = this.pendingTaskMap.get(responseMessage.id);
 
             if (maybePendingTask) {
                 // no need to check the session within the result
@@ -241,7 +242,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                         }
                     }
 
-                    // todo, mv this logic to pqDaemon
+                    // todo, mv this logic to pqServiceHost
                     if (maybePendingTask.request.method === "DisplayExtensionInfo") {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         this.currentExtensionInfos.emit(responseMessage.result.Payload as any);
@@ -265,7 +266,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
     }
 
     private createServerSocketTransport(port: number): void {
-        this.outputChannel.appendInfoLine(`Start to listen PqDaemon.exe at ${port}`);
+        this.outputChannel.appendInfoLine(`Start to listen PqServiceHost.exe at ${port}`);
         const socket: net.Socket = net.createConnection(port, "127.0.0.1");
         socket.setTimeout(0);
         socket.setKeepAlive(true);
@@ -283,12 +284,12 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
         });
 
         socket.on("connect", () => {
-            this.outputChannel.appendInfoLine(`Succeed listening PqDaemon.exe at ${port}`);
+            this.outputChannel.appendInfoLine(`Succeed listening PqServiceHost.exe at ${port}`);
         });
 
         socket.on("error", (err: Error) => {
             this.outputChannel.appendErrorLine(
-                `Failed to listen PqDaemon.exe at ${port} due to ${err.message}, will try to reconnect in 2 sec`,
+                `Failed to listen PqServiceHost.exe at ${port} due to ${err.message}, will try to reconnect in 2 sec`,
             );
 
             setTimeout(() => {
@@ -305,7 +306,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
         this.serverTransportTuple = theServerTransportTuple;
     }
 
-    private resolvePQDaemonPath(nextPQTestLocation: string | undefined): string | undefined {
+    private resolvePQServiceHostPath(nextPQTestLocation: string | undefined): string | undefined {
         if (!nextPQTestLocation) {
             this.outputChannel.appendErrorLine("powerquery.sdk.pqtest.location configuration value is not set.");
 
@@ -318,21 +319,21 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
             return undefined;
         }
 
-        const pqtestExe: string = path.resolve(nextPQTestLocation, PqDaemonClient.ExecutableName);
+        const pqServiceHostExe: string = path.resolve(nextPQTestLocation, PqServiceHostClient.ExecutableName);
 
-        if (!fs.existsSync(pqtestExe)) {
-            this.outputChannel.appendErrorLine(`pqDaemon.exe not found at ${pqtestExe}`);
+        if (!fs.existsSync(pqServiceHostExe)) {
+            this.outputChannel.appendErrorLine(`PqServiceHost.exe not found at ${pqServiceHostExe}`);
 
             return undefined;
         }
 
-        return pqtestExe;
+        return pqServiceHostExe;
     }
 
     private disposeCurrentServerTransportTuple(): void {
         if (this.serverTransportTuple) {
             this.outputChannel.appendInfoLine(
-                `Stop listening PqDaemon.exe at ${this.serverTransportTuple.status.port}`,
+                `Stop listening PqServiceHost.exe at ${this.serverTransportTuple.status.port}`,
             );
 
             this.serverTransportTuple.status.live = false;
@@ -351,16 +352,20 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
         return convertStringToInteger(pidString);
     }
 
-    private async doStartAndListenPqDaemonIfNeeded(nextPQTestLocation: string): Promise<void> {
-        const pidFileFullPath: string = path.resolve(nextPQTestLocation, PqDaemonClient.ExecutablePidLockFileName);
-        const portFileFullPath: string = path.resolve(nextPQTestLocation, PqDaemonClient.ExecutablePortLockFileName);
+    private async doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation: string): Promise<void> {
+        const pidFileFullPath: string = path.resolve(nextPQTestLocation, PqServiceHostClient.ExecutablePidLockFileName);
+
+        const portFileFullPath: string = path.resolve(
+            nextPQTestLocation,
+            PqServiceHostClient.ExecutablePortLockFileName,
+        );
 
         let pidNumber: number | undefined = this.doSeizeNumberFromLockFile(pidFileFullPath);
 
-        // check if we need to start the daemon for the first time
+        // check if we need to start the pqServiceHost for the first time
         if (typeof pidNumber !== "number" || !pidIsRunning(pidNumber.valueOf())) {
             new SpawnedProcess(
-                path.resolve(nextPQTestLocation, PqDaemonClient.ExecutableName),
+                path.resolve(nextPQTestLocation, PqServiceHostClient.ExecutableName),
                 [],
                 { cwd: this.pqTestLocation, detached: true },
                 {
@@ -395,7 +400,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
             }
 
             this.outputChannel.appendInfoLine(
-                `Check [${maxTry}] whether PqDaemon.exe exported at ${portNumber}, ${portInUse}`,
+                `Check [${maxTry}] whether PqServiceHost.exe exported at ${portNumber}, ${portInUse}`,
             );
 
             maxTry--;
@@ -410,19 +415,19 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
     onPowerQueryTestLocationChanged(): void {
         // PQTestLocation getter
         const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-        const pqDaemonExe: string | undefined = this.resolvePQDaemonPath(nextPQTestLocation);
+        const pqServiceHostExe: string | undefined = this.resolvePQServiceHostPath(nextPQTestLocation);
 
-        if (!pqDaemonExe || !nextPQTestLocation) {
+        if (!pqServiceHostExe || !nextPQTestLocation) {
             this.pqTestReady = false;
             this.pqTestLocation = "";
             this.pqTestFullPath = "";
         } else {
             this.pqTestReady = true;
             this.pqTestLocation = nextPQTestLocation;
-            this.pqTestFullPath = pqDaemonExe;
-            this.outputChannel.appendInfoLine(`PqDaemon.exe found at ${this.pqTestFullPath}`);
+            this.pqTestFullPath = pqServiceHostExe;
+            this.outputChannel.appendInfoLine(`PqServiceHost.exe found at ${this.pqTestFullPath}`);
 
-            void this.doStartAndListenPqDaemonIfNeeded(nextPQTestLocation);
+            void this.doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation);
         }
     }
 
@@ -437,11 +442,11 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private enlistOnePqDaemonTask<T = any>(
-        theRequestMessage: PqDaemonRequest,
-        options: PqDaemonTask["options"] = {},
+    private enlistOnePqServiceHostTask<T = any>(
+        theRequestMessage: PqServiceHostRequest,
+        options: PqServiceHostTask["options"] = {},
     ): Promise<T> {
-        const theTask: PqDaemonTask = { request: theRequestMessage, options } as PqDaemonTask;
+        const theTask: PqServiceHostTask = { request: theRequestMessage, options } as PqServiceHostTask;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result: Promise<T> = new Promise((resolve: (value: T) => void, reject: (reason?: any) => void) => {
@@ -459,7 +464,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
 
     DeleteCredential(): Promise<GenericResult> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "DeleteCredential",
@@ -472,15 +477,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     DisplayExtensionInfo(): Promise<ExtensionInfo> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "DisplayExtensionInfo",
@@ -492,16 +497,16 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<ExtensionInfo>(theRequestMessage, { shouldParsePayload: true });
+            return this.enlistOnePqServiceHostTask<ExtensionInfo>(theRequestMessage, { shouldParsePayload: true });
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     GenerateCredentialTemplate(): Promise<any> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "GenerateCredentialTemplate",
@@ -515,15 +520,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
             };
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return this.enlistOnePqDaemonTask<any>(theRequestMessage, { shouldParsePayload: true });
+            return this.enlistOnePqServiceHostTask<any>(theRequestMessage, { shouldParsePayload: true });
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     ListCredentials(): Promise<Credential[]> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "ListCredentials",
@@ -534,15 +539,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<Credential[]>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<Credential[]>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     RefreshCredential(): Promise<GenericResult> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "RefreshCredential",
@@ -555,9 +560,9 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
@@ -579,7 +584,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 pathToQueryFile = configPQTestQueryFileLocation;
             }
 
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "RunTestBattery",
@@ -592,9 +597,9 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
@@ -632,7 +637,7 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
             // only for RunTestBatteryFromContent,
             // PathToConnector would be full path of the current working folder
             // PathToQueryFile would be either the saved or unsaved content of the query file to be evaluated
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "RunTestBatteryFromContent",
@@ -645,15 +650,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     SetCredential(payloadStr: string): Promise<GenericResult> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "RefreshCredential",
@@ -667,15 +672,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "SetCredentialFromCreateAuthState",
@@ -693,15 +698,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     TestConnection(): Promise<GenericResult> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "TestConnection",
@@ -714,15 +719,15 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 
     HandleOneDocumentSaved(documentFullPaths: string[]): Promise<GenericResult> {
         if (this.serverTransportTuple) {
-            const theRequestMessage: PqDaemonRequest = {
+            const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
                 method: "v1/EventService/HandleOneDocumentSaved",
@@ -734,9 +739,9 @@ export class PqDaemonClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqDaemonTask<GenericResult>(theRequestMessage);
+            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
-            throw new PqDaemonServerNotReady();
+            throw new PqServiceHostServerNotReady();
         }
     }
 }
