@@ -227,6 +227,7 @@
         "build:pq-test-result-view": "cd webviews/pq-test-result-view && npm run build",
         "build": "npm run build:pq-test-result-view",
         "package": "npm run clean && npm run build && webpack --mode production",
+        "vsix": "npx vsce package",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
@@ -259,6 +260,7 @@
         "rimraf": "^3.0.2",
         "ts-loader": "^9.2.6",
         "typescript": "^4.5.2",
+        "vsce": "^2.10.0",
         "webpack": "^5.64.4",
         "webpack-cli": "^4.9.1",
         "tsconfig-paths-webpack-plugin": "^3.5.2"

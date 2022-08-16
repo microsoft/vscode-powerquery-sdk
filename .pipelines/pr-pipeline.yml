@@ -1,0 +1,61 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  - main
+
+pr:
+  - main
+
+pool:
+  vmImage: "windows-latest"
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "16.x"
+    displayName: "Install Node.js"
+
+  - task: Npm@1
+    displayName: "npm clean-install"
+    inputs:
+      command: "clean-install"
+
+  - task: Npm@1
+    displayName: "audit"
+    inputs:
+      command: "custom"
+      customCommand: "run audit"
+
+  - task: Npm@1
+    displayName: "build"
+    inputs:
+      command: "custom"
+      customCommand: "run vsix"
+
+#  - task: Npm@1
+#    displayName: "npm test"
+#    inputs:
+#      command: "custom"
+#      customCommand: "test"
+
+  - task: PoliCheck@1
+    inputs:
+      inputType: "Basic"
+      targetType: "F"
+      targetArgument: "src"
+      result: "PoliCheck.xml"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: "$(System.DefaultWorkingDirectory)/*.vsix"
+      ArtifactName: VSIX
+    displayName: "publish vsix"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: "$(System.DefaultWorkingDirectory)/../_sdt/logs/PoliCheck"
+      ArtifactName: PoliCheck
+    displayName: "publish policheck results"
