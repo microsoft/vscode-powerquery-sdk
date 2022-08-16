@@ -30,7 +30,7 @@ steps:
       customCommand: "run audit"
 
   - task: Npm@1
-    displayName: "build"
+    displayName: "build VSIX"
     inputs:
       command: "custom"
       customCommand: "run vsix"
@@ -48,14 +48,20 @@ steps:
       targetArgument: "src"
       result: "PoliCheck.xml"
 
-  - task: PublishBuildArtifacts@1
+  - task: CopyFiles@2
+    displayName: "copy VSIX to ArtifactStagingDirectory"
     inputs:
-      PathtoPublish: "$(System.DefaultWorkingDirectory)/*.vsix"
-      ArtifactName: VSIX
-    displayName: "publish vsix"
+      contents: '$(System.DefaultWorkingDirectory)/*.vsix'
+      targetFolder: $(Build.ArtifactStagingDirectory)
 
   - task: PublishBuildArtifacts@1
+    displayName: "drop ArtifactStagingDirectory"
+    inputs:
+      PathtoPublish: $(Build.ArtifactStagingDirectory)
+      ArtifactName: VSIX
+
+  - task: PublishBuildArtifacts@1
+    displayName: "publish policheck results"
     inputs:
       PathtoPublish: "$(System.DefaultWorkingDirectory)/../_sdt/logs/PoliCheck"
       ArtifactName: PoliCheck
-    displayName: "publish policheck results"
