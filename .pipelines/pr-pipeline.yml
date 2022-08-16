@@ -21,7 +21,7 @@ steps:
   - task: Npm@1
     displayName: "npm clean-install"
     inputs:
-      command: "clean-install"
+      command: "ci"
 
   - task: Npm@1
     displayName: "audit"
