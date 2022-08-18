@@ -1,0 +1,32 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+name: 1loc_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+trigger: none
+
+pr: none
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+  - task: OneLocBuild@2
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    inputs:
+      locProj: 'localize/LocProject.json'
+      displayName: "Localization Build: localize/LocProject.json"
+      outDir: '$(Build.ArtifactStagingDirectory)'
+      isCreatePrSelected: true
+      repoType: gitHub
+      gitHubPatVariable: "$(GitHubPat)"
+      prSourceBranchPrefix: 'locfiles'
+      packageSourceAuth: 'patAuth'
+      patVariable: '$(OneLocBuildPat)'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'drop'
+      publishLocation: 'Container'
