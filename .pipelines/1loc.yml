@@ -11,12 +11,13 @@ pool:
   vmImage: 'windows-latest'
 
 steps:
-  - task: OneLocBuild@2
+  - checkout: self
+  - task: cesve.one-loc-build.one-loc-build.OneLocBuild@2
+    displayName: "Localization Build: localize/LocProject.json"
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
     inputs:
       locProj: 'localize/LocProject.json'
-      displayName: "Localization Build: localize/LocProject.json"
       outDir: '$(Build.ArtifactStagingDirectory)'
       isCreatePrSelected: true
       repoType: gitHub
