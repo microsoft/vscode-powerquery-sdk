@@ -45,7 +45,7 @@
         "commands": [
             {
                 "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
-                "title": "Evaluate current power query script",
+                "title": "%extension.pqtest.RunTestBatteryCommand.title%",
                 "category": "Power query",
                 "icon": "$(debug-console-evaluation-prompt)"
             },
@@ -235,6 +235,9 @@
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },
+    "dependencies": {
+        "vscode-nls": "^5.1.0"
+    },
     "devDependencies": {
         "@types/chai": "^4.3.1",
         "@types/glob": "^7.2.0",
@@ -261,6 +264,7 @@
         "ts-loader": "^9.2.6",
         "typescript": "^4.5.2",
         "vsce": "^2.10.0",
+        "vscode-nls-dev": "^4.0.1",
         "webpack": "^5.64.4",
         "webpack-cli": "^4.9.1",
         "tsconfig-paths-webpack-plugin": "^3.5.2"
