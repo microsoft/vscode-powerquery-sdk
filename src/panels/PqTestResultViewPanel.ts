@@ -203,6 +203,10 @@ export class PqTestResultViewPanel implements IDisposable {
 
     private _getHtmlForWebview(webview: Webview): string {
         // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
+        const baseUri: vscode.Uri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths),
+        );
+
         const scriptUri: vscode.Uri = webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths, "main.js"),
         );
@@ -210,6 +214,7 @@ export class PqTestResultViewPanel implements IDisposable {
         return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
+			    <base href="${baseUri}/">
 				<meta charset="UTF-8">
 
 				<!--

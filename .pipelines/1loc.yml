@@ -10,27 +10,24 @@ pr: none
 pool:
   vmImage: 'windows-latest'
 
-jobs:
-  - job: Job_1
-    displayName: Agent job 1
-    pool:
-      vmImage: windows-latest
-    steps:
-      - checkout: self
-      - task: cesve.one-loc-build.one-loc-build.OneLocBuild@2
-        displayName: "Localization Build: localize/LocProject.json"
-        inputs:
-          locProj: "localize/LocProject.json"
-          isCreatePrSelected: true
-          repoType: gitHub
-          gitHubPatVariable: "$(GitHubPat)"
-          packageSourceAuth: patAuth
-          patVariable: "$(OneLocBuildPat)"
-        env:
-          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-      - task: PublishBuildArtifacts@1
-        displayName: "Publish Artifact: drop"
-        inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'drop'
-          publishLocation: 'Container'
+steps:
+  - checkout: self
+  - task: OneLocBuild@2
+    displayName: "Localization Build: localize/LocProject.json"
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    inputs:
+      locProj: 'localize/LocProject.json'
+      outDir: '$(Build.ArtifactStagingDirectory)'
+      isCreatePrSelected: true
+      repoType: gitHub
+      gitHubPatVariable: "$(GitHubPat)"
+      prSourceBranchPrefix: 'locfiles'
+      packageSourceAuth: 'patAuth'
+      patVariable: '$(OneLocBuildPat)'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'drop'
+      publishLocation: 'Container'
