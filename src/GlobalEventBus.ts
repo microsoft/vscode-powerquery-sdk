@@ -9,7 +9,8 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
-import { getFirstWorkspaceFolder } from "./utils/vscodes";
+import { getFirstWorkspaceFolder } from "utils/vscodes";
+import { handleLocaleChanged } from "i18n/extension";
 
 import {
     ConfigurationChangeEvent,
@@ -82,7 +83,15 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
 
         this.vscExtCtx.subscriptions.push(
             vscWorkspace.onDidChangeConfiguration((evt: ConfigurationChangeEvent) => {
-                if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
+                if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuery.name)) {
+                    if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuery.name}.${ExtensionConstants.ConfigNames.PowerQuery.properties.locale}`,
+                        )
+                    ) {
+                        handleLocaleChanged();
+                    }
+                } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
                     if (
                         evt.affectsConfiguration(
                             `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation}`,

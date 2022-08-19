@@ -358,3 +358,4 @@ pqTest.pid
 node_modules
 .vscode-test/
 *.vsix
+package.nls.*.json

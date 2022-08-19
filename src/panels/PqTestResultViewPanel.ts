@@ -10,6 +10,7 @@ import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vs
 
 import { Disposable, IDisposable } from "common/Disposable";
 import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "common/ValueEventEmitter";
+import { extensionI18nRecord } from "i18n/extension";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
 
@@ -128,7 +129,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
         const panel: WebviewPanel = vscode.window.createWebviewPanel(
             PqTestResultViewPanel.viewType,
-            "PQTest result",
+            extensionI18nRecord["PQTest.result.view.title"],
             vscode.ViewColumn.Beside,
             PqTestResultViewPanel.getWebviewOptions(extensionUri),
         );
@@ -173,7 +174,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
     _update(): void {
         // noop
-        this._panel.title = "PQTest result";
+        this._panel.title = extensionI18nRecord["PQTest.result.view.title"];
 
         this._panel.webview.html = isDevWebView
             ? this._getDevHtmlForWebview()
@@ -224,7 +225,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				
-				<title>PQTest result</title>
+				<title>${extensionI18nRecord["PQTest.result.view.title"]}</title>
 			</head>
 			<body>
         <div id="root"></div>
@@ -246,7 +247,7 @@ export class PqTestResultViewPanel implements IDisposable {
     
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
-            <title>PQTest result</title>
+            <title>${extensionI18nRecord["PQTest.result.view.title"]}</title>
             <script defer src="http://localhost:3001/main.js"></script>
           </head>
           <body>

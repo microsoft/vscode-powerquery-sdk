@@ -15,6 +15,15 @@ import { findExecutable } from "utils/executables";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
+    get pqLocale(): string {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuery.name,
+        );
+
+        const result: string | undefined = config.get(ExtensionConstants.ConfigNames.PowerQuery.properties.locale);
+
+        return result ?? vscode.env.language;
+    },
     setAutoDetection(
         autoDetection: boolean,
         configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,

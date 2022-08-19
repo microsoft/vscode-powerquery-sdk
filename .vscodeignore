@@ -5,6 +5,7 @@
 out/**
 node_modules/**
 resources/**
+localize/**
 src/**
 webviews/**
 .gitignore

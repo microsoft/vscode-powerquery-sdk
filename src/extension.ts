@@ -5,14 +5,13 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as nls from "vscode-nls";
 import * as vscode from "vscode";
 
 import { convertExtensionInfoToLibraryJson, ExtensionInfo } from "common/PQTestService";
-import { createExtensionI18nRecord, ExtensionI18nRecord } from "i18n/extension";
 import { getFirstWorkspaceFolder, openDefaultPqFileIfNeeded } from "utils/vscodes";
 import { activateExternalConfiguration } from "constants/PowerQuerySdkConfiguration";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
+import { extensionI18nRecord } from "i18n/extension";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
@@ -22,13 +21,9 @@ import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
-const localize: nls.LocalizeFunc = nls.config({ messageFormat: nls.MessageFormat.file })();
-
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
-
-    const extensionI18nRecord: ExtensionI18nRecord = createExtensionI18nRecord(localize);
 
     activateExternalConfiguration(true);
     // let's make extension::activate serves as minimum as possible:
