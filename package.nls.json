@@ -1,3 +1,24 @@
 {
-  "extension.pqtest.RunTestBatteryCommand.title": "Evaluate current power query script"
+  "extension.pqtest.RunTestBatteryCommand.title": "Evaluate current power query file.",
+  "extension.pqtest.SetupCurrentWorkspaceCommand.title": "Setup workspace",
+  "extension.pqtest.config.project.autoDetection.description": "When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.",
+  "extension.pqtest.config.externals.msbuildPath.description": "Local path to msbuild.exe installation folder.",
+  "extension.pqtest.config.externals.nugetPath.description": "Local path to nuget.exe installation folder.",
+  "extension.pqtest.config.pqtest.location.description": "Local path to PQTest installation folder.",
+  "extension.pqtest.config.pqtest.extension.description": "Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.",
+  "extension.pqtest.config.pqtest.queryFile.description": "Query file containing section document or M expression (.m/.pq).",
+  "extension.pqtest.taskDefinitions.properties.operation.description": "The operation to run",
+  "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Additional commandline arguments for the operation",
+  "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Path to the connector file (--extension)",
+  "extension.pqtest.taskDefinitions.properties.pathToQueryFile.description": "Path to the query file (--queryFile)",
+  "extension.pqtest.explorer.name": "Power query SDK",
+  "extension.pqtest.welcome.contents": "In order to use extension features, you need to create an Power query extension project.\n[Create an extension project](command:powerquery.sdk.pqtest.CreateNewProjectCommand)\nTo learn more about how to create an extension, [read our docs](https://docs.microsoft.com/en-us/powerquery-m/).",
+  "extension.pqtest.debugger.properties.program.description": "Absolute path to a power query file.",
+  "extension.pqtest.debugger.properties.trace.description": "Enable logging of the Debug",
+  "extension.pqtest.debugger.properties.operation.description": "PQTest operation string",
+  "extension.pqtest.debugger.properties.operation.info.description": "info: Returns all module information",
+  "extension.pqtest.debugger.properties.operation.runTest.description": "run-test: test connection",
+  "extension.pqtest.debugger.properties.operation.testConnection.description": "test-connection: test current connection",
+  "extension.pqtest.initialConfigurations.name": "Evaluate power query file.",
+  "extension.pqtest.configurationSnippets.description": "A new configuration for testing power query file a user selected."
 }
