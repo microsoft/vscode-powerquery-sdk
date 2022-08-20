@@ -12,6 +12,7 @@ import { Socket } from "net";
 import { CancellationToken, DebugConfiguration, ProviderResult, TextEditor, WorkspaceFolder } from "vscode";
 
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { extensionI18n } from "i18n/extension";
 import { IDisposable } from "common/Disposable";
 import { MQueryDebugSession } from "debugAdaptor/MQueryDebugSession";
 
@@ -38,7 +39,7 @@ class MQueryConfigurationProvider implements vscode.DebugConfigurationProvider {
         }
 
         if (!config.program) {
-            return vscode.window.showInformationMessage("Cannot find a program to debug").then(
+            return vscode.window.showInformationMessage(extensionI18n["PQSdk.debugger.error.cannot.find.program"]).then(
                 (_: string | undefined) => undefined, // abort launch
             );
         }

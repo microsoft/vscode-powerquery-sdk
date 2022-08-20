@@ -11,7 +11,7 @@ import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vs
 import { Disposable, IDisposable } from "common/Disposable";
 import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "common/ValueEventEmitter";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { extensionI18nRecord } from "i18n/extension";
+import { extensionI18n } from "i18n/extension";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
 
@@ -131,7 +131,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
         const panel: WebviewPanel = vscode.window.createWebviewPanel(
             PqTestResultViewPanel.viewType,
-            extensionI18nRecord["PQTest.result.view.title"],
+            extensionI18n["PQTest.result.view.title"],
             vscode.ViewColumn.Beside,
             PqTestResultViewPanel.getWebviewOptions(extensionUri),
         );
@@ -176,7 +176,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
     _update(): void {
         // noop
-        this._panel.title = extensionI18nRecord["PQTest.result.view.title"];
+        this._panel.title = extensionI18n["PQTest.result.view.title"];
 
         this._panel.webview.html = isDevWebView
             ? this._getDevHtmlForWebview(this._panel.webview)
@@ -227,7 +227,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				
-				<title>${extensionI18nRecord["PQTest.result.view.title"]}</title>
+				<title>${extensionI18n["PQTest.result.view.title"]}</title>
 			</head>
 			<body>
         <div id="root"></div>
@@ -255,7 +255,7 @@ export class PqTestResultViewPanel implements IDisposable {
     
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
-            <title>${extensionI18nRecord["PQTest.result.view.title"]}</title>
+            <title>${extensionI18n["PQTest.result.view.title"]}</title>
             <script defer src="http://localhost:3001/main.js"></script>
           </head>
           <body>

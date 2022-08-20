@@ -10,6 +10,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
+import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
 import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
 import { buildPqTestArgs } from "common/PQTestService";
 import { ChildProcess } from "child_process";
@@ -77,11 +78,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
         const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
         if (!nextPQTestLocation) {
-            this.handleErrorStr("powerquery.sdk.pqtest.location configuration value is not set.");
+            this.handleErrorStr(extensionI18n["PQSdk.taskQueue.error.pqtestLocationNotSet"]);
             throw new Error("Failed to find PqTest executable");
         } else if (!fs.existsSync(nextPQTestLocation)) {
             this.handleErrorStr(
-                `powerquery.sdk.pqtest.location set to '${nextPQTestLocation}' but directory does not exist.`,
+                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestLocationDoesntExist", {
+                    nextPQTestLocation,
+                }),
             );
 
             throw new Error("Failed to find PqTest executable");
@@ -90,7 +93,11 @@ export class PqTestExecutableOnceTask implements IDisposable {
         const pqtestExe: string = path.resolve(nextPQTestLocation, PqTestExecutableOnceTask.ExecutableName);
 
         if (!fs.existsSync(pqtestExe)) {
-            this.handleErrorStr(`pqtest.exe not found at ${pqtestExe}`);
+            this.handleErrorStr(
+                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestExecutableDoesntExist", {
+                    pqtestExe,
+                }),
+            );
             throw new Error("Failed to find PqTest executable");
         }
 
@@ -140,7 +147,12 @@ export class PqTestExecutableOnceTask implements IDisposable {
             const processArgs: string[] = buildPqTestArgs(task);
 
             this.handleTaskCreated();
-            this.handleOutputStr(`[Debug task found] ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+            this.handleOutputStr(
+                resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskFound", {
+                    pqTestExeFullPath,
+                    arguments: processArgs.join(" "),
+                }),
+            );
 
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,
@@ -152,7 +164,10 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         this._threadId = childProcess.pid ?? NaN;
 
                         this.handleOutputStr(
-                            `[Debug task began] Fork pqtask ${task.operation} executable of pid: ${childProcess.pid}`,
+                            resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskBegan", {
+                                operation: task.operation,
+                                pid: `${childProcess.pid}`,
+                            }),
                         );
                     },
                 },
@@ -181,9 +196,12 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }
             } else {
                 this.handleErrorStr(
-                    `[Debug task exited abnormally] pqtest ${task.operation} pid(${spawnProcess.pid}) exit(${
-                        processExit.exitCode
-                    }) stderr: ${processExit.stderr ?? processExit.stdout}`,
+                    resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskExitAbnormally", {
+                        operation: task.operation,
+                        pid: `${spawnProcess.pid}`,
+                        exitCode: `${processExit.exitCode}`,
+                        stdErr: `${processExit.stderr ?? processExit.stdout}`,
+                    }),
                 );
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

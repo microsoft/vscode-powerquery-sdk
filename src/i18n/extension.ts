@@ -11,6 +11,7 @@ import * as path from "path";
 import defaultJson from "i18n/extension.json";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { RecordKeys } from "utils/types";
+import { replaceAt } from "utils/strings";
 
 export type ExtensionI18nRecord = typeof defaultJson;
 export type ExtensionI18nKeys = RecordKeys<ExtensionI18nRecord>;
@@ -46,8 +47,44 @@ export function handleLocaleChanged(nextLocale?: string): void {
     currentLocale = nextLocale;
 }
 
-// todo populate the template if needed
-
 handleLocaleChanged();
 
-export const extensionI18nRecord: ExtensionI18nRecord = createExtensionI18nRecord();
+export const extensionI18n: ExtensionI18nRecord = createExtensionI18nRecord();
+
+const I18nTemplateItemRegex: RegExp = /{([a-zA-Z0-9_]*)}/gm;
+
+// we might share doResolveI18nTemplate with another i18n record
+function doResolveI18nTemplate<R extends Record<string, string>>(
+    i18nRecord: R,
+    i18nKey: RecordKeys<R>,
+    argumentsPackage: Record<string, string | null | undefined> = {},
+): string {
+    let result: string = i18nRecord[i18nKey];
+
+    I18nTemplateItemRegex.lastIndex = 0;
+    let curMatch: RegExpExecArray | null = I18nTemplateItemRegex.exec(result);
+
+    while (curMatch) {
+        const theMatchedArgumentName: string = curMatch[1];
+        let theReplacedStr: string = "";
+
+        if (theMatchedArgumentName && argumentsPackage[theMatchedArgumentName]) {
+            theReplacedStr = argumentsPackage[theMatchedArgumentName] ?? theMatchedArgumentName;
+        } else if (theMatchedArgumentName) {
+            theReplacedStr = theMatchedArgumentName;
+        }
+
+        result = replaceAt(result, curMatch.index, curMatch[0].length, theReplacedStr);
+        I18nTemplateItemRegex.lastIndex = curMatch.index + theReplacedStr.length;
+        curMatch = I18nTemplateItemRegex.exec(result);
+    }
+
+    return result;
+}
+
+export function resolveI18nTemplate(
+    i18nKey: ExtensionI18nKeys,
+    argumentsPackage: Record<string, string | null | undefined> = {},
+): string {
+    return doResolveI18nTemplate<ExtensionI18nRecord>(extensionI18n, i18nKey, argumentsPackage);
+}

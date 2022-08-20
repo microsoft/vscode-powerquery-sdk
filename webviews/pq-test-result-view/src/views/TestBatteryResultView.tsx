@@ -24,7 +24,9 @@ interface GeneralDetailItem {
 export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<TestBatteryResult>(props => {
     const { testRunExecution } = props;
 
-    const OutputLabel = useI18n("testBatteryResView_Output");
+    const OutputLabel = useI18n("testBatteryResView.Table.Output.Title");
+    const SummaryLabel = useI18n("testBatteryResView.Table.Output.Summary");
+    const DataSourceLabel = useI18n("testBatteryResView.Table.Output.DataSource");
 
     const hasOutput = useMemo(
         () => Array.isArray(testRunExecution.Output) && testRunExecution.Output.length,
@@ -81,11 +83,11 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
                         <TestBatteryGeneralGrid items={testRunExecution.Output} />
                     </PivotItem>
                 ) : null}
-                <PivotItem key="Details" headerText="Summary">
+                <PivotItem key="summary" headerText={SummaryLabel}>
                     <TestBatteryGeneralGrid items={summaryArr} />
                 </PivotItem>
                 {hasDataSource ? (
-                    <PivotItem key="dataSource" headerText="DataSource">
+                    <PivotItem key="dataSource" headerText={DataSourceLabel}>
                         <TestBatteryGeneralGrid items={dataSourceArr} />
                     </PivotItem>
                 ) : null}
