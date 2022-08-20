@@ -1,3 +1,5 @@
 {
-  "testBatteryResView_Output": "输出结果"
+  "testBatteryResView.Table.Output.Title": "Output",
+  "testBatteryResView.Table.Output.Summary": "Summary",
+  "testBatteryResView.Table.Output.DataSource": "DataSource"
 }
