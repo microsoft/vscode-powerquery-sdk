@@ -232,7 +232,7 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
-        "audit": "npm audit",
+        "audit": "npm audit --production",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },
