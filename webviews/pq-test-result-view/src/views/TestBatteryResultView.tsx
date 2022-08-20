@@ -10,6 +10,7 @@ import { Pivot, PivotItem } from "@fluentui/react/lib/Pivot";
 
 import { TestBatteryGeneralGrid } from "../components/TestBatteryGeneralGrid";
 import { flattenJSON } from "../utils/jsons";
+import { useI18n } from "../i18n";
 
 interface TestBatteryResult {
     testRunExecution: any;
@@ -22,6 +23,8 @@ interface GeneralDetailItem {
 
 export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<TestBatteryResult>(props => {
     const { testRunExecution } = props;
+
+    const OutputLabel = useI18n("testBatteryResView_Output");
 
     const hasOutput = useMemo(
         () => Array.isArray(testRunExecution.Output) && testRunExecution.Output.length,
@@ -74,7 +77,7 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         <>
             <Pivot aria-label="PQTest battery test result" defaultSelectedKey={hasOutput ? "Output" : "Summary"}>
                 {hasOutput ? (
-                    <PivotItem key="output" headerText="Output">
+                    <PivotItem key="output" headerText={OutputLabel}>
                         <TestBatteryGeneralGrid items={testRunExecution.Output} />
                     </PivotItem>
                 ) : null}

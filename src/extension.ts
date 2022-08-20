@@ -11,7 +11,6 @@ import { convertExtensionInfoToLibraryJson, ExtensionInfo } from "common/PQTestS
 import { getFirstWorkspaceFolder, openDefaultPqFileIfNeeded } from "utils/vscodes";
 import { activateExternalConfiguration } from "constants/PowerQuerySdkConfiguration";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
-import { extensionI18nRecord } from "i18n/extension";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
@@ -33,9 +32,6 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const globalEventBus: GlobalEventBus = new GlobalEventBus(vscExtCtx);
     const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
     const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
-
-    // todo remove this
-    pqSdkOutputChannel.appendInfoLine(`[i18n works]${extensionI18nRecord["PQTest.result.view.title"]}`);
 
     const pqTestExecutableTaskQueue: PqTestExecutableTaskQueue = new PqTestExecutableTaskQueue(
         vscExtCtx,

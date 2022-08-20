@@ -10,12 +10,14 @@ import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vs
 
 import { Disposable, IDisposable } from "common/Disposable";
 import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "common/ValueEventEmitter";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { extensionI18nRecord } from "i18n/extension";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
 
 // eslint-disable-next-line @typescript-eslint/typedef
 const SimpleBrokerValues = Object.freeze({
+    locale: new ValueEventEmitter<string>(ExtensionConfigurations.pqLocale),
     activeColorTheme: new ValueEventEmitter<vscode.ColorTheme>(vscode.window.activeColorTheme),
     // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
     latestPqTestResult: new ValueEventEmitter<any>(undefined),
@@ -177,7 +179,7 @@ export class PqTestResultViewPanel implements IDisposable {
         this._panel.title = extensionI18nRecord["PQTest.result.view.title"];
 
         this._panel.webview.html = isDevWebView
-            ? this._getDevHtmlForWebview()
+            ? this._getDevHtmlForWebview(this._panel.webview)
             : this._getHtmlForWebview(this._panel.webview);
     }
 
@@ -234,10 +236,16 @@ export class PqTestResultViewPanel implements IDisposable {
 			</html>`;
     }
 
-    private _getDevHtmlForWebview(): string {
+    private _getDevHtmlForWebview(webview: Webview): string {
+        // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
+        const baseUri: vscode.Uri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths),
+        );
+
         return `<!DOCTYPE html>
           <html lang="en">
           <head>
+            <base href="${baseUri}/">
             <meta charset="UTF-8">
     
             <!--

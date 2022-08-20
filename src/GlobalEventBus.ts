@@ -8,6 +8,7 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { getFirstWorkspaceFolder } from "utils/vscodes";
 import { handleLocaleChanged } from "i18n/extension";
@@ -21,6 +22,7 @@ import {
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { FSWatcher, WatchEventType } from "fs";
+import { SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const GlobalEvents = Object.freeze({
@@ -90,6 +92,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         )
                     ) {
                         handleLocaleChanged();
+                        SimplePqTestResultViewBroker.values.locale.emit(ExtensionConfigurations.pqLocale);
                     }
                 } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
                     if (
