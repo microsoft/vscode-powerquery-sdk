@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 import { buildPqTestArgs, IPQTestService } from "common/PQTestService";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { extensionI18n } from "i18n/extension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PowerQueryTaskDefinition } from "common/PowerQueryTask";
 
@@ -25,20 +26,20 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "delete-credential",
-        label: "Clear ALL credentials",
+        label: extensionI18n["PQSdk.lifecycleTreeView.item.deleteAllCredentials.title"],
         additionalArgs: ["--ALL"],
     },
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "info",
-        label: "Connector info",
+        label: extensionI18n["PQSdk.lifecycleTreeView.item.displayExtensionInfo.title"],
         pathToConnector: ExtensionConstants.ConfigPathToConnector,
     },
     // TODO: We need logic to determine which authentication kind to use (when there is more than one)
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "set-credential",
-        label: "Set credential",
+        label: extensionI18n["PQSdk.lifecycleTreeView.item.createOneCredential.title"],
         additionalArgs: ["--interactive"],
         pathToConnector: ExtensionConstants.ConfigPathToConnector,
         pathToQueryFile: ExtensionConstants.ConfigPathToTestConnectionFile,
@@ -47,7 +48,7 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "refresh-credential",
-        label: "Refresh credential",
+        label: extensionI18n["PQSdk.lifecycleTreeView.item.refreshCredentials.title"],
         pathToConnector: ExtensionConstants.ConfigPathToConnector,
         pathToQueryFile: ExtensionConstants.ConfigPathToTestConnectionFile,
     },
@@ -55,14 +56,14 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "run-test",
-        label: "Evaluate current file",
+        label: extensionI18n["PQSdk.lifecycleTreeView.item.evaluateOpenedFile.title"],
         pathToConnector: ExtensionConstants.ConfigPathToConnector,
         pathToQueryFile: "${file}",
     },
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "test-connection",
-        label: "Test connection",
+        label: extensionI18n["PQSdk.lifecycleTreeView.item.testConnection.title"],
         pathToConnector: ExtensionConstants.ConfigPathToConnector,
         pathToQueryFile: ExtensionConstants.ConfigPathToTestConnectionFile,
     },
@@ -78,7 +79,7 @@ const buildTasks: PowerQueryTaskDefinition[] = [
     {
         type: ExtensionConstants.PowerQueryTaskType,
         operation: "compile",
-        label: "Build connector project using MakePQX",
+        label: extensionI18n["PQSdk.taskProvider.makePQx.compile.label"],
         additionalArgs: [],
     },
 ];

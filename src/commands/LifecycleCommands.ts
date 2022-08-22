@@ -46,6 +46,7 @@ import { InputStep, MultiStepInput } from "common/MultiStepInput";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
 
+import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
 import { debounce } from "utils/debounce";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { NugetVersions } from "utils/NugetVersions";
@@ -144,6 +145,7 @@ export class LifecycleCommands {
         this.displayExtensionInfoCommand,
         3e3,
     ).bind(this);
+
     private watchMezFileIfNeeded(): void {
         const currentPQTestExtensionFileLocation: string | undefined =
             ExtensionConfigurations.PQTestExtensionFileLocation;
@@ -202,14 +204,16 @@ export class LifecycleCommands {
                 !ExtensionConfigurations.PQTestQueryFileLocation &&
                 !ExtensionConfigurations.PQTestExtensionFileLocation
             ) {
+                const enableStr: string = extensionI18n["PQSdk.common.enable"];
+
                 // we need to suggest setup for newly opened folder
                 const result: string | undefined = await vscode.window.showInformationMessage(
-                    "Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?",
-                    "Enable",
-                    "Cancel",
+                    extensionI18n["PQSdk.lifecycle.prompt.update.workspace"],
+                    enableStr,
+                    extensionI18n["PQSdk.common.cancel"],
                 );
 
-                if (result === "Enable") {
+                if (result === enableStr) {
                     void vscode.commands.executeCommand(LifecycleCommands.SetupCurrentWorkspaceCommand);
                 }
             }
@@ -277,7 +281,11 @@ export class LifecycleCommands {
                         void ExtensionConfigurations.setPQTestExtensionFileLocation(mezExtensionPath);
 
                         this.outputChannel.appendInfoLine(
-                            `Set ${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation} to ${mezExtensionPath}`,
+                            resolveI18nTemplate("PQSdk.lifecycle.command.set.config", {
+                                configName:
+                                    ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation,
+                                configValue: mezExtensionPath,
+                            }),
                         );
                     }
                 })(),
@@ -304,7 +312,11 @@ export class LifecycleCommands {
                             void ExtensionConfigurations.setPQTestQueryFileLocation(primaryConnQueryLocation);
 
                             this.outputChannel.appendInfoLine(
-                                `Set ${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation} to ${primaryConnQueryLocation}`,
+                                resolveI18nTemplate("PQSdk.lifecycle.command.set.config", {
+                                    configName:
+                                        ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation,
+                                    configValue: primaryConnQueryLocation,
+                                }),
                             );
 
                             break;
@@ -495,7 +507,7 @@ export class LifecycleCommands {
 
             if (!pqTestExecutableFullPath && !skipQueryDialog) {
                 const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
-                    openLabel: "Before continuing, the pqtest.exe would be required",
+                    openLabel: extensionI18n["PQSdk.lifecycle.warning.pqtest.required"],
                     canSelectFiles: true,
                     canSelectFolders: false,
                     canSelectMany: false,
@@ -569,18 +581,22 @@ export class LifecycleCommands {
             const pqTestExecutableFullPath: string = this.expectedPqTestPath(maybeNextVersion);
 
             this.outputChannel.appendInfoLine(
-                `PqTest has been seized from nuget and put at ${pqTestExecutableFullPath}.`,
+                resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.seized.from", {
+                    pqTestExecutableFullPath,
+                }),
             );
         } else {
-            this.outputChannel.appendErrorLine(`PqTest has not been seized from nuget.`);
+            this.outputChannel.appendErrorLine(extensionI18n["PQSdk.lifecycle.warning.pqtest.seized.failed"]);
         }
 
         if (pqTestLocation) {
             this.outputChannel.appendInfoLine(
-                `Current pqTest has been configured at ${ExtensionConfigurations.PQTestLocation}.`,
+                resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.set.to", {
+                    pqTestLocation: ExtensionConfigurations.PQTestLocation,
+                }),
             );
         } else {
-            this.outputChannel.appendErrorLine(`Current PqTest has not been configured.`);
+            this.outputChannel.appendErrorLine(extensionI18n["PQSdk.lifecycle.warning.pqtest.set.failed"]);
         }
 
         return pqTestLocation;
@@ -588,13 +604,13 @@ export class LifecycleCommands {
 
     public async generateOneNewProject(): Promise<void> {
         const newProjName: string | undefined = await vscode.window.showInputBox({
-            title: "New project name",
-            placeHolder: "Only lower cases or upper cases characters are allowed",
+            title: extensionI18n["PQSdk.lifecycle.command.new.project.title"],
+            placeHolder: extensionI18n["PQSdk.lifecycle.command.new.project.placeHolder"],
             validateInput(value: string): string | Thenable<string | undefined | null> | undefined | null {
                 if (!value) {
-                    return `Project name cannot be empty.`;
+                    return extensionI18n["PQSdk.lifecycle.error.empty.project.name"];
                 } else if (!value.match(validateProjectNameRegExp)) {
-                    return `Only lower cases or upper cases ch are allowed.`;
+                    return extensionI18n["PQSdk.lifecycle.error.invalid.project.name"];
                 }
 
                 return undefined;
@@ -620,7 +636,10 @@ export class LifecycleCommands {
                     );
 
                     void vscode.window.showInformationMessage(
-                        `New ${newProjName}.pq and other files have been created at ${targetFolder}`,
+                        resolveI18nTemplate("PQSdk.lifecycle.command.new.project.created", {
+                            newProjName,
+                            targetFolder,
+                        }),
                     );
                 } else {
                     // open the sub folder as the current workspace
@@ -631,7 +650,7 @@ export class LifecycleCommands {
                 // we need to open a folder and generate into it
                 const selectedFolders: Uri[] | undefined = await vscode.window.showOpenDialog({
                     canSelectMany: false,
-                    openLabel: "Select workspace",
+                    openLabel: extensionI18n["PQSdk.lifecycle.command.select.workspace"],
                     canSelectFiles: false,
                     canSelectFolders: true,
                 });
@@ -651,7 +670,7 @@ export class LifecycleCommands {
     public async deleteCredentialCommand(): Promise<void> {
         await vscode.window.withProgress(
             {
-                title: "Deleting credentials",
+                title: extensionI18n["PQSdk.lifecycle.command.delete.credentials.title"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -660,7 +679,12 @@ export class LifecycleCommands {
 
                 try {
                     const result: GenericResult = await this.pqTestService.DeleteCredential();
-                    this.outputChannel.appendInfoLine(`DeleteCredential result ${prettifyJson(result)}`);
+
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.delete.credentials.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
@@ -676,7 +700,7 @@ export class LifecycleCommands {
     public async displayExtensionInfoCommand(): Promise<void> {
         await vscode.window.withProgress(
             {
-                title: "Displaying extension info",
+                title: extensionI18n["PQSdk.lifecycle.command.display.extension.info.title"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -685,7 +709,12 @@ export class LifecycleCommands {
 
                 try {
                     const result: unknown = await this.pqTestService.DisplayExtensionInfo();
-                    this.outputChannel.appendInfoLine(`DisplayExtensionInfo result ${prettifyJson(result)}`);
+
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
@@ -701,7 +730,7 @@ export class LifecycleCommands {
     public async listCredentialCommand(): Promise<void> {
         await vscode.window.withProgress(
             {
-                title: "Listing credentials",
+                title: extensionI18n["PQSdk.lifecycle.command.list.credentials.title"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -710,7 +739,11 @@ export class LifecycleCommands {
 
                 try {
                     const result: unknown[] = await this.pqTestService.ListCredentials();
-                    this.outputChannel.appendInfoLine(`ListCredentials result ${prettifyJson(result)}`);
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
@@ -734,7 +767,9 @@ export class LifecycleCommands {
             placeHolder: valueName,
             validateInput(value: string): string | Thenable<string | undefined | null> | undefined | null {
                 if (!value) {
-                    return `Value ${valueName} cannot be empty`;
+                    return resolveI18nTemplate("PQSdk.lifecycle.error.invalid.empty.value", {
+                        valueName,
+                    });
                 }
 
                 return undefined;
@@ -757,17 +792,25 @@ export class LifecycleCommands {
         switch (theAuthenticationKind) {
             case "Key":
                 // $$KEY$$
-                templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Credential key", "$$KEY$$");
+                templateStr = await this.doPopulateOneSubstitutedValue(
+                    templateStr,
+                    extensionI18n["PQSdk.lifecycle.credential.key.label"],
+                    "$$KEY$$",
+                );
                 break;
             case "Aad":
             case "OAuth":
                 // $$ACCESS_TOKEN$$
-                templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Access token", "$$ACCESS_TOKEN$$");
+                templateStr = await this.doPopulateOneSubstitutedValue(
+                    templateStr,
+                    extensionI18n["PQSdk.lifecycle.credential.accessToken.label"],
+                    "$$ACCESS_TOKEN$$",
+                );
 
                 // $$REFRESH_TOKEN$$
                 templateStr = await this.doPopulateOneSubstitutedValue(
                     templateStr,
-                    "Refresh token",
+                    extensionI18n["PQSdk.lifecycle.credential.refreshToken.label"],
                     "$$REFRESH_TOKEN$$",
                 );
 
@@ -775,12 +818,21 @@ export class LifecycleCommands {
             case "UsernamePassword":
             case "Windows":
                 // $$USERNAME$$
-                templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "Username", "$$USERNAME$$");
+                templateStr = await this.doPopulateOneSubstitutedValue(
+                    templateStr,
+                    extensionI18n["PQSdk.lifecycle.credential.username.label"],
+                    "$$USERNAME$$",
+                );
 
                 // $$PASSWORD$$
-                templateStr = await this.doPopulateOneSubstitutedValue(templateStr, "password", "$$PASSWORD$$", {
-                    password: true,
-                });
+                templateStr = await this.doPopulateOneSubstitutedValue(
+                    templateStr,
+                    extensionI18n["PQSdk.lifecycle.credential.password.label"],
+                    "$$PASSWORD$$",
+                    {
+                        password: true,
+                    },
+                );
 
                 break;
             case "Anonymous":
@@ -794,7 +846,7 @@ export class LifecycleCommands {
     public async generateAndSetCredentialCommand(): Promise<void> {
         await vscode.window.withProgress(
             {
-                title: "Generating one credential",
+                title: extensionI18n["PQSdk.lifecycle.command.generate.credentials.title"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -806,16 +858,25 @@ export class LifecycleCommands {
                     const credentialPayload: any = await this.pqTestService.GenerateCredentialTemplate();
 
                     this.outputChannel.appendInfoLine(
-                        `GenerateCredentialTemplate result ${prettifyJson(credentialPayload)}`,
+                        resolveI18nTemplate("PQSdk.lifecycle.command.generate.credentials.result", {
+                            result: prettifyJson(credentialPayload),
+                        }),
                     );
 
                     const credentialPayloadStr: string = await this.populateCredentialTemplate(credentialPayload);
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const result: any = await this.pqTestService.SetCredential(credentialPayloadStr);
-                    this.outputChannel.appendInfoLine(`SetCredential result ${prettifyJson(result)}`);
+
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
 
                     void vscode.window.showInformationMessage(
-                        `New ${credentialPayload.AuthenticationKind} credential has been generated successfully`,
+                        resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.info", {
+                            authenticationKind: credentialPayload.AuthenticationKind,
+                        }),
                     );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
@@ -839,25 +900,29 @@ export class LifecycleCommands {
             !createAuthState.AuthenticationKind ||
             !createAuthState.PathToQueryFile
         ) {
-            return `Invalid credentials missing DataSourceKind, AuthenticationKind or the Query file`;
+            return extensionI18n["PQSdk.lifecycle.error.invalid.missing.dataSourceKindAndAuthKind"];
         }
 
         if (
             createAuthState.AuthenticationKind.toLowerCase() === "usernamepassword" &&
             (!createAuthState.$$PASSWORD$$ || !createAuthState.$$USERNAME$$)
         ) {
-            return `Invalid ${createAuthState.AuthenticationKind} credentials missing username or password property`;
+            return resolveI18nTemplate("PQSdk.lifecycle.error.invalid.missing.userNameAndPw", {
+                authenticationKind: createAuthState.AuthenticationKind,
+            });
         }
 
         if (createAuthState.AuthenticationKind.toLowerCase() === "key" && !createAuthState.$$KEY$$) {
-            return `Invalid ${createAuthState.AuthenticationKind} credentials missing key property`;
+            return resolveI18nTemplate("PQSdk.lifecycle.error.invalid.missing.key", {
+                authenticationKind: createAuthState.AuthenticationKind,
+            });
         }
 
         return undefined;
     }
 
     public async generateAndSetCredentialCommandV2(): Promise<void> {
-        const title: string = "Generating one credential";
+        const title: string = extensionI18n["PQSdk.lifecycle.command.generate.credentials.title"];
 
         await vscode.window.withProgress(
             {
@@ -936,7 +1001,7 @@ export class LifecycleCommands {
                                 title,
                                 step: 1,
                                 totalSteps: 3,
-                                placeholder: "Choose the data source kind",
+                                placeholder: extensionI18n["PQSdk.lifecycle.command.choose.dataSourceKind"],
                                 activeItem: items[0],
                                 items,
                             });
@@ -950,10 +1015,14 @@ export class LifecycleCommands {
                                 step: 1,
                                 totalSteps: 3,
                                 value: "",
-                                prompt: "Data source kind",
+                                prompt: extensionI18n["PQSdk.lifecycle.command.choose.dataSourceKind.label"],
                                 ignoreFocusOut: true,
                                 validate: (key: string) =>
-                                    Promise.resolve(key.length ? undefined : "Data source kind cannot be empty"),
+                                    Promise.resolve(
+                                        key.length
+                                            ? undefined
+                                            : extensionI18n["PQSdk.lifecycle.error.empty.dataSourceKind"],
+                                    ),
                             });
                         }
 
@@ -976,7 +1045,7 @@ export class LifecycleCommands {
                             title,
                             step: 2,
                             totalSteps: 3,
-                            placeholder: "Choose a connector file",
+                            placeholder: extensionI18n["PQSdk.lifecycle.command.choose.connectorFile"],
                             activeItem: items[0],
                             items,
                         });
@@ -1011,7 +1080,7 @@ export class LifecycleCommands {
                             title,
                             step: 3,
                             totalSteps: 3,
-                            placeholder: "Choose a authentication method",
+                            placeholder: extensionI18n["PQSdk.lifecycle.command.choose.auth"],
                             activeItem: items[0],
                             items,
                         });
@@ -1040,10 +1109,16 @@ export class LifecycleCommands {
                             step: 4,
                             totalSteps: 4,
                             value: "",
-                            prompt: "Authentication key value",
+                            prompt: extensionI18n["PQSdk.lifecycle.command.choose.authKind.prompt"],
                             ignoreFocusOut: true,
                             validate: (key: string) =>
-                                Promise.resolve(key.length ? undefined : "Key value cannot be empty"),
+                                Promise.resolve(
+                                    key.length
+                                        ? undefined
+                                        : resolveI18nTemplate("PQSdk.lifecycle.error.invalid.empty.value", {
+                                            valueName: "key",
+                                        }),
+                                ),
                         });
 
                         progress.report({ increment: 10 });
@@ -1060,10 +1135,16 @@ export class LifecycleCommands {
                             step: 4,
                             totalSteps: 5,
                             value: "",
-                            prompt: "Username",
+                            prompt: extensionI18n["PQSdk.lifecycle.credential.username.label"],
                             ignoreFocusOut: true,
                             validate: (username: string) =>
-                                Promise.resolve(username.length ? undefined : "Username cannot be empty"),
+                                Promise.resolve(
+                                    username.length
+                                        ? undefined
+                                        : resolveI18nTemplate("PQSdk.lifecycle.error.invalid.empty.value", {
+                                            valueName: "username",
+                                        }),
+                                ),
                         });
 
                         progress.report({ increment: 10 });
@@ -1083,7 +1164,7 @@ export class LifecycleCommands {
                             totalSteps: 5,
                             value: "",
                             ignoreFocusOut: true,
-                            prompt: "Password",
+                            prompt: extensionI18n["PQSdk.lifecycle.credential.password.label"],
                             password: true,
                             validate: (_pw: string) => Promise.resolve(undefined),
                         });
@@ -1104,10 +1185,16 @@ export class LifecycleCommands {
                                 createAuthState,
                             );
 
-                            this.outputChannel.appendInfoLine(`CreateAuthState result ${prettifyJson(result)}`);
+                            this.outputChannel.appendInfoLine(
+                                resolveI18nTemplate("PQSdk.lifecycle.command.createAuthState.result", {
+                                    result: prettifyJson(result),
+                                }),
+                            );
 
                             void vscode.window.showInformationMessage(
-                                `New ${createAuthState.AuthenticationKind} credential has been generated successfully`,
+                                resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.info", {
+                                    authenticationKind: createAuthState.AuthenticationKind,
+                                }),
                             );
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         } catch (error: any | string) {
@@ -1133,7 +1220,7 @@ export class LifecycleCommands {
     public async refreshCredentialCommand(): Promise<void> {
         await vscode.window.withProgress(
             {
-                title: "Refreshing credentials",
+                title: extensionI18n["PQSdk.lifecycle.credential.refreshToken.label"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -1142,7 +1229,11 @@ export class LifecycleCommands {
 
                 try {
                     const result: GenericResult = await this.pqTestService.RefreshCredential();
-                    this.outputChannel.appendInfoLine(`RefreshCredential result ${prettifyJson(result)}`);
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
@@ -1161,7 +1252,7 @@ export class LifecycleCommands {
 
         await vscode.window.withProgress(
             {
-                title: "Running a test",
+                title: extensionI18n["PQSdk.lifecycle.command.run.test.title"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -1176,7 +1267,11 @@ export class LifecycleCommands {
                         result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
                     }
 
-                    this.outputChannel.appendInfoLine(`RunTestBattery result ${prettifyJson(result)}`);
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.run.test.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
@@ -1197,7 +1292,7 @@ export class LifecycleCommands {
     public async testConnectionCommand(): Promise<void> {
         await vscode.window.withProgress(
             {
-                title: "Testing the connection",
+                title: extensionI18n["PQSdk.lifecycle.command.test.connection.title"],
                 location: ProgressLocation.Window,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
@@ -1206,7 +1301,11 @@ export class LifecycleCommands {
 
                 try {
                     const result: GenericResult = await this.pqTestService.TestConnection();
-                    this.outputChannel.appendInfoLine(`TestConnection result ${prettifyJson(result)}`);
+                    this.outputChannel.appendInfoLine(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
+                            result: prettifyJson(result),
+                        }),
+                    );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;

@@ -8,6 +8,7 @@
 import * as vscode from "vscode";
 import { OutputChannel, ViewColumn } from "vscode";
 import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { extensionI18n } from "i18n/extension";
 import { IDisposable } from "common/Disposable";
 
 // we can do write to file or log according to a log_level over here
@@ -42,21 +43,20 @@ export class PqSdkOutputChannel implements OutputChannel, IDisposable {
     }
 
     public appendDebugLine(value: string): void {
-        this.appendLineWithTimeStamp(`[Debug]\t${value}`);
+        this.appendLineWithTimeStamp(`[${extensionI18n["PQSdk.common.logLevel.Debug"]}]\t${value}`);
     }
 
     public appendTraceLine(_value: string): void {
-        // temporarily turn this off as it is too noisy
-        // noop for now
-        // this.appendLineWithTimeStamp(`[Trace]\t${_value}`);
+        // // temporarily turn this off as it is too noisy
+        // this.appendLineWithTimeStamp(`[${extensionI18n["PQSdk.common.logLevel.Trace"]}]\t${_value}`);
     }
 
     public appendInfoLine(value: string): void {
-        this.appendLineWithTimeStamp(`[Info]\t${value}`);
+        this.appendLineWithTimeStamp(`[${extensionI18n["PQSdk.common.logLevel.Info"]}]\t${value}`);
     }
 
     public appendErrorLine(value: string): void {
-        this.appendLineWithTimeStamp(`[Error]\t${value}`);
+        this.appendLineWithTimeStamp(`[${extensionI18n["PQSdk.common.logLevel.Error"]}]\t${value}`);
     }
 
     clear(): void {
