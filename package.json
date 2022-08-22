@@ -94,7 +94,7 @@
                     "scope": "machine-overridable",
                     "type": "boolean",
                     "default": false,
-                    "description": "Try the new feature using a reusable engine service host other than the command lines"
+                    "description": "%extension.pqtest.config.feature.useServiceHost%"
                 }
             }
         },

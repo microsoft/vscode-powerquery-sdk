@@ -689,7 +689,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to delete credentials due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.delete.credentials.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -719,7 +723,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to display extension info due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -739,6 +747,7 @@ export class LifecycleCommands {
 
                 try {
                     const result: unknown[] = await this.pqTestService.ListCredentials();
+
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.result", {
                             result: prettifyJson(result),
@@ -748,7 +757,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to list credentials due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -797,6 +810,7 @@ export class LifecycleCommands {
                     extensionI18n["PQSdk.lifecycle.credential.key.label"],
                     "$$KEY$$",
                 );
+
                 break;
             case "Aad":
             case "OAuth":
@@ -882,7 +896,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to set credentials due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -1116,8 +1134,8 @@ export class LifecycleCommands {
                                     key.length
                                         ? undefined
                                         : resolveI18nTemplate("PQSdk.lifecycle.error.invalid.empty.value", {
-                                            valueName: "key",
-                                        }),
+                                              valueName: "key",
+                                          }),
                                 ),
                         });
 
@@ -1142,8 +1160,8 @@ export class LifecycleCommands {
                                     username.length
                                         ? undefined
                                         : resolveI18nTemplate("PQSdk.lifecycle.error.invalid.empty.value", {
-                                            valueName: "username",
-                                        }),
+                                              valueName: "username",
+                                          }),
                                 ),
                         });
 
@@ -1201,7 +1219,10 @@ export class LifecycleCommands {
                             const errorMessage: string = error instanceof Error ? error.message : error;
 
                             void vscode.window.showErrorMessage(
-                                `Fail to create ${createAuthState.AuthenticationKind} credential due to ${errorMessage}`,
+                                resolveI18nTemplate("PQSdk.lifecycle.command.createAuthState.ofKind.errorMessage", {
+                                    authenticationKind: createAuthState.AuthenticationKind,
+                                    errorMessage,
+                                }),
                             );
                         }
                     }
@@ -1209,7 +1230,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to create credential due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.createAuthState.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -1229,6 +1254,7 @@ export class LifecycleCommands {
 
                 try {
                     const result: GenericResult = await this.pqTestService.RefreshCredential();
+
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.result", {
                             result: prettifyJson(result),
@@ -1238,7 +1264,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to refresh credentials due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -1276,7 +1306,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to run the query due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.run.test.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -1301,6 +1335,7 @@ export class LifecycleCommands {
 
                 try {
                     const result: GenericResult = await this.pqTestService.TestConnection();
+
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
                             result: prettifyJson(result),
@@ -1310,7 +1345,11 @@ export class LifecycleCommands {
                 } catch (error: any | string) {
                     const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(`Fail to run the query due to ${errorMessage}`);
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.errorMessage", {
+                            errorMessage,
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
