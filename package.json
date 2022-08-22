@@ -45,13 +45,13 @@
         "commands": [
             {
                 "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
-                "title": "Evaluate current power query script",
+                "title": "%extension.pqtest.RunTestBatteryCommand.title%",
                 "category": "Power query",
                 "icon": "$(debug-console-evaluation-prompt)"
             },
             {
                 "command": "powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
-                "title": "Setup workspace",
+                "title": "%extension.pqtest.SetupCurrentWorkspaceCommand.title%",
                 "category": "Power query",
                 "icon": "$(pencil)"
             }
@@ -62,33 +62,33 @@
                 "powerquery.sdk.project.autoDetection": {
                     "scope": "machine-overridable",
                     "type": "boolean",
-                    "description": "When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.",
+                    "description": "%extension.pqtest.config.project.autoDetection.description%",
                     "default": true
                 },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
                     "type": "string",
-                    "description": "Local path to PQTest installation folder."
+                    "description": "%extension.pqtest.config.externals.msbuildPath.description%"
                 },
                 "powerquery.sdk.externals.nugetPath": {
                     "scope": "machine-overridable",
                     "type": "string",
-                    "description": "Local path to PQTest installation folder."
+                    "description": "%extension.pqtest.config.externals.nugetPath.description%"
                 },
                 "powerquery.sdk.pqtest.location": {
                     "scope": "machine-overridable",
                     "type": "string",
-                    "description": "Local path to PQTest installation folder."
+                    "description": "%extension.pqtest.config.pqtest.location.description%"
                 },
                 "powerquery.sdk.pqtest.extension": {
                     "scope": "window",
                     "type": "string",
-                    "description": "Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once."
+                    "description": "%extension.pqtest.config.pqtest.extension.description%"
                 },
                 "powerquery.sdk.pqtest.queryFile": {
                     "scope": "window",
                     "type": "string",
-                    "description": "Query file containing section document or M expression (.m/.pq)."
+                    "description": "%extension.pqtest.config.pqtest.queryFile.description%"
                 }
             }
         },
@@ -102,19 +102,19 @@
                 "properties": {
                     "operation": {
                         "type": "string",
-                        "description": "The operation to run"
+                        "description": "%extension.pqtest.taskDefinitions.properties.operation.description%"
                     },
                     "additionalArgs": {
                         "type": "array",
-                        "description": "Additional commandline arguments for the operation"
+                        "description": "%extension.pqtest.taskDefinitions.properties.additionalArgs.description%"
                     },
                     "pathToConnector": {
                         "type": "string",
-                        "description": "Path to the connector file (--extension)"
+                        "description": "%extension.pqtest.taskDefinitions.properties.pathToConnector.description%"
                     },
                     "pathToQueryFile": {
                         "type": "string",
-                        "description": "Path to the query file (--queryFile)"
+                        "description": "%extension.pqtest.taskDefinitions.properties.pathToQueryFile.description%"
                     }
                 }
             }
@@ -123,14 +123,14 @@
             "explorer": [
                 {
                     "id": "powerquery.sdk.pqtest.LifeCycleTaskTreeView",
-                    "name": "Power query SDK"
+                    "name": "%extension.pqtest.explorer.name%"
                 }
             ]
         },
         "viewsWelcome": [
             {
                 "view": "powerquery.sdk.pqtest.LifeCycleTaskTreeView",
-                "contents": "In order to use extension features, you need to create an Power query extension project.\n[Create an extension project](command:powerquery.sdk.pqtest.CreateNewProjectCommand)\nTo learn more about how to create an extension, [read our docs](https://docs.microsoft.com/en-us/powerquery-m/)."
+                "contents": "%extension.pqtest.welcome.contents%"
             }
         ],
         "menus": {
@@ -165,26 +165,26 @@
                         "properties": {
                             "program": {
                                 "type": "string",
-                                "description": "Absolute path to a power query file.",
+                                "description": "%extension.pqtest.debugger.properties.program.description%",
                                 "default": "${workspaceFolder}/${command:AskForPowerQueryFileName}"
                             },
                             "trace": {
                                 "type": "boolean",
-                                "description": "Enable logging of the Debug",
+                                "description": "%extension.pqtest.debugger.properties.trace.description%",
                                 "default": true
                             },
                             "operation": {
                                 "type": "string",
-                                "description": "PQTest operation string",
+                                "description": "%extension.pqtest.debugger.properties.operation.description%",
                                 "enum": [
                                     "info",
                                     "run-test",
                                     "test-connection"
                                 ],
                                 "enumDescriptions": [
-                                    "info: Returns all module information",
-                                    "run-test: test connection",
-                                    "test-connection: test current connection"
+                                    "%extension.pqtest.debugger.properties.operation.info.description%",
+                                    "%extension.pqtest.debugger.properties.operation.runTest.description%",
+                                    "%extension.pqtest.debugger.properties.operation.testConnection.description%"
                                 ],
                                 "default": "run-test"
                             }
@@ -195,14 +195,14 @@
                     {
                         "type": "powerquery",
                         "request": "launch",
-                        "name": "Test powerquery file",
+                        "name": "%extension.pqtest.initialConfigurations.name%",
                         "program": "${workspaceFolder}/${command:AskForPowerQueryFileName}"
                     }
                 ],
                 "configurationSnippets": [
                     {
                         "label": "powerquery Debug: Launch",
-                        "description": "A new configuration for testing power query file a user selected.",
+                        "description": "%extension.pqtest.configurationSnippets.description%",
                         "body": {
                             "type": "powerquery",
                             "request": "launch",
@@ -218,7 +218,7 @@
         ]
     },
     "scripts": {
-        "clean": "rimraf out && rimraf dist && rimraf webviewDist",
+        "clean": "ts-node scripts/clean.ts",
         "vscode:prepublish": "npm run package",
         "install:pq-test-result-view": "cd webviews/pq-test-result-view && npm ci",
         "postinstall": "npm run install:pq-test-result-view",
@@ -226,17 +226,20 @@
         "watch": "webpack --mode development --watch",
         "build:pq-test-result-view": "cd webviews/pq-test-result-view && npm run build",
         "build": "npm run build:pq-test-result-view",
-        "package": "npm run clean && npm run build && webpack --mode production",
+        "copy:i18n": "ts-node scripts/addI18n.ts",
+        "package": "npm run clean && npm run build && webpack --mode production && npm run copy:i18n",
+        "vsix": "npx vsce package",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
-        "audit": "npm audit",
+        "audit": "npm audit --production",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
         "@types/chai": "^4.3.1",
         "@types/glob": "^7.2.0",
+        "@types/gulp": "^4.0.9",
         "@types/mocha": "^9.0.0",
         "@types/node": "16.x",
         "@types/vscode": "^1.62.0",
@@ -251,6 +254,7 @@
         "eslint-plugin-prettier": "^4.0.0",
         "eslint-plugin-security": "^1.4.0",
         "eslint-plugin-license-header": "^0.4.0",
+        "gulp": "^4.0.2",
         "glob": "^7.2.0",
         "mocha": "^9.1.3",
         "husky": "^8.0.1",
@@ -258,7 +262,10 @@
         "prettier": "^2.5.0",
         "rimraf": "^3.0.2",
         "ts-loader": "^9.2.6",
+        "ts-node": "^10.9.1",
         "typescript": "^4.5.2",
+        "vsce": "^2.10.0",
+        "vscode-nls-dev": "^4.0.1",
         "webpack": "^5.64.4",
         "webpack-cli": "^4.9.1",
         "tsconfig-paths-webpack-plugin": "^3.5.2"

@@ -7,11 +7,13 @@
 
 "use strict";
 
+const path = require("path");
 // Do this as the first thing so that any code reading it knows the right env.
 process.env.BABEL_ENV = "production";
 process.env.NODE_ENV = "production";
 
 const { merge } = require("webpack-merge");
+const CopyPlugin = require("copy-webpack-plugin");
 const paths = require("./paths");
 
 const commonConfig = require("./webpack.common");
@@ -25,7 +27,11 @@ const prodConfig = {
         // since we host it from the
         filename: "[name].js",
     },
-    plugins: [],
+    plugins: [
+        new CopyPlugin({
+            patterns: [{ from: path.resolve(paths.appPublic, "i18n"), to: path.resolve(paths.appBuild, "i18n") }],
+        }),
+    ],
 };
 
 module.exports = merge(commonConfig, prodConfig);

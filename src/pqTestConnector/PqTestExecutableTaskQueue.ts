@@ -8,6 +8,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
+
+import { ChildProcess } from "child_process";
+
 import {
     buildPqTestArgs,
     CreateAuthState,
@@ -16,22 +19,21 @@ import {
     GenericResult,
     IPQTestService,
 } from "common/PQTestService";
+import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+
 import { Disposable, IDisposable } from "common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
 import { ExtensionContext, TextEditor } from "vscode";
 import { FSWatcher, WatchEventType } from "fs";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
-import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { ValueEventEmitter } from "common/ValueEventEmitter";
-
 import { convertStringToInteger } from "utils/numbers";
 import { pidIsRunning } from "utils/pids";
-import { resolveSubstitutedValues } from "utils/vscodes";
-
-import { ChildProcess } from "child_process";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { PQTestTask } from "common/PowerQueryTask";
+import { resolveSubstitutedValues } from "utils/vscodes";
+import { ValueEventEmitter } from "common/ValueEventEmitter";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {
@@ -130,12 +132,14 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     private resolvePQTestPath(nextPQTestLocation: string | undefined): string | undefined {
         if (!nextPQTestLocation) {
-            this.outputChannel.appendErrorLine("powerquery.sdk.pqtest.location configuration value is not set.");
+            this.outputChannel.appendErrorLine(extensionI18n["PQSdk.taskQueue.error.pqtestLocationNotSet"]);
 
             return undefined;
         } else if (!fs.existsSync(nextPQTestLocation)) {
             this.outputChannel.appendErrorLine(
-                `powerquery.sdk.pqtest.location set to '${nextPQTestLocation}' but directory does not exist.`,
+                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestLocationDoesntExist", {
+                    nextPQTestLocation,
+                }),
             );
 
             return undefined;
@@ -144,7 +148,11 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         const pqtestExe: string = path.resolve(nextPQTestLocation, PqTestExecutableTaskQueue.ExecutableName);
 
         if (!fs.existsSync(pqtestExe)) {
-            this.outputChannel.appendErrorLine(`pqtest.exe not found at ${pqtestExe}`);
+            this.outputChannel.appendErrorLine(
+                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestExecutableDoesntExist", {
+                    pqtestExe,
+                }),
+            );
 
             return undefined;
         }
@@ -206,7 +214,12 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
                 const processArgs: string[] = buildPqTestArgs(pendingTask);
-                this.outputChannel.appendInfoLine(`[Task found] ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+                this.outputChannel.appendInfoLine(
+                    resolveI18nTemplate("PQSdk.taskQueue.info.taskFound", {
+                        pqTestExeFullPath,
+                        arguments: processArgs.join(" "),
+                    }),
+                );
 
                 const spawnProcess: SpawnedProcess = new SpawnedProcess(
                     pqTestExeFullPath,
@@ -218,7 +231,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                             this.doWritePid(`${childProcess.pid}` ?? "nan");
 
                             this.outputChannel.appendTraceLine(
-                                `[Task began] Fork pqtask ${pendingTask.operation} executable of pid: ${childProcess.pid}`,
+                                resolveI18nTemplate("PQSdk.taskQueue.info.taskBegan", {
+                                    operation: pendingTask.operation,
+                                    pid: `${childProcess.pid}`,
+                                }),
                             );
                         },
                     },
@@ -228,7 +244,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 this.doWritePid("");
 
                 this.outputChannel.appendTraceLine(
-                    `[Task finished] Forked pqtask ${pendingTask.operation} executable pid(${spawnProcess.pid}) exited.`,
+                    resolveI18nTemplate("PQSdk.taskQueue.info.taskFinished", {
+                        operation: pendingTask.operation,
+                        pid: `${spawnProcess.pid}`,
+                    }),
                 );
 
                 if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
@@ -266,10 +285,14 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
                     pendingTask.resolve(resultJson);
                 } else {
-                    this.outputChannel.appendErrorLine(`[Task exited abnormally] pqtest ${pendingTask.operation} pid(${
-                        spawnProcess.pid
-                    }) exit(${processExit.exitCode})
-\t\t\t\t stderr: ${processExit.stderr || processExit.stdout}`);
+                    this.outputChannel.appendErrorLine(
+                        resolveI18nTemplate("PQSdk.taskQueue.info.taskExitAbnormally", {
+                            operation: pendingTask.operation,
+                            pid: `${spawnProcess.pid}`,
+                            exitCode: `${processExit.exitCode}`,
+                            stdErr: `${processExit.stderr ?? processExit.stdout}`,
+                        }),
+                    );
 
                     pendingTask.reject(new PqTestExecutableTaskError(pqTestExeFullPath, processArgs, processExit));
                 }
@@ -307,7 +330,11 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             this.pqTestReady = true;
             this.pqTestLocation = nextPQTestLocation;
             this.pqTestFullPath = pqTestExe;
-            this.outputChannel.appendInfoLine(`pqtest.exe found at ${this.pqTestFullPath}`);
+            this.outputChannel.appendInfoLine(
+                resolveI18nTemplate("PQSdk.taskQueue.info.pqtest.found", {
+                    pqTestFullPath: this.pqTestFullPath,
+                }),
+            );
             // if no running pid found, dequeue and execute one pending tasks if any
 
             void this.doCheckPidAndDequeueOneTaskIfAny();

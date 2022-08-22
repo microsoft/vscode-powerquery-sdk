@@ -9,6 +9,7 @@
         "strict": true,
         "allowUnreachableCode": false,
         "allowUnusedLabels": false,
+        "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "noEmitOnError": true,
         "noFallthroughCasesInSwitch": true,
@@ -16,7 +17,8 @@
         "noImplicitOverride": true,
         "noImplicitReturns": true,
         "noUnusedLocals": true,
+        "resolveJsonModule": true,
         "strictPropertyInitialization": true
     },
-    "exclude": ["node_modules", ".vscode-test", "webviews"]
+    "exclude": ["node_modules", ".vscode-test", "webviews", "scripts"]
 }

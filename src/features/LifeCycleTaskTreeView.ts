@@ -18,6 +18,7 @@ import {
 } from "vscode";
 import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
+import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
 import { debounce } from "utils/debounce";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { getAnyPqFileBeneathTheFirstWorkspace } from "utils/vscodes";
@@ -43,63 +44,63 @@ export class LifecycleTreeViewItem extends TreeItem {
 
 const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
     new LifecycleTreeViewItem(
-        "Setup workspace",
+        extensionI18n["PQSdk.lifecycleTreeView.item.setupWorkspace.title"],
         {
-            title: "Setup workspace",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.setupWorkspace.title"],
             command: `${LifecycleCommands.SetupCurrentWorkspaceCommand}`,
             arguments: [],
         },
         new ThemeIcon("pencil"),
     ),
     new LifecycleTreeViewItem(
-        "Create one credential",
+        extensionI18n["PQSdk.lifecycleTreeView.item.createOneCredential.title"],
         {
-            title: "Create one credential",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.createOneCredential.title"],
             command: `${LifecycleCommands.GenerateAndSetCredentialCommand}`,
             arguments: [],
         },
         new ThemeIcon("key"),
     ),
     new LifecycleTreeViewItem(
-        "List credentials",
+        extensionI18n["PQSdk.lifecycle.command.list.credentials.title"],
         {
-            title: "List credentials",
+            title: extensionI18n["PQSdk.lifecycle.command.list.credentials.title"],
             command: `${LifecycleCommands.ListCredentialCommand}`,
             arguments: [],
         },
         new ThemeIcon("library"),
     ),
     new LifecycleTreeViewItem(
-        "Refresh credentials",
+        extensionI18n["PQSdk.lifecycleTreeView.item.refreshCredentials.title"],
         {
-            title: "Refresh credentials",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.refreshCredentials.title"],
             command: `${LifecycleCommands.RefreshCredentialCommand}`,
             arguments: [],
         },
         new ThemeIcon("refresh"),
     ),
     new LifecycleTreeViewItem(
-        "Delete all credentials",
+        extensionI18n["PQSdk.lifecycleTreeView.item.deleteAllCredentials.title"],
         {
-            title: "Delete all credentials",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.deleteAllCredentials.title"],
             command: `${LifecycleCommands.DeleteCredentialCommand}`,
             arguments: [],
         },
         new ThemeIcon("terminal-kill"),
     ),
     new LifecycleTreeViewItem(
-        "Evaluate the currently opened file",
+        extensionI18n["PQSdk.lifecycleTreeView.item.evaluateOpenedFile.title"],
         {
-            title: "Evaluate the currently focused file",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.evaluateOpenedFile.title"],
             command: `${LifecycleCommands.RunTestBatteryCommand}`,
             arguments: [],
         },
         new ThemeIcon("debug-console-evaluation-prompt"),
     ),
     new LifecycleTreeViewItem(
-        "Test connection",
+        extensionI18n["PQSdk.lifecycleTreeView.item.testConnection.title"],
         {
-            title: "Test connection",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.testConnection.title"],
             command: `${LifecycleCommands.TestConnectionCommand}`,
             arguments: [],
         },
@@ -107,9 +108,9 @@ const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
         new ThemeIcon("test-view-icon"),
     ),
     new LifecycleTreeViewItem(
-        "Display extension info",
+        extensionI18n["PQSdk.lifecycleTreeView.item.displayExtensionInfo.title"],
         {
-            title: "Display extension info",
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.displayExtensionInfo.title"],
             command: `${LifecycleCommands.DisplayExtensionInfoCommand}`,
             arguments: [],
         },
@@ -157,9 +158,9 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
 
         if (await this.isValidWorkspace()) {
             const updateSdkToolItem: LifecycleTreeViewItem = new LifecycleTreeViewItem(
-                "Update SDK Tool",
+                extensionI18n["PQSdk.lifecycleTreeView.item.updateSdk.title"],
                 {
-                    title: `Update SDK Tool`,
+                    title: extensionI18n["PQSdk.lifecycleTreeView.item.updateSdk.title"],
                     command: `${LifecycleCommands.SeizePqTestCommand}`,
                     arguments: [],
                 },
@@ -186,6 +187,8 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
 
         return currentPqSdkNugetVersion.isZero()
             ? undefined
-            : `Current version: ${currentPqSdkNugetVersion.toString()}`;
+            : resolveI18nTemplate("PQSdk.lifecycleTreeView.item.updateSdk.currentVersion.label", {
+                  currentPqSdkNugetVersion: currentPqSdkNugetVersion.toString(),
+              });
     }
 }

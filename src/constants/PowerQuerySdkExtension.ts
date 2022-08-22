@@ -12,6 +12,12 @@ const ExtensionId: string = "vscode-powerquery-sdk";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 const ConfigNames = {
+    PowerQuery: {
+        name: "powerquery",
+        properties: {
+            locale: "general.locale" as const,
+        },
+    },
     PowerQuerySdk: {
         name: "powerquery.sdk" as const,
         properties: {

@@ -10,11 +10,14 @@ import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vs
 
 import { Disposable, IDisposable } from "common/Disposable";
 import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "common/ValueEventEmitter";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { extensionI18n } from "i18n/extension";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
 
 // eslint-disable-next-line @typescript-eslint/typedef
 const SimpleBrokerValues = Object.freeze({
+    locale: new ValueEventEmitter<string>(ExtensionConfigurations.pqLocale),
     activeColorTheme: new ValueEventEmitter<vscode.ColorTheme>(vscode.window.activeColorTheme),
     // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
     latestPqTestResult: new ValueEventEmitter<any>(undefined),
@@ -128,7 +131,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
         const panel: WebviewPanel = vscode.window.createWebviewPanel(
             PqTestResultViewPanel.viewType,
-            "PQTest result",
+            extensionI18n["PQTest.result.view.title"],
             vscode.ViewColumn.Beside,
             PqTestResultViewPanel.getWebviewOptions(extensionUri),
         );
@@ -173,10 +176,10 @@ export class PqTestResultViewPanel implements IDisposable {
 
     _update(): void {
         // noop
-        this._panel.title = "PQTest result";
+        this._panel.title = extensionI18n["PQTest.result.view.title"];
 
         this._panel.webview.html = isDevWebView
-            ? this._getDevHtmlForWebview()
+            ? this._getDevHtmlForWebview(this._panel.webview)
             : this._getHtmlForWebview(this._panel.webview);
     }
 
@@ -203,6 +206,10 @@ export class PqTestResultViewPanel implements IDisposable {
 
     private _getHtmlForWebview(webview: Webview): string {
         // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
+        const baseUri: vscode.Uri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths),
+        );
+
         const scriptUri: vscode.Uri = webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths, "main.js"),
         );
@@ -210,6 +217,7 @@ export class PqTestResultViewPanel implements IDisposable {
         return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
+			    <base href="${baseUri}/">
 				<meta charset="UTF-8">
 
 				<!--
@@ -219,7 +227,7 @@ export class PqTestResultViewPanel implements IDisposable {
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				
-				<title>PQTest result</title>
+				<title>${extensionI18n["PQTest.result.view.title"]}</title>
 			</head>
 			<body>
         <div id="root"></div>
@@ -228,10 +236,16 @@ export class PqTestResultViewPanel implements IDisposable {
 			</html>`;
     }
 
-    private _getDevHtmlForWebview(): string {
+    private _getDevHtmlForWebview(webview: Webview): string {
+        // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
+        const baseUri: vscode.Uri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, ...PqTestResultViewPanel.viewPaths),
+        );
+
         return `<!DOCTYPE html>
           <html lang="en">
           <head>
+            <base href="${baseUri}/">
             <meta charset="UTF-8">
     
             <!--
@@ -241,7 +255,7 @@ export class PqTestResultViewPanel implements IDisposable {
     
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
-            <title>PQTest result</title>
+            <title>${extensionI18n["PQTest.result.view.title"]}</title>
             <script defer src="http://localhost:3001/main.js"></script>
           </head>
           <body>
