@@ -30,8 +30,8 @@ export function delay(ms: number): Promise<void> {
 export function isPortBusy(port: number): Promise<boolean> {
     return new Promise((resolve: (value: boolean | PromiseLike<boolean>) => void) => {
         const theServer: net.Server = net.createServer((socket: net.Socket) => {
-            // write something to activate the socket
-            socket.write("dummy echo");
+            // write a space char to activate the socket, do not remove it
+            socket.write(" ");
             socket.pipe(socket);
         });
 

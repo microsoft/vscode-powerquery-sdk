@@ -85,16 +85,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
 
         this.vscExtCtx.subscriptions.push(
             vscWorkspace.onDidChangeConfiguration((evt: ConfigurationChangeEvent) => {
-                if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuery.name)) {
-                    if (
-                        evt.affectsConfiguration(
-                            `${ExtensionConstants.ConfigNames.PowerQuery.name}.${ExtensionConstants.ConfigNames.PowerQuery.properties.locale}`,
-                        )
-                    ) {
-                        handleLocaleChanged();
-                        SimplePqTestResultViewBroker.values.locale.emit(ExtensionConfigurations.pqLocale);
-                    }
-                } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
+                if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
                     if (
                         evt.affectsConfiguration(
                             `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation}`,
@@ -130,6 +121,15 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                                 void vscode.commands.executeCommand("workbench.action.reloadWindow");
                             }
                         })();
+                    }
+                } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuery.name)) {
+                    if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuery.name}.${ExtensionConstants.ConfigNames.PowerQuery.properties.locale}`,
+                        )
+                    ) {
+                        handleLocaleChanged();
+                        SimplePqTestResultViewBroker.values.locale.emit(ExtensionConfigurations.pqLocale);
                     }
                 }
             }),
