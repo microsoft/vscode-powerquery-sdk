@@ -85,16 +85,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
 
         this.vscExtCtx.subscriptions.push(
             vscWorkspace.onDidChangeConfiguration((evt: ConfigurationChangeEvent) => {
-                if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuery.name)) {
-                    if (
-                        evt.affectsConfiguration(
-                            `${ExtensionConstants.ConfigNames.PowerQuery.name}.${ExtensionConstants.ConfigNames.PowerQuery.properties.locale}`,
-                        )
-                    ) {
-                        handleLocaleChanged();
-                        SimplePqTestResultViewBroker.values.locale.emit(ExtensionConfigurations.pqLocale);
-                    }
-                } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
+                if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
                     if (
                         evt.affectsConfiguration(
                             `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation}`,
@@ -113,6 +104,32 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         )
                     ) {
                         this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestQuery);
+                    } else if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featureUseServiceHost}`,
+                        )
+                    ) {
+                        void (async (): Promise<void> => {
+                            const reloadAction: string = "Reload Window";
+
+                            if (
+                                (await vscode.window.showInformationMessage(
+                                    "To activate a new feature, reloading the windows is required",
+                                    reloadAction,
+                                )) === reloadAction
+                            ) {
+                                void vscode.commands.executeCommand("workbench.action.reloadWindow");
+                            }
+                        })();
+                    }
+                } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuery.name)) {
+                    if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuery.name}.${ExtensionConstants.ConfigNames.PowerQuery.properties.locale}`,
+                        )
+                    ) {
+                        handleLocaleChanged();
+                        SimplePqTestResultViewBroker.values.locale.emit(ExtensionConfigurations.pqLocale);
                     }
                 }
             }),

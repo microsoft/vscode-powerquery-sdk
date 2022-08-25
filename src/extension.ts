@@ -7,9 +7,9 @@
 
 import * as vscode from "vscode";
 
-import { convertExtensionInfoToLibraryJson, ExtensionInfo } from "common/PQTestService";
+import { activateExternalConfiguration, ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "common/PQTestService";
 import { getFirstWorkspaceFolder, openDefaultPqFileIfNeeded } from "utils/vscodes";
-import { activateExternalConfiguration } from "constants/PowerQuerySdkConfiguration";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
@@ -17,6 +17,7 @@ import { LifecycleCommands } from "commands/LifecycleCommands";
 import { LifeCycleTaskTreeView } from "features/LifeCycleTaskTreeView";
 import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
+import { PqServiceHostClient } from "pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
 
@@ -25,6 +26,8 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
 
     activateExternalConfiguration(true);
+    const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
+
     // let's make extension::activate serves as minimum as possible:
     // for now:
     //          it basically does the Dependency Injection,
@@ -33,13 +36,11 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
     const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
 
-    const pqTestExecutableTaskQueue: PqTestExecutableTaskQueue = new PqTestExecutableTaskQueue(
-        vscExtCtx,
-        globalEventBus,
-        pqSdkOutputChannel,
-    );
+    const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
+        ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
+        : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
 
-    pqTestExecutableTaskQueue.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {
+    disposablePqTestServices.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {
         const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
         if (theUri) {
@@ -47,17 +48,17 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         }
     });
 
-    if (pqTestExecutableTaskQueue.currentExtensionInfos.value.length) {
-        pqTestExecutableTaskQueue.currentExtensionInfos.emit();
+    if (disposablePqTestServices.currentExtensionInfos.value.length) {
+        disposablePqTestServices.currentExtensionInfos.emit();
     }
 
     const pqTaskProvider: IDisposable = vscode.tasks.registerTaskProvider(
         PowerQueryTaskProvider.TaskType,
-        new PowerQueryTaskProvider(pqTestExecutableTaskQueue),
+        new PowerQueryTaskProvider(disposablePqTestServices),
     );
 
     // lifecycleCommands instance has not been a disposable yet
-    new LifecycleCommands(vscExtCtx, globalEventBus, pqTestExecutableTaskQueue, pqSdkOutputChannel);
+    new LifecycleCommands(vscExtCtx, globalEventBus, disposablePqTestServices, pqSdkOutputChannel);
 
     const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);
 
@@ -70,7 +71,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
             globalEventBus,
             pqTestResultViewPanelDisposable,
             pqSdkOutputChannel,
-            pqTestExecutableTaskQueue,
+            disposablePqTestServices,
             pqTaskProvider,
             lifeCycleTaskTreeView,
         ].reverse(),

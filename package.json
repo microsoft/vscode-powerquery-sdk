@@ -89,6 +89,12 @@
                     "scope": "window",
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"
+                },
+                "powerquery.sdk.features.useServiceHost": {
+                    "scope": "machine-overridable",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.pqtest.config.feature.useServiceHost%"
                 }
             }
         },
@@ -235,6 +241,9 @@
         "audit": "npm audit --production",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
+    },
+    "dependencies": {
+        "vscode-jsonrpc": "^8.0.2"
     },
     "devDependencies": {
         "@types/chai": "^4.3.1",

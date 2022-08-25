@@ -7,6 +7,7 @@
   "extension.pqtest.config.pqtest.location.description": "Local path to PQTest installation folder.",
   "extension.pqtest.config.pqtest.extension.description": "Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.",
   "extension.pqtest.config.pqtest.queryFile.description": "Query file containing section document or M expression (.m/.pq).",
+  "extension.pqtest.config.feature.useServiceHost": "Try the new feature using a reusable engine service host other than the command lines",
   "extension.pqtest.taskDefinitions.properties.operation.description": "The operation to run",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Additional commandline arguments for the operation",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Path to the connector file (--extension)",
