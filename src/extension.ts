@@ -9,7 +9,7 @@ import * as vscode from "vscode";
 
 import { activateExternalConfiguration, ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "common/PQTestService";
-import { getFirstWorkspaceFolder, openDefaultPqFileIfNeeded } from "utils/vscodes";
+import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "utils/vscodes";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
@@ -79,7 +79,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
 
     activateMQueryDebug(vscExtCtx, "server");
 
-    openDefaultPqFileIfNeeded();
+    maybeHandleNewWorkspaceCreated();
 }
 
 // we need not explicitly invoke deactivate callbacks for now

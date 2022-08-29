@@ -10,6 +10,7 @@ import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
 
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { replaceAt } from "./strings";
 
 const RegularSubstitutedValueRegexp: RegExp = /\${([A-Za-z0-9.]*)}/g;
@@ -234,7 +235,7 @@ export function substitutedWorkspaceFolderBasenameIfNeeded(str: string): string 
     return str;
 }
 
-export function openDefaultPqFileIfNeeded(): void {
+export function maybeHandleNewWorkspaceCreated(): void {
     const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
     if (maybeFirstWorkspaceUri) {
@@ -244,9 +245,15 @@ export function openDefaultPqFileIfNeeded(): void {
         if (fs.existsSync(expectedRootPqPath)) {
             const expectedRootPqPathStat: fs.Stats = fs.statSync(expectedRootPqPath);
 
-            // open it only if it just got created
+            // a new workspace just got created
             if (Math.abs(expectedRootPqPathStat.ctime.getTime() - Date.now()) < 6e4) {
+                // open the expected root-level pq connector file
                 void vscode.commands.executeCommand("vscode.open", vscode.Uri.file(expectedRootPqPath));
+
+                // set the language service mode to sdk if needed for the workspace
+                if (ExtensionConfigurations.pqMode !== "SDK") {
+                    void ExtensionConfigurations.setPqMode("SDK", vscode.ConfigurationTarget.Workspace);
+                }
             }
         }
     }

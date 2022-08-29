@@ -10,12 +10,15 @@ import * as os from "os";
 // todo: should we rename it into ms.vscode-powerquery-sdk which is more authentic?
 const ExtensionId: string = "vscode-powerquery-sdk";
 
+export type PqModeType = "Power Query" | "SDK";
+
 // eslint-disable-next-line @typescript-eslint/typedef
 const ConfigNames = {
     PowerQuery: {
         name: "powerquery",
         properties: {
             locale: "general.locale" as const,
+            mode: "general.mode" as const,
         },
     },
     PowerQuerySdk: {

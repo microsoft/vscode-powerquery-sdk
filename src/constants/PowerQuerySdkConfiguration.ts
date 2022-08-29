@@ -10,7 +10,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { ConfigurationTarget } from "vscode";
 
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { ExtensionConstants, PqModeType } from "constants/PowerQuerySdkExtension";
 import { findExecutable } from "utils/executables";
 
 // eslint-disable-next-line @typescript-eslint/typedef
@@ -23,6 +23,25 @@ export const ExtensionConfigurations = {
         const result: string | undefined = config.get(ExtensionConstants.ConfigNames.PowerQuery.properties.locale);
 
         return result ?? vscode.env.language;
+    },
+    get pqMode(): PqModeType {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuery.name,
+        );
+
+        const result: PqModeType = config.get(ExtensionConstants.ConfigNames.PowerQuery.properties.mode) as PqModeType;
+
+        return result;
+    },
+    setPqMode(
+        mode: PqModeType,
+        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+    ): Thenable<void> {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuery.name,
+        );
+
+        return config.update(ExtensionConstants.ConfigNames.PowerQuery.properties.mode, mode, configurationTarget);
     },
     setAutoDetection(
         autoDetection: boolean,
