@@ -250,8 +250,8 @@ export function maybeHandleNewWorkspaceCreated(): void {
                 // open the expected root-level pq connector file
                 void vscode.commands.executeCommand("vscode.open", vscode.Uri.file(expectedRootPqPath));
 
-                // set the language service mode to sdk if needed for the workspace
-                if (ExtensionConfigurations.pqMode !== "SDK") {
+                // set the language service mode to sdk only if it were defined and also needed for the workspace
+                if (Boolean(ExtensionConfigurations.pqMode) && ExtensionConfigurations.pqMode !== "SDK") {
                     void ExtensionConfigurations.setPqMode("SDK", vscode.ConfigurationTarget.Workspace);
                 }
             }
