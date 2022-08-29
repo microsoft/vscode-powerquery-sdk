@@ -1091,7 +1091,7 @@ export class LifecycleCommands {
                         }
 
                         const items: vscode.QuickPickItem[] = currentAuthCandidates.map((one: string) => ({
-                            label: one,
+                            label: one.toLowerCase() === "implicit" ? "Anonymous" : one,
                         }));
 
                         const picked: vscode.QuickPickItem = await input.showQuickPick({
