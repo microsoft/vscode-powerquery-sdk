@@ -10,6 +10,14 @@ pr: none
 pool:
   vmImage: 'windows-latest'
 
+schedules:
+  - cron: "0 0 * * *"
+    displayName: Daily midnight build
+    branches:
+      include:
+        - main
+    always: true
+
 steps:
   - checkout: self
   - task: OneLocBuild@2
