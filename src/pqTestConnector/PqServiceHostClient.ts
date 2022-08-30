@@ -244,10 +244,10 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                     }
 
                     // todo, mv this logic to pqServiceHost
-                    if (maybePendingTask.request.method === "DisplayExtensionInfo") {
+                    if (maybePendingTask.request.method === "v1/PqTestService/DisplayExtensionInfo") {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         this.currentExtensionInfos.emit(responseMessage.result.Payload as any);
-                    } else if (maybePendingTask.request.method === "ListCredentials") {
+                    } else if (maybePendingTask.request.method === "v1/PqTestService/ListCredentials") {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         this.currentCredentials.emit(responseMessage.result.Payload as any);
                     }
