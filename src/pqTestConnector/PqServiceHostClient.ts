@@ -147,6 +147,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     private readonly sessionId: string = vscode.env.sessionId;
     private pendingTaskMap: Map<string, PqServiceHostTask> = new Map();
     private serverTransportTuple: ServerTransportTuple | undefined = undefined;
+    private pingTimer: NodeJS.Timer | undefined = undefined;
     protected _disposables: Array<IDisposable> = [];
 
     public get pqServiceHostConnected(): boolean {
@@ -285,12 +286,15 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
 
         socket.on("connect", () => {
             this.outputChannel.appendInfoLine(`Succeed listening PqServiceHost.exe at ${port}`);
+            this.startToSendPingMessages();
         });
 
         socket.on("error", (err: Error) => {
             this.outputChannel.appendErrorLine(
                 `Failed to listen PqServiceHost.exe at ${port} due to ${err.message}, will try to reconnect in 2 sec`,
             );
+
+            this.stopSendingPingMessages();
 
             setTimeout(() => {
                 this.onPowerQueryTestLocationChanged();
@@ -304,6 +308,19 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         });
 
         this.serverTransportTuple = theServerTransportTuple;
+    }
+
+    private startToSendPingMessages(): void {
+        this.pingTimer = setInterval(() => {
+            void this.Ping();
+        }, 1950);
+    }
+
+    private stopSendingPingMessages(): void {
+        if (this.pingTimer) {
+            clearInterval(this.pingTimer);
+            this.pingTimer = undefined;
+        }
     }
 
     private resolvePQServiceHostPath(nextPQTestLocation: string | undefined): string | undefined {
@@ -436,6 +453,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             oneDisposable.dispose();
         }
 
+        this.stopSendingPingMessages();
         this.currentExtensionInfos.dispose();
         this.currentCredentials.dispose();
         this.disposeCurrentServerTransportTuple();
@@ -467,7 +485,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "DeleteCredential",
+                method: "v1/PqTestService/DeleteCredential",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -488,7 +506,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "DisplayExtensionInfo",
+                method: "v1/PqTestService/DisplayExtensionInfo",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -509,7 +527,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "GenerateCredentialTemplate",
+                method: "v1/PqTestService/GenerateCredentialTemplate",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -531,7 +549,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "ListCredentials",
+                method: "v1/PqTestService/ListCredentials",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -550,7 +568,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "RefreshCredential",
+                method: "v1/PqTestService/RefreshCredential",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -587,7 +605,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "RunTestBattery",
+                method: "v1/PqTestService/RunTestBattery",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -640,7 +658,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "RunTestBatteryFromContent",
+                method: "v1/PqTestService/RunTestBatteryFromContent",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -661,7 +679,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "RefreshCredential",
+                method: "v1/PqTestService/RefreshCredential",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -683,7 +701,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "SetCredentialFromCreateAuthState",
+                method: "v1/PqTestService/SetCredentialFromCreateAuthState",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -709,7 +727,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,
-                method: "TestConnection",
+                method: "v1/PqTestService/TestConnection",
                 params: [
                     {
                         SessionId: this.sessionId,
@@ -720,6 +738,25 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             };
 
             return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
+        } else {
+            throw new PqServiceHostServerNotReady();
+        }
+    }
+
+    Ping(): Promise<number> {
+        if (this.serverTransportTuple) {
+            const theRequestMessage: PqServiceHostRequest = {
+                jsonrpc: JSON_RPC_VERSION,
+                id: this.nextSequenceId,
+                method: "v1/HealthService/Ping",
+                params: [
+                    {
+                        SessionId: this.sessionId,
+                    },
+                ],
+            };
+
+            return this.enlistOnePqServiceHostTask<number>(theRequestMessage);
         } else {
             throw new PqServiceHostServerNotReady();
         }
