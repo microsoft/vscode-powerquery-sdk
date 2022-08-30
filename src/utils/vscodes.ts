@@ -11,6 +11,7 @@ import * as process from "process";
 import * as vscode from "vscode";
 
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
 import { replaceAt } from "./strings";
 
 const RegularSubstitutedValueRegexp: RegExp = /\${([A-Za-z0-9.]*)}/g;
@@ -235,6 +236,23 @@ export function substitutedWorkspaceFolderBasenameIfNeeded(str: string): string 
     return str;
 }
 
+export function manuallyGetLocalVscSetting(baseWorkspace: string): Record<string, string | undefined> {
+    const expectedVscodeSettingPath: string | undefined = path.join(baseWorkspace, ".vscode", "settings.json");
+    let result: Record<string, string> = {};
+
+    if (fs.existsSync(expectedVscodeSettingPath)) {
+        const content: string = fs.readFileSync(expectedVscodeSettingPath, { encoding: "utf8" });
+
+        try {
+            result = JSON.parse(content);
+        } catch (e) {
+            // noop
+        }
+    }
+
+    return result;
+}
+
 export function maybeHandleNewWorkspaceCreated(): void {
     const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
@@ -251,7 +269,16 @@ export function maybeHandleNewWorkspaceCreated(): void {
                 void vscode.commands.executeCommand("vscode.open", vscode.Uri.file(expectedRootPqPath));
 
                 // set the language service mode to sdk only if it were defined and also needed for the workspace
-                if (Boolean(ExtensionConfigurations.pqMode) && ExtensionConfigurations.pqMode !== "SDK") {
+                const currentLocalVscSettingRecord: Record<string, string | undefined> = manuallyGetLocalVscSetting(
+                    maybeFirstWorkspaceUri.fsPath,
+                );
+
+                const currentLocalPqMode: string | undefined =
+                    currentLocalVscSettingRecord[
+                        `${ExtensionConstants.ConfigNames.PowerQuery}.${ExtensionConstants.ConfigNames.PowerQuery.properties.mode}`
+                    ];
+
+                if (!currentLocalPqMode && ExtensionConfigurations.pqMode !== "SDK") {
                     void ExtensionConfigurations.setPqMode("SDK", vscode.ConfigurationTarget.Workspace);
                 }
             }
