@@ -143,6 +143,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     pqTestLocation: string = "";
     pqTestFullPath: string = "";
 
+    private firstTimeStarted: boolean = true;
     private _sequenceSeed: number = Date.now();
     private readonly sessionId: string = vscode.env.sessionId;
     private pendingTaskMap: Map<string, PqServiceHostTask> = new Map();
@@ -151,7 +152,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     protected _disposables: Array<IDisposable> = [];
 
     public get pqServiceHostConnected(): boolean {
-        return Boolean(this.serverTransportTuple);
+        return Boolean(this.pingTimer);
     }
 
     private get nextSequenceId(): string {
@@ -286,6 +287,25 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
 
         socket.on("connect", () => {
             this.outputChannel.appendInfoLine(`Succeed listening PqServiceHost.exe at ${port}`);
+
+            // check whether it were the first time staring for the current maybe existing workspace
+            if (this.firstTimeStarted) {
+                // and we also need to ensure we got a valid pq connector mez file
+                const currentPQTestExtensionFileLocation: string | undefined =
+                    ExtensionConfigurations.PQTestExtensionFileLocation;
+
+                const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
+                    ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
+                    : undefined;
+
+                if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+                    // trigger one display extension info task to populate modules in the pq-lang ext
+                    void this.DisplayExtensionInfo();
+                }
+
+                this.firstTimeStarted = false;
+            }
+
             this.startToSendPingMessages();
         });
 
@@ -369,64 +389,90 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         return convertStringToInteger(pidString);
     }
 
-    private async doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation: string): Promise<void> {
-        const pidFileFullPath: string = path.resolve(nextPQTestLocation, PqServiceHostClient.ExecutablePidLockFileName);
+    private doStartAndListenPqServiceHostIfNeededInProgress: boolean = false;
+    private async doStartAndListenPqServiceHostIfNeeded(
+        nextPQTestLocation: string,
+        tryNumber: number = 0,
+    ): Promise<void> {
+        if (this.doStartAndListenPqServiceHostIfNeededInProgress || tryNumber > 4) return;
 
-        const portFileFullPath: string = path.resolve(
-            nextPQTestLocation,
-            PqServiceHostClient.ExecutablePortLockFileName,
-        );
+        try {
+            this.doStartAndListenPqServiceHostIfNeededInProgress = true;
 
-        let pidNumber: number | undefined = this.doSeizeNumberFromLockFile(pidFileFullPath);
-
-        // check if we need to start the pqServiceHost for the first time
-        if (typeof pidNumber !== "number" || !pidIsRunning(pidNumber.valueOf())) {
-            new SpawnedProcess(
-                path.resolve(nextPQTestLocation, PqServiceHostClient.ExecutableName),
-                [],
-                { cwd: this.pqTestLocation, detached: true },
-                {
-                    onSpawned: (childProcess: ChildProcess): void => {
-                        if (Number.isInteger(childProcess.pid)) {
-                            pidNumber = childProcess.pid;
-                        }
-                    },
-                },
+            const pidFileFullPath: string = path.resolve(
+                nextPQTestLocation,
+                PqServiceHostClient.ExecutablePidLockFileName,
             );
-        }
 
-        if (!Number.isInteger(pidNumber)) {
-            // pause for effects
-            await delay(500);
-            // eslint-disable-next-line require-atomic-updates
-            pidNumber = this.doSeizeNumberFromLockFile(pidFileFullPath);
-        }
+            const portFileFullPath: string = path.resolve(
+                nextPQTestLocation,
+                PqServiceHostClient.ExecutablePortLockFileName,
+            );
 
-        let portNumber: number | undefined = undefined;
-        let portInUse: boolean = false;
-        let maxTry: number = 5;
+            let pidNumber: number | undefined = this.doSeizeNumberFromLockFile(pidFileFullPath);
 
-        while (maxTry > 0 && !portInUse) {
-            // eslint-disable-next-line no-await-in-loop
-            await delay(895);
-            portNumber = this.doSeizeNumberFromLockFile(portFileFullPath);
+            // check if we need to start the pqServiceHost for the first time
+            if (typeof pidNumber !== "number" || !pidIsRunning(pidNumber.valueOf())) {
+                // pause a little while to enlarge the chances that other service hosts fully shutdown
+                await delay(250);
 
-            if (typeof portNumber === "number") {
-                // eslint-disable-next-line no-await-in-loop
-                portInUse = await isPortBusy(portNumber);
+                new SpawnedProcess(
+                    path.resolve(nextPQTestLocation, PqServiceHostClient.ExecutableName),
+                    [],
+                    { cwd: this.pqTestLocation, detached: true },
+                    {
+                        onSpawned: (childProcess: ChildProcess): void => {
+                            if (Number.isInteger(childProcess.pid)) {
+                                pidNumber = childProcess.pid;
+                            }
+                        },
+                    },
+                );
+
+                this.outputChannel.appendInfoLine(`#${tryNumber + 1} try to boot PqServiceHost.exe`);
             }
 
-            this.outputChannel.appendInfoLine(
-                `Check [${maxTry}] whether PqServiceHost.exe exported at ${portNumber}, ${portInUse}`,
-            );
+            if (!Number.isInteger(pidNumber)) {
+                // pause for effects
+                await delay(500);
+                // eslint-disable-next-line require-atomic-updates
+                pidNumber = this.doSeizeNumberFromLockFile(pidFileFullPath);
+            }
 
-            maxTry--;
+            let portNumber: number | undefined = undefined;
+            let portInUse: boolean = false;
+            let maxTry: number = 4;
+
+            while (maxTry > 0 && !portInUse) {
+                // eslint-disable-next-line no-await-in-loop
+                await delay(895);
+                portNumber = this.doSeizeNumberFromLockFile(portFileFullPath);
+
+                if (typeof portNumber === "number") {
+                    // eslint-disable-next-line no-await-in-loop
+                    portInUse = await isPortBusy(portNumber);
+                }
+
+                this.outputChannel.appendInfoLine(
+                    `Check #[${5 - maxTry}] whether PqServiceHost.exe exported at ${portNumber}, ${portInUse}`,
+                );
+
+                maxTry--;
+            }
+
+            if (typeof pidNumber === "number" && typeof portNumber === "number") {
+                this.disposeCurrentServerTransportTuple();
+                this.createServerSocketTransport(portNumber);
+            }
+        } finally {
+            this.doStartAndListenPqServiceHostIfNeededInProgress = false;
         }
 
-        if (typeof pidNumber === "number" && typeof portNumber === "number") {
-            this.disposeCurrentServerTransportTuple();
-            this.createServerSocketTransport(portNumber);
-        }
+        setTimeout(() => {
+            if (!this.pqServiceHostConnected) {
+                void this.doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation, tryNumber + 1);
+            }
+        }, 750);
     }
 
     onPowerQueryTestLocationChanged(): void {
@@ -443,6 +489,14 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             this.pqTestLocation = nextPQTestLocation;
             this.pqTestFullPath = pqServiceHostExe;
             this.outputChannel.appendInfoLine(`PqServiceHost.exe found at ${this.pqTestFullPath}`);
+
+            // we were already listening to a service host
+            if (this.pingTimer) {
+                // thus we need to shut it down
+                void this.ForceShutdown();
+                // and clear the pinger interval
+                this.stopSendingPingMessages();
+            }
 
             void this.doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation);
         }
@@ -738,6 +792,25 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             };
 
             return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
+        } else {
+            throw new PqServiceHostServerNotReady();
+        }
+    }
+
+    ForceShutdown(): Promise<number> {
+        if (this.serverTransportTuple) {
+            const theRequestMessage: PqServiceHostRequest = {
+                jsonrpc: JSON_RPC_VERSION,
+                id: this.nextSequenceId,
+                method: "v1/HealthService/Shutdown",
+                params: [
+                    {
+                        SessionId: this.sessionId,
+                    },
+                ],
+            };
+
+            return this.enlistOnePqServiceHostTask<number>(theRequestMessage);
         } else {
             throw new PqServiceHostServerNotReady();
         }
