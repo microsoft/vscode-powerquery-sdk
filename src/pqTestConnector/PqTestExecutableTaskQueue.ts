@@ -68,6 +68,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     private readonly eventBus: DisposableEventEmitter<PqTestExecutableTaskQueueEventTypes>;
     private readonly pidLockFileLocation: string;
+    private firstTimeReady: boolean = true;
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
     protected _disposables: Array<IDisposable> = [];
@@ -214,6 +215,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
                 const processArgs: string[] = buildPqTestArgs(pendingTask);
+
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.taskQueue.info.taskFound", {
                         pqTestExeFullPath,
@@ -330,11 +332,31 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             this.pqTestReady = true;
             this.pqTestLocation = nextPQTestLocation;
             this.pqTestFullPath = pqTestExe;
+
             this.outputChannel.appendInfoLine(
                 resolveI18nTemplate("PQSdk.taskQueue.info.pqtest.found", {
                     pqTestFullPath: this.pqTestFullPath,
                 }),
             );
+
+            // check whether it were the first time being ready for the current maybe existing workspace
+            if (this.firstTimeReady) {
+                // and we also need to ensure we got a valid pq connector mez file
+                const currentPQTestExtensionFileLocation: string | undefined =
+                    ExtensionConfigurations.PQTestExtensionFileLocation;
+
+                const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
+                    ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
+                    : undefined;
+
+                if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+                    // trigger one display extension info task to populate modules in the pq-lang ext
+                    void this.DisplayExtensionInfo();
+                }
+
+                this.firstTimeReady = false;
+            }
+
             // if no running pid found, dequeue and execute one pending tasks if any
 
             void this.doCheckPidAndDequeueOneTaskIfAny();
@@ -467,6 +489,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
+
             additionalArgs.unshift("--interactive");
         }
 

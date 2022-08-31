@@ -160,7 +160,6 @@ export class LifecycleCommands {
         }
 
         if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
-            void this.debouncedDisplayExtensionInfoCommand();
             const theBaseFolder: string = path.dirname(resolvedPQTestExtensionFileLocation);
             const theFileName: string = path.basename(resolvedPQTestExtensionFileLocation);
 
