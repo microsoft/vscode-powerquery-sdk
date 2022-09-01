@@ -29,7 +29,9 @@ import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
 
 import { convertStringToInteger } from "utils/numbers";
 import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+import { globFiles } from "utils/files";
 import { IDisposable } from "common/Disposable";
+import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { SpawnedProcess } from "common/SpawnedProcess";
 import { ValueEventEmitter } from "common/ValueEventEmitter";
@@ -144,6 +146,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     pqTestFullPath: string = "";
 
     private firstTimeStarted: boolean = true;
+    private needToRebuildBeforeEvaluation: boolean = true;
     private _sequenceSeed: number = Date.now();
     private readonly sessionId: string = vscode.env.sessionId;
     private pendingTaskMap: Map<string, PqServiceHostTask> = new Map();
@@ -177,11 +180,10 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
 
         vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
             if (
-                ((textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
-                    textDocument.uri.fsPath.indexOf(".m") > -1) &&
-                this.pqServiceHostConnected
+                (textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
+                textDocument.uri.fsPath.indexOf(".m") > -1
             ) {
-                void this.HandleOneDocumentSaved([textDocument.uri.fsPath]);
+                this.needToRebuildBeforeEvaluation = true;
             }
         });
 
@@ -194,8 +196,8 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 )
                 .map((oneUri: vscode.Uri) => oneUri.fsPath);
 
-            if (filteredPaths.length && this.pqServiceHostConnected) {
-                void this.HandleOneDocumentSaved(filteredPaths);
+            if (filteredPaths.length) {
+                this.needToRebuildBeforeEvaluation = true;
             }
         });
     }
@@ -534,6 +536,29 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         return result;
     }
 
+    private async maybeExecuteBuildTask(): Promise<void> {
+        const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
+
+        if (this.needToRebuildBeforeEvaluation && maybeCurrentWorkspace) {
+            for await (const oneFullPath of globFiles(path.join(maybeCurrentWorkspace, "bin"), (fullPath: string) =>
+                fullPath.endsWith(".mez"),
+            )) {
+                fs.unlinkSync(oneFullPath);
+            }
+
+            // choose msbuild or makePQX compile as the build task
+            let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
+
+            if (ExtensionConfigurations.msbuildPath) {
+                theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
+            }
+
+            await PowerQueryTaskProvider.executeTask(theBuildTask);
+
+            this.needToRebuildBeforeEvaluation = false;
+        }
+    }
+
     DeleteCredential(): Promise<GenericResult> {
         if (this.serverTransportTuple) {
             const theRequestMessage: PqServiceHostRequest = {
@@ -676,7 +701,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    RunTestBatteryFromContent(pathToQueryFile: string | undefined): Promise<any> {
+    async RunTestBatteryFromContent(pathToQueryFile: string | undefined): Promise<any> {
         if (this.serverTransportTuple) {
             const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
@@ -705,6 +730,9 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                     currentContent = oneEditor.document.getText();
                 }
             });
+
+            // maybe we need to execute the build task before evaluating.
+            await this.maybeExecuteBuildTask();
 
             // only for RunTestBatteryFromContent,
             // PathToConnector would be full path of the current working folder
@@ -830,26 +858,6 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             };
 
             return this.enlistOnePqServiceHostTask<number>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
-    }
-
-    HandleOneDocumentSaved(documentFullPaths: string[]): Promise<GenericResult> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/EventService/HandleOneDocumentSaved",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        Content: documentFullPaths,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
         } else {
             throw new PqServiceHostServerNotReady();
         }
