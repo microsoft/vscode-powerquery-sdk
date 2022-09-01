@@ -69,23 +69,70 @@ const pqTestOperations: PowerQueryTaskDefinition[] = [
     },
 ];
 
-const buildTasks: PowerQueryTaskDefinition[] = [
-    {
-        type: ExtensionConstants.PowerQueryTaskType,
-        operation: "msbuild",
-        label: "Build connector project using MSBuild",
-        additionalArgs: ["/restore", "/consoleloggerparameters:NoSummary", "/property:GenerateFullPaths=true"],
-    },
-    {
-        type: ExtensionConstants.PowerQueryTaskType,
-        operation: "compile",
-        label: extensionI18n["PQSdk.taskProvider.makePQx.compile.label"],
-        additionalArgs: [],
-    },
-];
+const msbuildTaskDefinition: PowerQueryTaskDefinition = {
+    type: ExtensionConstants.PowerQueryTaskType,
+    operation: "msbuild",
+    label: "Build connector project using MSBuild",
+    additionalArgs: ["/restore", "/consoleloggerparameters:NoSummary", "/property:GenerateFullPaths=true"],
+};
+
+const makePQXCompileTaskDefinition: PowerQueryTaskDefinition = {
+    type: ExtensionConstants.PowerQueryTaskType,
+    operation: "compile",
+    label: extensionI18n["PQSdk.taskProvider.makePQx.compile.label"],
+    additionalArgs: [],
+};
+
+interface PendingTaskResolver {
+    resolve: (execution: vscode.TaskExecution) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reject: (reason: any) => void;
+}
 
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
-    static TaskType: string = ExtensionConstants.PowerQueryTaskType;
+    private static pendingTaskMap: WeakMap<vscode.Task, PendingTaskResolver> = new WeakMap();
+
+    public static TaskType: string = ExtensionConstants.PowerQueryTaskType;
+    // the ExtensionConfigurations.msbuildPath might change during the runtime,
+    // thus we also have to build the task during the runtime
+    public static buildMsbuildTask(): vscode.Task {
+        return this.getTaskForBuildTaskDefinition(
+            msbuildTaskDefinition,
+            ExtensionConfigurations.msbuildPath ?? "msbuild",
+        );
+    }
+    // the pqTestLocation might change during the runtime,
+    // thus we also have to build the task during the runtime
+    public static buildMakePQXCompileTask(pqTestLocation: string): vscode.Task {
+        return this.getTaskForPQTestTaskDefinition(
+            makePQXCompileTaskDefinition,
+            path.join(pqTestLocation, ExtensionConstants.MakePQXExecutableName),
+        );
+    }
+
+    public static executeTask(task: vscode.Task): Promise<vscode.TaskExecution> {
+        void vscode.tasks.executeTask(task);
+
+        return new Promise<vscode.TaskExecution>(
+            (resolve: PendingTaskResolver["resolve"], reject: PendingTaskResolver["reject"]) => {
+                this.pendingTaskMap.set(task, { resolve, reject });
+            },
+        );
+    }
+
+    public static ActivateModule(): void {
+        vscode.tasks.onDidEndTask((event: vscode.TaskEndEvent) => {
+            const theTask: vscode.Task = event.execution.task;
+
+            const maybePendingTaskResolver: PendingTaskResolver | undefined =
+                PowerQueryTaskProvider.pendingTaskMap.get(theTask);
+
+            if (maybePendingTaskResolver) {
+                maybePendingTaskResolver.resolve(event.execution);
+                PowerQueryTaskProvider.pendingTaskMap.delete(theTask);
+            }
+        });
+    }
 
     constructor(protected readonly pqTestService: IPQTestService) {}
 
@@ -96,23 +143,8 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             return result;
         }
 
-        buildTasks.forEach((taskDef: PowerQueryTaskDefinition) => {
-            if (taskDef.operation === "msbuild") {
-                result.push(
-                    PowerQueryTaskProvider.getTaskForBuildTaskDefinition(
-                        taskDef,
-                        ExtensionConfigurations.msbuildPath ?? "msbuild",
-                    ),
-                );
-            } else {
-                result.push(
-                    PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(
-                        taskDef,
-                        path.join(this.pqTestService.pqTestLocation, ExtensionConstants.MakePQXExecutableName),
-                    ),
-                );
-            }
-        });
+        result.push(PowerQueryTaskProvider.buildMsbuildTask());
+        result.push(PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestService.pqTestLocation));
 
         pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
             result.push(
@@ -224,3 +256,5 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         return task;
     }
 }
+// activate the PowerQueryTaskProvider module to subscribe vsc tasks
+PowerQueryTaskProvider.ActivateModule();
