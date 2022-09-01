@@ -166,6 +166,10 @@ export class LifecycleCommands {
             this.mezFilesWatcher = fs.watch(
                 path.dirname(resolvedPQTestExtensionFileLocation),
                 (event: WatchEventType, filename: string) => {
+                    // we need not trigger a debounced build from here
+                    // b/c in ServiceHost mode, libProvider use a new directory provider everytime before evaluation
+                    // thus, we only need to lazily build merely prior our evaluation
+
                     if (filename === theFileName && event === "change") {
                         void this.debouncedDisplayExtensionInfoCommand();
                     }
