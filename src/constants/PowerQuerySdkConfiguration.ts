@@ -5,13 +5,10 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { ConfigurationTarget } from "vscode";
 
 import { ExtensionConstants, PqModeType } from "constants/PowerQuerySdkExtension";
-import { findExecutable } from "utils/executables";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -29,13 +26,11 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuery.name,
         );
 
-        const result: PqModeType = config.get(ExtensionConstants.ConfigNames.PowerQuery.properties.mode) as PqModeType;
-
-        return result;
+        return config.get(ExtensionConstants.ConfigNames.PowerQuery.properties.mode) as PqModeType;
     },
     setPqMode(
         mode: PqModeType,
-        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+        configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
     ): Thenable<void> {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuery.name,
@@ -45,7 +40,7 @@ export const ExtensionConfigurations = {
     },
     setAutoDetection(
         autoDetection: boolean,
-        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+        configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
     ): Thenable<void> {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
@@ -71,7 +66,7 @@ export const ExtensionConfigurations = {
     },
     setMsbuildPath(
         msbuildFullPath: string | undefined,
-        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+        configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
     ): Thenable<void> {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
@@ -105,7 +100,7 @@ export const ExtensionConfigurations = {
     },
     setNugetPath(
         nugetFullPath: string | undefined,
-        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+        configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
     ): Thenable<void> {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
@@ -139,7 +134,7 @@ export const ExtensionConfigurations = {
     },
     setPQTestLocation(
         pqTestLocation: string | undefined,
-        configurationTarget: ConfigurationTarget | boolean | null = ConfigurationTarget.Global,
+        configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
     ): Thenable<void> {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
@@ -163,7 +158,7 @@ export const ExtensionConfigurations = {
 
     setPQTestExtensionFileLocation(
         PQTestExtensionFileLocation: string,
-        configurationTarget: ConfigurationTarget | boolean = ConfigurationTarget.Workspace,
+        configurationTarget: vscode.ConfigurationTarget | boolean = vscode.ConfigurationTarget.Workspace,
     ): Thenable<void> {
         // we should not cache it
         return vscode.workspace
@@ -185,7 +180,7 @@ export const ExtensionConfigurations = {
 
     setPQTestQueryFileLocation(
         PQTestQueryFileLocation: string,
-        configurationTarget: ConfigurationTarget | boolean = ConfigurationTarget.Workspace,
+        configurationTarget: vscode.ConfigurationTarget | boolean = vscode.ConfigurationTarget.Workspace,
     ): Thenable<void> {
         // we should not cache it
         return vscode.workspace
@@ -221,8 +216,8 @@ const NugetDownloadVscUrl: vscode.Uri = vscode.Uri.parse(ExtensionConstants.Nuge
 const MSBuildDownloadVscUrl: vscode.Uri = vscode.Uri.parse(ExtensionConstants.MSBuildDownloadUrl);
 
 export async function promptWarningMessageForExternalDependency(
-    hasNugetFromCurConfig: boolean,
-    hasMsbuildFromCurConfig: boolean,
+    hasNugetFromCurConfig: boolean = true,
+    hasMsbuildFromCurConfig: boolean = true,
     shouldThrow: boolean = false,
 ): Promise<void> {
     if (!hasNugetFromCurConfig && !hasMsbuildFromCurConfig) {
@@ -268,24 +263,20 @@ export async function promptWarningMessageForExternalDependency(
     }
 }
 
-export function activateExternalConfiguration(promptWarningMessage: boolean = false): void {
-    const nugetFromCurConfig: string | undefined = ExtensionConfigurations.nugetPath;
-    const msbuildFromCurConfig: string | undefined = ExtensionConfigurations.msbuildPath;
-    let hasNugetFromCurConfig: boolean = Boolean(nugetFromCurConfig && fs.existsSync(nugetFromCurConfig));
-    const hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
-
-    if (!hasNugetFromCurConfig) {
-        const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
-        hasNugetFromCurConfig = Boolean(nugetFromThePath);
-        void ExtensionConfigurations.setNugetPath(nugetFromThePath);
-    }
-
-    if (!hasMsbuildFromCurConfig) {
-        const msbuildFromThePath: string | undefined = findExecutable("MSBuild", [".exe", ""]);
-        void ExtensionConfigurations.setMsbuildPath(msbuildFromThePath);
-    }
-
-    if (promptWarningMessage) {
-        void promptWarningMessageForExternalDependency(hasNugetFromCurConfig, true);
-    }
-}
+// export function activateExternalConfiguration(): void {
+//     // const nugetFromCurConfig: string | undefined = ExtensionConfigurations.nugetPath;
+//     const msbuildFromCurConfig: string | undefined = ExtensionConfigurations.msbuildPath;
+//     // let hasNugetFromCurConfig: boolean = Boolean(nugetFromCurConfig && fs.existsSync(nugetFromCurConfig));
+//     const hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
+//
+//     // if (!hasNugetFromCurConfig) {
+//     //     const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
+//     //     hasNugetFromCurConfig = Boolean(nugetFromThePath);
+//     //     void ExtensionConfigurations.setNugetPath(nugetFromThePath);
+//     // }
+//
+//     if (!hasMsbuildFromCurConfig) {
+//         const msbuildFromThePath: string | undefined = findExecutable("MSBuild", [".exe", ""]);
+//         void ExtensionConfigurations.setMsbuildPath(msbuildFromThePath);
+//     }
+// }
