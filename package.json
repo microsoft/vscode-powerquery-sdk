@@ -30,8 +30,16 @@
     "activationEvents": [
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
-        "onCommand:powerquery.sdk.pqtest.RunTestBatteryCommand",
+        "onCommand:powerquery.sdk.pqtest.CreateNewProjectCommand",
+        "onCommand:powerquery.sdk.pqtest.SeizePqTestCommand",
         "onCommand:powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
+        "onCommand:powerquery.sdk.pqtest.DeleteCredentialCommand",
+        "onCommand:powerquery.sdk.pqtest.DisplayExtensionInfoCommand",
+        "onCommand:powerquery.sdk.pqtest.ListCredentialCommand",
+        "onCommand:powerquery.sdk.pqtest.GenerateAndSetCredentialCommand",
+        "onCommand:powerquery.sdk.pqtest.RefreshCredentialCommand",
+        "onCommand:powerquery.sdk.pqtest.RunTestBatteryCommand",
+        "onCommand:powerquery.sdk.pqtest.TestConnectionCommand",
         "onView:powerquery.sdk.pqtest.LifeCycleTaskTreeView",
         "onWebviewPanel:powerquery.sdk.pqtest.ResultWebView",
         "onLanguage:powerquery"
@@ -45,16 +53,64 @@
     "contributes": {
         "commands": [
             {
-                "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
-                "title": "%extension.pqtest.RunTestBatteryCommand.title%",
+                "command": "powerquery.sdk.pqtest.CreateNewProjectCommand",
+                "title": "%extension.pqtest.CreateNewProjectCommand.title%",
                 "category": "Power query",
-                "icon": "$(debug-console-evaluation-prompt)"
+                "icon": "$(new-folder)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.SeizePqTestCommand",
+                "title": "%extension.pqtest.SeizePqTestCommand.title%",
+                "category": "Power query",
+                "icon": "$(cloud-download)"
             },
             {
                 "command": "powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
                 "title": "%extension.pqtest.SetupCurrentWorkspaceCommand.title%",
                 "category": "Power query",
                 "icon": "$(pencil)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.DeleteCredentialCommand",
+                "title": "%extension.pqtest.DeleteCredentialCommand.title%",
+                "category": "Power query",
+                "icon": "$(terminal-kill)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.DisplayExtensionInfoCommand",
+                "title": "%extension.pqtest.DisplayExtensionInfoCommand.title%",
+                "category": "Power query",
+                "icon": "$(extensions-info-message)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.ListCredentialCommand",
+                "title": "%extension.pqtest.ListCredentialCommand.title%",
+                "category": "Power query",
+                "icon": "$(library)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.GenerateAndSetCredentialCommand",
+                "title": "%extension.pqtest.GenerateAndSetCredentialCommand.title%",
+                "category": "Power query",
+                "icon": "$(key)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.RefreshCredentialCommand",
+                "title": "%extension.pqtest.RefreshCredentialCommand.title%",
+                "category": "Power query",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                "title": "%extension.pqtest.RunTestBatteryCommand.title%",
+                "category": "Power query",
+                "icon": "$(debug-console-evaluation-prompt)"
+            },
+            {
+                "command": "powerquery.sdk.pqtest.TestConnectionCommand",
+                "title": "%extension.pqtest.TestConnectionCommand.title%",
+                "category": "Power query",
+                "icon": "$(test-view-icon)"
             }
         ],
         "configuration": {
@@ -235,7 +291,6 @@
         "build": "npm run build:pq-test-result-view",
         "copy:i18n": "ts-node scripts/addI18n.ts",
         "package": "npm run clean && npm run build && webpack --mode production && npm run copy:i18n",
-        "vsix": "npx vsce package",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
@@ -243,7 +298,9 @@
         "lint": "eslint src --ext ts",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
         "test:e2e": "npm run package && npm run compile-tests && node ./out/test/runTest.js",
-        "test": "npm run test:unit-test && npm run test:e2e"
+        "test": "npm run test:unit-test && npm run test:e2e",
+        "vsix": "npx vsce package",
+        "code-install": "ts-node scripts/install.ts"
     },
     "dependencies": {
         "axios": "^0.27.2",
