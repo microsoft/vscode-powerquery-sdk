@@ -33,7 +33,7 @@ steps:
     displayName: "npm unit test"
     inputs:
       command: "custom"
-      customCommand: "test:unit-test"
+      customCommand: "run test:unit-test"
 
   - task: Npm@1
     displayName: "npm e2e test"
@@ -41,7 +41,7 @@ steps:
     continueOnError: 'true'
     inputs:
       command: "custom"
-      customCommand: "test:e2e"
+      customCommand: "run test:e2e"
 
   - task: Npm@1
     displayName: "build VSIX"
