@@ -242,7 +242,8 @@
         "audit": "npm audit --production",
         "lint": "eslint src --ext ts",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
-        "test": "node ./out/test/runTest.js"
+        "test:e2e": "npm run package && npm run compile-tests && node ./out/test/runTest.js",
+        "test": "npm run test:unit-test && npm run test:e2e"
     },
     "dependencies": {
         "axios": "^0.27.2",
