@@ -235,13 +235,14 @@
         "build": "npm run build:pq-test-result-view",
         "copy:i18n": "ts-node scripts/addI18n.ts",
         "package": "npm run clean && npm run build && webpack --mode production && npm run copy:i18n",
-        "vsix": "npx vsce package",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "audit": "npm audit --production",
         "lint": "eslint src --ext ts",
-        "test": "node ./out/test/runTest.js"
+        "test": "node ./out/test/runTest.js",
+        "vsix": "npx vsce package",
+        "code-install": "ts-node scripts/install.ts"
     },
     "dependencies": {
         "vscode-jsonrpc": "^8.0.2"
