@@ -9,6 +9,7 @@ import * as path from "path";
 
 const NugetStdOutputOfVersionRegExp: RegExp = /(Microsoft\.PowerQuery\.SdkTools[ ])([0-9]+)\.([0-9]+)\.([0-9]+)/g;
 const PathPartOfVersionRegExp: RegExp = /(Microsoft\.PowerQuery\.SdkTools\.)([0-9]+)\.([0-9]+)\.([0-9]+)/g;
+const ReleasedVersionRegExp: RegExp = /([0-9]+)\.([0-9]+)\.([0-9]+)/;
 export class NugetVersions {
     public static ZERO_VERSION: NugetVersions = new NugetVersions(0, 0, 0);
 
@@ -59,6 +60,23 @@ export class NugetVersions {
 
             return false;
         });
+
+        return result;
+    }
+
+    /**
+     * create NugetVersion from a released version like: 2.107.1
+     * @param releasedVersionString
+     */
+    public static createFromReleasedVersionString(releasedVersionString: string): NugetVersions {
+        if (!releasedVersionString) return NugetVersions.ZERO_VERSION;
+
+        let result: NugetVersions = NugetVersions.ZERO_VERSION;
+        const matched: RegExpMatchArray | null = ReleasedVersionRegExp.exec(releasedVersionString);
+
+        if (matched && matched.length === 4) {
+            result = new NugetVersions(parseInt(matched[1], 10), parseInt(matched[2], 10), parseInt(matched[3], 10));
+        }
 
         return result;
     }

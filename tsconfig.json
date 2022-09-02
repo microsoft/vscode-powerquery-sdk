@@ -20,5 +20,5 @@
         "resolveJsonModule": true,
         "strictPropertyInitialization": true
     },
-    "exclude": ["node_modules", ".vscode-test", "webviews", "scripts"]
+    "exclude": ["node_modules", ".vscode-test", "webviews", "scripts", "unit-tests"]
 }

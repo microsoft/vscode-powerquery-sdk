@@ -7,14 +7,15 @@
 
 import * as vscode from "vscode";
 
-import { activateExternalConfiguration, ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "common/PQTestService";
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "utils/vscodes";
 import { activateMQueryDebug } from "debugAdaptor/activateMQueryDebug";
+import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
 import { GlobalEventBus } from "GlobalEventBus";
 import { IDisposable } from "common/Disposable";
 import { LifecycleCommands } from "commands/LifecycleCommands";
 import { LifeCycleTaskTreeView } from "features/LifeCycleTaskTreeView";
+import { NugetHttpService } from "common/NugetHttpService";
 import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
 import { PqServiceHostClient } from "pqTestConnector/PqServiceHostClient";
@@ -25,7 +26,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
 
-    activateExternalConfiguration(true);
+    const nugetHttpService: NugetHttpService = new NugetHttpService();
     const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
     // let's make extension::activate serves as minimum as possible:
@@ -58,7 +59,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     );
 
     // lifecycleCommands instance has not been a disposable yet
-    new LifecycleCommands(vscExtCtx, globalEventBus, disposablePqTestServices, pqSdkOutputChannel);
+    new LifecycleCommands(vscExtCtx, globalEventBus, nugetHttpService, disposablePqTestServices, pqSdkOutputChannel);
 
     const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);
 
