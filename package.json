@@ -2,7 +2,7 @@
     "name": "vscode-powerquery-sdk",
     "displayName": "Power Query SDK",
     "description": "Power Query Connector SDK",
-    "version": "0.0.3",
+    "version": "0.1.0",
     "author": "Microsoft Corporation",
     "license": "MIT",
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
