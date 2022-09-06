@@ -21,7 +21,7 @@ import { delay } from "../../utils/pids";
 
 const expect = chai.expect;
 
-const MAX_AWAIT_TIME: number = 2 * 60e3;
+const MAX_AWAIT_TIME: number = 8 * 60e3;
 const AWAIT_INTERVAL: number = 5e3;
 
 function getExpectedPqTestPath(maybeNextVersion?: string): string | undefined {
