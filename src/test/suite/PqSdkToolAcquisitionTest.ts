@@ -8,7 +8,8 @@
 import * as chai from "chai";
 import * as fs from "fs";
 import * as path from "path";
-import * as vscode from "vscode";
+
+import { Workbench } from "vscode-extension-tester";
 
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { NugetHttpService } from "../../common/NugetHttpService";
@@ -16,7 +17,7 @@ import { NugetHttpService } from "../../common/NugetHttpService";
 import { NugetVersions } from "../../utils/NugetVersions";
 
 import { buildPqTestSubPath, extensionDevelopmentPath, NugetBaseFolder, PqTestSubPath } from "./common";
-import { delay } from "./utils";
+import { delay } from "../../utils/pids";
 
 const expect = chai.expect;
 
@@ -31,10 +32,12 @@ function getExpectedPqTestPath(maybeNextVersion?: string): string | undefined {
     return path.resolve(baseNugetFolder, ...pqTestSubPath);
 }
 
-export function buildPqTestAcquisitionTest(): void {
+describe("PQSdk Tool Acquisition Test", () => {
     const nugetHttpService = new NugetHttpService();
 
-    test("Seize the pqTest from public nuget", async () => {
+    it("Seize the latest by default.", async () => {
+        const workbench = new Workbench();
+
         const packageName: string = ExtensionConstants.PublicMsftPqSdkToolsNugetName;
         const releasedVersions = await nugetHttpService.getPackageReleasedVersions(packageName);
 
@@ -64,10 +67,10 @@ export function buildPqTestAcquisitionTest(): void {
             }
         }
 
-        const manuallySeizedPath: string = await vscode.commands.executeCommand(
-            "powerquery.sdk.pqtest.SeizePqTestCommand",
-        );
+        await workbench.executeCommand("power query: Update SDK Tool");
 
-        expect(manuallySeizedPath).eq(path.dirname(expectedPqTestExePath));
+        await delay(3e3);
+
+        expect(fs.existsSync(expectedPqTestExePath)).true;
     }).timeout(MAX_AWAIT_TIME);
-}
+});

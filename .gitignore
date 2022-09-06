@@ -357,5 +357,6 @@ webviewDist
 pqTest.pid
 node_modules
 .vscode-test/
+test-resources/
 *.vsix
 package.nls.*.json
