@@ -11,10 +11,10 @@ import { Socket } from "net";
 
 import { CancellationToken, DebugConfiguration, ProviderResult, TextEditor, WorkspaceFolder } from "vscode";
 
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
-import { extensionI18n } from "i18n/extension";
-import { IDisposable } from "common/Disposable";
-import { MQueryDebugSession } from "debugAdaptor/MQueryDebugSession";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { extensionI18n } from "../i18n/extension";
+import { IDisposable } from "../common/Disposable";
+import { MQueryDebugSession } from "./MQueryDebugSession";
 
 class MQueryConfigurationProvider implements vscode.DebugConfigurationProvider {
     /**

@@ -8,10 +8,10 @@
 import * as vscode from "vscode";
 import { Webview, WebviewPanel, WebviewPanelOnDidChangeViewStateEvent } from "vscode";
 
-import { Disposable, IDisposable } from "common/Disposable";
-import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "common/ValueEventEmitter";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { extensionI18n } from "i18n/extension";
+import { Disposable, IDisposable } from "../common/Disposable";
+import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "../common/ValueEventEmitter";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { extensionI18n } from "../i18n/extension";
 
 const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
 

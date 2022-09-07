@@ -16,14 +16,14 @@ import {
     TreeItemCollapsibleState,
     Uri,
 } from "vscode";
-import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
-import { debounce } from "utils/debounce";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { getAnyPqFileBeneathTheFirstWorkspace } from "utils/vscodes";
-import { LifecycleCommands } from "commands/LifecycleCommands";
-import { NugetVersions } from "utils/NugetVersions";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { debounce } from "../utils/debounce";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { getAnyPqFileBeneathTheFirstWorkspace } from "../utils/vscodes";
+import { LifecycleCommands } from "../commands/LifecycleCommands";
+import { NugetVersions } from "../utils/NugetVersions";
 
 const TreeViewPrefix: string = `powerquery.sdk.pqtest`;
 

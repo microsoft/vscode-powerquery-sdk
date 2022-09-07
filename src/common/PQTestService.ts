@@ -5,8 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { PQTestTask } from "common/PowerQueryTask";
-import type { ValueEventEmitter } from "common/ValueEventEmitter";
+import { PQTestTask } from "./PowerQueryTask";
+import type { ValueEventEmitter } from "./ValueEventEmitter";
 
 export interface GenericResult {
     readonly Status: "Success" | "Failure";

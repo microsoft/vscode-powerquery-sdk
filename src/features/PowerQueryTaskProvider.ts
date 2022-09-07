@@ -8,12 +8,12 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { buildPqTestArgs, IPQTestService } from "common/PQTestService";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
-import { extensionI18n } from "i18n/extension";
+import { buildPqTestArgs, IPQTestService } from "../common/PQTestService";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { extensionI18n } from "../i18n/extension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
-import { PowerQueryTaskDefinition } from "common/PowerQueryTask";
+import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
 
 const enum TaskLabelPrefix {
     Build = "build",

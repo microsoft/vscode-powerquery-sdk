@@ -10,8 +10,8 @@ import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
 
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { replaceAt } from "./strings";
 
 const RegularSubstitutedValueRegexp: RegExp = /\${([A-Za-z0-9.]*)}/g;

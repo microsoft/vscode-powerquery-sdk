@@ -297,7 +297,7 @@
         "audit": "npm audit --production",
         "lint": "eslint src --ext ts",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
-        "test:e2e": "npm run compile-tests && extest setup-and-run out/test/**/*.js",
+        "test:e2e": "npm run compile-tests && extest setup-and-run out/src/test/**/*.spec.js",
         "test": "npm run test:unit-test && npm run test:e2e",
         "vsix": "npx vsce package",
         "code-install": "ts-node scripts/install.ts"

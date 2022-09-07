@@ -21,9 +21,9 @@ import {
 } from "vscode";
 import { FSWatcher, WatchEventType } from "fs";
 
-import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import type { PqServiceHostClient } from "pqTestConnector/PqServiceHostClient";
+import type { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
 
 import {
     AuthenticationKind,
@@ -31,28 +31,28 @@ import {
     ExtensionInfo,
     GenericResult,
     IPQTestService,
-} from "common/PQTestService";
+} from "../common/PQTestService";
 import {
     ExtensionConfigurations,
     promptWarningMessageForExternalDependency,
-} from "constants/PowerQuerySdkConfiguration";
+} from "../constants/PowerQuerySdkConfiguration";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
     getFirstWorkspaceFolder,
     resolveSubstitutedValues,
     substitutedWorkspaceFolderBasenameIfNeeded,
-} from "utils/vscodes";
-import { InputStep, MultiStepInput } from "common/MultiStepInput";
-import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
-import { prettifyJson, resolveTemplateSubstitutedValues } from "utils/strings";
+} from "../utils/vscodes";
+import { InputStep, MultiStepInput } from "../common/MultiStepInput";
+import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
+import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 
-import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
-import { debounce } from "utils/debounce";
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
-import { NugetHttpService } from "common/NugetHttpService";
-import { NugetVersions } from "utils/NugetVersions";
-import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { SpawnedProcess } from "common/SpawnedProcess";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { debounce } from "../utils/debounce";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { NugetHttpService } from "../common/NugetHttpService";
+import { NugetVersions } from "../utils/NugetVersions";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { SpawnedProcess } from "../common/SpawnedProcess";
 
 const CommandPrefix: string = `powerquery.sdk.pqtest`;
 

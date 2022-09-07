@@ -8,10 +8,10 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import defaultJson from "i18n/extension.json";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { RecordKeys } from "utils/types";
-import { replaceAt } from "utils/strings";
+import defaultJson from "../i18n/extension.json";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { RecordKeys } from "../utils/types";
+import { replaceAt } from "../utils/strings";
 
 export type ExtensionI18nRecord = typeof defaultJson;
 export type ExtensionI18nKeys = RecordKeys<ExtensionI18nRecord>;

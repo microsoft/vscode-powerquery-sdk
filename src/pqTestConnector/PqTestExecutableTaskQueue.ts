@@ -9,6 +9,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { ExtensionContext, TextEditor } from "vscode";
+import { FSWatcher, WatchEventType } from "fs";
 import { ChildProcess } from "child_process";
 
 import {
@@ -18,22 +20,20 @@ import {
     ExtensionInfo,
     GenericResult,
     IPQTestService,
-} from "common/PQTestService";
-import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+} from "../common/PQTestService";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 
-import { Disposable, IDisposable } from "common/Disposable";
-import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
-import { ExtensionContext, TextEditor } from "vscode";
-import { FSWatcher, WatchEventType } from "fs";
-import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
-import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
-import { convertStringToInteger } from "utils/numbers";
-import { pidIsRunning } from "utils/pids";
-import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { PQTestTask } from "common/PowerQueryTask";
-import { resolveSubstitutedValues } from "utils/vscodes";
-import { ValueEventEmitter } from "common/ValueEventEmitter";
+import { Disposable, IDisposable } from "../common/Disposable";
+import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
+import { convertStringToInteger } from "../utils/numbers";
+import { pidIsRunning } from "../utils/pids";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { PQTestTask } from "../common/PowerQueryTask";
+import { resolveSubstitutedValues } from "../utils/vscodes";
+import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {
