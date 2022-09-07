@@ -61,6 +61,7 @@ const templateFileBaseName: string = "PQConn";
 
 export class LifecycleCommands {
     static SeizePqTestCommand: string = `${CommandPrefix}.SeizePqTestCommand`;
+    static BuildProjectCommand: string = `${CommandPrefix}.BuildProjectCommand`;
     static SetupCurrentWorkspaceCommand: string = `${CommandPrefix}.SetupCurrentWorkspaceCommand`;
     static CreateNewProjectCommand: string = `${CommandPrefix}.CreateNewProjectCommand`;
     static DeleteCredentialCommand: string = `${CommandPrefix}.DeleteCredentialCommand`;
@@ -72,6 +73,7 @@ export class LifecycleCommands {
     static TestConnectionCommand: string = `${CommandPrefix}.TestConnectionCommand`;
 
     private isSuggestingSetupCurrentWorkspace: boolean = false;
+    private readonly initPqSdkTool$deferred: Promise<string | undefined>;
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
@@ -82,6 +84,10 @@ export class LifecycleCommands {
     ) {
         vscExtCtx.subscriptions.push(
             vscode.commands.registerCommand(LifecycleCommands.SeizePqTestCommand, this.manuallyUpdatePqTest.bind(this)),
+            vscode.commands.registerCommand(
+                LifecycleCommands.BuildProjectCommand,
+                this.doBuildProjectCommand.bind(this),
+            ),
             vscode.commands.registerCommand(
                 LifecycleCommands.SetupCurrentWorkspaceCommand,
                 this.setupCurrentlyOpenedWorkspaceCommand.bind(this),
@@ -138,7 +144,7 @@ export class LifecycleCommands {
 
         this.watchMezFileIfNeeded();
 
-        void this.checkAndTryToUpdatePqTest(true);
+        this.initPqSdkTool$deferred = this.checkAndTryToUpdatePqTest(true);
         void this.promptToSetupCurrentWorkspaceIfNeeded();
     }
 
@@ -164,6 +170,11 @@ export class LifecycleCommands {
         if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
             const theBaseFolder: string = path.dirname(resolvedPQTestExtensionFileLocation);
             const theFileName: string = path.basename(resolvedPQTestExtensionFileLocation);
+
+            void (async (): Promise<void> => {
+                await this.initPqSdkTool$deferred;
+                await this.debouncedDisplayExtensionInfoCommand();
+            })();
 
             this.mezFilesWatcher = fs.watch(
                 path.dirname(resolvedPQTestExtensionFileLocation),
@@ -247,7 +258,13 @@ export class LifecycleCommands {
         }, debouncedTime).bind(this) as (...args: any[]) => Promise<any>;
     }
 
-    public setupCurrentlyOpenedWorkspaceCommand(): void {
+    public async doBuildProjectCommand(): Promise<void> {
+        await this.initPqSdkTool$deferred;
+
+        return this.pqTestService.MaybeExecuteBuildTask();
+    }
+
+    public setupCurrentlyOpenedWorkspaceCommand(): Promise<unknown> {
         const tasks: Array<Promise<void>> = [];
 
         let hasPQTestExtensionFileLocation: boolean = false;
@@ -331,7 +348,9 @@ export class LifecycleCommands {
             );
         }
 
-        void Promise.all(tasks);
+        return Promise.all(tasks).then(() => {
+            this.watchMezFileIfNeeded();
+        });
     }
 
     private doGenerateOneProjectIntoOneFolderFromTemplates(inputFolder: string, projectName: string): string {

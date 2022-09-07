@@ -253,7 +253,7 @@ export function manuallyGetLocalVscSetting(baseWorkspace: string): Record<string
     return result;
 }
 
-export function maybeHandleNewWorkspaceCreated(): void {
+export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
     const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
     if (maybeFirstWorkspaceUri) {
@@ -281,6 +281,12 @@ export function maybeHandleNewWorkspaceCreated(): void {
                 if (!currentLocalPqMode && ExtensionConfigurations.pqMode !== "SDK") {
                     void ExtensionConfigurations.setPqMode("SDK", vscode.ConfigurationTarget.Workspace);
                 }
+
+                // build when freshly created, just execute the command
+                // to trigger the MaybeExecuteBuildTask from pqTestService
+                await vscode.commands.executeCommand("powerquery.sdk.pqtest.BuildProjectCommand");
+                // and also setup the workspace as the output of the msbuild might be different
+                await vscode.commands.executeCommand("powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand");
             }
         }
     }

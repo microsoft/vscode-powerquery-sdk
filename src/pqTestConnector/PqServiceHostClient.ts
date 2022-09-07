@@ -536,7 +536,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         return result;
     }
 
-    private async maybeExecuteBuildTask(): Promise<void> {
+    async MaybeExecuteBuildTask(): Promise<void> {
         const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
 
         if (this.needToRebuildBeforeEvaluation && maybeCurrentWorkspace) {
@@ -732,7 +732,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             });
 
             // maybe we need to execute the build task before evaluating.
-            await this.maybeExecuteBuildTask();
+            await this.MaybeExecuteBuildTask();
 
             // only for RunTestBatteryFromContent,
             // PathToConnector would be full path of the current working folder

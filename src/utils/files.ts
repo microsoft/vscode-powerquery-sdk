@@ -15,6 +15,8 @@ export async function* globFiles(
     matcher: (path: string) => boolean = defaultMatcher,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): AsyncGenerator<string, any, void> {
+    if (!fs.existsSync(dir)) return;
+
     const dirents: fs.Dirent[] = await fs.promises.readdir(dir, { withFileTypes: true });
 
     for (const dirent of dirents) {
