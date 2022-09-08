@@ -5,7 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { IDisposable } from "common/Disposable";
+import { IDisposable } from "./Disposable";
 
 export type ExtractValueEventEmitterTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp extends Record<infer Key, infer Value>
     ? Value extends ValueEventEmitter

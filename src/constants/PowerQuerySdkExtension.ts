@@ -54,7 +54,7 @@ const NugetBaseFolder: string = ".nuget" as const;
 const NugetConfigFileName: string = "nuget-staging.config" as const;
 const InternalMsftPqSdkToolsNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
 const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
-const SuggestedPqTestNugetVersion: string = "2.107.2" as const;
+const SuggestedPqTestNugetVersion: string = "2.109.5" as const;
 
 const PqTestSubPath: string[] = [
     `${InternalMsftPqSdkToolsNugetName}.${SuggestedPqTestNugetVersion}`,

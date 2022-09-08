@@ -8,7 +8,7 @@
 import * as Net from "net";
 import { Socket } from "net";
 
-import { MQueryDebugSession } from "debugAdaptor/MQueryDebugSession";
+import { MQueryDebugSession } from "./debugAdaptor/MQueryDebugSession";
 
 /*
  * debugAdapter.js is the entrypoint of the debug adapter when it runs as a separate process.

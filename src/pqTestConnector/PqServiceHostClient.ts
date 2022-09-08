@@ -22,19 +22,19 @@ import {
 import { ChildProcess } from "child_process";
 import { TextEditor } from "vscode";
 
-import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "common/PQTestService";
-import { delay, isPortBusy, pidIsRunning } from "utils/pids";
-import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "utils/vscodes";
-import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
+import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "../common/PQTestService";
+import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
+import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import { convertStringToInteger } from "utils/numbers";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { globFiles } from "utils/files";
-import { IDisposable } from "common/Disposable";
-import { PowerQueryTaskProvider } from "features/PowerQueryTaskProvider";
-import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { SpawnedProcess } from "common/SpawnedProcess";
-import { ValueEventEmitter } from "common/ValueEventEmitter";
+import { convertStringToInteger } from "../utils/numbers";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { globFiles } from "../utils/files";
+import { IDisposable } from "../common/Disposable";
+import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { SpawnedProcess } from "../common/SpawnedProcess";
+import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
 interface ServerTransportTuple {
     readonly status: {
@@ -536,7 +536,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         return result;
     }
 
-    private async maybeExecuteBuildTask(): Promise<void> {
+    async MaybeExecuteBuildTask(): Promise<void> {
         const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
 
         if (this.needToRebuildBeforeEvaluation && maybeCurrentWorkspace) {
@@ -732,7 +732,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             });
 
             // maybe we need to execute the build task before evaluating.
-            await this.maybeExecuteBuildTask();
+            await this.MaybeExecuteBuildTask();
 
             // only for RunTestBatteryFromContent,
             // PathToConnector would be full path of the current working folder

@@ -8,7 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { ExtensionConstants, PqModeType } from "constants/PowerQuerySdkExtension";
+import { ExtensionConstants, PqModeType } from "./PowerQuerySdkExtension";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {

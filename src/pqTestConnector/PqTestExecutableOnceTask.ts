@@ -9,16 +9,17 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
-import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
-import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
-import { buildPqTestArgs } from "common/PQTestService";
 import { ChildProcess } from "child_process";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { IDisposable } from "common/Disposable";
-import { PqTestResultViewPanel } from "panels/PqTestResultViewPanel";
-import { PQTestTask } from "common/PowerQueryTask";
-import { resolveSubstitutedValues } from "utils/vscodes";
+
+import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
+import { buildPqTestArgs } from "../common/PQTestService";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { IDisposable } from "../common/Disposable";
+import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
+import { PQTestTask } from "../common/PowerQueryTask";
+import { resolveSubstitutedValues } from "../utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -98,6 +99,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
                     pqtestExe,
                 }),
             );
+
             throw new Error("Failed to find PqTest executable");
         }
 
@@ -147,6 +149,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
             const processArgs: string[] = buildPqTestArgs(task);
 
             this.handleTaskCreated();
+
             this.handleOutputStr(
                 resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskFound", {
                     pqTestExeFullPath,

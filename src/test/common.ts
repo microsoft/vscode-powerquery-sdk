@@ -1,0 +1,39 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+
+import * as os from "os";
+import * as path from "path";
+
+import rootPackageJson from "../../package.json";
+
+export const MAX_AWAIT_TIME: number = 2 * 60e3;
+export const AWAIT_INTERVAL: number = 5e3;
+
+export const extensionId: string = rootPackageJson.name;
+export const extensionVersion: string = rootPackageJson.version;
+export const extensionPublisher: string = rootPackageJson.publisher;
+
+export const homeDirectory = os.homedir();
+export const extensionDevelopmentPath = path.resolve(__dirname, "../../../");
+export const extensionInstalledDirectory = path.join(
+    homeDirectory,
+    ".vscode",
+    "extensions",
+    `${extensionPublisher.toLowerCase()}.${extensionId.toLowerCase()}-${extensionVersion.toLowerCase()}`,
+);
+
+export const NugetBaseFolderName: string = ExtensionConstants.NugetBaseFolder;
+export const NugetConfigFileName: string = ExtensionConstants.NugetConfigFileName;
+
+export const NugetPackagesDirectory: string = path.join(extensionInstalledDirectory, NugetBaseFolderName);
+
+export const PqTestSubPath: string[] = ExtensionConstants.PqTestSubPath;
+export const buildPqTestSubPath: (version: string) => string[] = ExtensionConstants.buildPqTestSubPath;
+
+export const PublicMsftPqSdkToolsNugetName: string = ExtensionConstants.PublicMsftPqSdkToolsNugetName;

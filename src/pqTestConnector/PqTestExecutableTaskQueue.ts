@@ -9,6 +9,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { ExtensionContext, TextEditor } from "vscode";
+import { FSWatcher, WatchEventType } from "fs";
 import { ChildProcess } from "child_process";
 
 import {
@@ -18,22 +20,22 @@ import {
     ExtensionInfo,
     GenericResult,
     IPQTestService,
-} from "common/PQTestService";
-import { extensionI18n, resolveI18nTemplate } from "i18n/extension";
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
+} from "../common/PQTestService";
+import { Disposable, IDisposable } from "../common/Disposable";
+import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 
-import { Disposable, IDisposable } from "common/Disposable";
-import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
-import { ExtensionContext, TextEditor } from "vscode";
-import { FSWatcher, WatchEventType } from "fs";
-import { GlobalEventBus, GlobalEvents } from "GlobalEventBus";
-import { ProcessExit, SpawnedProcess } from "common/SpawnedProcess";
-import { convertStringToInteger } from "utils/numbers";
-import { pidIsRunning } from "utils/pids";
-import { PqSdkOutputChannel } from "features/PqSdkOutputChannel";
-import { PQTestTask } from "common/PowerQueryTask";
-import { resolveSubstitutedValues } from "utils/vscodes";
-import { ValueEventEmitter } from "common/ValueEventEmitter";
+import { convertStringToInteger } from "../utils/numbers";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { globFiles } from "../utils/files";
+import { pidIsRunning } from "../utils/pids";
+import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { PQTestTask } from "../common/PowerQueryTask";
+import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {
@@ -69,6 +71,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private readonly eventBus: DisposableEventEmitter<PqTestExecutableTaskQueueEventTypes>;
     private readonly pidLockFileLocation: string;
     private firstTimeReady: boolean = true;
+    private needToRebuildBeforeEvaluation: boolean = true;
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
     protected _disposables: Array<IDisposable> = [];
@@ -112,6 +115,29 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         );
 
         this.onPowerQueryTestLocationChanged();
+
+        vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
+            if (
+                (textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
+                textDocument.uri.fsPath.indexOf(".m") > -1
+            ) {
+                this.needToRebuildBeforeEvaluation = true;
+            }
+        });
+
+        vscode.workspace.onDidCreateFiles((evt: vscode.FileCreateEvent) => {
+            const filteredPaths: string[] = evt.files
+                .filter(
+                    (oneUri: vscode.Uri) =>
+                        (oneUri.fsPath.indexOf(".pq") > -1 && oneUri.fsPath.indexOf(".query.pq") === -1) ||
+                        oneUri.fsPath.indexOf(".m") > -1,
+                )
+                .map((oneUri: vscode.Uri) => oneUri.fsPath);
+
+            if (filteredPaths.length) {
+                this.needToRebuildBeforeEvaluation = true;
+            }
+        });
     }
 
     public subscribeOneEvent(
@@ -384,6 +410,29 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
     }
 
+    async MaybeExecuteBuildTask(): Promise<void> {
+        const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
+
+        if (this.needToRebuildBeforeEvaluation && maybeCurrentWorkspace) {
+            for await (const oneFullPath of globFiles(path.join(maybeCurrentWorkspace, "bin"), (fullPath: string) =>
+                fullPath.endsWith(".mez"),
+            )) {
+                fs.unlinkSync(oneFullPath);
+            }
+
+            // choose msbuild or makePQX compile as the build task
+            let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
+
+            if (ExtensionConfigurations.msbuildPath) {
+                theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
+            }
+
+            await PowerQueryTaskProvider.executeTask(theBuildTask);
+
+            this.needToRebuildBeforeEvaluation = false;
+        }
+    }
+
     public DeleteCredential(): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "delete-credential",
@@ -521,7 +570,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
+    public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
+        // maybe we need to execute the build task before evaluating.
+        await this.MaybeExecuteBuildTask();
+
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
         const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(

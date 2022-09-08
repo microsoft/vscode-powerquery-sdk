@@ -20,9 +20,9 @@ import { DebugProtocol } from "@vscode/debugprotocol";
 import {
     PqTestExecutableOnceTask,
     PqTestExecutableOnceTaskQueueEvents,
-} from "pqTestConnector/PqTestExecutableOnceTask";
-import { DeferredValue } from "common/DeferredValue";
-import { WaitNotify } from "common/WaitNotify";
+} from "../pqTestConnector/PqTestExecutableOnceTask";
+import { DeferredValue } from "../common/DeferredValue";
+import { WaitNotify } from "../common/WaitNotify";
 
 /**
  * This interface describes the mock-debug specific launch attributes

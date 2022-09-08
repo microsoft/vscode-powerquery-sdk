@@ -13,11 +13,12 @@ import { GlobSync, IGlobBase } from "glob";
 
 const projectDirectory: string = process.cwd();
 
-const outDirectory: string = path.join(projectDirectory, "out");
+// do not remove out directory, which would be required by e2e test cases
+// const outDirectory: string = path.join(projectDirectory, "out");
 const distDirectory: string = path.join(projectDirectory, "dist");
 const webviewDistDirectory: string = path.join(projectDirectory, "webviewDist");
 
-[outDirectory, distDirectory, webviewDistDirectory].forEach((oneDirectory: string) => {
+[distDirectory, webviewDistDirectory].forEach((oneDirectory: string) => {
     if (fs.existsSync(oneDirectory)) {
         fs.rmSync(oneDirectory, { force: true, recursive: true });
     }

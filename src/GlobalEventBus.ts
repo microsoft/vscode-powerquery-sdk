@@ -8,10 +8,10 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 
-import { ExtensionConfigurations } from "constants/PowerQuerySdkConfiguration";
-import { ExtensionConstants } from "constants/PowerQuerySdkExtension";
-import { getFirstWorkspaceFolder } from "utils/vscodes";
-import { handleLocaleChanged } from "i18n/extension";
+import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "./constants/PowerQuerySdkExtension";
+import { getFirstWorkspaceFolder } from "./utils/vscodes";
+import { handleLocaleChanged } from "./i18n/extension";
 
 import {
     ConfigurationChangeEvent,
@@ -19,10 +19,10 @@ import {
     workspace as vscWorkspace,
     WorkspaceFoldersChangeEvent,
 } from "vscode";
-import { Disposable, IDisposable } from "common/Disposable";
-import { DisposableEventEmitter, ExtractEventTypes } from "common/DisposableEventEmitter";
+import { Disposable, IDisposable } from "./common/Disposable";
+import { DisposableEventEmitter, ExtractEventTypes } from "./common/DisposableEventEmitter";
 import { FSWatcher, WatchEventType } from "fs";
-import { SimplePqTestResultViewBroker } from "panels/PqTestResultViewPanel";
+import { SimplePqTestResultViewBroker } from "./panels/PqTestResultViewPanel";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const GlobalEvents = Object.freeze({
