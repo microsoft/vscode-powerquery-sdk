@@ -119,7 +119,7 @@ export interface IPQTestService {
     readonly onPowerQueryTestLocationChanged: () => void;
     readonly MaybeExecuteBuildTask: () => Promise<void>;
     readonly DeleteCredential: () => Promise<GenericResult>;
-    readonly DisplayExtensionInfo: () => Promise<ExtensionInfo>;
+    readonly DisplayExtensionInfo: () => Promise<ExtensionInfo[]>;
     readonly ListCredentials: () => Promise<Credential[]>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly GenerateCredentialTemplate: () => Promise<any>;

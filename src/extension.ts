@@ -35,7 +35,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const globalEventBus: GlobalEventBus = new GlobalEventBus(vscExtCtx);
     const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
     const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
-    const nugetHttpService: NugetHttpService = new NugetHttpService(pqSdkOutputChannel);
+    const nugetHttpService: NugetHttpService = new NugetHttpService(globalEventBus, pqSdkOutputChannel);
 
     const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
         ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)

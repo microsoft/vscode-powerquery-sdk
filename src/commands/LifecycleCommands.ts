@@ -74,6 +74,7 @@ export class LifecycleCommands {
 
     private isSuggestingSetupCurrentWorkspace: boolean = false;
     private readonly initPqSdkTool$deferred: Promise<string | undefined>;
+    private checkAndTryToUpdatePqTestDeferred$: Promise<string | undefined> | undefined;
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
@@ -142,9 +143,8 @@ export class LifecycleCommands {
         //     this.handleCurrentExtensionInfoAndCredentialsChanged.bind(this),
         // );
 
-        this.watchMezFileIfNeeded();
-
         this.initPqSdkTool$deferred = this.checkAndTryToUpdatePqTest(true);
+        this.watchMezFileIfNeeded();
         void this.promptToSetupCurrentWorkspaceIfNeeded();
     }
 
@@ -564,12 +564,7 @@ export class LifecycleCommands {
         }
     }
 
-    /**
-     * check and only update pqTest if needed like: not ready, not existing, the latest one doesn't exist either
-     * @param skipQueryDialog
-     * @private
-     */
-    private async checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
+    private async doCheckAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         try {
             let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
@@ -624,9 +619,24 @@ export class LifecycleCommands {
                     errorMessage,
                 }),
             );
+        } finally {
+            this.checkAndTryToUpdatePqTestDeferred$ = undefined;
         }
 
         return undefined;
+    }
+
+    /**
+     * check and only update pqTest if needed like: not ready, not existing, the latest one doesn't exist either
+     * @param skipQueryDialog
+     * @private
+     */
+    private checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
+        if (!this.checkAndTryToUpdatePqTestDeferred$) {
+            this.checkAndTryToUpdatePqTestDeferred$ = this.doCheckAndTryToUpdatePqTest(skipQueryDialog);
+        }
+
+        return this.checkAndTryToUpdatePqTestDeferred$;
     }
 
     /**
@@ -817,11 +827,14 @@ export class LifecycleCommands {
                 this.outputChannel.show();
 
                 try {
-                    const result: unknown = await this.pqTestService.DisplayExtensionInfo();
+                    const result: ExtensionInfo[] = await this.pqTestService.DisplayExtensionInfo();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
-                            result: prettifyJson(result),
+                            result: result
+                                .map((info: ExtensionInfo) => info.Name ?? "")
+                                .filter(Boolean)
+                                .join(","),
                         }),
                     );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any

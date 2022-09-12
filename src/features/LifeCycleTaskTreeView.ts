@@ -146,7 +146,7 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
         this._onDidChangeTreeData.fire(undefined);
     }
 
-    public debouncedRefresh: () => void = debounce(this.refresh.bind(this), 1e3);
+    public debouncedRefresh: () => void = debounce(this.refresh.bind(this), 1e3).bind(this);
 
     async isValidWorkspace(): Promise<boolean> {
         return Boolean((await getAnyPqFileBeneathTheFirstWorkspace()).length);
