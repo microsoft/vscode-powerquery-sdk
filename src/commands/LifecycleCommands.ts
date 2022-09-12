@@ -23,8 +23,6 @@ import { FSWatcher, WatchEventType } from "fs";
 
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import type { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
-
 import {
     AuthenticationKind,
     CreateAuthState,
@@ -43,10 +41,11 @@ import {
     substitutedWorkspaceFolderBasenameIfNeeded,
 } from "../utils/vscodes";
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
+import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
-import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import { debounce } from "../utils/debounce";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { NugetHttpService } from "../common/NugetHttpService";
@@ -162,19 +161,16 @@ export class LifecycleCommands {
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
             : undefined;
 
-        if (this.mezFilesWatcher) {
-            this.mezFilesWatcher.close();
-            this.mezFilesWatcher = undefined;
-        }
-
-        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+        // fs watcher is very problematic and un-reliable..... we should avoid it
+        if (
+            resolvedPQTestExtensionFileLocation &&
+            fs.existsSync(resolvedPQTestExtensionFileLocation) &&
+            !this.mezFilesWatcher
+        ) {
             const theBaseFolder: string = path.dirname(resolvedPQTestExtensionFileLocation);
             const theFileName: string = path.basename(resolvedPQTestExtensionFileLocation);
 
-            void (async (): Promise<void> => {
-                await this.initPqSdkTool$deferred;
-                await this.debouncedDisplayExtensionInfoCommand();
-            })();
+            // do not trigger one info for the first time watching it, which would be problematic
 
             this.mezFilesWatcher = fs.watch(
                 path.dirname(resolvedPQTestExtensionFileLocation),
@@ -839,13 +835,26 @@ export class LifecycleCommands {
                     );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
+                    // in service host mode:
+                    // we could ignore PqServiceHostServerNotReady for displayInfo while serviceHost not connected
+                    // which would be triggerred by fs.watcher that I cannot control
+                    // and service host would also ensure that there would be one display info triggerred
+                    // everytime a new connection established.
+                    if (
+                        !(
+                            ExtensionConfigurations.featureUseServiceHost &&
+                            !(this.pqTestService as PqServiceHostClient).pqServiceHostConnected &&
+                            error instanceof PqServiceHostServerNotReady
+                        )
+                    ) {
+                        const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(
-                        resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
-                            errorMessage,
-                        }),
-                    );
+                        void vscode.window.showErrorMessage(
+                            resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
+                                errorMessage,
+                            }),
+                        );
+                    }
                 }
 
                 progress.report({ increment: 100 });
