@@ -15,6 +15,7 @@ import { StreamZipAsync } from "node-stream-zip";
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { makeOneTmpDir } from "../utils/osUtils";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { removeDirectoryRecursively } from "../utils/files";
 
 const streamFinished$deferred: (
@@ -28,10 +29,10 @@ export class NugetHttpService {
     public static ReleasedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,})$/;
 
     private instance: AxiosInstance;
-    private errorHandler: (error: Error) => void = () => {
-        // noop
+    private errorHandler: (error: Error) => void = (error: Error) => {
+        this.outputChannel?.appendErrorLine(`Failed to request to public nuget endpoints due to ${error}`);
     };
-    constructor() {
+    constructor(private readonly outputChannel?: PqSdkOutputChannel) {
         this.instance = axios.create({
             baseURL: "https://api.nuget.org",
             // todo populate the proxy settings over here
@@ -66,18 +67,24 @@ export class NugetHttpService {
         const writer: WriteStream = createWriteStream(outputLocation);
         const packageNameInLowerCase: string = packageName.toLowerCase();
 
-        return this.instance
-            .get(
-                `v3-flatcontainer/${packageNameInLowerCase}/${packageVersion}/${packageNameInLowerCase}.${packageVersion}.nupkg`,
-                {
-                    responseType: "stream",
-                },
-            )
-            .then((response: AxiosResponse) => {
-                response.data.pipe(writer);
+        try {
+            return this.instance
+                .get(
+                    `v3-flatcontainer/${packageNameInLowerCase}/${packageVersion}/${packageNameInLowerCase}.${packageVersion}.nupkg`,
+                    {
+                        responseType: "stream",
+                    },
+                )
+                .then((response: AxiosResponse) => {
+                    response.data.pipe(writer);
 
-                return streamFinished$deferred(writer);
-            });
+                    return streamFinished$deferred(writer);
+                });
+        } catch (e: unknown) {
+            this.errorHandler(e as Error);
+
+            return Promise.resolve();
+        }
     }
 
     public async downloadAndExtractNugetPackage(
