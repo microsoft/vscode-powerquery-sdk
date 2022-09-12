@@ -19,10 +19,10 @@ import {
 } from "../common";
 
 import { delay } from "../../utils/pids";
-import { NugetHttpService } from "../../common/NugetHttpService";
+import { NugetLiteHttpService } from "./NugetLiteHttpService";
 import { NugetVersions } from "../../utils/NugetVersions";
 
-const nugetHttpService = new NugetHttpService();
+const nugetHttpService = new NugetLiteHttpService();
 
 const expect = chai.expect;
 
