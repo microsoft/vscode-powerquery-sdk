@@ -443,9 +443,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
                 }
 
-                await PowerQueryTaskProvider.executeTask(theBuildTask);
-
+                // we should set lastPqRelatedFileTouchedDate first to ensure it is less than the new build's ctime
                 this.lastPqRelatedFileTouchedDate = new Date();
+
+                await PowerQueryTaskProvider.executeTask(theBuildTask);
             }
         }
     }
