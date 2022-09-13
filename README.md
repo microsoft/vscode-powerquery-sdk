@@ -10,37 +10,24 @@ Provides functionality related to the development and testing of [Custom Connect
 -   Run test queries
 -   View query results
 
-## Requirements
-
-### nuget.exe
-
-The extension uses [nuget.exe](https://www.nuget.org/downloads) to automatically provision the Microsoft.PowerQuery.SdkTools package on startup.
-
 ## How to build and install from source
 
-1. To build the installer (.vsix), you need to install [vsce](https://www.npmjs.com/package/vsce).
+Install project dependencies:
 
 ```msdos
-npm install -g vsce
-```
-
-1. Install project dependencies
-
-```msdos
-cd vscode-powerquery-sdk
 npm install
 ```
 
-1. Create the install package to build the project
+Build the project and create the vsix installer (`npx vsce package`):
 
 ```msdos
-vsce package
+npm run vsix
 ```
 
-1. Install the extension from the command line
+Install the extension from the command line (`code --install-extension <pqsdk.vsix>`):
 
 ```msdos
-code --install-extension vscode-powerquery-sdk-*.vsix
+npm run code-install
 ```
 
 ## Related projects
