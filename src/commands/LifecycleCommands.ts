@@ -19,9 +19,8 @@ import {
     workspace as vscWorkspace,
     WorkspaceFolder,
 } from "vscode";
-import { FSWatcher, WatchEventType } from "fs";
 
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { GlobalEventBus } from "../GlobalEventBus";
 
 import {
     AuthenticationKind,
@@ -36,6 +35,7 @@ import {
 } from "../constants/PowerQuerySdkConfiguration";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
+    getCurrentWorkspaceSettingPath,
     getFirstWorkspaceFolder,
     resolveSubstitutedValues,
     substitutedWorkspaceFolderBasenameIfNeeded,
@@ -48,6 +48,8 @@ import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import { debounce } from "../utils/debounce";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { getCtimeOfAFile } from "../utils/files";
+import { IDisposable } from "../common/Disposable";
 import { NugetHttpService } from "../common/NugetHttpService";
 import { NugetVersions } from "../utils/NugetVersions";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
@@ -58,7 +60,7 @@ const CommandPrefix: string = `powerquery.sdk.pqtest`;
 const validateProjectNameRegExp: RegExp = /[A-Za-z]+/;
 const templateFileBaseName: string = "PQConn";
 
-export class LifecycleCommands {
+export class LifecycleCommands implements IDisposable {
     static SeizePqTestCommand: string = `${CommandPrefix}.SeizePqTestCommand`;
     static BuildProjectCommand: string = `${CommandPrefix}.BuildProjectCommand`;
     static SetupCurrentWorkspaceCommand: string = `${CommandPrefix}.SetupCurrentWorkspaceCommand`;
@@ -126,34 +128,55 @@ export class LifecycleCommands {
             ),
         );
 
-        globalEventBus.subscribeOneEvent(GlobalEvents.workspaces.filesChangedAtWorkspace, () => {
-            if (!this.mezFilesWatcher) {
-                this.watchMezFileIfNeeded();
-            }
-        });
-
-        globalEventBus.subscribeOneEvent(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestExtension, () => {
-            this.watchMezFileIfNeeded();
-        });
-
-        // this.pqTestService.currentExtensionInfos.subscribe(this.handleCurrentExtensionInfoChanged.bind(this));
-
-        // this.pqTestService.currentCredentials.subscribe(
-        //     this.handleCurrentExtensionInfoAndCredentialsChanged.bind(this),
-        // );
-
         this.initPqSdkTool$deferred = this.checkAndTryToUpdatePqTest(true);
-        this.watchMezFileIfNeeded();
+
+        this.activateIntervalTasks();
+
         void this.promptToSetupCurrentWorkspaceIfNeeded();
     }
 
-    private mezFilesWatcher: FSWatcher | undefined = undefined;
-    private debouncedDisplayExtensionInfoCommand: () => Promise<void> = this.commandGuard(
-        this.displayExtensionInfoCommand,
-        3e3,
-    ).bind(this);
+    dispose(): void {
+        this.disposeIntervalTasks();
+    }
 
-    private watchMezFileIfNeeded(): void {
+    private intervalTaskHandler: NodeJS.Timeout | undefined;
+    private activateIntervalTasks(): void {
+        // update lastCtimeOfMezFileWhoseInfoSeized once its info:static-type-check got re-eval
+        this.pqTestService.currentExtensionInfos.subscribe(() => {
+            const currentPQTestExtensionFileLocation: string | undefined =
+                ExtensionConfigurations.PQTestExtensionFileLocation;
+
+            const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
+                ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
+                : undefined;
+
+            if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+                this.lastCtimeOfMezFileWhoseInfoSeized = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
+
+                this.outputChannel.appendInfoLine(
+                    `promptSettingIncorrectOrInvokeInfoTaskIfNeeded update lastCtimeOfMezFileWhoseInfoSeized ${this.lastCtimeOfMezFileWhoseInfoSeized.getTime()}`,
+                );
+            }
+        });
+
+        this.intervalTaskHandler = setInterval(this.intervalTask.bind(this), 2995);
+    }
+
+    private disposeIntervalTasks(): void {
+        if (this.intervalTaskHandler) {
+            clearInterval(this.intervalTaskHandler);
+            this.intervalTaskHandler = undefined;
+        }
+    }
+
+    private intervalTask(): void {
+        // this task gonna be invoked repeatedly, thus make sure it is as lite as possible
+        void this.promptSettingIncorrectOrInvokeInfoTaskIfNeeded();
+    }
+
+    private currentIncorrectConnectorPathInSettingGotPromptedBefore: boolean = false;
+    private lastCtimeOfMezFileWhoseInfoSeized: Date = new Date(0);
+    private promptSettingIncorrectOrInvokeInfoTaskIfNeeded(): void {
         const currentPQTestExtensionFileLocation: string | undefined =
             ExtensionConfigurations.PQTestExtensionFileLocation;
 
@@ -161,48 +184,73 @@ export class LifecycleCommands {
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
             : undefined;
 
-        // fs watcher is very problematic and un-reliable..... we should avoid it
-        if (
-            resolvedPQTestExtensionFileLocation &&
-            fs.existsSync(resolvedPQTestExtensionFileLocation) &&
-            !this.mezFilesWatcher
-        ) {
-            const theBaseFolder: string = path.dirname(resolvedPQTestExtensionFileLocation);
-            const theFileName: string = path.basename(resolvedPQTestExtensionFileLocation);
+        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+            const currentCtime: Date = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
-            // do not trigger one info for the first time watching it, which would be problematic
+            if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized) {
+                // we need to invoke a info task
+                this.outputChannel.appendInfoLine(
+                    `promptSettingIncorrectOrInvokeInfoTaskIfNeeded about to display info 
+                    ${currentCtime.getTime()} | ${this.lastCtimeOfMezFileWhoseInfoSeized.getTime()}
+                    ${currentCtime.getTime() - this.lastCtimeOfMezFileWhoseInfoSeized.getTime()} 
+                    `,
+                );
 
-            this.mezFilesWatcher = fs.watch(
-                path.dirname(resolvedPQTestExtensionFileLocation),
-                (event: WatchEventType, filename: string) => {
-                    // we need not trigger a debounced build from here
-                    // b/c in ServiceHost mode, libProvider use a new directory provider everytime before evaluation
-                    // thus, we only need to lazily build merely prior our evaluation
+                void this.displayLatestExtensionInfoCommand(currentCtime);
+            }
 
-                    if (filename === theFileName && event === "change") {
-                        void this.debouncedDisplayExtensionInfoCommand();
+            // do not reset currentIncorrectConnectorPathInSettingGotPromptedBefore like:
+            //  this.currentIncorrectConnectorPathInSettingGotPromptedBefore = false;
+            // as there would be a short intermediate state that the mez is messing while building
+            // then it would bring up the setting.json warning unexpectedly
+        } else if (!this.currentIncorrectConnectorPathInSettingGotPromptedBefore) {
+            // prompt only once for each setting config
+            this.currentIncorrectConnectorPathInSettingGotPromptedBefore = true;
+
+            setTimeout(async () => {
+                if (!resolvedPQTestExtensionFileLocation || !fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+                    const nullableCurrentWorkspaceSettingPath: string | undefined = getCurrentWorkspaceSettingPath();
+
+                    if (nullableCurrentWorkspaceSettingPath) {
+                        const openStr: string = "Open setting.json";
+
+                        const result: string | undefined = await vscode.window.showWarningMessage(
+                            "Cannot find the file set to the powerquery.sdk.pqtest.extension, open setting.json to ensure it got populated correctly.",
+                            openStr,
+                            "Cancel",
+                        );
+
+                        if (result === openStr) {
+                            void vscode.commands.executeCommand(
+                                "vscode.open",
+                                vscode.Uri.file(nullableCurrentWorkspaceSettingPath),
+                            );
+                        }
                     }
-
-                    if (!fs.existsSync(theBaseFolder)) {
-                        this.mezFilesWatcher?.close();
-                        this.mezFilesWatcher = undefined;
-
-                        setTimeout(() => {
-                            this.watchMezFileIfNeeded();
-                        }, 1e3);
-                    }
-                },
-            );
+                }
+            }, 7e3);
         }
     }
 
-    // private handleCurrentExtensionInfoChanged(_extensionInfo: ExtensionInfo[]): void {
-    //     void vscode.commands.executeCommand(LifecycleCommands.ListCredentialCommand);
-    // }
+    private currentExecuteTimeOfExtensionDisplayingInfo: Date | undefined;
+    private currentCtimeOfExtensionDisplayingInfo: Date | undefined;
+    private currentDisplayInfoDeferred$: Promise<void> | undefined;
+    private displayLatestExtensionInfoCommand(targetCTime: Date): Promise<unknown> {
+        if (
+            !this.currentCtimeOfExtensionDisplayingInfo ||
+            !this.currentDisplayInfoDeferred$ ||
+            !this.currentExecuteTimeOfExtensionDisplayingInfo ||
+            targetCTime > this.currentCtimeOfExtensionDisplayingInfo ||
+            // time out and retry if it would take longer than 10s
+            new Date().getTime() - this.currentExecuteTimeOfExtensionDisplayingInfo.getTime() > 1e4
+        ) {
+            this.currentExecuteTimeOfExtensionDisplayingInfo = new Date();
+            this.currentCtimeOfExtensionDisplayingInfo = targetCTime;
+            this.currentDisplayInfoDeferred$ = this.displayExtensionInfoCommand();
+        }
 
-    // private handleCurrentExtensionInfoAndCredentialsChanged(_credentials: Credential[]): void {
-    //     // latter check whether we need to suggest a info msg box and ask users input credentials
-    // }
+        return this.currentDisplayInfoDeferred$;
+    }
 
     public async promptToSetupCurrentWorkspaceIfNeeded(): Promise<void> {
         const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
@@ -347,9 +395,7 @@ export class LifecycleCommands {
             );
         }
 
-        return Promise.all(tasks).then(() => {
-            this.watchMezFileIfNeeded();
-        });
+        return Promise.all(tasks);
     }
 
     private doGenerateOneProjectIntoOneFolderFromTemplates(inputFolder: string, projectName: string): string {
@@ -786,6 +832,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.command.delete.credentials.title"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -820,6 +867,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.command.display.extension.info.title"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -870,6 +918,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.command.list.credentials.title"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -992,6 +1041,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.command.generate.credentials.title"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -1076,6 +1126,7 @@ export class LifecycleCommands {
             {
                 title,
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -1377,6 +1428,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.credential.refreshToken.label"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -1414,6 +1466,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.command.run.test.title"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });
@@ -1458,6 +1511,7 @@ export class LifecycleCommands {
             {
                 title: extensionI18n["PQSdk.lifecycle.command.test.connection.title"],
                 location: ProgressLocation.Window,
+                cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
                 progress.report({ increment: 0 });

@@ -253,6 +253,24 @@ export function manuallyGetLocalVscSetting(baseWorkspace: string): Record<string
     return result;
 }
 
+export function getCurrentWorkspaceSettingPath(): string | undefined {
+    const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
+
+    if (maybeFirstWorkspaceUri) {
+        const expectedVscodeSettingPath: string | undefined = path.join(
+            maybeFirstWorkspaceUri.fsPath,
+            ".vscode",
+            "settings.json",
+        );
+
+        if (expectedVscodeSettingPath && fs.existsSync(expectedVscodeSettingPath)) {
+            return expectedVscodeSettingPath;
+        }
+    }
+
+    return undefined;
+}
+
 export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
     const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 

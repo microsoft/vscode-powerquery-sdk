@@ -24,12 +24,12 @@ import { TextEditor } from "vscode";
 
 import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "../common/PQTestService";
 import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
+import { getCtimeOfAFile, globFiles } from "../utils/files";
 import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { convertStringToInteger } from "../utils/numbers";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { globFiles } from "../utils/files";
 import { IDisposable } from "../common/Disposable";
 import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
@@ -146,7 +146,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     pqTestFullPath: string = "";
 
     private firstTimeStarted: boolean = true;
-    private needToRebuildBeforeEvaluation: boolean = true;
+    private lastPqRelatedFileTouchedDate: Date = new Date(0);
     private _sequenceSeed: number = Date.now();
     private readonly sessionId: string = vscode.env.sessionId;
     private pendingTaskMap: Map<string, PqServiceHostTask> = new Map();
@@ -183,7 +183,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 (textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
                 textDocument.uri.fsPath.indexOf(".m") > -1
             ) {
-                this.needToRebuildBeforeEvaluation = true;
+                this.lastPqRelatedFileTouchedDate = new Date();
             }
         });
 
@@ -197,7 +197,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 .map((oneUri: vscode.Uri) => oneUri.fsPath);
 
             if (filteredPaths.length) {
-                this.needToRebuildBeforeEvaluation = true;
+                this.lastPqRelatedFileTouchedDate = new Date();
             }
         });
     }
@@ -538,24 +538,41 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
 
     async MaybeExecuteBuildTask(): Promise<void> {
         const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
+        let needToRebuildBeforeEvaluation: boolean = true;
 
-        if (this.needToRebuildBeforeEvaluation && maybeCurrentWorkspace) {
+        if (maybeCurrentWorkspace) {
+            const currentlyAllMezFiles: string[] = [];
+
             for await (const oneFullPath of globFiles(path.join(maybeCurrentWorkspace, "bin"), (fullPath: string) =>
                 fullPath.endsWith(".mez"),
             )) {
-                fs.unlinkSync(oneFullPath);
+                currentlyAllMezFiles.push(oneFullPath);
             }
 
-            // choose msbuild or makePQX compile as the build task
-            let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
-
-            if (ExtensionConfigurations.msbuildPath) {
-                theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
+            if (currentlyAllMezFiles.length === 1) {
+                const theCtimeOfTheFile: Date = getCtimeOfAFile(currentlyAllMezFiles[0]);
+                needToRebuildBeforeEvaluation = theCtimeOfTheFile <= this.lastPqRelatedFileTouchedDate;
+            } else {
+                needToRebuildBeforeEvaluation = true;
             }
 
-            await PowerQueryTaskProvider.executeTask(theBuildTask);
+            if (needToRebuildBeforeEvaluation) {
+                // remove all existing mez file
+                currentlyAllMezFiles.forEach((oneMezFileFullPath: string) => {
+                    fs.unlinkSync(oneMezFileFullPath);
+                });
 
-            this.needToRebuildBeforeEvaluation = false;
+                // choose msbuild or makePQX compile as the build task
+                let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
+
+                if (ExtensionConfigurations.msbuildPath) {
+                    theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
+                }
+
+                await PowerQueryTaskProvider.executeTask(theBuildTask);
+
+                this.lastPqRelatedFileTouchedDate = new Date();
+            }
         }
     }
 
