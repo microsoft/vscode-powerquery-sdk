@@ -23,8 +23,6 @@ import { FSWatcher, WatchEventType } from "fs";
 
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import type { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
-
 import {
     AuthenticationKind,
     CreateAuthState,
@@ -43,10 +41,11 @@ import {
     substitutedWorkspaceFolderBasenameIfNeeded,
 } from "../utils/vscodes";
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
+import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
-import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import { debounce } from "../utils/debounce";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { NugetHttpService } from "../common/NugetHttpService";
@@ -74,6 +73,7 @@ export class LifecycleCommands {
 
     private isSuggestingSetupCurrentWorkspace: boolean = false;
     private readonly initPqSdkTool$deferred: Promise<string | undefined>;
+    private checkAndTryToUpdatePqTestDeferred$: Promise<string | undefined> | undefined;
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
@@ -142,9 +142,8 @@ export class LifecycleCommands {
         //     this.handleCurrentExtensionInfoAndCredentialsChanged.bind(this),
         // );
 
-        this.watchMezFileIfNeeded();
-
         this.initPqSdkTool$deferred = this.checkAndTryToUpdatePqTest(true);
+        this.watchMezFileIfNeeded();
         void this.promptToSetupCurrentWorkspaceIfNeeded();
     }
 
@@ -162,19 +161,16 @@ export class LifecycleCommands {
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
             : undefined;
 
-        if (this.mezFilesWatcher) {
-            this.mezFilesWatcher.close();
-            this.mezFilesWatcher = undefined;
-        }
-
-        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+        // fs watcher is very problematic and un-reliable..... we should avoid it
+        if (
+            resolvedPQTestExtensionFileLocation &&
+            fs.existsSync(resolvedPQTestExtensionFileLocation) &&
+            !this.mezFilesWatcher
+        ) {
             const theBaseFolder: string = path.dirname(resolvedPQTestExtensionFileLocation);
             const theFileName: string = path.basename(resolvedPQTestExtensionFileLocation);
 
-            void (async (): Promise<void> => {
-                await this.initPqSdkTool$deferred;
-                await this.debouncedDisplayExtensionInfoCommand();
-            })();
+            // do not trigger one info for the first time watching it, which would be problematic
 
             this.mezFilesWatcher = fs.watch(
                 path.dirname(resolvedPQTestExtensionFileLocation),
@@ -283,11 +279,14 @@ export class LifecycleCommands {
             tasks.push(
                 (async (): Promise<void> => {
                     const mezUrlsBeneathBin: Uri[] = await vscWorkspace.findFiles("bin/**/*.{mez}", null, 1);
-                    const oldMProjFiles: Uri[] = await vscWorkspace.findFiles("*.{mproj}", null, 1);
 
-                    let mezExtensionPath: string = oldMProjFiles.length
-                        ? path.join("${workspaceFolder}", "bin", "Debug", "${workspaceFolderBasename}.mez")
-                        : path.join("${workspaceFolder}", "bin", "AnyCPU", "Debug", "${workspaceFolderBasename}.mez");
+                    let mezExtensionPath: string = path.join(
+                        "${workspaceFolder}",
+                        "bin",
+                        "AnyCPU",
+                        "Debug",
+                        "${workspaceFolderBasename}.mez",
+                    );
 
                     if (mezUrlsBeneathBin.length) {
                         const relativePath: string = vscWorkspace.asRelativePath(mezUrlsBeneathBin[0], false);
@@ -564,54 +563,79 @@ export class LifecycleCommands {
         }
     }
 
+    private async doCheckAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
+        try {
+            let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+
+            const maybeNewVersion: string | undefined = await this.findMaybeNewPqSdkVersion();
+
+            // we should not update to the latest unless the latest nuget doesn't exist on start
+            // users might just want to use the previous one purposely
+            // therefore do not try to update when, like, pqTestLocation.indexOf(maybeNewVersion) === -1
+            if (!pqTestLocation || !this.pqTestService.pqTestReady || !this.nugetPqTestExistsSync(maybeNewVersion)) {
+                const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(
+                    maybeNewVersion,
+                );
+
+                if (!pqTestExecutableFullPath && !skipQueryDialog) {
+                    const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
+                        openLabel: extensionI18n["PQSdk.lifecycle.warning.pqtest.required"],
+                        canSelectFiles: true,
+                        canSelectFolders: false,
+                        canSelectMany: false,
+                        filters: {
+                            Executable: ["exe"],
+                        },
+                    });
+
+                    if (pqTestLocationUrls?.[0]) {
+                        pqTestLocation = pqTestLocationUrls[0].fsPath;
+                    }
+                }
+
+                if (pqTestExecutableFullPath) {
+                    // convert pqTestLocation of exe to its dirname
+                    pqTestLocation = path.dirname(pqTestExecutableFullPath);
+                    const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+                    const newPqTestLocation: string = pqTestLocation;
+
+                    await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
+
+                    if (histPqTestLocation === newPqTestLocation) {
+                        // update the pqtest location by force in case it equals the previous one
+                        this.pqTestService.onPowerQueryTestLocationChanged();
+                    }
+                }
+            }
+
+            return pqTestLocation;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any | string) {
+            const errorMessage: string = error instanceof Error ? error.message : error;
+
+            void vscode.window.showErrorMessage(
+                resolveI18nTemplate("PQSdk.lifecycle.command.update.sdkTool.errorMessage", {
+                    errorMessage,
+                }),
+            );
+        } finally {
+            this.checkAndTryToUpdatePqTestDeferred$ = undefined;
+        }
+
+        return undefined;
+    }
+
     /**
      * check and only update pqTest if needed like: not ready, not existing, the latest one doesn't exist either
      * @param skipQueryDialog
      * @private
      */
-    private async checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
-        let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-
-        const maybeNewVersion: string | undefined = await this.findMaybeNewPqSdkVersion();
-
-        // we should not update to the latest unless the latest nuget doesn't exist on start
-        // users might just want to use the previous one purposely
-        // therefore do not try to update when, like, pqTestLocation.indexOf(maybeNewVersion) === -1
-        if (!pqTestLocation || !this.pqTestService.pqTestReady || !this.nugetPqTestExistsSync(maybeNewVersion)) {
-            const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(maybeNewVersion);
-
-            if (!pqTestExecutableFullPath && !skipQueryDialog) {
-                const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
-                    openLabel: extensionI18n["PQSdk.lifecycle.warning.pqtest.required"],
-                    canSelectFiles: true,
-                    canSelectFolders: false,
-                    canSelectMany: false,
-                    filters: {
-                        Executable: ["exe"],
-                    },
-                });
-
-                if (pqTestLocationUrls?.[0]) {
-                    pqTestLocation = pqTestLocationUrls[0].fsPath;
-                }
-            }
-
-            if (pqTestExecutableFullPath) {
-                // convert pqTestLocation of exe to its dirname
-                pqTestLocation = path.dirname(pqTestExecutableFullPath);
-                const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-                const newPqTestLocation: string = pqTestLocation;
-
-                await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
-
-                if (histPqTestLocation === newPqTestLocation) {
-                    // update the pqtest location by force in case it equals the previous one
-                    this.pqTestService.onPowerQueryTestLocationChanged();
-                }
-            }
+    private checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
+        if (!this.checkAndTryToUpdatePqTestDeferred$) {
+            this.checkAndTryToUpdatePqTestDeferred$ = this.doCheckAndTryToUpdatePqTest(skipQueryDialog);
         }
 
-        return pqTestLocation;
+        return this.checkAndTryToUpdatePqTestDeferred$;
     }
 
     /**
@@ -619,62 +643,77 @@ export class LifecycleCommands {
      * @param maybeNextVersion
      */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
-        if (!maybeNextVersion) {
-            maybeNextVersion = await this.findMaybeNewPqSdkVersion();
-        }
+        try {
+            if (!maybeNextVersion) {
+                maybeNextVersion = await this.findMaybeNewPqSdkVersion();
+            }
 
-        let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+            let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
-        // determine whether we should trigger to seize or not
-        if (
-            !this.nugetPqTestExistsSync(maybeNextVersion) ||
-            !pqTestLocation ||
-            // when manually update, we should eagerly update as long as current path is not of the latest version
-            //  like,
-            //      users might want to switch back to the latest some time after
-            //      they temporarily switch back to the previous version
-            (maybeNextVersion && pqTestLocation.indexOf(maybeNextVersion) === -1)
-        ) {
-            const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(maybeNextVersion);
+            // determine whether we should trigger to seize or not
+            if (
+                !this.nugetPqTestExistsSync(maybeNextVersion) ||
+                !pqTestLocation ||
+                // when manually update, we should eagerly update as long as current path is not of the latest version
+                //  like,
+                //      users might want to switch back to the latest some time after
+                //      they temporarily switch back to the previous version
+                (maybeNextVersion && pqTestLocation.indexOf(maybeNextVersion) === -1)
+            ) {
+                const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(
+                    maybeNextVersion,
+                );
 
-            if (pqTestExecutableFullPath) {
-                pqTestLocation = path.dirname(pqTestExecutableFullPath);
-                const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-                const newPqTestLocation: string = pqTestLocation;
+                if (pqTestExecutableFullPath) {
+                    pqTestLocation = path.dirname(pqTestExecutableFullPath);
+                    const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+                    const newPqTestLocation: string = pqTestLocation;
 
-                await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
+                    await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
 
-                if (histPqTestLocation === newPqTestLocation) {
-                    // update the pqtest location by force in case it equals the previous one
-                    this.pqTestService.onPowerQueryTestLocationChanged();
+                    if (histPqTestLocation === newPqTestLocation) {
+                        // update the pqtest location by force in case it equals the previous one
+                        this.pqTestService.onPowerQueryTestLocationChanged();
+                    }
                 }
             }
-        }
 
-        // check whether it got seized or not
-        if (this.nugetPqTestExistsSync(maybeNextVersion)) {
-            const pqTestExecutableFullPath: string = this.expectedPqTestPath(maybeNextVersion);
+            // check whether it got seized or not
+            if (this.nugetPqTestExistsSync(maybeNextVersion)) {
+                const pqTestExecutableFullPath: string = this.expectedPqTestPath(maybeNextVersion);
 
-            this.outputChannel.appendInfoLine(
-                resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.seized.from", {
-                    pqTestExecutableFullPath,
+                this.outputChannel.appendInfoLine(
+                    resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.seized.from", {
+                        pqTestExecutableFullPath,
+                    }),
+                );
+            } else {
+                this.outputChannel.appendErrorLine(extensionI18n["PQSdk.lifecycle.warning.pqtest.seized.failed"]);
+            }
+
+            if (pqTestLocation) {
+                this.outputChannel.appendInfoLine(
+                    resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.set.to", {
+                        pqTestLocation: ExtensionConfigurations.PQTestLocation,
+                    }),
+                );
+            } else {
+                this.outputChannel.appendErrorLine(extensionI18n["PQSdk.lifecycle.warning.pqtest.set.failed"]);
+            }
+
+            return pqTestLocation;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any | string) {
+            const errorMessage: string = error instanceof Error ? error.message : error;
+
+            void vscode.window.showErrorMessage(
+                resolveI18nTemplate("PQSdk.lifecycle.command.manuallyUpdate.sdkTool.errorMessage", {
+                    errorMessage,
                 }),
             );
-        } else {
-            this.outputChannel.appendErrorLine(extensionI18n["PQSdk.lifecycle.warning.pqtest.seized.failed"]);
         }
 
-        if (pqTestLocation) {
-            this.outputChannel.appendInfoLine(
-                resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.set.to", {
-                    pqTestLocation: ExtensionConfigurations.PQTestLocation,
-                }),
-            );
-        } else {
-            this.outputChannel.appendErrorLine(extensionI18n["PQSdk.lifecycle.warning.pqtest.set.failed"]);
-        }
-
-        return pqTestLocation;
+        return undefined;
     }
 
     public async generateOneNewProject(): Promise<void> {
@@ -787,22 +826,38 @@ export class LifecycleCommands {
                 this.outputChannel.show();
 
                 try {
-                    const result: unknown = await this.pqTestService.DisplayExtensionInfo();
+                    const result: ExtensionInfo[] = await this.pqTestService.DisplayExtensionInfo();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
-                            result: prettifyJson(result),
+                            result: result
+                                .map((info: ExtensionInfo) => info.Name ?? "")
+                                .filter(Boolean)
+                                .join(","),
                         }),
                     );
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
+                    // in service host mode:
+                    // we could ignore PqServiceHostServerNotReady for displayInfo while serviceHost not connected
+                    // which would be triggerred by fs.watcher that I cannot control
+                    // and service host would also ensure that there would be one display info triggerred
+                    // everytime a new connection established.
+                    if (
+                        !(
+                            ExtensionConfigurations.featureUseServiceHost &&
+                            !(this.pqTestService as PqServiceHostClient).pqServiceHostConnected &&
+                            error instanceof PqServiceHostServerNotReady
+                        )
+                    ) {
+                        const errorMessage: string = error instanceof Error ? error.message : error;
 
-                    void vscode.window.showErrorMessage(
-                        resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
-                            errorMessage,
-                        }),
-                    );
+                        void vscode.window.showErrorMessage(
+                            resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
+                                errorMessage,
+                            }),
+                        );
+                    }
                 }
 
                 progress.report({ increment: 100 });

@@ -14,7 +14,11 @@ import { promisify } from "util";
 import { StreamZipAsync } from "node-stream-zip";
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { debounce } from "../utils/debounce";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { makeOneTmpDir } from "../utils/osUtils";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { removeDirectoryRecursively } from "../utils/files";
 
 const streamFinished$deferred: (
@@ -22,20 +26,68 @@ const streamFinished$deferred: (
     options?: stream.FinishedOptions | undefined,
 ) => Promise<void> = promisify(stream.finished);
 
+/**
+ * Format
+ *  https: into https
+ *  http: into http
+ * @param urlProtocol
+ */
+function formatUrlProtocol(urlProtocol: string): string {
+    if (urlProtocol.toLowerCase().indexOf("https") > -1) {
+        return "https";
+    } else if (urlProtocol.toLowerCase().indexOf("http") > -1) {
+        return "http";
+    } else {
+        return urlProtocol;
+    }
+}
+
 export class NugetHttpService {
     // public static PreReleaseIncludedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,}(?:[-a-z0-9]+)?)$/;
     // eslint-disable-next-line security/detect-unsafe-regex
     public static ReleasedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,})$/;
 
-    private instance: AxiosInstance;
-    private errorHandler: (error: Error) => void = () => {
-        // noop
+    private instance: AxiosInstance = axios.create({
+        baseURL: "https://api.nuget.org",
+    });
+    private errorHandler: (error: Error) => void = (error: Error) => {
+        this.outputChannel?.appendErrorLine(`Failed to request to public nuget endpoints due to ${error}`);
     };
-    constructor() {
-        this.instance = axios.create({
-            baseURL: "https://api.nuget.org",
-            // todo populate the proxy settings over here
-        });
+    constructor(readonly globalEventBus?: GlobalEventBus, private readonly outputChannel?: PqSdkOutputChannel) {
+        this.updateAxiosInstance();
+
+        this.globalEventBus?.on(
+            GlobalEvents.VSCodeEvents.onProxySettingsChanged,
+            debounce(() => {
+                this.updateAxiosInstance();
+            }, 750).bind(this),
+        );
+    }
+
+    private updateAxiosInstance(baseURL: string = "https://api.nuget.org"): void {
+        const maybeHttpProxy: string | undefined = ExtensionConfigurations.httpProxy;
+
+        if (maybeHttpProxy) {
+            const proxyUrl: URL = new URL(maybeHttpProxy);
+            const maybeHttpProxyAuthHeaderString: string | undefined = ExtensionConfigurations.httpProxyAuthorization;
+
+            this.instance = axios.create({
+                baseURL,
+                proxy: {
+                    protocol: formatUrlProtocol(proxyUrl.protocol),
+                    host: proxyUrl.hostname,
+                    port: parseInt(proxyUrl.port, 10),
+                },
+            });
+
+            if (maybeHttpProxyAuthHeaderString) {
+                this.instance.defaults.headers.common["Authorization"] = maybeHttpProxyAuthHeaderString;
+            }
+        } else {
+            this.instance = axios.create({
+                baseURL,
+            });
+        }
     }
 
     public async getPackageVersions(packageName: string): Promise<{ versions: string[] }> {
@@ -48,7 +100,7 @@ export class NugetHttpService {
         } catch (e: unknown) {
             this.errorHandler(e as Error);
 
-            return { versions: [] };
+            throw e;
         }
     }
 
@@ -66,18 +118,24 @@ export class NugetHttpService {
         const writer: WriteStream = createWriteStream(outputLocation);
         const packageNameInLowerCase: string = packageName.toLowerCase();
 
-        return this.instance
-            .get(
-                `v3-flatcontainer/${packageNameInLowerCase}/${packageVersion}/${packageNameInLowerCase}.${packageVersion}.nupkg`,
-                {
-                    responseType: "stream",
-                },
-            )
-            .then((response: AxiosResponse) => {
-                response.data.pipe(writer);
+        try {
+            return this.instance
+                .get(
+                    `v3-flatcontainer/${packageNameInLowerCase}/${packageVersion}/${packageNameInLowerCase}.${packageVersion}.nupkg`,
+                    {
+                        responseType: "stream",
+                    },
+                )
+                .then((response: AxiosResponse) => {
+                    response.data.pipe(writer);
 
-                return streamFinished$deferred(writer);
-            });
+                    return streamFinished$deferred(writer);
+                });
+        } catch (e: unknown) {
+            this.errorHandler(e as Error);
+
+            throw e;
+        }
     }
 
     public async downloadAndExtractNugetPackage(
@@ -85,6 +143,7 @@ export class NugetHttpService {
         packageVersion: string,
         outputLocation: string,
     ): Promise<void> {
+        this.outputChannel?.appendInfoLine(`Start to download ${packageName} ${packageVersion}`);
         const oneTmpDir: string = makeOneTmpDir();
 
         const targetFilePath: string = path.join(oneTmpDir, `${packageName}.${packageVersion}.zip`);
@@ -94,6 +153,12 @@ export class NugetHttpService {
         await zip.extract(null, outputLocation);
         await zip.close();
 
-        await removeDirectoryRecursively(oneTmpDir);
+        setTimeout(async () => {
+            try {
+                await removeDirectoryRecursively(oneTmpDir);
+            } catch (e: unknown) {
+                this.outputChannel?.appendErrorLine(`Cannot remove ${oneTmpDir} due to ${e}`);
+            }
+        }, 4e3);
     }
 }

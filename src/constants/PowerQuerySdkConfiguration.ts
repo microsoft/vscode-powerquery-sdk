@@ -12,6 +12,16 @@ import { ExtensionConstants, PqModeType } from "./PowerQuerySdkExtension";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
+    get httpProxy(): string | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
+
+        return config.get(ExtensionConstants.ConfigNames.http.proxy);
+    },
+    get httpProxyAuthorization(): string | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
+
+        return config.get(ExtensionConstants.ConfigNames.http.proxyAuthorization);
+    },
     get pqLocale(): string {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuery.name,
@@ -262,21 +272,3 @@ export async function promptWarningMessageForExternalDependency(
         }
     }
 }
-
-// export function activateExternalConfiguration(): void {
-//     // const nugetFromCurConfig: string | undefined = ExtensionConfigurations.nugetPath;
-//     const msbuildFromCurConfig: string | undefined = ExtensionConfigurations.msbuildPath;
-//     // let hasNugetFromCurConfig: boolean = Boolean(nugetFromCurConfig && fs.existsSync(nugetFromCurConfig));
-//     const hasMsbuildFromCurConfig: boolean = Boolean(msbuildFromCurConfig && fs.existsSync(msbuildFromCurConfig));
-//
-//     // if (!hasNugetFromCurConfig) {
-//     //     const nugetFromThePath: string | undefined = findExecutable("Nuget", [".exe", ""]);
-//     //     hasNugetFromCurConfig = Boolean(nugetFromThePath);
-//     //     void ExtensionConfigurations.setNugetPath(nugetFromThePath);
-//     // }
-//
-//     if (!hasMsbuildFromCurConfig) {
-//         const msbuildFromThePath: string | undefined = findExecutable("MSBuild", [".exe", ""]);
-//         void ExtensionConfigurations.setMsbuildPath(msbuildFromThePath);
-//     }
-// }

@@ -440,7 +440,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public DisplayExtensionInfo(): Promise<ExtensionInfo> {
+    public DisplayExtensionInfo(): Promise<ExtensionInfo[]> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "info",

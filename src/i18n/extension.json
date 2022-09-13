@@ -13,6 +13,8 @@
   "PQSdk.lifecycle.command.new.project.placeHolder": "Only lower cases or upper cases characters are allowed",
   "PQSdk.lifecycle.command.new.project.created": "New {newProjName}.pq and other files have been created at {targetFolder}",
   "PQSdk.lifecycle.command.select.workspace": "Select workspace",
+  "PQSdk.lifecycle.command.update.sdkTool.errorMessage": "Fail to update PQSdk tools due to {errorMessage}",
+  "PQSdk.lifecycle.command.manuallyUpdate.sdkTool.errorMessage": "Fail to manually update PQSdk tools due to {errorMessage}",
   "PQSdk.lifecycle.command.delete.credentials.title": "Deleting credentials",
   "PQSdk.lifecycle.command.delete.credentials.result": "DeleteCredential result {result}",
   "PQSdk.lifecycle.command.delete.credentials.errorMessage": "Fail to delete credentials due to {errorMessage}",

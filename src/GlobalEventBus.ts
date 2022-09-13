@@ -30,6 +30,7 @@ export const GlobalEvents = Object.freeze({
         filesChangedAtWorkspace: "filesChangedAtWorkspace" as const,
     }),
     VSCodeEvents: Object.freeze({
+        onProxySettingsChanged: "onProxySettingsChanged" as const,
         onDidChangeWorkspaceFolders: "onDidChangeWorkspaceFolders" as const,
         ConfigDidChangePowerQueryTestLocation: "ConfigDidChangePowerQueryTestLocation" as const,
         ConfigDidChangePQTestExtension: "ConfigDidChangePQTestExtension" as const,
@@ -131,6 +132,11 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         handleLocaleChanged();
                         SimplePqTestResultViewBroker.values.locale.emit(ExtensionConfigurations.pqLocale);
                     }
+                } else if (
+                    evt.affectsConfiguration(ExtensionConstants.ConfigNames.http.proxy) ||
+                    evt.affectsConfiguration(ExtensionConstants.ConfigNames.http.proxyAuthorization)
+                ) {
+                    this.emit(GlobalEvents.VSCodeEvents.onProxySettingsChanged);
                 }
             }),
         );

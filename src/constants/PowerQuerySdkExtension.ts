@@ -14,6 +14,10 @@ export type PqModeType = "Power Query" | "SDK";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 const ConfigNames = {
+    http: {
+        proxy: "http.proxy",
+        proxyAuthorization: "http.proxyAuthorization",
+    },
     PowerQuery: {
         name: "powerquery",
         properties: {

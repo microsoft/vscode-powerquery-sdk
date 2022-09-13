@@ -580,7 +580,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         }
     }
 
-    DisplayExtensionInfo(): Promise<ExtensionInfo> {
+    DisplayExtensionInfo(): Promise<ExtensionInfo[]> {
         if (this.serverTransportTuple) {
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
@@ -594,7 +594,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqServiceHostTask<ExtensionInfo>(theRequestMessage, { shouldParsePayload: true });
+            return this.enlistOnePqServiceHostTask<ExtensionInfo[]>(theRequestMessage, { shouldParsePayload: true });
         } else {
             throw new PqServiceHostServerNotReady();
         }

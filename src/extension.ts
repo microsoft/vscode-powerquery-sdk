@@ -26,7 +26,6 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
 
-    const nugetHttpService: NugetHttpService = new NugetHttpService();
     const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
     // let's make extension::activate serves as minimum as possible:
@@ -36,6 +35,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const globalEventBus: GlobalEventBus = new GlobalEventBus(vscExtCtx);
     const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
     const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
+    const nugetHttpService: NugetHttpService = new NugetHttpService(globalEventBus, pqSdkOutputChannel);
 
     const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
         ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
@@ -80,7 +80,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
 
     activateMQueryDebug(vscExtCtx, "server");
 
-    maybeHandleNewWorkspaceCreated();
+    void maybeHandleNewWorkspaceCreated();
 }
 
 // we need not explicitly invoke deactivate callbacks for now

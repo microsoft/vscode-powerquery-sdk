@@ -287,6 +287,8 @@ export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
                 await vscode.commands.executeCommand("powerquery.sdk.pqtest.BuildProjectCommand");
                 // and also setup the workspace as the output of the msbuild might be different
                 await vscode.commands.executeCommand("powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand");
+                // and seize its info for the very first time
+                await vscode.commands.executeCommand("powerquery.sdk.pqtest.DisplayExtensionInfoCommand");
             }
         }
     }
