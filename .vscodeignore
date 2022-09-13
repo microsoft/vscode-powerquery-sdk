@@ -1,3 +1,4 @@
+.pipelines/
 .nuget/
 .idea/
 .vscode/**
@@ -10,6 +11,7 @@ src/**
 test-resources/**
 unit-tests/**
 webviews/**
+.eslintignore
 .gitignore
 .yarnrc
 webpack.config.js
