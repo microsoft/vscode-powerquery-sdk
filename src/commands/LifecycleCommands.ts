@@ -154,7 +154,9 @@ export class LifecycleCommands implements IDisposable {
                 this.lastCtimeOfMezFileWhoseInfoSeized = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
                 this.outputChannel.appendInfoLine(
-                    `promptSettingIncorrectOrInvokeInfoTaskIfNeeded update lastCtimeOfMezFileWhoseInfoSeized ${this.lastCtimeOfMezFileWhoseInfoSeized.getTime()}`,
+                    resolveI18nTemplate("PQSdk.lifecycle.command.update.lastCtimeOfMezFile", {
+                        lastCtimeOfMezFileWhoseInfoSeized: String(this.lastCtimeOfMezFileWhoseInfoSeized.getTime()),
+                    }),
                 );
             }
         });
@@ -184,16 +186,21 @@ export class LifecycleCommands implements IDisposable {
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
             : undefined;
 
-        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+        if (
+            resolvedPQTestExtensionFileLocation &&
+            fs.existsSync(resolvedPQTestExtensionFileLocation) &&
+            (!ExtensionConfigurations.featureUseServiceHost ||
+                (this.pqTestService as PqServiceHostClient).pqServiceHostConnected)
+        ) {
             const currentCtime: Date = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
-            if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized) {
+            if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
                 // we need to invoke a info task
                 this.outputChannel.appendInfoLine(
-                    `promptSettingIncorrectOrInvokeInfoTaskIfNeeded about to display info 
-                    ${currentCtime.getTime()} | ${this.lastCtimeOfMezFileWhoseInfoSeized.getTime()}
-                    ${currentCtime.getTime() - this.lastCtimeOfMezFileWhoseInfoSeized.getTime()} 
-                    `,
+                    resolveI18nTemplate("PQSdk.lifecycle.command.detect.newerMezFile", {
+                        currentCtime: String(currentCtime.getTime()),
+                        diffCtime: String(currentCtime.getTime() - this.lastCtimeOfMezFileWhoseInfoSeized.getTime()),
+                    }),
                 );
 
                 void this.displayLatestExtensionInfoCommand(currentCtime);
@@ -208,16 +215,27 @@ export class LifecycleCommands implements IDisposable {
             this.currentIncorrectConnectorPathInSettingGotPromptedBefore = true;
 
             setTimeout(async () => {
+                const currentPQTestExtensionFileLocation: string | undefined =
+                    ExtensionConfigurations.PQTestExtensionFileLocation;
+
+                const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
+                    ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
+                    : undefined;
+
+                // still not found
                 if (!resolvedPQTestExtensionFileLocation || !fs.existsSync(resolvedPQTestExtensionFileLocation)) {
                     const nullableCurrentWorkspaceSettingPath: string | undefined = getCurrentWorkspaceSettingPath();
 
+                    // and we are beneath an opened workspace
                     if (nullableCurrentWorkspaceSettingPath) {
-                        const openStr: string = "Open setting.json";
+                        const openStr: string = resolveI18nTemplate("PQSdk.common.open.file", {
+                            fileName: "setting.json",
+                        });
 
                         const result: string | undefined = await vscode.window.showWarningMessage(
-                            "Cannot find the file set to the powerquery.sdk.pqtest.extension, open setting.json to ensure it got populated correctly.",
+                            extensionI18n["PQSdk.lifecycle.command.verify.mezFilePath.warning.message"],
                             openStr,
-                            "Cancel",
+                            extensionI18n["PQSdk.common.cancel"],
                         );
 
                         if (result === openStr) {
