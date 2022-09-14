@@ -24,13 +24,13 @@ import {
 import { Disposable, IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { getCtimeOfAFile, globFiles } from "../utils/files";
 import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { convertStringToInteger } from "../utils/numbers";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { globFiles } from "../utils/files";
 import { pidIsRunning } from "../utils/pids";
 import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
@@ -71,7 +71,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private readonly eventBus: DisposableEventEmitter<PqTestExecutableTaskQueueEventTypes>;
     private readonly pidLockFileLocation: string;
     private firstTimeReady: boolean = true;
-    private needToRebuildBeforeEvaluation: boolean = true;
+    private lastPqRelatedFileTouchedDate: Date = new Date(0);
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
     protected _disposables: Array<IDisposable> = [];
@@ -121,7 +121,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 (textDocument.uri.fsPath.indexOf(".pq") > -1 && textDocument.uri.fsPath.indexOf(".query.pq") === -1) ||
                 textDocument.uri.fsPath.indexOf(".m") > -1
             ) {
-                this.needToRebuildBeforeEvaluation = true;
+                this.lastPqRelatedFileTouchedDate = new Date();
             }
         });
 
@@ -135,7 +135,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 .map((oneUri: vscode.Uri) => oneUri.fsPath);
 
             if (filteredPaths.length) {
-                this.needToRebuildBeforeEvaluation = true;
+                this.lastPqRelatedFileTouchedDate = new Date();
             }
         });
     }
@@ -412,24 +412,42 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     async MaybeExecuteBuildTask(): Promise<void> {
         const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
+        let needToRebuildBeforeEvaluation: boolean = true;
 
-        if (this.needToRebuildBeforeEvaluation && maybeCurrentWorkspace) {
+        if (maybeCurrentWorkspace) {
+            const currentlyAllMezFiles: string[] = [];
+
             for await (const oneFullPath of globFiles(path.join(maybeCurrentWorkspace, "bin"), (fullPath: string) =>
                 fullPath.endsWith(".mez"),
             )) {
-                fs.unlinkSync(oneFullPath);
+                currentlyAllMezFiles.push(oneFullPath);
             }
 
-            // choose msbuild or makePQX compile as the build task
-            let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
-
-            if (ExtensionConfigurations.msbuildPath) {
-                theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
+            if (currentlyAllMezFiles.length === 1) {
+                const theCtimeOfTheFile: Date = getCtimeOfAFile(currentlyAllMezFiles[0]);
+                needToRebuildBeforeEvaluation = theCtimeOfTheFile <= this.lastPqRelatedFileTouchedDate;
+            } else {
+                needToRebuildBeforeEvaluation = true;
             }
 
-            await PowerQueryTaskProvider.executeTask(theBuildTask);
+            if (needToRebuildBeforeEvaluation) {
+                // remove all existing mez file
+                currentlyAllMezFiles.forEach((oneMezFileFullPath: string) => {
+                    fs.unlinkSync(oneMezFileFullPath);
+                });
 
-            this.needToRebuildBeforeEvaluation = false;
+                // choose msbuild or makePQX compile as the build task
+                let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
+
+                if (ExtensionConfigurations.msbuildPath) {
+                    theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
+                }
+
+                // we should set lastPqRelatedFileTouchedDate first to ensure it is less than the new build's ctime
+                this.lastPqRelatedFileTouchedDate = new Date();
+
+                await PowerQueryTaskProvider.executeTask(theBuildTask);
+            }
         }
     }
 

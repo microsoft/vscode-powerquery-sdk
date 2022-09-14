@@ -59,7 +59,13 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     );
 
     // lifecycleCommands instance has not been a disposable yet
-    new LifecycleCommands(vscExtCtx, globalEventBus, nugetHttpService, disposablePqTestServices, pqSdkOutputChannel);
+    const lifecycleCommands: LifecycleCommands = new LifecycleCommands(
+        vscExtCtx,
+        globalEventBus,
+        nugetHttpService,
+        disposablePqTestServices,
+        pqSdkOutputChannel,
+    );
 
     const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);
 
@@ -74,6 +80,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
             pqSdkOutputChannel,
             disposablePqTestServices,
             pqTaskProvider,
+            lifecycleCommands,
             lifeCycleTaskTreeView,
         ].reverse(),
     );

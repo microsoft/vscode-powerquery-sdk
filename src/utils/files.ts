@@ -44,3 +44,13 @@ export function removeDirectoryRecursively(directoryFullName: string): Promise<v
         });
     });
 }
+
+export function getCtimeOfAFile(fileFullPath: string): Date {
+    if (fs.existsSync(fileFullPath)) {
+        const fileStats: fs.Stats = fs.statSync(fileFullPath);
+
+        return fileStats.ctime;
+    }
+
+    return new Date(0);
+}
