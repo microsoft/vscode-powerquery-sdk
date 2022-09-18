@@ -6,28 +6,22 @@
  */
 
 import * as fs from "fs";
-import * as net from "net";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import {
-    Message,
-    RequestMessage,
-    ResponseError,
-    ResponseMessage,
-    SocketMessageReader,
-    SocketMessageWriter,
-} from "vscode-jsonrpc/node";
-
 import { ChildProcess } from "child_process";
 import { TextEditor } from "vscode";
+import WebSocket from "ws";
 
 import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "../common/PQTestService";
 import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
 import { getCtimeOfAFile, globFiles } from "../utils/files";
 import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
 
+import { CLOSED, OPEN } from "../common/websockets/WebSocketClient";
+import { defaultBackOff, JsonRpcWebSocketClient } from "../common/websockets/JsonRpcWebSocketClient";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { AnyFunction } from "../common/promises/types";
 import { convertStringToInteger } from "../utils/numbers";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { IDisposable } from "../common/Disposable";
@@ -36,41 +30,6 @@ import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../common/SpawnedProcess";
 import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
-interface ServerTransportTuple {
-    readonly status: {
-        port: number;
-        live: boolean;
-    };
-    readonly socket: net.Socket;
-    readonly reader: SocketMessageReader;
-    readonly writer: SocketMessageWriter;
-}
-
-interface PqServiceHostRequestParamBase {
-    SessionId: string;
-    PathToConnector?: string;
-    PathToQueryFile?: string;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
-}
-
-interface PqServiceHostRequest<T extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase>
-    extends RequestMessage {
-    /**
-     * The request id.
-     */
-    id: string;
-    /**
-     * The method to be invoked.
-     */
-    method: string;
-    /**
-     * The method's params.
-     */
-    params: [T];
-}
-
 enum ResponseStatus {
     Null = 0,
     Acknowledged = 1,
@@ -78,31 +37,13 @@ enum ResponseStatus {
     Failure = 3,
 }
 
-interface PqServiceHostResponseBase<T = string> extends ResponseMessage {
-    id: string;
-    result: {
-        SessionId: string;
-        Status: ResponseStatus;
-        Payload: T;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        InnerException?: any;
-    };
+interface PqServiceHostResponseResult<T = string> {
+    SessionId: string;
+    Status: ResponseStatus;
+    Payload: T;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    InnerException?: any;
 }
-
-/**
- * Internal interface within the module, we need not cast members as readonly
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface PqServiceHostTask<Req extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase, Res = any> {
-    request: PqServiceHostRequest<Req>;
-    options: {
-        shouldParsePayload?: boolean;
-    };
-    resolve: (res: Res) => void;
-    reject: (reason: Error | string) => void;
-}
-
-const JSON_RPC_VERSION: string = "2.0";
 
 export class PqServiceHostServerNotReady extends Error {
     constructor() {
@@ -147,19 +88,13 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
 
     private firstTimeStarted: boolean = true;
     private lastPqRelatedFileTouchedDate: Date = new Date(0);
-    private _sequenceSeed: number = Date.now();
     private readonly sessionId: string = vscode.env.sessionId;
-    private pendingTaskMap: Map<string, PqServiceHostTask> = new Map();
-    private serverTransportTuple: ServerTransportTuple | undefined = undefined;
+    private jsonRpcWebSocketClient: JsonRpcWebSocketClient | undefined = undefined;
     private pingTimer: NodeJS.Timer | undefined = undefined;
     protected _disposables: Array<IDisposable> = [];
 
     public get pqServiceHostConnected(): boolean {
         return Boolean(this.pingTimer);
-    }
-
-    private get nextSequenceId(): string {
-        return `${this.sessionId}-${this._sequenceSeed++}`;
     }
 
     public readonly currentExtensionInfos: ValueEventEmitter<ExtensionInfo[]> = new ValueEventEmitter<ExtensionInfo[]>(
@@ -202,92 +137,81 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         });
     }
 
-    private handleRpcMessage(message: Message): void {
-        if (message.jsonrpc === JSON_RPC_VERSION && this.pendingTaskMap.has(`${(message as ResponseMessage).id}`)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const responseMessage: PqServiceHostResponseBase = message as PqServiceHostResponseBase<any>;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const maybePendingTask: PqServiceHostTask<any> | undefined = this.pendingTaskMap.get(responseMessage.id);
+    private async callRemoteRpcMethod(
+        method: string,
+        parameters: unknown[],
+        options: {
+            shouldParsePayload?: boolean;
+        } = {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ): Promise<any> {
+        if (this.jsonRpcWebSocketClient) {
+            const responseResult: PqServiceHostResponseResult = (await this.jsonRpcWebSocketClient.call(
+                method,
+                parameters,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            )) as PqServiceHostResponseResult<any>;
 
-            if (maybePendingTask) {
-                // no need to check the session within the result
-                if (responseMessage.error) {
-                    maybePendingTask.reject(
-                        new ResponseError(
-                            responseMessage.error.code,
-                            responseMessage.error.message,
-                            responseMessage.error.data,
-                        ),
-                    );
-                } else if (responseMessage.result.Status === ResponseStatus.Success) {
-                    if (
-                        maybePendingTask.options.shouldParsePayload &&
-                        typeof responseMessage.result.Payload === "string"
-                    ) {
-                        try {
-                            let theStr: string = responseMessage.result.Payload;
+            if (responseResult.Status === ResponseStatus.Success) {
+                if (options.shouldParsePayload && typeof responseResult.Payload === "string") {
+                    try {
+                        let theStr: string = responseResult.Payload;
 
-                            theStr = theStr
-                                .replace(/\\n/g, "\\n")
-                                .replace(/\\'/g, "\\'")
-                                .replace(/\\"/g, '\\"')
-                                .replace(/\\&/g, "\\&")
-                                .replace(/\\r/g, "\\r")
-                                .replace(/\\t/g, "\\t")
-                                .replace(/\\b/g, "\\b")
-                                .replace(/\\f/g, "\\f")
+                        theStr = theStr
+                            .replace(/\\n/g, "\\n")
+                            .replace(/\\'/g, "\\'")
+                            .replace(/\\"/g, '\\"')
+                            .replace(/\\&/g, "\\&")
+                            .replace(/\\r/g, "\\r")
+                            .replace(/\\t/g, "\\t")
+                            .replace(/\\b/g, "\\b")
+                            .replace(/\\f/g, "\\f")
 
-                                // eslint-disable-next-line no-control-regex
-                                .replace(/[\u0000-\u0019]+/g, "");
+                            // eslint-disable-next-line no-control-regex
+                            .replace(/[\u0000-\u0019]+/g, "");
 
-                            responseMessage.result.Payload = JSON.parse(theStr);
-                        } catch (e) {
-                            // noop
-                        }
+                        responseResult.Payload = JSON.parse(theStr);
+                    } catch (e) {
+                        // noop
                     }
-
-                    // todo, mv this logic to pqServiceHost
-                    if (maybePendingTask.request.method === "v1/PqTestService/DisplayExtensionInfo") {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        this.currentExtensionInfos.emit(responseMessage.result.Payload as any);
-                    } else if (maybePendingTask.request.method === "v1/PqTestService/ListCredentials") {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        this.currentCredentials.emit(responseMessage.result.Payload as any);
-                    }
-
-                    maybePendingTask.resolve(responseMessage.result.Payload);
-                } else {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const errorData: any = responseMessage.result.InnerException ?? responseMessage.result.Payload;
-
-                    const errorMessage: string = getInternalErrorMessage(errorData);
-                    maybePendingTask.reject(new PqInternalError(errorMessage, errorData));
                 }
 
-                this.pendingTaskMap.delete(responseMessage.id);
+                // todo, mv this logic to pqServiceHost
+                if (method === "v1/PqTestService/DisplayExtensionInfo") {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    this.currentExtensionInfos.emit(responseResult.Payload as any);
+                } else if (method === "v1/PqTestService/ListCredentials") {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    this.currentCredentials.emit(responseResult.Payload as any);
+                }
+
+                return responseResult.Payload;
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const errorData: any = responseResult.InnerException ?? responseResult.Payload;
+
+                const errorMessage: string = getInternalErrorMessage(errorData);
+
+                return Promise.reject(new PqInternalError(errorMessage, errorData));
             }
+        } else {
+            throw new PqServiceHostServerNotReady();
         }
     }
 
-    private createServerSocketTransport(port: number): void {
+    private async createJsonRpcWebsocketClient(port: number): Promise<void> {
         this.outputChannel.appendInfoLine(`Start to listen PqServiceHost.exe at ${port}`);
-        const socket: net.Socket = net.createConnection(port, "127.0.0.1");
-        socket.setTimeout(0);
-        socket.setKeepAlive(true);
-        const reader: SocketMessageReader = new SocketMessageReader(socket, "utf-8");
-        const writer: SocketMessageWriter = new SocketMessageWriter(socket, "utf-8");
+        // todo enhance this tcp conn
+        const theJsonRpcWebSocketClient: JsonRpcWebSocketClient = new JsonRpcWebSocketClient(`ws://127.0.0.1:${port}`);
 
-        const theServerTransportTuple: ServerTransportTuple = Object.freeze({
-            status: {
-                port,
-                live: true,
-            },
-            socket,
-            reader,
-            writer,
-        });
+        try {
+            await theJsonRpcWebSocketClient.open(defaultBackOff);
+            this.jsonRpcWebSocketClient = theJsonRpcWebSocketClient;
+        } catch (error: unknown) {
+            this.outputChannel.appendErrorLine(`Failed to listen PqServiceHost.exe at ${port} due to ${error}`);
+        }
 
-        socket.on("connect", () => {
+        if (theJsonRpcWebSocketClient.status === OPEN) {
             this.outputChannel.appendInfoLine(`Succeed listening PqServiceHost.exe at ${port}`);
 
             // check whether it were the first time staring for the current maybe existing workspace
@@ -309,27 +233,23 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             }
 
             this.startToSendPingMessages();
-        });
 
-        socket.on("error", (err: Error) => {
-            this.outputChannel.appendErrorLine(
-                `Failed to listen PqServiceHost.exe at ${port} due to ${err.message}, will try to reconnect in 2 sec`,
-            );
+            const handleJsonRpcWsClientClosed: AnyFunction = (event: WebSocket.CloseEvent) => {
+                this.outputChannel.appendErrorLine(
+                    `Failed to listen PqServiceHost.exe at ${port} due to ${event.reason}, will try to reconnect in 2 sec`,
+                );
 
-            this.stopSendingPingMessages();
+                this.stopSendingPingMessages();
 
-            setTimeout(() => {
-                this.onPowerQueryTestLocationChanged();
-            }, 250);
-        });
+                setTimeout(() => {
+                    this.onPowerQueryTestLocationChanged();
+                }, 250);
 
-        reader.listen((data: Message) => {
-            if (theServerTransportTuple.status.live) {
-                this.handleRpcMessage.call(this, data);
-            }
-        });
+                theJsonRpcWebSocketClient.off(CLOSED, handleJsonRpcWsClientClosed);
+            };
 
-        this.serverTransportTuple = theServerTransportTuple;
+            theJsonRpcWebSocketClient.on(CLOSED, handleJsonRpcWsClientClosed);
+        }
     }
 
     private startToSendPingMessages(): void {
@@ -369,15 +289,12 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         return pqServiceHostExe;
     }
 
-    private disposeCurrentServerTransportTuple(): void {
-        if (this.serverTransportTuple) {
-            this.outputChannel.appendInfoLine(
-                `Stop listening PqServiceHost.exe at ${this.serverTransportTuple.status.port}`,
-            );
-
-            this.serverTransportTuple.status.live = false;
-            this.serverTransportTuple.socket.emit("close");
-            this.serverTransportTuple = undefined;
+    private disposeCurrentJsonRpcWebsocketClient(): void {
+        if (this.jsonRpcWebSocketClient) {
+            this.stopSendingPingMessages();
+            void this.jsonRpcWebSocketClient.close();
+            this.jsonRpcWebSocketClient = undefined;
+            this.outputChannel.appendInfoLine(`Stop listening PqServiceHost.exe`);
         }
     }
 
@@ -463,8 +380,8 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             }
 
             if (typeof pidNumber === "number" && typeof portNumber === "number") {
-                this.disposeCurrentServerTransportTuple();
-                this.createServerSocketTransport(portNumber);
+                this.disposeCurrentJsonRpcWebsocketClient();
+                await this.createJsonRpcWebsocketClient(portNumber);
             }
         } finally {
             this.doStartAndListenPqServiceHostIfNeededInProgress = false;
@@ -512,28 +429,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         this.stopSendingPingMessages();
         this.currentExtensionInfos.dispose();
         this.currentCredentials.dispose();
-        this.disposeCurrentServerTransportTuple();
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private enlistOnePqServiceHostTask<T = any>(
-        theRequestMessage: PqServiceHostRequest,
-        options: PqServiceHostTask["options"] = {},
-    ): Promise<T> {
-        const theTask: PqServiceHostTask = { request: theRequestMessage, options } as PqServiceHostTask;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: Promise<T> = new Promise((resolve: (value: T) => void, reject: (reason?: any) => void) => {
-            theTask.resolve = resolve;
-            theTask.reject = reject;
-        });
-
-        this.pendingTaskMap.set(theRequestMessage.id, theTask);
-
-        // no need to await it
-        void this.serverTransportTuple?.writer.write(theRequestMessage);
-
-        return result;
+        this.disposeCurrentJsonRpcWebsocketClient();
     }
 
     async MaybeExecuteBuildTask(): Promise<void> {
@@ -578,306 +474,178 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
     }
 
     DeleteCredential(): Promise<GenericResult> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/DeleteCredential",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        AllCredentials: true,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/PqTestService/DeleteCredential", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                AllCredentials: true,
+            },
+        ]);
     }
 
     DisplayExtensionInfo(): Promise<ExtensionInfo[]> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/DisplayExtensionInfo",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<ExtensionInfo[]>(theRequestMessage, { shouldParsePayload: true });
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod(
+            "v1/PqTestService/DisplayExtensionInfo",
+            [
+                {
+                    SessionId: this.sessionId,
+                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                },
+            ],
+            { shouldParsePayload: true },
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     GenerateCredentialTemplate(): Promise<any> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/GenerateCredentialTemplate",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
-                    },
-                ],
-            };
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return this.enlistOnePqServiceHostTask<any>(theRequestMessage, { shouldParsePayload: true });
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod(
+            "v1/PqTestService/GenerateCredentialTemplate",
+            [
+                {
+                    SessionId: this.sessionId,
+                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                },
+            ],
+            { shouldParsePayload: true },
+        );
     }
 
     ListCredentials(): Promise<Credential[]> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/ListCredentials",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<Credential[]>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/PqTestService/ListCredentials", [
+            {
+                SessionId: this.sessionId,
+            },
+        ]);
     }
 
     RefreshCredential(): Promise<GenericResult> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/RefreshCredential",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/PqTestService/RefreshCredential", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            },
+        ]);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     RunTestBattery(pathToQueryFile: string | undefined): Promise<any> {
-        if (this.serverTransportTuple) {
-            const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
+        const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
-            const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-                ExtensionConfigurations.PQTestQueryFileLocation,
-            );
+        const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
+            ExtensionConfigurations.PQTestQueryFileLocation,
+        );
 
-            // todo, maybe we could export this lang id to from the lang svc extension
-            if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
-                pathToQueryFile = activeTextEditor.document.uri.fsPath;
-            }
-
-            if (!pathToQueryFile && configPQTestQueryFileLocation) {
-                pathToQueryFile = configPQTestQueryFileLocation;
-            }
-
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/RunTestBattery",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: pathToQueryFile,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
+        // todo, maybe we could export this lang id to from the lang svc extension
+        if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
+            pathToQueryFile = activeTextEditor.document.uri.fsPath;
         }
+
+        if (!pathToQueryFile && configPQTestQueryFileLocation) {
+            pathToQueryFile = configPQTestQueryFileLocation;
+        }
+
+        return this.callRemoteRpcMethod("v1/PqTestService/RunTestBattery", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: pathToQueryFile,
+            },
+        ]);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async RunTestBatteryFromContent(pathToQueryFile: string | undefined): Promise<any> {
-        if (this.serverTransportTuple) {
-            const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
+        const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
-            const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-                ExtensionConfigurations.PQTestQueryFileLocation,
-            );
+        const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
+            ExtensionConfigurations.PQTestQueryFileLocation,
+        );
 
-            // todo, maybe we could export this lang id to from the lang svc extension
-            if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
-                pathToQueryFile = activeTextEditor.document.uri.fsPath;
-            }
-
-            if (!pathToQueryFile && configPQTestQueryFileLocation) {
-                pathToQueryFile = configPQTestQueryFileLocation;
-            }
-
-            if (!pathToQueryFile || !fs.existsSync(pathToQueryFile)) return Promise.resolve();
-
-            let currentContent: string = fs.readFileSync(pathToQueryFile, { encoding: "utf8" });
-
-            vscode.window.visibleTextEditors.forEach((oneEditor: vscode.TextEditor) => {
-                if (
-                    oneEditor?.document.languageId === "powerquery" &&
-                    oneEditor.document.uri.fsPath === pathToQueryFile
-                ) {
-                    currentContent = oneEditor.document.getText();
-                }
-            });
-
-            // maybe we need to execute the build task before evaluating.
-            await this.MaybeExecuteBuildTask();
-
-            // only for RunTestBatteryFromContent,
-            // PathToConnector would be full path of the current working folder
-            // PathToQueryFile would be either the saved or unsaved content of the query file to be evaluated
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/RunTestBatteryFromContent",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: currentContent,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
+        // todo, maybe we could export this lang id to from the lang svc extension
+        if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
+            pathToQueryFile = activeTextEditor.document.uri.fsPath;
         }
+
+        if (!pathToQueryFile && configPQTestQueryFileLocation) {
+            pathToQueryFile = configPQTestQueryFileLocation;
+        }
+
+        if (!pathToQueryFile || !fs.existsSync(pathToQueryFile)) return Promise.resolve();
+
+        let currentContent: string = fs.readFileSync(pathToQueryFile, { encoding: "utf8" });
+
+        vscode.window.visibleTextEditors.forEach((oneEditor: vscode.TextEditor) => {
+            if (oneEditor?.document.languageId === "powerquery" && oneEditor.document.uri.fsPath === pathToQueryFile) {
+                currentContent = oneEditor.document.getText();
+            }
+        });
+
+        // maybe we need to execute the build task before evaluating.
+        await this.MaybeExecuteBuildTask();
+
+        // only for RunTestBatteryFromContent,
+        // PathToConnector would be full path of the current working folder
+        // PathToQueryFile would be either the saved or unsaved content of the query file to be evaluated
+        return this.callRemoteRpcMethod("v1/PqTestService/RunTestBatteryFromContent", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: currentContent,
+            },
+        ]);
     }
 
     SetCredential(payloadStr: string): Promise<GenericResult> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/RefreshCredential",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
-                        InputTemplateString: payloadStr,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/PqTestService/RefreshCredential", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                InputTemplateString: payloadStr,
+            },
+        ]);
     }
 
     SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/SetCredentialFromCreateAuthState",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
-                        // DataSourceKind: createAuthState.DataSourceKind,
-                        AuthenticationKind: createAuthState.AuthenticationKind,
-                        TemplateValueKey: createAuthState.$$KEY$$,
-                        TemplateValueUsername: createAuthState.$$USERNAME$$,
-                        TemplateValuePassword: createAuthState.$$PASSWORD$$,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/PqTestService/SetCredentialFromCreateAuthState", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
+                // DataSourceKind: createAuthState.DataSourceKind,
+                AuthenticationKind: createAuthState.AuthenticationKind,
+                TemplateValueKey: createAuthState.$$KEY$$,
+                TemplateValueUsername: createAuthState.$$USERNAME$$,
+                TemplateValuePassword: createAuthState.$$PASSWORD$$,
+            },
+        ]);
     }
 
     TestConnection(): Promise<GenericResult> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/PqTestService/TestConnection",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/PqTestService/TestConnection", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            },
+        ]);
     }
 
     ForceShutdown(): Promise<number> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/HealthService/Shutdown",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<number>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/HealthService/Shutdown", [
+            {
+                SessionId: this.sessionId,
+            },
+        ]);
     }
 
     Ping(): Promise<number> {
-        if (this.serverTransportTuple) {
-            const theRequestMessage: PqServiceHostRequest = {
-                jsonrpc: JSON_RPC_VERSION,
-                id: this.nextSequenceId,
-                method: "v1/HealthService/Ping",
-                params: [
-                    {
-                        SessionId: this.sessionId,
-                    },
-                ],
-            };
-
-            return this.enlistOnePqServiceHostTask<number>(theRequestMessage);
-        } else {
-            throw new PqServiceHostServerNotReady();
-        }
+        return this.callRemoteRpcMethod("v1/HealthService/Ping", [
+            {
+                SessionId: this.sessionId,
+            },
+        ]);
     }
 }

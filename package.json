@@ -307,7 +307,8 @@
         "ws": "^8.8.1",
         "node-stream-zip": "^1.15.0",
         "json-rpc-protocol": "^0.13.2",
-        "vscode-jsonrpc": "^8.0.2"
+        "bufferutil": "^4.0.6",
+        "utf-8-validate": "^5.0.9"
     },
     "devDependencies": {
         "@types/chai": "^4.3.1",

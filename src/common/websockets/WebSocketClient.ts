@@ -92,7 +92,7 @@ export class WebSocketClient extends EventEmitter {
             return this._open();
         }
 
-        const theNumbericIterator: NumberIterator = backOffGenerator();
+        const theNumberIterator: NumberIterator = backOffGenerator();
 
         let __cancelled: boolean = false;
 
@@ -110,7 +110,7 @@ export class WebSocketClient extends EventEmitter {
             return this._open().catch((reason: any) => {
                 let current: IteratorResult<number, undefined>;
 
-                if (reason instanceof AbortedConnection || (current = theNumbericIterator.next()).done) {
+                if (reason instanceof AbortedConnection || (current = theNumberIterator.next()).done) {
                     throw reason;
                 }
 
@@ -141,14 +141,14 @@ export class WebSocketClient extends EventEmitter {
         }
     }
 
-    private _onClose: () => void = () => {
+    private _onClose: (event: WebSocket.CloseEvent) => void = (event: WebSocket.CloseEvent) => {
         const previousStatus: StatusType = this._status;
 
         this._socket = undefined;
         this._status = CLOSED;
 
         if (previousStatus === OPEN) {
-            this.emit(CLOSED);
+            this.emit(CLOSED, event);
         }
     };
 

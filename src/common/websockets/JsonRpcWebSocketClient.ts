@@ -19,7 +19,7 @@ import { NumberGenerator } from "../iterables/NumberIterator";
 
 export { ConnectionError } from "./WebSocketClient";
 
-export const defaultBackOff: NumberGenerator = (tries: number = 10) => fibonacciNumbers().addNoise().toMs().take(tries);
+export const defaultBackOff: NumberGenerator = (tries: number = 6) => fibonacciNumbers().addNoise().toMs().take(tries);
 
 export class JsonRpcWebSocketClient extends WebSocketClient {
     private readonly jsonRpcHelper: JsonRpcHelper;
