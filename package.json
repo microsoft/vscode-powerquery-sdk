@@ -304,7 +304,9 @@
     },
     "dependencies": {
         "axios": "^0.27.2",
+        "ws": "^8.8.1",
         "node-stream-zip": "^1.15.0",
+        "json-rpc-protocol": "^0.13.2",
         "vscode-jsonrpc": "^8.0.2"
     },
     "devDependencies": {
@@ -312,6 +314,7 @@
         "@types/glob": "^7.2.0",
         "@types/gulp": "^4.0.9",
         "@types/mocha": "^9.0.0",
+        "@types/sinon": "^10.0.13",
         "@types/node": "16.x",
         "@types/vscode": "^1.62.0",
         "@typescript-eslint/eslint-plugin": "^5.5.0",
@@ -320,6 +323,7 @@
         "@vscode/debugadapter-testsupport": "^1.55.1",
         "@vscode/test-electron": "^1.6.2",
         "chai": "^4.3.6",
+        "sinon": "^14.0.0",
         "eslint": "^8.3.0",
         "eslint-config-prettier": "^8.3.0",
         "eslint-plugin-license-header": "^0.4.0",
