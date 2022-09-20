@@ -28,7 +28,7 @@ const ConfigNames = {
     PowerQuerySdk: {
         name: "powerquery.sdk" as const,
         properties: {
-            autoDetection: "project.autoDetection" as const,
+            autoDetection: "features.autoDetection" as const,
             externalsMsbuildPath: "externals.msbuildPath" as const,
             externalsNugetPath: "externals.nugetPath" as const,
             pqTestLocation: "pqtest.location" as const,

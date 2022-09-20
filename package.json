@@ -119,8 +119,10 @@
                 "powerquery.sdk.project.autoDetection": {
                     "scope": "machine-overridable",
                     "type": "boolean",
-                    "description": "%extension.pqtest.config.project.autoDetection.description%",
-                    "default": true
+                    "description": "%extension.pqtest.config.features.autoDetection.description%",
+                    "default": true,
+                    "deprecationMessage": "Deprecated: Please use powerquery.sdk.features.autoDetection instead.",
+                    "markdownDeprecationMessage": "**Deprecated**: Please use `#powerquery.sdk.features.autoDetection#` instead."
                 },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
@@ -147,11 +149,17 @@
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"
                 },
+                "powerquery.sdk.features.autoDetection": {
+                    "scope": "machine-overridable",
+                    "type": "boolean",
+                    "description": "%extension.pqtest.config.features.autoDetection.description%",
+                    "default": true
+                },
                 "powerquery.sdk.features.useServiceHost": {
                     "scope": "machine-overridable",
                     "type": "boolean",
                     "default": false,
-                    "description": "%extension.pqtest.config.feature.useServiceHost%"
+                    "description": "%extension.pqtest.config.features.useServiceHost%"
                 }
             }
         },
