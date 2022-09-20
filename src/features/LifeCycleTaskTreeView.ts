@@ -18,12 +18,10 @@ import {
 } from "vscode";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { debounce } from "../utils/debounce";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { extensionI18n } from "../i18n/extension";
 import { getAnyPqFileBeneathTheFirstWorkspace } from "../utils/vscodes";
 import { LifecycleCommands } from "../commands/LifecycleCommands";
-import { NugetVersions } from "../utils/NugetVersions";
 
 const TreeViewPrefix: string = `powerquery.sdk.pqtest`;
 
@@ -107,15 +105,6 @@ const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
 
         new ThemeIcon("test-view-icon"),
     ),
-    new LifecycleTreeViewItem(
-        extensionI18n["PQSdk.lifecycleTreeView.item.displayExtensionInfo.title"],
-        {
-            title: extensionI18n["PQSdk.lifecycleTreeView.item.displayExtensionInfo.title"],
-            command: `${LifecycleCommands.DisplayExtensionInfoCommand}`,
-            arguments: [],
-        },
-        new ThemeIcon("extensions-info-message"),
-    ),
 ];
 
 export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeViewItem> {
@@ -157,20 +146,7 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
         if (element) return undefined;
 
         if (await this.isValidWorkspace()) {
-            const updateSdkToolItem: LifecycleTreeViewItem = new LifecycleTreeViewItem(
-                extensionI18n["PQSdk.lifecycleTreeView.item.updateSdk.title"],
-                {
-                    title: extensionI18n["PQSdk.lifecycleTreeView.item.updateSdk.title"],
-                    command: `${LifecycleCommands.SeizePqTestCommand}`,
-                    arguments: [],
-                },
-                new ThemeIcon("cloud-download"),
-            );
-
-            updateSdkToolItem.description = this.currentPqSdkVersion();
-
-            // do create primary tasks
-            return [updateSdkToolItem, ...staticLifecycleTreeViewItem] as LifecycleTreeViewItem[];
+            return staticLifecycleTreeViewItem;
         }
 
         // still return undefined if the workspace is not set up yet
@@ -179,16 +155,5 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
 
     getTreeItem(element: LifecycleTreeViewItem): TreeItem | Thenable<TreeItem> {
         return element;
-    }
-
-    private currentPqSdkVersion(): string | undefined {
-        const currentPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-        const currentPqSdkNugetVersion: NugetVersions = NugetVersions.createFromPath(currentPqTestLocation);
-
-        return currentPqSdkNugetVersion.isZero()
-            ? undefined
-            : resolveI18nTemplate("PQSdk.lifecycleTreeView.item.updateSdk.currentVersion.label", {
-                  currentPqSdkNugetVersion: currentPqSdkNugetVersion.toString(),
-              });
     }
 }
