@@ -30,18 +30,18 @@
     "activationEvents": [
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
-        "onCommand:powerquery.sdk.pqtest.CreateNewProjectCommand",
-        "onCommand:powerquery.sdk.pqtest.SeizePqTestCommand",
-        "onCommand:powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
-        "onCommand:powerquery.sdk.pqtest.DeleteCredentialCommand",
-        "onCommand:powerquery.sdk.pqtest.DisplayExtensionInfoCommand",
-        "onCommand:powerquery.sdk.pqtest.ListCredentialCommand",
-        "onCommand:powerquery.sdk.pqtest.GenerateAndSetCredentialCommand",
-        "onCommand:powerquery.sdk.pqtest.RefreshCredentialCommand",
-        "onCommand:powerquery.sdk.pqtest.RunTestBatteryCommand",
-        "onCommand:powerquery.sdk.pqtest.TestConnectionCommand",
-        "onView:powerquery.sdk.pqtest.LifeCycleTaskTreeView",
-        "onWebviewPanel:powerquery.sdk.pqtest.ResultWebView",
+        "onCommand:powerquery.sdk.tools.CreateNewProjectCommand",
+        "onCommand:powerquery.sdk.tools.SeizePqTestCommand",
+        "onCommand:powerquery.sdk.tools.SetupCurrentWorkspaceCommand",
+        "onCommand:powerquery.sdk.tools.DeleteCredentialCommand",
+        "onCommand:powerquery.sdk.tools.DisplayExtensionInfoCommand",
+        "onCommand:powerquery.sdk.tools.ListCredentialCommand",
+        "onCommand:powerquery.sdk.tools.GenerateAndSetCredentialCommand",
+        "onCommand:powerquery.sdk.tools.RefreshCredentialCommand",
+        "onCommand:powerquery.sdk.tools.RunTestBatteryCommand",
+        "onCommand:powerquery.sdk.tools.TestConnectionCommand",
+        "onView:powerquery.sdk.tools.LifeCycleTaskTreeView",
+        "onWebviewPanel:powerquery.sdk.tools.ResultWebView",
         "onLanguage:powerquery"
     ],
     "extensionDependencies": [
@@ -53,61 +53,61 @@
     "contributes": {
         "commands": [
             {
-                "command": "powerquery.sdk.pqtest.CreateNewProjectCommand",
+                "command": "powerquery.sdk.tools.CreateNewProjectCommand",
                 "title": "%extension.pqtest.CreateNewProjectCommand.title%",
                 "category": "Power query",
                 "icon": "$(new-folder)"
             },
             {
-                "command": "powerquery.sdk.pqtest.SeizePqTestCommand",
+                "command": "powerquery.sdk.tools.SeizePqTestCommand",
                 "title": "%extension.pqtest.SeizePqTestCommand.title%",
                 "category": "Power query",
                 "icon": "$(cloud-download)"
             },
             {
-                "command": "powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand",
+                "command": "powerquery.sdk.tools.SetupCurrentWorkspaceCommand",
                 "title": "%extension.pqtest.SetupCurrentWorkspaceCommand.title%",
                 "category": "Power query",
                 "icon": "$(pencil)"
             },
             {
-                "command": "powerquery.sdk.pqtest.DeleteCredentialCommand",
+                "command": "powerquery.sdk.tools.DeleteCredentialCommand",
                 "title": "%extension.pqtest.DeleteCredentialCommand.title%",
                 "category": "Power query",
                 "icon": "$(terminal-kill)"
             },
             {
-                "command": "powerquery.sdk.pqtest.DisplayExtensionInfoCommand",
+                "command": "powerquery.sdk.tools.DisplayExtensionInfoCommand",
                 "title": "%extension.pqtest.DisplayExtensionInfoCommand.title%",
                 "category": "Power query",
                 "icon": "$(extensions-info-message)"
             },
             {
-                "command": "powerquery.sdk.pqtest.ListCredentialCommand",
+                "command": "powerquery.sdk.tools.ListCredentialCommand",
                 "title": "%extension.pqtest.ListCredentialCommand.title%",
                 "category": "Power query",
                 "icon": "$(library)"
             },
             {
-                "command": "powerquery.sdk.pqtest.GenerateAndSetCredentialCommand",
+                "command": "powerquery.sdk.tools.GenerateAndSetCredentialCommand",
                 "title": "%extension.pqtest.GenerateAndSetCredentialCommand.title%",
                 "category": "Power query",
                 "icon": "$(key)"
             },
             {
-                "command": "powerquery.sdk.pqtest.RefreshCredentialCommand",
+                "command": "powerquery.sdk.tools.RefreshCredentialCommand",
                 "title": "%extension.pqtest.RefreshCredentialCommand.title%",
                 "category": "Power query",
                 "icon": "$(refresh)"
             },
             {
-                "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                "command": "powerquery.sdk.tools.RunTestBatteryCommand",
                 "title": "%extension.pqtest.RunTestBatteryCommand.title%",
                 "category": "Power query",
                 "icon": "$(debug-console-evaluation-prompt)"
             },
             {
-                "command": "powerquery.sdk.pqtest.TestConnectionCommand",
+                "command": "powerquery.sdk.tools.TestConnectionCommand",
                 "title": "%extension.pqtest.TestConnectionCommand.title%",
                 "category": "Power query",
                 "icon": "$(test-view-icon)"
@@ -134,17 +134,17 @@
                     "type": "string",
                     "description": "%extension.pqtest.config.externals.nugetPath.description%"
                 },
-                "powerquery.sdk.pqtest.location": {
+                "powerquery.sdk.tools.location": {
                     "scope": "machine-overridable",
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.location.description%"
                 },
-                "powerquery.sdk.pqtest.extension": {
+                "powerquery.sdk.tools.extension": {
                     "scope": "window",
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.extension.description%"
                 },
-                "powerquery.sdk.pqtest.queryFile": {
+                "powerquery.sdk.tools.queryFile": {
                     "scope": "window",
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"
@@ -193,27 +193,27 @@
         "views": {
             "explorer": [
                 {
-                    "id": "powerquery.sdk.pqtest.LifeCycleTaskTreeView",
+                    "id": "powerquery.sdk.tools.LifeCycleTaskTreeView",
                     "name": "%extension.pqtest.explorer.name%"
                 }
             ]
         },
         "viewsWelcome": [
             {
-                "view": "powerquery.sdk.pqtest.LifeCycleTaskTreeView",
+                "view": "powerquery.sdk.tools.LifeCycleTaskTreeView",
                 "contents": "%extension.pqtest.welcome.contents%"
             }
         ],
         "menus": {
             "commandPalette": [
                 {
-                    "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                    "command": "powerquery.sdk.tools.RunTestBatteryCommand",
                     "when": "editorLangId == powerquery"
                 }
             ],
             "editor/context": [
                 {
-                    "command": "powerquery.sdk.pqtest.RunTestBatteryCommand",
+                    "command": "powerquery.sdk.tools.RunTestBatteryCommand",
                     "when": "editorLangId == powerquery",
                     "group": "1_powerquery@1"
                 }

@@ -55,7 +55,7 @@ import { NugetVersions } from "../utils/NugetVersions";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../common/SpawnedProcess";
 
-const CommandPrefix: string = `powerquery.sdk.pqtest`;
+const CommandPrefix: string = `powerquery.sdk.tools`;
 
 const validateProjectNameRegExp: RegExp = /[A-Za-z]+/;
 const templateFileBaseName: string = "PQConn";

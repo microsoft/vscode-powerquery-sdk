@@ -9,7 +9,7 @@
   "PQSdk.debugger.error.cannot.find.program": "Cannot find a program to debug",
   "PQSdk.lifecycle.command.update.lastCtimeOfMezFile": "Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}",
   "PQSdk.lifecycle.command.detect.newerMezFile": "Detect a newer mez file, about to infer its latest info. {currentCtime}, {diffCtime}",
-  "PQSdk.lifecycle.command.verify.mezFilePath.warning.message": "Cannot find the file set to the powerquery.sdk.pqtest.extension, open setting.json to ensure it got populated correctly.",
+  "PQSdk.lifecycle.command.verify.mezFilePath.warning.message": "Cannot find the file set to the powerquery.sdk.tools.extension, open setting.json to ensure it got populated correctly.",
   "PQSdk.lifecycle.command.set.config": "Set {configName} to {configValue}",
   "PQSdk.lifecycle.command.pqtest.seized.from": "PqTest has been seized from nuget and put at {pqTestExecutableFullPath}.",
   "PQSdk.lifecycle.command.pqtest.set.to": "Current pqTest has been configured at {pqTestLocation}.",
@@ -85,8 +85,8 @@
   "PQSdk.taskQueue.info.taskBegan": "[Task began] Fork PQTask {operation} executable of pid: {pid}.",
   "PQSdk.taskQueue.info.taskFinished": "[Task finished] Forked PQTask {operation} executable pid({pid}) exited.",
   "PQSdk.taskQueue.info.taskExitAbnormally": "[Task exited abnormally] pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}",
-  "PQSdk.taskQueue.error.pqtestLocationNotSet": "Configuration value: powerquery.sdk.pqtest.location is not set.",
-  "PQSdk.taskQueue.error.pqtestLocationDoesntExist": "Directory powerquery.sdk.pqtest.location: '{nextPQTestLocation}' does not exist.",
+  "PQSdk.taskQueue.error.pqtestLocationNotSet": "Configuration value: powerquery.sdk.tools.location is not set.",
+  "PQSdk.taskQueue.error.pqtestLocationDoesntExist": "Directory powerquery.sdk.tools.location: '{nextPQTestLocation}' does not exist.",
   "PQSdk.taskQueue.error.pqtestExecutableDoesntExist": "PQTest.exe not found at {pqtestExe}.",
   "PQTest.result.view.title": "PQTest result"
 }

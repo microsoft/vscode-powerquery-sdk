@@ -13,7 +13,7 @@ import { ExtractValueEventEmitterTypes, ValueEventEmitter } from "../common/Valu
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { extensionI18n } from "../i18n/extension";
 
-const PqTestResultViewPanelPrefix: string = `powerquery.sdk.pqtest`;
+const PqTestResultViewPanelPrefix: string = `powerquery.sdk.tools`;
 
 // eslint-disable-next-line @typescript-eslint/typedef
 const SimpleBrokerValues = Object.freeze({

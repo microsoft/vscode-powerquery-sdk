@@ -347,12 +347,12 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
 
     private resolvePQServiceHostPath(nextPQTestLocation: string | undefined): string | undefined {
         if (!nextPQTestLocation) {
-            this.outputChannel.appendErrorLine("powerquery.sdk.pqtest.location configuration value is not set.");
+            this.outputChannel.appendErrorLine("powerquery.sdk.tools.location configuration value is not set.");
 
             return undefined;
         } else if (!fs.existsSync(nextPQTestLocation)) {
             this.outputChannel.appendErrorLine(
-                `powerquery.sdk.pqtest.location set to '${nextPQTestLocation}' but directory does not exist.`,
+                `powerquery.sdk.tools.location set to '${nextPQTestLocation}' but directory does not exist.`,
             );
 
             return undefined;
