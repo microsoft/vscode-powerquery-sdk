@@ -271,6 +271,22 @@ export function getCurrentWorkspaceSettingPath(): string | undefined {
     return undefined;
 }
 
+// set the language service mode to sdk only if it were defined and also needed for the workspace
+export function updateCurrentLocalPqModeIfNeeded(firstWorkspaceUriFsPath: string): void {
+    // set the language service mode to sdk only if it were defined and also needed for the workspace
+    const currentLocalVscSettingRecord: Record<string, string | undefined> =
+        manuallyGetLocalVscSetting(firstWorkspaceUriFsPath);
+
+    const currentLocalPqMode: string | undefined =
+        currentLocalVscSettingRecord[
+            `${ExtensionConstants.ConfigNames.PowerQuery}.${ExtensionConstants.ConfigNames.PowerQuery.properties.mode}`
+        ];
+
+    if (!currentLocalPqMode && ExtensionConfigurations.pqMode !== "SDK") {
+        void ExtensionConfigurations.setPqMode("SDK", vscode.ConfigurationTarget.Workspace);
+    }
+}
+
 export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
     const maybeFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
@@ -286,19 +302,7 @@ export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
                 // open the expected root-level pq connector file
                 void vscode.commands.executeCommand("vscode.open", vscode.Uri.file(expectedRootPqPath));
 
-                // set the language service mode to sdk only if it were defined and also needed for the workspace
-                const currentLocalVscSettingRecord: Record<string, string | undefined> = manuallyGetLocalVscSetting(
-                    maybeFirstWorkspaceUri.fsPath,
-                );
-
-                const currentLocalPqMode: string | undefined =
-                    currentLocalVscSettingRecord[
-                        `${ExtensionConstants.ConfigNames.PowerQuery}.${ExtensionConstants.ConfigNames.PowerQuery.properties.mode}`
-                    ];
-
-                if (!currentLocalPqMode && ExtensionConfigurations.pqMode !== "SDK") {
-                    void ExtensionConfigurations.setPqMode("SDK", vscode.ConfigurationTarget.Workspace);
-                }
+                updateCurrentLocalPqModeIfNeeded(maybeFirstWorkspaceUri.fsPath);
 
                 // build when freshly created, just execute the command
                 // to trigger the MaybeExecuteBuildTask from pqTestService
