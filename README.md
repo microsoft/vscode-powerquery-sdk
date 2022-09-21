@@ -10,38 +10,28 @@ Provides functionality related to the development and testing of [Custom Connect
 -   Run test queries
 -   View query results
 
-## How to build and install from source
-
-Install project dependencies:
-
-```msdos
-npm install
-```
-
-Build the project and create the vsix installer (`npx vsce package`):
-
-```msdos
-npm run vsix
-```
-
-Install the extension from the command line (`code --install-extension <pqsdk.vsix>`):
-
-```msdos
-npm run code-install
-```
 ## How to install the SDK using the Visual Studio Code User Interface
-/// TO DO
+
+1. Launch Visual Studio Code
+2. Select the Extensions view (Ctrl+Shift+X)
+
+![Open the extensions view in Visual Studio Code](media/list-extensions.jpg)
+
+3. Click the ellipse in the upper right hand corner of the Extensions view, and select **Install From VSIX ...**
+
+![Install the extension from a vsix file](media/install-from-vsix.jpg)
+
+4. Close and reopen Visual Studio Code
 
 ## Using the Power Query SDK
 
-This article focuses on the experience available for the Power Query SDK found in Visual Studio Code. You can learn more on how to install the Power Query SDK for Visual Studio from the article on [Installing the SDK](/powerquery-docs/InstallingSDK.md).
+This article focuses on the experience available for the Power Query SDK found in Visual Studio Code. You can learn more on how to install the Power Query SDK for Visual Studio from the article on [Installing the SDK](https://learn.microsoft.com/power-query/installingsdk).
 
 ### Create a new project
 
->[!TIP]
->Before creating an extension project, it is recommended that you create a new folder where you'll store your extension project. During the creation of a new project, if no folder is selected, the Power Query SDK will help you locate or create a new folder before creating your extension project.
+> Before creating an extension project, it is recommended that you create a new folder where you'll store your extension project. During the creation of a new project, if no folder is selected, the Power Query SDK will help you locate or create a new folder before creating your extension project.
 
-Once in Visual Studio Code, In the main *Explorer* pane of Visual Studio Code, you'll be able to see a section with the name **Power Query SDK**. This section will have only one button that reads *Create an extension project*. Select this button.
+Once in Visual Studio Code, In the main _Explorer_ pane of Visual Studio Code, you'll be able to see a section with the name **Power Query SDK**. This section will have only one button that reads _Create an extension project_. Select this button.
 
 ![Create a new extension project button in Visual Studio Code](media/create-new-extension.jpg)
 
@@ -49,19 +39,19 @@ This button will open an input field at the top of the Visual Studio Code interf
 
 ![Creating a new extension project and naming the project](media/new-project-name.jpg)
 
-After a few seconds, your Visual Studio Code window should open the main *.pq file for your extension project that contains your connector logic. The Power Query SDK will automatically run some necessary tasks to complete the setup of your workspace and you can check this in the Output console in Visual Studio Code.
+After a few seconds, your Visual Studio Code window should open the main \*.pq file for your extension project that contains your connector logic. The Power Query SDK will automatically run some necessary tasks to complete the setup of your workspace and you can check this in the Output console in Visual Studio Code.
 
 ![Extension project created using the Hello World template](media/extension-project-created.jpg)
 
 The Power Query SDK automatically creates the following set of files:
 
-* A **settings.json** file that dictates specific settings to work with at your workspace level
-* It builds the extension as a **.mez** file and stores it in a new *bin\AnyCPU\Debug* folder
-* A set of connector icons as png files
-* A **resources.resx** that serves as the main storage for strings to be used in the extension
-* A .pq file that holds the main logic of your extension or connector
-* A .query.pq file that main purpose is to be used as a way to create test queries that you can later evaluate
-* A .proj file that holds information about the extension project
+-   A **settings.json** file that dictates specific settings to work with at your workspace level
+-   It builds the extension as a **.mez** file and stores it in a new _bin\AnyCPU\Debug_ folder
+-   A set of connector icons as png files
+-   A **resources.resx** that serves as the main storage for strings to be used in the extension
+-   A .pq file that holds the main logic of your extension or connector
+-   A .query.pq file that main purpose is to be used as a way to create test queries that you can later evaluate
+-   A .proj file that holds information about the extension project
 
 ![Connector files](media/connector-files.jpg)
 
@@ -69,11 +59,9 @@ Once a extension project is recognized by the Power Query SDK, the section for t
 
 ![Tasks inside the Power Query SDK section](media/ui-driven-tasks.jpg)
 
-
 ### Credentials
 
->[!IMPORTANT] 
->Before you can evaluate any queries of your data connector, it is required to have a credential set.
+> Before you can evaluate any queries of your data connector, it is required to have a credential set.
 
 The Power Query SDK offers multiple tasks through its user interface to allow you to set, list and delete credentials from your extension project.
 
@@ -84,11 +72,10 @@ The Power Query SDK is primarily driven by tasks that can be triggered via multi
 1. Through the entry in the Power Query SDK section in the Explorer pane
 
 ![Setting a credential through the Power Query SDK section in the Explorer](media/set-credential.jpg)
- 
+
 2. Through the Terminal by selecting the "Run Task..." option and selecting the group of tasks for powerquery
 
 ![Setting a credential through the Terminal menu](media/set-credential-terminal-task.jpg)
-
 
 When you run this task, Visual Studio Code will guide you through a series of prompts to allow you to set the credential. These series of prompts are predictable and will always consist of the same stages:
 
@@ -96,7 +83,7 @@ When you run this task, Visual Studio Code will guide you through a series of pr
 2. Choose the connector file
 3. Choose the authentication method
 
- For the existing extension project, the [authentication method](HandlingAuthentication.md) available is anonymous and once the authentication is set a message box confirming that a credential has been generated successfully should be shown at the bottom right corner of the window.
+For the existing extension project, the [authentication method](HandlingAuthentication.md) available is anonymous and once the authentication is set a message box confirming that a credential has been generated successfully should be shown at the bottom right corner of the window.
 
 ![Credential has been generated successfully](media/credential-set.jpg)
 
@@ -120,41 +107,29 @@ The informational messages for this task are also shown in the output console.
 
 ### Evaluate a query and the results panel
 
-Before you can evaluate any tests queries, a credential must be set. Using the connector that was created in the previous section, you can open the ***.query.pq** file that serves as your test query file.
+Before you can evaluate any tests queries, a credential must be set. Using the connector that was created in the previous section, you can open the **\*.query.pq** file that serves as your test query file.
 
 For this specific connector where the project name was MyConnector, the code looks as follows:
 
-``
-// Use this file to write queries to test your data connector
-let
-    result = MyConnector.Contents()
-in
-    result
-``
+`// Use this file to write queries to test your data connector let result = MyConnector.Contents() in result`
 
 Before evaluating the query, let's change the code to look as follows:
 
-``
-// Use this file to write queries to test your data connector
-let
-    result = MyConnector.Contents("Hello World")
-in
-    result
-``
+`// Use this file to write queries to test your data connector let result = MyConnector.Contents("Hello World") in result`
 
 Make sure to save the file after changing its code.
 
 To evaluate this query you have three options:
 
-* Right select the file that's in use and select the option that reads "Evaluate current power query file"
+-   Right select the file that's in use and select the option that reads "Evaluate current power query file"
 
 ![Right click the current file to evaluate it](media/right-click-evaluate.jpg)
 
-* Going through the Terminal menu and selecting the "Evaluate current file" task
+-   Going through the Terminal menu and selecting the "Evaluate current file" task
 
 ![Selecting the evaluate current file task from the terminal menu experience](media/terminal-evaluate.jpg)
 
-* Use the native Run & Debug option from Visual Studio Code, select the hyperlink to create a launch.json file and then evaluate the file
+-   Use the native Run & Debug option from Visual Studio Code, select the hyperlink to create a launch.json file and then evaluate the file
 
 ![Create a launch.json file to evaluate queries through the Run and Debug extensibility](media/create-launch-json.jpg)
 
@@ -164,21 +139,20 @@ After evaluating the query, the results will be displayed in the console at the 
 
 The results panel consists of three tabs:
 
-* **Output tab:** Displays a data preview of the query evaluated. If it's a table it will be displayed as grid.
+-   **Output tab:** Displays a data preview of the query evaluated. If it's a table it will be displayed as grid.
 
 ![Output tab in the results panel](media/results-output.jpg)
 
-* **Summary:** Displays a summary of the Activity that ran the evaluation with statistics around it.
+-   **Summary:** Displays a summary of the Activity that ran the evaluation with statistics around it.
 
 ![Summary tab in the results panel](media/summary-output.jpg)
 
-* **DataSource:** Displays general information about the data source used for the evaluation.
+-   **DataSource:** Displays general information about the data source used for the evaluation.
 
 ![Summary tab in the results panel](media/datasource-output.jpg)
 
-To evaluate a different query you simply need to modify the *.query.pq file, save it and then run the evaluation task again with any of the three methods.
+To evaluate a different query you simply need to modify the \*.query.pq file, save it and then run the evaluation task again with any of the three methods.
 
->[!NOTE]
 > The Power Query SDK does not manage any sort of caching mechanism for the evaluations.
 
 ### Bring a legacy extension project to the new SDK
@@ -192,11 +166,11 @@ To bring the legacy extension project to the new SDK, follow these steps:
 1. Navigate to the folder where your extension project is located with Visual Studio Code's "Open folder" option in the File menu
 2. Setup a workspace using the existing folder and its contents via one of the following two methods:
 
-* The Power Query SDK has a mechanism to recognize the contents of your folder and suggest you to enable the conversion to a Power Query SDK workspace
+-   The Power Query SDK has a mechanism to recognize the contents of your folder and suggest you to enable the conversion to a Power Query SDK workspace
 
 ![Popup in the Visual Studio Code interface that suggests the user an upgrade to the Power Query SDK workspace](media/upgrade-suggestion.jpg)
 
-* You can run the **Setup workspace** and the **Build Task** from the terminal menu. These will effectively create the **.mez** file and the **settings.json** files needed for the workspace
+-   You can run the **Setup workspace** and the **Build Task** from the terminal menu. These will effectively create the **.mez** file and the **settings.json** files needed for the workspace
 
 The addition of the two new folders and files is what transforms the current workspace into a new Power Query SDK workspace.
 
@@ -222,10 +196,29 @@ The result of such task will be displayed in the output terminal at the bottom o
 
 ![Result of the Run TestConnection function in the Power Query SDK](media/TestConnection.jpg)
 
-
 ## Related projects
 
 [vscode-powerquery](https://github.com/microsoft/vscode-powerquery)
+
+## How to build and install from source
+
+Install project dependencies:
+
+```msdos
+npm install
+```
+
+Build the project and create the vsix installer (`npx vsce package`):
+
+```msdos
+npm run vsix
+```
+
+Install the extension from the command line (`code --install-extension <pqsdk.vsix>`):
+
+```msdos
+npm run code-install
+```
 
 ## Contributing
 
