@@ -124,6 +124,24 @@
                     "deprecationMessage": "Deprecated: Please use powerquery.sdk.features.autoDetection instead.",
                     "markdownDeprecationMessage": "**Deprecated**: Please use `#powerquery.sdk.features.autoDetection#` instead."
                 },
+                "powerquery.sdk.pqtest.location": {
+                    "scope": "machine-overridable",
+                    "type": "string",
+                    "deprecationMessage": "Deprecated: Please use powerquery.sdk.tools.location instead.",
+                    "description": "%extension.pqtest.config.pqtest.location.description%"
+                },
+                "powerquery.sdk.pqtest.extension": {
+                    "scope": "window",
+                    "type": "string",
+                    "deprecationMessage": "Deprecated: Please use powerquery.sdk.defaultExtension instead.",
+                    "description": "%extension.pqtest.config.pqtest.extension.description%"
+                },
+                "powerquery.sdk.pqtest.queryFile": {
+                    "scope": "window",
+                    "type": "string",
+                    "deprecationMessage": "Deprecated: Please use powerquery.sdk.defaultQueryFile instead.",
+                    "description": "%extension.pqtest.config.pqtest.queryFile.description%"
+                },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
                     "type": "string",
