@@ -139,12 +139,12 @@
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.location.description%"
                 },
-                "powerquery.sdk.tools.extension": {
+                "powerquery.sdk.defaultExtension": {
                     "scope": "window",
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.extension.description%"
                 },
-                "powerquery.sdk.tools.queryFile": {
+                "powerquery.sdk.defaultQueryFile": {
                     "scope": "window",
                     "type": "string",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"

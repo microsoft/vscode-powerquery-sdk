@@ -48,11 +48,11 @@ export module ConnectorProjects {
     export function assertNewlyCreatedWorkspaceSettingsIntact(newExtensionName: string, targetDirectory: string): void {
         const currentSdkSettings = ConnectorProjects.getVscSettings(newExtensionName, targetDirectory);
 
-        expect(currentSdkSettings["powerquery.sdk.tools.queryFile"]).eq(
+        expect(currentSdkSettings["powerquery.sdk.defaultQueryFile"]).eq(
             "${workspaceFolder}\\${workspaceFolderBasename}.query.pq",
         );
 
-        expect(currentSdkSettings["powerquery.sdk.tools.extension"]).eq(
+        expect(currentSdkSettings["powerquery.sdk.defaultExtension"]).eq(
             "${workspaceFolder}\\bin\\AnyCPU\\Debug\\${workspaceFolderBasename}.mez",
         );
 
