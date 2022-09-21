@@ -10,6 +10,7 @@ import * as chai from "chai";
 import { BottomBarPanel, OutputView } from "vscode-extension-tester";
 
 import { delay } from "../../utils/pids";
+import { pqSdkOutputChannelName } from "../common";
 
 const expect = chai.expect;
 
@@ -19,9 +20,9 @@ export module VscOutputChannels {
 
         // get names of all available channels
         const outputChannelNames = await outputView.getChannelNames();
-        expect(outputChannelNames.indexOf("Power Query SDK")).gt(-1);
+        expect(outputChannelNames.indexOf(pqSdkOutputChannelName)).gt(-1);
         // select a channel from the drop box by name
-        await outputView.selectChannel("Power Query SDK");
+        await outputView.selectChannel(pqSdkOutputChannelName);
 
         await delay(250);
 

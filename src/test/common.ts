@@ -10,7 +10,15 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import * as os from "os";
 import * as path from "path";
 
+import extension18nJson from "../i18n/extension.json";
+import root18nJson from "../../package.nls.json";
 import rootPackageJson from "../../package.json";
+
+export const rootI18n = root18nJson;
+export const extensionI18n = extension18nJson;
+
+export const defaultPqCommandCategory = "Power query";
+export const pqSdkOutputChannelName: string = "Power Query SDK";
 
 export const MAX_AWAIT_TIME: number = 2 * 60e3;
 export const AWAIT_INTERVAL: number = 5e3;

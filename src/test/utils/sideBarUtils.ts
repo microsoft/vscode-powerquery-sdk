@@ -6,12 +6,16 @@
  */
 
 import { DefaultTreeSection, InputBox, SideBarView, ViewSection, Workbench } from "vscode-extension-tester";
+
+import { extensionI18n, rootI18n } from "../common";
 import { delay } from "../../utils/pids";
 
 export module VscSideBars {
     export async function expandAndShowPqSdkSection(workbench?: Workbench): Promise<ViewSection> {
+        const primaryExplorerName = rootI18n["extension.pqtest.explorer.name"];
+
         const sideBarView = workbench ? workbench.getSideBar() : new SideBarView();
-        const pqSdkViewSection = await sideBarView.getContent().getSection("Power query SDK");
+        const pqSdkViewSection = await sideBarView.getContent().getSection(primaryExplorerName);
 
         await pqSdkViewSection.expand();
 
@@ -33,7 +37,8 @@ export module VscSideBars {
     }
 
     export async function clickClearAllCredentials(pqSdkViewSection: ViewSection): Promise<void> {
-        const clearAllCredentialsItem = await pqSdkViewSection.findItem("Clear ALL credentials");
+        const deleteAllCredentialsTitle = extensionI18n["PQSdk.lifecycleTreeView.item.deleteAllCredentials.title"];
+        const clearAllCredentialsItem = await pqSdkViewSection.findItem(deleteAllCredentialsTitle);
         clearAllCredentialsItem?.click();
         await delay(750);
     }
@@ -42,7 +47,8 @@ export module VscSideBars {
         pqSdkViewSection: ViewSection,
         candidates: string[],
     ): Promise<void> {
-        const setCredentialItem = await pqSdkViewSection.findItem("Set credential");
+        const createOneCredentialTitle = extensionI18n["PQSdk.lifecycleTreeView.item.createOneCredential.title"];
+        const setCredentialItem = await pqSdkViewSection.findItem(createOneCredentialTitle);
         setCredentialItem?.click();
         await delay(750);
 

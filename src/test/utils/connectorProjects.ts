@@ -11,6 +11,7 @@ import * as path from "path";
 
 import { InputBox, Key, Workbench } from "vscode-extension-tester";
 
+import { defaultPqCommandCategory, rootI18n } from "../common";
 import { delay } from "../../utils/pids";
 
 const expect = chai.expect;
@@ -21,7 +22,9 @@ export module ConnectorProjects {
         newExtensionName: string,
         targetDirectory: string,
     ): Promise<void> {
-        await workbench.executeCommand("power query: create an extension project");
+        const createNewProjectCommandTitle = rootI18n["extension.pqtest.CreateNewProjectCommand.title"];
+
+        await workbench.executeCommand(`${defaultPqCommandCategory}: ${createNewProjectCommandTitle}`);
 
         // InputBox.
         const inputBox = await InputBox.create();
