@@ -28,6 +28,9 @@ const ConfigNames = {
     PowerQuerySdk: {
         name: "powerquery.sdk" as const,
         properties: {
+            deprecatedPqTestLocation: "pqtest.location" as const,
+            deprecatedPqTestExtensionFileLocation: "pqtest.extension" as const,
+            deprecatedPqTestQueryFileLocation: "pqtest.queryFile" as const,
             autoDetection: "features.autoDetection" as const,
             externalsMsbuildPath: "externals.msbuildPath" as const,
             externalsNugetPath: "externals.nugetPath" as const,

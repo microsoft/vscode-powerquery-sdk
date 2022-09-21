@@ -163,7 +163,11 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation);
+        return (
+            config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation) ??
+            // adaptability of a deprecated config item
+            config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestLocation)
+        );
     },
 
     setDefaultExtensionLocation(
@@ -185,7 +189,11 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation);
+        return (
+            config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation) ??
+            // adaptability of a deprecated config item
+            config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestExtensionFileLocation)
+        );
     },
 
     setDefaultQueryFileLocation(
@@ -207,7 +215,11 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation);
+        return (
+            config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation) ??
+            // adaptability of a deprecated config item
+            config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestQueryFileLocation)
+        );
     },
     get featureUseServiceHost(): boolean {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
