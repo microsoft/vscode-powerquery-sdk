@@ -16,6 +16,7 @@ export module VscSettings {
     }
 
     export function findEnableServiceHostSetting(workbench?: Workbench): Promise<Setting> {
+        // this string got rephrased out of the contributor path 'powerquery.sdk.features.useServiceHost'
         return VscSettings.findSettings("Use Service Host", ["Powerquery", "Sdk", "Features"], workbench);
     }
 
@@ -25,6 +26,7 @@ export module VscSettings {
 
         if (enableServiceHostValue) {
             await enableServiceHostSetting.setValue(false);
+            // vsc built in commands
             workbench?.executeCommand("Developer: Reload Window");
         }
 
@@ -37,6 +39,7 @@ export module VscSettings {
 
         if (!enableServiceHostValue) {
             await enableServiceHostSetting.setValue(true);
+            // vsc built in commands
             workbench?.executeCommand("Developer: Reload Window");
         }
 
