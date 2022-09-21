@@ -306,11 +306,11 @@ export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
 
                 // build when freshly created, just execute the command
                 // to trigger the MaybeExecuteBuildTask from pqTestService
-                await vscode.commands.executeCommand("powerquery.sdk.pqtest.BuildProjectCommand");
+                await vscode.commands.executeCommand("powerquery.sdk.tools.BuildProjectCommand");
                 // and also setup the workspace as the output of the msbuild might be different
-                await vscode.commands.executeCommand("powerquery.sdk.pqtest.SetupCurrentWorkspaceCommand");
+                await vscode.commands.executeCommand("powerquery.sdk.tools.SetupCurrentWorkspaceCommand");
                 // and seize its info for the very first time
-                await vscode.commands.executeCommand("powerquery.sdk.pqtest.DisplayExtensionInfoCommand");
+                await vscode.commands.executeCommand("powerquery.sdk.tools.DisplayExtensionInfoCommand");
             }
         }
     }

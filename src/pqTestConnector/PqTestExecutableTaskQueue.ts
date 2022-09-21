@@ -369,7 +369,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             if (this.firstTimeReady) {
                 // and we also need to ensure we got a valid pq connector mez file
                 const currentPQTestExtensionFileLocation: string | undefined =
-                    ExtensionConfigurations.PQTestExtensionFileLocation;
+                    ExtensionConfigurations.DefaultExtensionLocation;
 
                 const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
                     ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
@@ -462,7 +462,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "info",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
         });
     }
 
@@ -479,8 +479,8 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return this.doEnqueueOneTask<any>({
             operation: "credential-template",
             // additionalArgs: [`--authentication-kind ${authenticationKind}`],
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
         });
     }
 
@@ -488,8 +488,8 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "set-credential",
             // additionalArgs: [`${JSON.stringify(payload)}`],
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
             stdinStr: payloadStr,
         });
     }
@@ -573,7 +573,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "set-credential",
             additionalArgs,
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
             pathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
             stdinStr: payloadStr,
         });
@@ -582,8 +582,8 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     public RefreshCredential(): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "refresh-credential",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
         });
     }
 
@@ -595,7 +595,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
         const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-            ExtensionConfigurations.PQTestQueryFileLocation,
+            ExtensionConfigurations.DefaultQueryFileLocation,
         );
 
         // todo maybe we could export this lang id to from the lang svc extension
@@ -610,7 +610,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "run-test",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
             pathToQueryFile,
         });
     }
@@ -618,8 +618,8 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     public TestConnection(): Promise<GenericResult> {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "test-connection",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
         });
     }
 }

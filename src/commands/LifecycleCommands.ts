@@ -56,7 +56,7 @@ import { NugetVersions } from "../utils/NugetVersions";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../common/SpawnedProcess";
 
-const CommandPrefix: string = `powerquery.sdk.pqtest`;
+const CommandPrefix: string = `powerquery.sdk.tools`;
 
 const validateProjectNameRegExp: RegExp = /[A-Za-z]+/;
 const templateFileBaseName: string = "PQConn";
@@ -145,7 +145,7 @@ export class LifecycleCommands implements IDisposable {
         // update lastCtimeOfMezFileWhoseInfoSeized once its info:static-type-check got re-eval
         this.pqTestService.currentExtensionInfos.subscribe(() => {
             const currentPQTestExtensionFileLocation: string | undefined =
-                ExtensionConfigurations.PQTestExtensionFileLocation;
+                ExtensionConfigurations.DefaultExtensionLocation;
 
             const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
                 ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
@@ -180,8 +180,7 @@ export class LifecycleCommands implements IDisposable {
     private currentIncorrectConnectorPathInSettingGotPromptedBefore: boolean = false;
     private lastCtimeOfMezFileWhoseInfoSeized: Date = new Date(0);
     private promptSettingIncorrectOrInvokeInfoTaskIfNeeded(): void {
-        const currentPQTestExtensionFileLocation: string | undefined =
-            ExtensionConfigurations.PQTestExtensionFileLocation;
+        const currentPQTestExtensionFileLocation: string | undefined = ExtensionConfigurations.DefaultExtensionLocation;
 
         const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
@@ -217,7 +216,7 @@ export class LifecycleCommands implements IDisposable {
 
             setTimeout(async () => {
                 const currentPQTestExtensionFileLocation: string | undefined =
-                    ExtensionConfigurations.PQTestExtensionFileLocation;
+                    ExtensionConfigurations.DefaultExtensionLocation;
 
                 const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
                     ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
@@ -280,8 +279,8 @@ export class LifecycleCommands implements IDisposable {
 
             if (
                 anyPqFiles.length &&
-                !ExtensionConfigurations.PQTestQueryFileLocation &&
-                !ExtensionConfigurations.PQTestExtensionFileLocation
+                !ExtensionConfigurations.DefaultQueryFileLocation &&
+                !ExtensionConfigurations.DefaultExtensionLocation
             ) {
                 const enableStr: string = extensionI18n["PQSdk.common.enable"];
 
@@ -333,9 +332,9 @@ export class LifecycleCommands implements IDisposable {
         const nullableFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
         let hasPQTestExtensionFileLocation: boolean = false;
 
-        if (ExtensionConfigurations.PQTestExtensionFileLocation) {
+        if (ExtensionConfigurations.DefaultExtensionLocation) {
             const resolvedPQTestExtensionFileLocation: string | undefined = resolveSubstitutedValues(
-                ExtensionConfigurations.PQTestExtensionFileLocation,
+                ExtensionConfigurations.DefaultExtensionLocation,
             );
 
             hasPQTestExtensionFileLocation = Boolean(
@@ -370,13 +369,13 @@ export class LifecycleCommands implements IDisposable {
                         );
                     }
 
-                    if (ExtensionConfigurations.PQTestExtensionFileLocation !== mezExtensionPath) {
-                        void ExtensionConfigurations.setPQTestExtensionFileLocation(mezExtensionPath);
+                    if (ExtensionConfigurations.DefaultExtensionLocation !== mezExtensionPath) {
+                        void ExtensionConfigurations.setDefaultExtensionLocation(mezExtensionPath);
 
                         this.outputChannel.appendInfoLine(
                             resolveI18nTemplate("PQSdk.lifecycle.command.set.config", {
                                 configName:
-                                    ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation,
+                                    ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation,
                                 configValue: mezExtensionPath,
                             }),
                         );
@@ -385,7 +384,7 @@ export class LifecycleCommands implements IDisposable {
             );
         }
 
-        if (!ExtensionConfigurations.PQTestQueryFileLocation) {
+        if (!ExtensionConfigurations.DefaultQueryFileLocation) {
             tasks.push(
                 (async (): Promise<void> => {
                     const connectorQueryUrls: Uri[] = await vscWorkspace.findFiles("*.{m,pq}", null, 10);
@@ -402,12 +401,13 @@ export class LifecycleCommands implements IDisposable {
                                 substitutedWorkspaceFolderBasenameIfNeeded(path.basename(relativePath)),
                             );
 
-                            void ExtensionConfigurations.setPQTestQueryFileLocation(primaryConnQueryLocation);
+                            void ExtensionConfigurations.setDefaultQueryFileLocation(primaryConnQueryLocation);
 
                             this.outputChannel.appendInfoLine(
                                 resolveI18nTemplate("PQSdk.lifecycle.command.set.config", {
                                     configName:
-                                        ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation,
+                                        ExtensionConstants.ConfigNames.PowerQuerySdk.properties
+                                            .defaultQueryFileLocation,
                                     configValue: primaryConnQueryLocation,
                                 }),
                             );

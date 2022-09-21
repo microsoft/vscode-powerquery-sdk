@@ -28,12 +28,15 @@ const ConfigNames = {
     PowerQuerySdk: {
         name: "powerquery.sdk" as const,
         properties: {
+            deprecatedPqTestLocation: "pqtest.location" as const,
+            deprecatedPqTestExtensionFileLocation: "pqtest.extension" as const,
+            deprecatedPqTestQueryFileLocation: "pqtest.queryFile" as const,
             autoDetection: "features.autoDetection" as const,
             externalsMsbuildPath: "externals.msbuildPath" as const,
             externalsNugetPath: "externals.nugetPath" as const,
-            pqTestLocation: "pqtest.location" as const,
-            pqTestExtensionFileLocation: "pqtest.extension" as const,
-            pqTestQueryFileLocation: "pqtest.queryFile" as const,
+            pqTestLocation: "tools.location" as const,
+            defaultExtensionLocation: "defaultExtension" as const,
+            defaultQueryFileLocation: "defaultQueryFile" as const,
             featureUseServiceHost: "features.useServiceHost" as const,
         },
     },
@@ -41,12 +44,12 @@ const ConfigNames = {
 
 const ConfigPathToConnector: string =
     "${config:" +
-    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation}` +
+    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation}` +
     "}";
 
 const ConfigPathToTestConnectionFile: string =
     "${config:" +
-    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation}` +
+    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation}` +
     "}";
 
 const PQLanguageId: string = "powerquery";
