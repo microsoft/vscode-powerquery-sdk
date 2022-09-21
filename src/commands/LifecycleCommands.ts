@@ -224,10 +224,11 @@ export class LifecycleCommands implements IDisposable {
 
                 // still not found
                 if (!resolvedPQTestExtensionFileLocation || !fs.existsSync(resolvedPQTestExtensionFileLocation)) {
+                    const anyPqFiles: Uri[] = await getAnyPqFileBeneathTheFirstWorkspace();
                     const nullableCurrentWorkspaceSettingPath: string | undefined = getCurrentWorkspaceSettingPath();
 
-                    // and we are beneath an opened workspace
-                    if (nullableCurrentWorkspaceSettingPath) {
+                    // and we are beneath an opened workspace and there are pq.files be opened pq workspace
+                    if (anyPqFiles.length && nullableCurrentWorkspaceSettingPath) {
                         const openStr: string = resolveI18nTemplate("PQSdk.common.open.file", {
                             fileName: "setting.json",
                         });
