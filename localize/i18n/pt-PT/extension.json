@@ -72,7 +72,7 @@
   "PQSdk.lifecycleTreeView.item.refreshCredentials.title": "Refresh credentials",
   "PQSdk.lifecycleTreeView.item.deleteAllCredentials.title": "Clear ALL credentials",
   "PQSdk.lifecycleTreeView.item.evaluateOpenedFile.title": "Evaluate current file",
-  "PQSdk.lifecycleTreeView.item.testConnection.title": "Test connection",
+  "PQSdk.lifecycleTreeView.item.testConnection.title": "Run TestConnection function",
   "PQSdk.lifecycleTreeView.item.displayExtensionInfo.title": "Connector info",
   "PQSdk.lifecycleTreeView.item.updateSdk.title": "Update SDK Tool",
   "PQSdk.lifecycleTreeView.item.updateSdk.currentVersion.label": "Current version: {currentPqSdkNugetVersion}",
