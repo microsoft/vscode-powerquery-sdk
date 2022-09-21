@@ -114,7 +114,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
             case "info":
                 result = {
                     ...result,
-                    pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                    pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                 };
 
                 break;
@@ -125,7 +125,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
             case "test-connection":
                 result = {
                     ...result,
-                    pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.PQTestExtensionFileLocation),
+                    pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     pathToQueryFile: path.resolve(program),
                 };
 

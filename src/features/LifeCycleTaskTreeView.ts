@@ -23,7 +23,7 @@ import { extensionI18n } from "../i18n/extension";
 import { getAnyPqFileBeneathTheFirstWorkspace } from "../utils/vscodes";
 import { LifecycleCommands } from "../commands/LifecycleCommands";
 
-const TreeViewPrefix: string = `powerquery.sdk.pqtest`;
+const TreeViewPrefix: string = `powerquery.sdk.tools`;
 
 export class LifecycleTreeViewItem extends TreeItem {
     constructor(
