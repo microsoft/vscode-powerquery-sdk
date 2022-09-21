@@ -95,13 +95,13 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                         this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation);
                     } else if (
                         evt.affectsConfiguration(
-                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation}`,
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation}`,
                         )
                     ) {
                         this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestExtension);
                     } else if (
                         evt.affectsConfiguration(
-                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation}`,
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation}`,
                         )
                     ) {
                         this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestQuery);

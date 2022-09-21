@@ -294,7 +294,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             if (this.firstTimeStarted) {
                 // and we also need to ensure we got a valid pq connector mez file
                 const currentPQTestExtensionFileLocation: string | undefined =
-                    ExtensionConfigurations.PQTestExtensionFileLocation;
+                    ExtensionConfigurations.DefaultExtensionLocation;
 
                 const resolvedPQTestExtensionFileLocation: string | undefined = currentPQTestExtensionFileLocation
                     ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
@@ -629,7 +629,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                     {
                         SessionId: this.sessionId,
                         PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                     },
                 ],
             };
@@ -670,7 +670,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                     {
                         SessionId: this.sessionId,
                         PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                     },
                 ],
             };
@@ -687,7 +687,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
             const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-                ExtensionConfigurations.PQTestQueryFileLocation,
+                ExtensionConfigurations.DefaultQueryFileLocation,
             );
 
             // todo, maybe we could export this lang id to from the lang svc extension
@@ -724,7 +724,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
             const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-                ExtensionConfigurations.PQTestQueryFileLocation,
+                ExtensionConfigurations.DefaultQueryFileLocation,
             );
 
             // todo, maybe we could export this lang id to from the lang svc extension
@@ -784,7 +784,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                     {
                         SessionId: this.sessionId,
                         PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                         InputTemplateString: payloadStr,
                     },
                 ],
@@ -832,7 +832,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                     {
                         SessionId: this.sessionId,
                         PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.PQTestQueryFileLocation),
+                        PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                     },
                 ],
             };

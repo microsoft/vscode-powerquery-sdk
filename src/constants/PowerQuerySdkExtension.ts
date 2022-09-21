@@ -32,8 +32,8 @@ const ConfigNames = {
             externalsMsbuildPath: "externals.msbuildPath" as const,
             externalsNugetPath: "externals.nugetPath" as const,
             pqTestLocation: "tools.location" as const,
-            pqTestExtensionFileLocation: "defaultExtension" as const,
-            pqTestQueryFileLocation: "defaultQueryFile" as const,
+            defaultExtensionLocation: "defaultExtension" as const,
+            defaultQueryFileLocation: "defaultQueryFile" as const,
             featureUseServiceHost: "features.useServiceHost" as const,
         },
     },
@@ -41,12 +41,12 @@ const ConfigNames = {
 
 const ConfigPathToConnector: string =
     "${config:" +
-    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation}` +
+    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation}` +
     "}";
 
 const ConfigPathToTestConnectionFile: string =
     "${config:" +
-    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation}` +
+    `${ConfigNames.PowerQuerySdk.name}.${ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation}` +
     "}";
 
 const PQLanguageId: string = "powerquery";

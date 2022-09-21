@@ -166,7 +166,7 @@ export const ExtensionConfigurations = {
         return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation);
     },
 
-    setPQTestExtensionFileLocation(
+    setDefaultExtensionLocation(
         PQTestExtensionFileLocation: string,
         configurationTarget: vscode.ConfigurationTarget | boolean = vscode.ConfigurationTarget.Workspace,
     ): Thenable<void> {
@@ -174,21 +174,21 @@ export const ExtensionConfigurations = {
         return vscode.workspace
             .getConfiguration()
             .update(
-                `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation}`,
+                `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation}`,
                 PQTestExtensionFileLocation,
                 configurationTarget,
             );
     },
-    get PQTestExtensionFileLocation(): string | undefined {
+    get DefaultExtensionLocation(): string | undefined {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExtensionFileLocation);
+        return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultExtensionLocation);
     },
 
-    setPQTestQueryFileLocation(
+    setDefaultQueryFileLocation(
         PQTestQueryFileLocation: string,
         configurationTarget: vscode.ConfigurationTarget | boolean = vscode.ConfigurationTarget.Workspace,
     ): Thenable<void> {
@@ -196,18 +196,18 @@ export const ExtensionConfigurations = {
         return vscode.workspace
             .getConfiguration()
             .update(
-                `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation}`,
+                `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation}`,
                 PQTestQueryFileLocation,
                 configurationTarget,
             );
     },
-    get PQTestQueryFileLocation(): string | undefined {
+    get DefaultQueryFileLocation(): string | undefined {
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestQueryFileLocation);
+        return config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultQueryFileLocation);
     },
     get featureUseServiceHost(): boolean {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
