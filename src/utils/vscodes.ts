@@ -16,7 +16,7 @@ import { replaceAt } from "./strings";
 
 const RegularSubstitutedValueRegexp: RegExp = /\${([A-Za-z0-9.]*)}/g;
 const EnvironmentSubstitutedValueRegexp: RegExp = /\${env:(.*?)}/g;
-const ConifigurationSubstitutedValueRegexp: RegExp = /\${config:(.*?)}/g;
+const ConfigurationSubstitutedValueRegexp: RegExp = /\${config:(.*?)}/g;
 
 function doResolveRegularSubstitutedValue(valueName: string): string {
     const workspaces: Readonly<vscode.WorkspaceFolder[]> | undefined = vscode.workspace.workspaceFolders;
@@ -151,7 +151,7 @@ export function resolveSubstitutedValues(str: string | undefined): string | unde
             if (curMatch && matchedType === SubstitutedValueMatchedStatus.NONE) {
                 matchedType = SubstitutedValueMatchedStatus.ENV;
             } else if (!curMatch) {
-                curMatch = ConifigurationSubstitutedValueRegexp.exec(result);
+                curMatch = ConfigurationSubstitutedValueRegexp.exec(result);
             }
 
             if (curMatch && matchedType === SubstitutedValueMatchedStatus.NONE) {
