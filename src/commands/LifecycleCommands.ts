@@ -39,6 +39,7 @@ import {
     getFirstWorkspaceFolder,
     resolveSubstitutedValues,
     substitutedWorkspaceFolderBasenameIfNeeded,
+    updateCurrentLocalPqModeIfNeeded,
 } from "../utils/vscodes";
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
 import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
@@ -329,6 +330,7 @@ export class LifecycleCommands implements IDisposable {
     public setupCurrentlyOpenedWorkspaceCommand(): Promise<unknown> {
         const tasks: Array<Promise<void>> = [];
 
+        const nullableFirstWorkspaceUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
         let hasPQTestExtensionFileLocation: boolean = false;
 
         if (ExtensionConfigurations.PQTestExtensionFileLocation) {
@@ -339,6 +341,10 @@ export class LifecycleCommands implements IDisposable {
             hasPQTestExtensionFileLocation = Boolean(
                 resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation),
             );
+        }
+
+        if (nullableFirstWorkspaceUri) {
+            updateCurrentLocalPqModeIfNeeded(nullableFirstWorkspaceUri.fsPath);
         }
 
         if (!hasPQTestExtensionFileLocation) {
