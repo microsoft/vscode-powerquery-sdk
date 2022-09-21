@@ -11,6 +11,7 @@ src/**
 test-resources/**
 unit-tests/**
 webviews/**
+media/**
 .eslintignore
 .gitignore
 .yarnrc
