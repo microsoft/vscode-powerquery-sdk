@@ -209,13 +209,25 @@ export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return vscode.workspace.workspaceFolders?.[0];
 }
 
-// require-await is redundant over here
+// require-await is not redundant over here
 // eslint-disable-next-line require-await
 export async function getAnyPqFileBeneathTheFirstWorkspace(): Promise<vscode.Uri[]> {
     const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
     if (theFirstWorkspace) {
         return vscode.workspace.findFiles("*.{pq}", "**/bin/**", 10);
+    }
+
+    return [];
+}
+
+// require-await is not redundant over here
+// eslint-disable-next-line require-await
+export async function getAnyMProjFilesBeneathTheFirstWorkspace(): Promise<vscode.Uri[]> {
+    const theFirstWorkspace: vscode.WorkspaceFolder | undefined = getFirstWorkspaceFolder();
+
+    if (theFirstWorkspace) {
+        return vscode.workspace.findFiles("*.{proj,mproj}", "**/bin/**", 1);
     }
 
     return [];
@@ -305,9 +317,9 @@ export async function maybeHandleNewWorkspaceCreated(): Promise<void> {
                 updateCurrentLocalPqModeIfNeeded(maybeFirstWorkspaceUri.fsPath);
 
                 // build when freshly created, just execute the command
-                // to trigger the MaybeExecuteBuildTask from pqTestService
+                // to trigger the ExecuteBuildTaskAndAwaitIfNeeded from pqTestService
                 await vscode.commands.executeCommand("powerquery.sdk.tools.BuildProjectCommand");
-                // and also setup the workspace as the output of the msbuild might be different
+                // and also set up the workspace as the output of the msbuild might be different
                 await vscode.commands.executeCommand("powerquery.sdk.tools.SetupCurrentWorkspaceCommand");
                 // and seize its info for the very first time
                 await vscode.commands.executeCommand("powerquery.sdk.tools.DisplayExtensionInfoCommand");

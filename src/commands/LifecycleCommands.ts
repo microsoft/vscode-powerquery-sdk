@@ -324,7 +324,7 @@ export class LifecycleCommands implements IDisposable {
     public async doBuildProjectCommand(): Promise<void> {
         await this.initPqSdkTool$deferred;
 
-        return this.pqTestService.MaybeExecuteBuildTask();
+        return this.pqTestService.ExecuteBuildTaskAndAwaitIfNeeded();
     }
 
     public setupCurrentlyOpenedWorkspaceCommand(): Promise<unknown> {

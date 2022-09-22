@@ -98,7 +98,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     public static buildMsbuildTask(): vscode.Task {
         return this.getTaskForBuildTaskDefinition(
             msbuildTaskDefinition,
-            ExtensionConfigurations.msbuildPath ?? "msbuild",
+            ExtensionConfigurations.msbuildPath || "msbuild",
         );
     }
     // the pqTestLocation might change during the runtime,

@@ -24,17 +24,16 @@ import {
 import { Disposable, IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
-import { getCtimeOfAFile, globFiles } from "../utils/files";
-import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
+
 import { convertStringToInteger } from "../utils/numbers";
+import { executeBuildTaskAndAwaitIfNeeded } from "./PqTestTaskUtils";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { pidIsRunning } from "../utils/pids";
-import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { PQTestTask } from "../common/PowerQueryTask";
+import { resolveSubstitutedValues } from "../utils/vscodes";
 import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
 // eslint-disable-next-line @typescript-eslint/typedef
@@ -410,45 +409,14 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
     }
 
-    async MaybeExecuteBuildTask(): Promise<void> {
-        const maybeCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
-        let needToRebuildBeforeEvaluation: boolean = true;
-
-        if (maybeCurrentWorkspace) {
-            const currentlyAllMezFiles: string[] = [];
-
-            for await (const oneFullPath of globFiles(path.join(maybeCurrentWorkspace, "bin"), (fullPath: string) =>
-                fullPath.endsWith(".mez"),
-            )) {
-                currentlyAllMezFiles.push(oneFullPath);
-            }
-
-            if (currentlyAllMezFiles.length === 1) {
-                const theCtimeOfTheFile: Date = getCtimeOfAFile(currentlyAllMezFiles[0]);
-                needToRebuildBeforeEvaluation = theCtimeOfTheFile <= this.lastPqRelatedFileTouchedDate;
-            } else {
-                needToRebuildBeforeEvaluation = true;
-            }
-
-            if (needToRebuildBeforeEvaluation) {
-                // remove all existing mez file
-                currentlyAllMezFiles.forEach((oneMezFileFullPath: string) => {
-                    fs.unlinkSync(oneMezFileFullPath);
-                });
-
-                // choose msbuild or makePQX compile as the build task
-                let theBuildTask: vscode.Task = PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestLocation);
-
-                if (ExtensionConfigurations.msbuildPath) {
-                    theBuildTask = PowerQueryTaskProvider.buildMsbuildTask();
-                }
-
-                // we should set lastPqRelatedFileTouchedDate first to ensure it is less than the new build's ctime
-                this.lastPqRelatedFileTouchedDate = new Date();
-
-                await PowerQueryTaskProvider.executeTask(theBuildTask);
-            }
-        }
+    ExecuteBuildTaskAndAwaitIfNeeded(): Promise<void> {
+        return executeBuildTaskAndAwaitIfNeeded(
+            this.pqTestLocation,
+            this.lastPqRelatedFileTouchedDate,
+            (nextLastPqRelatedFileTouchedDate: Date) => {
+                this.lastPqRelatedFileTouchedDate = nextLastPqRelatedFileTouchedDate;
+            },
+        );
     }
 
     public DeleteCredential(): Promise<GenericResult> {
@@ -590,7 +558,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
         // maybe we need to execute the build task before evaluating.
-        await this.MaybeExecuteBuildTask();
+        await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
