@@ -6,11 +6,15 @@
  */
 
 import React, { useMemo } from "react";
+
+import { MessageBarType } from "@fluentui/react/lib/MessageBar";
 import { Pivot, PivotItem } from "@fluentui/react/lib/Pivot";
 
+import { CloseableMessageBoxComp } from "../components/MessageBoxComp";
+
 import { TestBatteryGeneralGrid } from "../components/TestBatteryGeneralGrid";
-import { flattenJSON } from "../utils/jsons";
 import { useI18n } from "../i18n";
+import { flattenJSON } from "../utils/jsons";
 
 interface TestBatteryResult {
     testRunExecution: any;
@@ -32,6 +36,17 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         () => Array.isArray(testRunExecution.Output) && testRunExecution.Output.length,
         [testRunExecution],
     );
+
+    const errorDetailsString = useMemo<string | null>(
+        () =>
+            testRunExecution.Status !== "Passed" &&
+            testRunExecution.Details &&
+            typeof testRunExecution.Details === "string"
+                ? testRunExecution.Details
+                : null,
+        [testRunExecution],
+    );
+
     const hasDataSource = useMemo(
         () => Array.isArray(testRunExecution.DataSourceAnalysis) && testRunExecution.DataSourceAnalysis.length,
         [testRunExecution],
@@ -77,6 +92,15 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
 
     return (
         <>
+            {errorDetailsString ? (
+                <CloseableMessageBoxComp
+                    key={new Date().getTime()}
+                    messageBarType={MessageBarType.error}
+                    isMultiline={true}
+                >
+                    {errorDetailsString}
+                </CloseableMessageBoxComp>
+            ) : null}
             <Pivot aria-label="PQTest battery test result" defaultSelectedKey={hasOutput ? "Output" : "Summary"}>
                 {hasOutput ? (
                     <PivotItem key="output" headerText={OutputLabel}>

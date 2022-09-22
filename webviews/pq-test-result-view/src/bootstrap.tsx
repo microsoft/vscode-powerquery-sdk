@@ -7,7 +7,11 @@
 
 import React from "react";
 import ReactDom from "react-dom";
+
+import { initializeIcons } from "@fluentui/react/lib/Icons";
 import App from "./App";
+
+initializeIcons();
 
 window.addEventListener(
     "contextmenu",

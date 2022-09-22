@@ -1,4 +1,5 @@
 {
+  "common.dismiss.label" : "Close",
   "testBatteryResView.Table.Output.Title" : "Output",
   "testBatteryResView.Table.Output.Summary" : "Summary",
   "testBatteryResView.Table.Output.DataSource" : "DataSource"
