@@ -21,7 +21,7 @@
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Path to the connector file (--extension)",
   "extension.pqtest.taskDefinitions.properties.pathToQueryFile.description": "Path to the query file (--queryFile)",
   "extension.pqtest.explorer.name": "Power query SDK",
-  "extension.pqtest.welcome.contents": "In order to use extension features, you need to create an Power query extension project.\n[Create an extension project](command:powerquery.sdk.pqtest.CreateNewProjectCommand)\nTo learn more about how to create an extension, [read our docs](https://aka.ms/PowerQuerySDKDocs).",
+  "extension.pqtest.welcome.contents": "In order to use extension features, you need to create an Power query extension project.\n[Create an extension project](command:powerquery.sdk.tools.CreateNewProjectCommand)\nTo learn more about how to create an extension, [read our docs](https://aka.ms/PowerQuerySDKDocs).",
   "extension.pqtest.debugger.properties.program.description": "Absolute path to a power query file.",
   "extension.pqtest.debugger.properties.trace.description": "Enable logging of the Debug",
   "extension.pqtest.debugger.properties.operation.description": "PQTest operation string",
