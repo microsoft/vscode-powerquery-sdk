@@ -24,3 +24,9 @@ body{
   min-width: calc( 100vw - 40px );
   min-height: 100vh;
 }
+
+
+ //fluent message bar
+.ms-MessageBar.ms-MessageBar--error{
+  background-color: var(--vscode-notificationsErrorIcon-foreground);
+}
