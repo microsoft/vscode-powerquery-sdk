@@ -162,7 +162,7 @@ export class LifecycleCommands implements IDisposable {
             }
         });
 
-        this.intervalTaskHandler = setInterval(this.intervalTask.bind(this), 2995);
+        this.intervalTaskHandler = setInterval(this.intervalTask.bind(this), 3995);
     }
 
     private disposeIntervalTasks(): void {
