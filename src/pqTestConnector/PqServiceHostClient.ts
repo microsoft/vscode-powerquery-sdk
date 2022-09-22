@@ -245,6 +245,9 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                         }
                     }
 
+                    // we need not infer general error string in serviceHost mode
+                    // as it would be handled by the InnerException
+
                     // todo, mv this logic to pqServiceHost
                     if (maybePendingTask.request.method === "v1/PqTestService/DisplayExtensionInfo") {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
