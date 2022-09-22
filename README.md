@@ -111,11 +111,23 @@ Before you can evaluate any tests queries, a credential must be set. Using the c
 
 For this specific connector where the project name was MyConnector, the code looks as follows:
 
-`// Use this file to write queries to test your data connector let result = MyConnector.Contents() in result`
+````
+// Use this file to write queries to test your data connector 
+let
+    result = MyConnector.Contents()
+in 
+    result
+````
 
 Before evaluating the query, let's change the code to look as follows:
 
-`// Use this file to write queries to test your data connector let result = MyConnector.Contents("Hello World") in result`
+````
+// Use this file to write queries to test your data connector 
+let 
+    result = MyConnector.Contents("Hello World") 
+in 
+    result
+````
 
 Make sure to save the file after changing its code.
 
