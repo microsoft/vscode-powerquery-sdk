@@ -69,3 +69,25 @@ export async function executeBuildTaskAndAwaitIfNeeded(
         }
     }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function inferAnyGeneralErrorString(resultJson: any): string {
+    let result: string = "";
+
+    if (Array.isArray(resultJson)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resultJson.some((one: any) => {
+            if (typeof one["ErrorStatus"] === "string" && one["ErrorStatus"]) {
+                result = one["ErrorStatus"];
+
+                return true;
+            }
+
+            return false;
+        });
+    } else if (typeof resultJson["ErrorStatus"] === "string" && resultJson["ErrorStatus"]) {
+        result = resultJson["ErrorStatus"];
+    }
+
+    return result;
+}

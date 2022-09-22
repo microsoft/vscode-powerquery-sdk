@@ -23,12 +23,12 @@ import {
 } from "../common/PQTestService";
 import { Disposable, IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
+import { executeBuildTaskAndAwaitIfNeeded, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { convertStringToInteger } from "../utils/numbers";
-import { executeBuildTaskAndAwaitIfNeeded } from "./PqTestTaskUtils";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { pidIsRunning } from "../utils/pids";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
@@ -59,6 +59,18 @@ export class PqTestExecutableTaskError extends Error {
         public readonly processExit: ProcessExit,
     ) {
         super(`Failed to execute ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+        this.processExit = processExit;
+    }
+}
+
+export class PqTestExecutableDetailedTaskError extends Error {
+    constructor(
+        public readonly details: string,
+        public readonly pqTestExeFullPath: string,
+        public readonly processArgs: string[],
+        public readonly processExit: ProcessExit,
+    ) {
+        super(`${details}, failed to execute ${pqTestExeFullPath} ${processArgs.join(" ")}`);
         this.processExit = processExit;
     }
 }
@@ -304,13 +316,26 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                         // noop
                     }
 
-                    if (pendingTask.operation === "info") {
-                        this.currentExtensionInfos.emit(resultJson);
-                    } else if (pendingTask.operation === "list-credential") {
-                        this.currentCredentials.emit(resultJson);
-                    }
+                    const errMessage: string = inferAnyGeneralErrorString(resultJson);
 
-                    pendingTask.resolve(resultJson);
+                    if (errMessage) {
+                        pendingTask.reject(
+                            new PqTestExecutableDetailedTaskError(
+                                errMessage,
+                                pqTestExeFullPath,
+                                processArgs,
+                                processExit,
+                            ),
+                        );
+                    } else {
+                        if (pendingTask.operation === "info") {
+                            this.currentExtensionInfos.emit(resultJson);
+                        } else if (pendingTask.operation === "list-credential") {
+                            this.currentCredentials.emit(resultJson);
+                        }
+
+                        pendingTask.resolve(resultJson);
+                    }
                 } else {
                     this.outputChannel.appendErrorLine(
                         resolveI18nTemplate("PQSdk.taskQueue.info.taskExitAbnormally", {
