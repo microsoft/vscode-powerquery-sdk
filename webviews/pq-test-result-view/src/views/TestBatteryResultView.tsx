@@ -96,7 +96,7 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
                 <CloseableMessageBoxComp
                     key={new Date().getTime()}
                     messageBarType={MessageBarType.error}
-                    isMultiline={false}
+                    isMultiline={true}
                 >
                     {errorDetailsString}
                 </CloseableMessageBoxComp>
