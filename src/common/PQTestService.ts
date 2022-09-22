@@ -117,7 +117,7 @@ export interface IPQTestService {
     readonly currentExtensionInfos: ValueEventEmitter<ExtensionInfo[]>;
     readonly currentCredentials: ValueEventEmitter<Credential[]>;
     readonly onPowerQueryTestLocationChanged: () => void;
-    readonly MaybeExecuteBuildTask: () => Promise<void>;
+    readonly ExecuteBuildTaskAndAwaitIfNeeded: () => Promise<void>;
     readonly DeleteCredential: () => Promise<GenericResult>;
     readonly DisplayExtensionInfo: () => Promise<ExtensionInfo[]>;
     readonly ListCredentials: () => Promise<Credential[]>;
