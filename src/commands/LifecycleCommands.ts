@@ -223,6 +223,7 @@ export class LifecycleCommands implements IDisposable {
                     deferred: this.displayLatestExtensionInfoCommand(currentCtime).finally(() => {
                         if (this.onGoingDisplayLatestExtensionInfoCommand?.ctime === currentCtime) {
                             this.onGoingDisplayLatestExtensionInfoCommand = undefined;
+                            this.lastCtimeOfMezFileWhoseInfoSeized = currentCtime;
                         }
                     }),
                 };
