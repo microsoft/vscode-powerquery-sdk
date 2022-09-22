@@ -179,6 +179,12 @@ export class LifecycleCommands implements IDisposable {
 
     private currentIncorrectConnectorPathInSettingGotPromptedBefore: boolean = false;
     private lastCtimeOfMezFileWhoseInfoSeized: Date = new Date(0);
+    private onGoingDisplayLatestExtensionInfoCommand:
+        | {
+              ctime: Date;
+              deferred: Promise<unknown>;
+          }
+        | undefined = undefined;
     private promptSettingIncorrectOrInvokeInfoTaskIfNeeded(): void {
         const currentPQTestExtensionFileLocation: string | undefined = ExtensionConfigurations.DefaultExtensionLocation;
 
@@ -195,6 +201,15 @@ export class LifecycleCommands implements IDisposable {
             const currentCtime: Date = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
             if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
+                // first check where we got an onGoing one or not,
+                // if the ongGoing one were newer or equaled to the current one, just return
+                if (
+                    this.onGoingDisplayLatestExtensionInfoCommand &&
+                    this.onGoingDisplayLatestExtensionInfoCommand.ctime >= currentCtime
+                ) {
+                    return;
+                }
+
                 // we need to invoke a info task
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.lifecycle.command.detect.newerMezFile", {
@@ -203,7 +218,14 @@ export class LifecycleCommands implements IDisposable {
                     }),
                 );
 
-                void this.displayLatestExtensionInfoCommand(currentCtime);
+                this.onGoingDisplayLatestExtensionInfoCommand = {
+                    ctime: currentCtime,
+                    deferred: this.displayLatestExtensionInfoCommand(currentCtime).finally(() => {
+                        if (this.onGoingDisplayLatestExtensionInfoCommand?.ctime === currentCtime) {
+                            this.onGoingDisplayLatestExtensionInfoCommand = undefined;
+                        }
+                    }),
+                };
             }
 
             // do not reset currentIncorrectConnectorPathInSettingGotPromptedBefore like:
