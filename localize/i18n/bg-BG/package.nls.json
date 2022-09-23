@@ -28,6 +28,7 @@
   "extension.pqtest.debugger.properties.operation.info.description": "info: Returns all module information",
   "extension.pqtest.debugger.properties.operation.runTest.description": "run-test: test connection",
   "extension.pqtest.debugger.properties.operation.testConnection.description": "test-connection: test current connection",
+  "extension.pqtest.debugger.properties.additionalArgs.description": "Additional arguments for current operation",
   "extension.pqtest.initialConfigurations.name": "Evaluate power query file.",
   "extension.pqtest.configurationSnippets.description": "A new configuration for testing power query file a user selected."
 }
