@@ -23,7 +23,7 @@ import {
 } from "../common/PQTestService";
 import { Disposable, IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
-import { executeBuildTaskAndAwaitIfNeeded, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
+import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
@@ -58,7 +58,7 @@ export class PqTestExecutableTaskError extends Error {
         public readonly processArgs: string[],
         public readonly processExit: ProcessExit,
     ) {
-        super(`Failed to execute ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+        super(`Failed to execute ${pqTestExeFullPath} ${formatArguments(processArgs)}`);
         this.processExit = processExit;
     }
 }
@@ -70,7 +70,7 @@ export class PqTestExecutableDetailedTaskError extends Error {
         public readonly processArgs: string[],
         public readonly processExit: ProcessExit,
     ) {
-        super(`${details}, failed to execute ${pqTestExeFullPath} ${processArgs.join(" ")}`);
+        super(`${details}, failed to execute ${pqTestExeFullPath} ${formatArguments(processArgs)}`);
         this.processExit = processExit;
     }
 }
@@ -256,7 +256,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.taskQueue.info.taskFound", {
                         pqTestExeFullPath,
-                        arguments: processArgs.join(" "),
+                        arguments: formatArguments(processArgs),
                     }),
                 );
 
