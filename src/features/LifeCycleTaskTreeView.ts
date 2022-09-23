@@ -93,7 +93,7 @@ const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
             command: `${LifecycleCommands.RunTestBatteryCommand}`,
             arguments: [],
         },
-        new ThemeIcon("debug-console-evaluation-prompt"),
+        new ThemeIcon("play"),
     ),
     new LifecycleTreeViewItem(
         extensionI18n["PQSdk.lifecycleTreeView.item.testConnection.title"],
