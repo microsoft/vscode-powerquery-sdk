@@ -100,15 +100,18 @@ export function formatArguments(args: string[], opt: { cwd?: string } = {}): str
 
     const cwd: string = opt.cwd ?? getFirstWorkspaceFolder()?.uri.fsPath ?? "";
     const hasBaseDirectory: boolean = Boolean(cwd);
-    let isLastArgParameters: boolean = false;
+    let isLastArgParameter: boolean = false;
 
     for (const oneArg of args) {
         // pre formatting
+        const isCurrentArgumentParameter: boolean = oneArg.indexOf("--") === 0;
+
         const isDirectoryString: boolean = Boolean(
             oneArg.match(WIN_DIRECTORY_REG) || oneArg.match(POSIX_FULL_PATH_REG),
         );
 
-        const shouldQuoted: boolean = isLastArgParameters && isDirectoryString;
+        const shouldQuoted: boolean = isLastArgParameter && isDirectoryString;
+        const shouldBreakLine: boolean = isCurrentArgumentParameter;
 
         // formatting
         let oneArgStr: string = oneArg;
@@ -122,14 +125,16 @@ export function formatArguments(args: string[], opt: { cwd?: string } = {}): str
         }
 
         // append
-        if (result.length) {
+        if (shouldBreakLine) {
+            result += "\r\n\t\t\t\t";
+        } else if (result.length) {
             result += " ";
         }
 
         result += oneArgStr;
 
         // post formatting
-        isLastArgParameters = oneArg.indexOf("--") === 0;
+        isLastArgParameter = isCurrentArgumentParameter;
     }
 
     return result;
