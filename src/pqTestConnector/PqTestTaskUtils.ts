@@ -92,33 +92,20 @@ export function inferAnyGeneralErrorString(resultJson: any): string {
     return result;
 }
 
-const WIN_DIRECTORY_REG: RegExp = /^[a-zA-Z]:\\[\\\S|*\S]?.*$/gm;
-const POSIX_FULL_PATH_REG: RegExp = /^(.*)\/([^/]*)$/gm;
-
-export function formatArguments(args: string[], opt: { cwd?: string } = {}): string {
+export function formatArguments(args: string[]): string {
     let result: string = "";
 
-    const cwd: string = opt.cwd ?? getFirstWorkspaceFolder()?.uri.fsPath ?? "";
-    const hasBaseDirectory: boolean = Boolean(cwd);
     let isLastArgParameter: boolean = false;
 
     for (const oneArg of args) {
         // pre formatting
         const isCurrentArgumentParameter: boolean = oneArg.indexOf("--") === 0;
 
-        const isDirectoryString: boolean = Boolean(
-            oneArg.match(WIN_DIRECTORY_REG) || oneArg.match(POSIX_FULL_PATH_REG),
-        );
-
-        const shouldQuoted: boolean = isLastArgParameter && isDirectoryString;
+        const shouldQuoted: boolean = isLastArgParameter && !isCurrentArgumentParameter;
         const shouldBreakLine: boolean = isCurrentArgumentParameter;
 
         // formatting
         let oneArgStr: string = oneArg;
-
-        if (isDirectoryString && hasBaseDirectory) {
-            oneArgStr = path.relative(cwd, oneArg);
-        }
 
         if (shouldQuoted) {
             oneArgStr = `"${oneArgStr}"`;
