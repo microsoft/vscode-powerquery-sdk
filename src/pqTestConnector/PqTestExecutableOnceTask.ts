@@ -16,6 +16,7 @@ import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { buildPqTestArgs } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { formatArguments } from "./PqTestTaskUtils";
 import { IDisposable } from "../common/Disposable";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { PQTestTask } from "../common/PowerQueryTask";
@@ -153,7 +154,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
             this.handleOutputStr(
                 resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskFound", {
                     pqTestExeFullPath,
-                    arguments: processArgs.join(" "),
+                    arguments: formatArguments(processArgs),
                 }),
             );
 

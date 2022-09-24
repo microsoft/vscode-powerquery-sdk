@@ -91,3 +91,38 @@ export function inferAnyGeneralErrorString(resultJson: any): string {
 
     return result;
 }
+
+export function formatArguments(args: string[]): string {
+    let result: string = "";
+
+    let isLastArgParameter: boolean = false;
+
+    for (const oneArg of args) {
+        // pre formatting
+        const isCurrentArgumentParameter: boolean = oneArg.indexOf("--") === 0;
+
+        const shouldQuoted: boolean = isLastArgParameter && !isCurrentArgumentParameter;
+        const shouldBreakLine: boolean = isCurrentArgumentParameter;
+
+        // formatting
+        let oneArgStr: string = oneArg;
+
+        if (shouldQuoted) {
+            oneArgStr = `"${oneArgStr}"`;
+        }
+
+        // append
+        if (shouldBreakLine) {
+            result += "\r\n\t\t\t\t";
+        } else if (result.length) {
+            result += " ";
+        }
+
+        result += oneArgStr;
+
+        // post formatting
+        isLastArgParameter = isCurrentArgumentParameter;
+    }
+
+    return result;
+}
