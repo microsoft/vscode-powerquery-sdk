@@ -276,6 +276,14 @@
                                     "%extension.pqtest.debugger.properties.operation.testConnection.description%"
                                 ],
                                 "default": "run-test"
+                            },
+                            "additionalArgs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "%extension.pqtest.debugger.properties.additionalArgs.description%",
+                                "default": []
                             }
                         }
                     }
