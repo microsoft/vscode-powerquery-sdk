@@ -333,7 +333,7 @@
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
         "test:e2e": "npm run compile-tests && extest setup-and-run out/src/test/**/*.spec.js",
         "test": "npm run test:unit-test && npm run test:e2e",
-        "vsix": "npx vsce package",
+        "vsix": "npx vsce package --target win32-x64",
         "code-install": "ts-node scripts/install.ts"
     },
     "dependencies": {

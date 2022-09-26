@@ -58,7 +58,12 @@ export class PqTestExecutableTaskError extends Error {
         public readonly processArgs: string[],
         public readonly processExit: ProcessExit,
     ) {
-        super(`Failed to execute ${pqTestExeFullPath} ${formatArguments(processArgs)}`);
+        super(
+            processExit.stderr
+                ? processExit.stderr
+                : `Failed to execute ${pqTestExeFullPath} ${formatArguments(processArgs)}`,
+        );
+
         this.processExit = processExit;
     }
 }
@@ -76,7 +81,7 @@ export class PqTestExecutableDetailedTaskError extends Error {
 }
 
 export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
-    public static readonly ExecutableName: string = "pqtest.exe";
+    public static readonly ExecutableName: string = "PQTest.exe";
     public static readonly ExecutablePidLockFileName: string = "pqTest.pid";
 
     private readonly eventBus: DisposableEventEmitter<PqTestExecutableTaskQueueEventTypes>;
@@ -279,7 +284,20 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     },
                 );
 
-                const processExit: ProcessExit = await spawnProcess.deferred$;
+                let processExit: ProcessExit = {
+                    stdout: "",
+                    stderr: "",
+                    exitCode: null,
+                    signal: "SIGINT",
+                };
+
+                try {
+                    processExit = await spawnProcess.deferred$;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (e: any | Error) {
+                    processExit.stderr = typeof e === "string" ? e : e.toString();
+                }
+
                 this.doWritePid("");
 
                 this.outputChannel.appendTraceLine(

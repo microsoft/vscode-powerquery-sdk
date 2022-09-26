@@ -59,44 +59,53 @@ export class SpawnedProcess {
         options?: SpawnOptionsWithoutStdio,
         additionalOption?: AdditionalOption,
     ) {
-        this._promise = new Promise<ProcessExit>((res: (value: PromiseLike<ProcessExit> | ProcessExit) => void) => {
-            const theCpStream: ChildProcess = cp.spawn(command, args ?? [], {
-                timeout: DEFAULT_TIMEOUT,
-                ...options,
-                stdio: [typeof additionalOption?.stdinStr === "string" ? "pipe" : "ignore", "pipe", "pipe"],
-            });
-
-            additionalOption?.onSpawned && additionalOption?.onSpawned(theCpStream);
-
-            if (typeof additionalOption?.stdinStr === "string") {
-                theCpStream.stdin?.write(additionalOption.stdinStr);
-                theCpStream.stdin?.destroy();
-            }
-
-            theCpStream.stdout?.on("data", (data: Buffer) => {
-                additionalOption?.onStdOut && additionalOption?.onStdOut(data);
-                this._stdout = this._stdout.concat(data.toString("utf8"));
-            });
-
-            theCpStream.stderr?.on("data", (data: Buffer) => {
-                additionalOption?.onStdErr && additionalOption?.onStdErr(data);
-                this._stderr = this._stderr.concat(data.toString("utf8"));
-            });
-
-            theCpStream.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
-                this._exitCode = code;
-                this._signal = signal;
-                additionalOption?.onExit && additionalOption?.onExit(code, signal, this._stderr, this._stdout);
-
-                res({
-                    stdout: this._stdout,
-                    stderr: this._stderr,
-                    exitCode: this._exitCode,
-                    signal: this._signal,
+        this._promise = new Promise<ProcessExit>(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (res: (value: PromiseLike<ProcessExit> | ProcessExit) => void, rej: (reason: any) => void) => {
+                const theCpStream: ChildProcess = cp.spawn(command, args ?? [], {
+                    timeout: DEFAULT_TIMEOUT,
+                    ...options,
+                    stdio: [typeof additionalOption?.stdinStr === "string" ? "pipe" : "ignore", "pipe", "pipe"],
                 });
-            });
 
-            this._cpStream = theCpStream;
-        });
+                additionalOption?.onSpawned && additionalOption?.onSpawned(theCpStream);
+
+                if (typeof additionalOption?.stdinStr === "string") {
+                    theCpStream.stdin?.write(additionalOption.stdinStr);
+                    theCpStream.stdin?.destroy();
+                }
+
+                theCpStream.stdout?.on("data", (data: Buffer) => {
+                    additionalOption?.onStdOut && additionalOption?.onStdOut(data);
+                    this._stdout = this._stdout.concat(data.toString("utf8"));
+                });
+
+                theCpStream.stderr?.on("data", (data: Buffer) => {
+                    additionalOption?.onStdErr && additionalOption?.onStdErr(data);
+                    this._stderr = this._stderr.concat(data.toString("utf8"));
+                });
+
+                theCpStream.on("error", (error: Error) => {
+                    additionalOption?.onStdErr && additionalOption?.onStdErr(Buffer.from(error.toString(), "utf-8"));
+                    this._stderr = this._stderr.concat(error.toString());
+                    rej(error);
+                });
+
+                theCpStream.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+                    this._exitCode = code;
+                    this._signal = signal;
+                    additionalOption?.onExit && additionalOption?.onExit(code, signal, this._stderr, this._stdout);
+
+                    res({
+                        stdout: this._stdout,
+                        stderr: this._stderr,
+                        exitCode: this._exitCode,
+                        signal: this._signal,
+                    });
+                });
+
+                this._cpStream = theCpStream;
+            },
+        );
     }
 }
