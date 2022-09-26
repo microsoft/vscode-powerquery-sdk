@@ -75,8 +75,8 @@ body:
 - type: input
   id: vsc-version
   attributes:
-  label: PQSdkTool Path
-  description: The local path of the PQSdkTool Path.
+  label: VSCode version
+  description: Open the About dialog in VSCode to find this.
 
 - type: input
   id: pq-sdk-path
