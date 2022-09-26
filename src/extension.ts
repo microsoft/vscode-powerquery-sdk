@@ -95,7 +95,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         // do not activate for unsupported platform or architecture
         const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
 
-        pqSdkOutputChannel.appendInfoLine(extensionI18n["PQSdk.boostrap.unsupported.arch"]);
+        pqSdkOutputChannel.appendErrorLine(extensionI18n["PQSdk.boostrap.unsupported.arch"]);
 
         vscExtCtx.subscriptions.push(pqSdkOutputChannel);
     }
