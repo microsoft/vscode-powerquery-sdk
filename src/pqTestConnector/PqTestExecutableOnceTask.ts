@@ -31,7 +31,7 @@ export const PqTestExecutableOnceTaskQueueEvents = {
 type PqTestExecutableOnceTaskEventTypes = ExtractEventTypes<typeof PqTestExecutableOnceTaskQueueEvents>;
 
 export class PqTestExecutableOnceTask implements IDisposable {
-    public static readonly ExecutableName: string = "pqtest.exe";
+    public static readonly ExecutableName: string = "PQTest.exe";
 
     // threadId
     private _threadId: number = NaN;
@@ -177,7 +177,19 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 },
             );
 
-            const processExit: ProcessExit = await spawnProcess.deferred$;
+            let processExit: ProcessExit = {
+                stdout: "",
+                stderr: "",
+                exitCode: null,
+                signal: "SIGINT",
+            };
+
+            try {
+                processExit = await spawnProcess.deferred$;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any | Error) {
+                processExit.stderr = typeof e === "string" ? e : e.toString();
+            }
 
             if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
                 this.handleOutputStr(spawnProcess.stdOut);
