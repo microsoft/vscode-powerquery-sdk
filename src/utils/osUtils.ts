@@ -19,3 +19,10 @@ export function makeOneTmpDir(): string {
 
     return targetDir;
 }
+
+export function isSupportedOs(): boolean {
+    const platform: string = os.platform();
+    const arch: string = os.arch();
+
+    return platform === "win32" && arch === "x64";
+}
