@@ -36,18 +36,18 @@ steps:
       customCommand: "run test:unit-test"
 
   - task: Npm@1
+    displayName: "build VSIX"
+    inputs:
+      command: "custom"
+      customCommand: "run vsix"
+
+  - task: Npm@1
     displayName: "npm e2e test"
     enabled: 'true'
     continueOnError: 'true'
     inputs:
       command: "custom"
       customCommand: "run test:e2e"
-
-  - task: Npm@1
-    displayName: "build VSIX"
-    inputs:
-      command: "custom"
-      customCommand: "run vsix"
 
   - task: PoliCheck@1
     inputs:
