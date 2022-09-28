@@ -1,19 +1,16 @@
-import * as fs from "fs";
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 import * as cp from "child_process";
+import { getFirstVsixFileDirectlyBeneathOneDirectory } from "./utils/vsixs";
 
 const cwd = process.cwd();
 
-const dirents: fs.Dirent[] = fs.readdirSync(cwd, { withFileTypes: true });
-
-let oneVsixFile: string = "";
-
-dirents.some((dirent: fs.Dirent) => {
-    if (!dirent.isDirectory() && dirent.name.endsWith(".vsix")) {
-        oneVsixFile = dirent.name;
-        return true;
-    }
-    return false;
-});
+let oneVsixFile: string = getFirstVsixFileDirectlyBeneathOneDirectory(process.cwd());
 
 if (oneVsixFile) {
     cp.execSync(`code --install-extension ${oneVsixFile}`, { cwd });
