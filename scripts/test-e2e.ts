@@ -14,8 +14,9 @@ const theVsixFilePath: string = getFirstVsixFileDirectlyBeneathOneDirectory(proc
 async function doE2eTest() {
     const extTest = new ExTester();
 
-    // Performs all necessary setup: getting VSCode + ChromeDriver and packaging/installing extension into the test instance
-    await extTest.setupRequirements();
+    // Performs all necessary setup: getting VSCode + ChromeDriver into the test instance
+    await extTest.downloadCode();
+    await extTest.downloadChromeDriver();
 
     // Install the extension into the test instance of VS Code
     await extTest.installVsix({ vsixFile: path.resolve(process.cwd(), theVsixFilePath) });
