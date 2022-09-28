@@ -5,8 +5,6 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as path from "path";
-
 import { ExTester } from "vscode-extension-tester";
 import { getFirstVsixFileDirectlyBeneathOneDirectory } from "./utils/vsixs";
 
@@ -15,7 +13,7 @@ const theVsixFilePath: string = getFirstVsixFileDirectlyBeneathOneDirectory(proc
 async function doE2eTest() {
     const extTest = new ExTester();
 
-    await extTest.installVsix({ vsixFile: path.resolve(process.cwd(), theVsixFilePath) });
+    await extTest.installVsix({ vsixFile: theVsixFilePath });
 
     await extTest.runTests("out/src/test/**/*.spec.js", { cleanup: true });
 }
