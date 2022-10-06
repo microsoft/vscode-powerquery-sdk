@@ -31,21 +31,24 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
     const OutputLabel = useI18n("testBatteryResView.Table.Output.Title");
     const SummaryLabel = useI18n("testBatteryResView.Table.Output.Summary");
     const DataSourceLabel = useI18n("testBatteryResView.Table.Output.DataSource");
+    const ErrorLabel = useI18n("common.error.label");
 
     const hasOutput = useMemo(
         () => Array.isArray(testRunExecution.Output) && testRunExecution.Output.length,
         [testRunExecution],
     );
 
-    const errorDetailsString = useMemo<string | null>(
-        () =>
-            testRunExecution.Status !== "Passed" &&
-            testRunExecution.Details &&
-            typeof testRunExecution.Details === "string"
-                ? testRunExecution.Details
-                : null,
-        [testRunExecution],
-    );
+    const errorDetailsString = useMemo<string | null>(() => {
+        if (testRunExecution.Status !== "Passed") {
+            if (testRunExecution.Error?.Message && typeof testRunExecution.Error?.Message === "string") {
+                return testRunExecution.Error?.Message;
+            }
+            if (testRunExecution.Details && typeof testRunExecution.Details === "string") {
+                return testRunExecution.Details;
+            }
+        }
+        return null;
+    }, [testRunExecution]);
 
     const hasDataSource = useMemo(
         () => Array.isArray(testRunExecution.DataSourceAnalysis) && testRunExecution.DataSourceAnalysis.length,
@@ -90,6 +93,19 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         return result;
     }, [testRunExecution, hasDataSource]);
 
+    const mashupErrorArr = useMemo(() => {
+        const result: GeneralDetailItem[] = [];
+        const theFlattenError = flattenJSON(testRunExecution.Error);
+        Object.keys(theFlattenError).forEach(key => {
+            result.push({
+                Item: key,
+                Value: theFlattenError[key],
+            });
+        });
+
+        return result;
+    }, [testRunExecution.Error]);
+
     return (
         <>
             {errorDetailsString ? (
@@ -113,6 +129,12 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
                 {hasDataSource ? (
                     <PivotItem key="dataSource" headerText={DataSourceLabel}>
                         <TestBatteryGeneralGrid items={dataSourceArr} />
+                    </PivotItem>
+                ) : null}
+
+                {mashupErrorArr.length ? (
+                    <PivotItem key="mashupError" headerText={ErrorLabel}>
+                        <TestBatteryGeneralGrid items={mashupErrorArr} />
                     </PivotItem>
                 ) : null}
             </Pivot>
