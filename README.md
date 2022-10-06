@@ -1,4 +1,4 @@
-# Power Query Connector SDK for VS Code
+# Power Query Connector SDK for Visual Studio Code
 
 Provides functionality related to the development and testing of [Custom Connectors for Power Query and Power BI](https://docs.microsoft.com/en-us/power-query/startingtodevelopcustomconnectors).
 
