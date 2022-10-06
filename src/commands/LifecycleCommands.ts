@@ -509,7 +509,6 @@ export class LifecycleCommands implements IDisposable {
     private async doListPqTestFromNuget(): Promise<string> {
         await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
 
-        // nuget list Microsoft.PowerQuery.SdkTools -ConfigFile ./etc/nuget-staging.config
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
 
         if (!fs.existsSync(baseNugetFolder)) {
