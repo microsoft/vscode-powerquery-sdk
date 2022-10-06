@@ -142,6 +142,15 @@ export const ExtensionConfigurations = {
 
         return result;
     },
+
+    get nugetFeed(): string | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetPath);
+    },
+
     setPQTestLocation(
         pqTestLocation: string | undefined,
         configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,

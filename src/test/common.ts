@@ -37,7 +37,6 @@ export const extensionInstalledDirectory = path.join(
 );
 
 export const NugetBaseFolderName: string = ExtensionConstants.NugetBaseFolder;
-export const NugetConfigFileName: string = ExtensionConstants.NugetConfigFileName;
 
 export const NugetPackagesDirectory: string = path.join(extensionInstalledDirectory, NugetBaseFolderName);
 

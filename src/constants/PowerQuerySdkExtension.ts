@@ -34,6 +34,7 @@ const ConfigNames = {
             autoDetection: "features.autoDetection" as const,
             externalsMsbuildPath: "externals.msbuildPath" as const,
             externalsNugetPath: "externals.nugetPath" as const,
+            externalsNugetFeed: "externals.nugetFeed" as const,
             pqTestLocation: "tools.location" as const,
             defaultExtensionLocation: "defaultExtension" as const,
             defaultQueryFileLocation: "defaultQueryFile" as const,
@@ -58,7 +59,6 @@ const PowerQueryTaskType: string = PQLanguageId;
 const PQDebugType: string = PowerQueryTaskType;
 
 const NugetBaseFolder: string = ".nuget" as const;
-const NugetConfigFileName: string = "nuget-staging.config" as const;
 const InternalMsftPqSdkToolsNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
 const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
 const SuggestedPqTestNugetVersion: string = "2.109.5" as const;
@@ -96,7 +96,6 @@ export const ExtensionConstants = Object.freeze({
     PowerQueryTaskType,
     PQDebugType,
     NugetBaseFolder,
-    NugetConfigFileName,
     InternalMsftPqSdkToolsNugetName,
     PublicMsftPqSdkToolsNugetName,
     SuggestedPqTestNugetVersion,
