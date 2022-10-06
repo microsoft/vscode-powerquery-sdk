@@ -516,12 +516,11 @@ export class LifecycleCommands implements IDisposable {
             fs.mkdirSync(baseNugetFolder);
         }
 
-        const args: string[] = [
-            "list",
-            ExtensionConstants.InternalMsftPqSdkToolsNugetName,
-            "-ConfigFile",
-            path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
-        ];
+        const args: string[] = ["list", ExtensionConstants.InternalMsftPqSdkToolsNugetName];
+
+        if (ExtensionConfigurations.nugetFeed) {
+            args.push("-Source", ExtensionConfigurations.nugetFeed);
+        }
 
         const seizingProcess: SpawnedProcess = new SpawnedProcess(ExtensionConfigurations.nugetPath ?? "nuget", args, {
             cwd: baseNugetFolder,
@@ -560,11 +559,13 @@ export class LifecycleCommands implements IDisposable {
                 ExtensionConstants.InternalMsftPqSdkToolsNugetName,
                 "-Version",
                 maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion,
-                "-ConfigFile",
-                path.resolve(this.vscExtCtx.extensionPath, "etc", ExtensionConstants.NugetConfigFileName),
                 "-OutputDirectory",
                 baseNugetFolder,
             ];
+
+            if (ExtensionConfigurations.nugetFeed) {
+                args.push("-Source", ExtensionConfigurations.nugetFeed);
+            }
 
             const seizingProcess: SpawnedProcess = new SpawnedProcess(
                 ExtensionConfigurations.nugetPath ?? "nuget",

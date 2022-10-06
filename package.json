@@ -152,6 +152,12 @@
                     "type": "string",
                     "description": "%extension.pqtest.config.externals.nugetPath.description%"
                 },
+                "powerquery.sdk.externals.nugetFeed": {
+                    "scope": "window",
+                    "type": "string",
+                    "description": "%extension.pqtest.config.externals.nugetFeed.description%",
+                    "default": ""
+                },
                 "powerquery.sdk.tools.location": {
                     "scope": "machine-overridable",
                     "type": "string",
