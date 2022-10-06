@@ -522,7 +522,12 @@ export class LifecycleCommands implements IDisposable {
             args.push("-Source", ExtensionConfigurations.nugetFeed);
         }
 
-        const seizingProcess: SpawnedProcess = new SpawnedProcess(ExtensionConfigurations.nugetPath ?? "nuget", args, {
+        const command: string = ExtensionConfigurations.nugetPath ?? "nuget";
+
+        this.outputChannel.appendDebugLine(`Listing nuget packages using nuget.exe`);
+        this.outputChannel.appendInfoLine(`Running ${command} ${args.join(" ")}`);
+
+        const seizingProcess: SpawnedProcess = new SpawnedProcess(command, args, {
             cwd: baseNugetFolder,
             env: {
                 ...process.env,
@@ -537,12 +542,9 @@ export class LifecycleCommands implements IDisposable {
 
     private async doUpdatePqTestFromNuget(maybeNextVersion?: string | undefined): Promise<string | undefined> {
         if (ExtensionConfigurations.nugetPath) {
-            // if we got nuget path set, we could seize it from devops feed
+            // use nuget.exe to check the configured feed location
             await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
 
-            // nuget install Microsoft.PowerQuery.SdkTools -Version  <VERSION_NUMBER> -OutputDirectory .
-            // dotnet tool install Microsoft.PowerQuery.SdkTools
-            //  --configfile <FILE> --tool-path . --verbosity diag --version
             const baseNugetFolder: string = path.resolve(
                 this.vscExtCtx.extensionPath,
                 ExtensionConstants.NugetBaseFolder,
@@ -567,8 +569,13 @@ export class LifecycleCommands implements IDisposable {
                 args.push("-Source", ExtensionConfigurations.nugetFeed);
             }
 
+            const command: string = ExtensionConfigurations.nugetPath ?? "nuget";
+
+            this.outputChannel.appendDebugLine(`Installing nuget packages using nuget.exe`);
+            this.outputChannel.appendInfoLine(`Running ${command} ${args.join(" ")}`);
+
             const seizingProcess: SpawnedProcess = new SpawnedProcess(
-                ExtensionConfigurations.nugetPath ?? "nuget",
+                command,
                 args,
                 {
                     cwd: baseNugetFolder,
@@ -586,8 +593,6 @@ export class LifecycleCommands implements IDisposable {
                     },
                 },
             );
-
-            this.outputChannel.show();
 
             await seizingProcess.deferred$;
 
@@ -624,7 +629,7 @@ export class LifecycleCommands implements IDisposable {
 
     private async findMaybeNewPqSdkVersion(): Promise<string | undefined> {
         if (ExtensionConfigurations.nugetPath) {
-            // we got nuget executable path set, thus we use nuget.exe to query the devops feed
+            // use nuget.exe to check the configured feed location
             const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
             const curVersion: NugetVersions = NugetVersions.createFromPath(pqTestLocation);
 
