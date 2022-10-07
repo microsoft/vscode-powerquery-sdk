@@ -9,9 +9,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+
+import { debounce } from "../utils/debounce";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
-import { GlobalEventBus } from "../GlobalEventBus";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
 import { NugetVersions } from "../utils/NugetVersions";
@@ -26,8 +28,19 @@ export class PqSdkNugetPackageService {
         readonly globalEventBus?: GlobalEventBus,
         readonly outputChannel?: PqSdkOutputChannel,
     ) {
-        this.nugetHttpService = new NugetHttpService(globalEventBus, outputChannel);
+        this.nugetHttpService = new NugetHttpService(outputChannel);
         this.nugetCommandService = new NugetCommandService(vscExtCtx, outputChannel);
+
+        this.globalEventBus?.on(
+            GlobalEvents.VSCodeEvents.onProxySettingsChanged,
+            debounce(() => {
+                this.nugetHttpService.updateAxiosInstance(
+                    NugetHttpService.DefaultBaseUrl,
+                    ExtensionConfigurations.httpProxy,
+                    ExtensionConfigurations.httpProxyAuthorization,
+                );
+            }, 750).bind(this.nugetHttpService),
+        );
     }
 
     public async findNullableNewPqSdkVersion(): Promise<string | undefined> {

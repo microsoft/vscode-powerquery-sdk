@@ -14,11 +14,8 @@ import { promisify } from "util";
 import { StreamZipAsync } from "node-stream-zip";
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { GlobalEventBus, GlobalEvents } from "../../GlobalEventBus";
-import { debounce } from "../../utils/debounce";
-import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { makeOneTmpDir } from "../../utils/osUtils";
-import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { removeDirectoryRecursively } from "../../utils/files";
 
 const streamFinished$deferred: (
@@ -46,30 +43,25 @@ export class NugetHttpService {
     // public static PreReleaseIncludedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,}(?:[-a-z0-9]+)?)$/;
     // eslint-disable-next-line security/detect-unsafe-regex
     public static ReleasedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,})$/;
+    public static DefaultBaseUrl: string = "https://api.nuget.org";
 
     private instance: AxiosInstance = axios.create({
-        baseURL: "https://api.nuget.org",
+        baseURL: NugetHttpService.DefaultBaseUrl,
     });
     private errorHandler: (error: Error) => void = (error: Error) => {
         this.outputChannel?.appendErrorLine(`Failed to request to public nuget endpoints due to ${error}`);
     };
-    constructor(readonly globalEventBus?: GlobalEventBus, private readonly outputChannel?: PqSdkOutputChannel) {
+    constructor(private readonly outputChannel?: PqSdkOutputChannel) {
         this.updateAxiosInstance();
-
-        this.globalEventBus?.on(
-            GlobalEvents.VSCodeEvents.onProxySettingsChanged,
-            debounce(() => {
-                this.updateAxiosInstance();
-            }, 750).bind(this),
-        );
     }
 
-    private updateAxiosInstance(baseURL: string = "https://api.nuget.org"): void {
-        const maybeHttpProxy: string | undefined = ExtensionConfigurations.httpProxy;
-
-        if (maybeHttpProxy) {
-            const proxyUrl: URL = new URL(maybeHttpProxy);
-            const maybeHttpProxyAuthHeaderString: string | undefined = ExtensionConfigurations.httpProxyAuthorization;
+    public updateAxiosInstance(
+        baseURL: string = NugetHttpService.DefaultBaseUrl,
+        nullableHttpProxy: string | undefined = undefined,
+        nullableHttpProxyAuthHeaderString: string | undefined = undefined,
+    ): void {
+        if (nullableHttpProxy) {
+            const proxyUrl: URL = new URL(nullableHttpProxy);
 
             this.instance = axios.create({
                 baseURL,
@@ -80,8 +72,8 @@ export class NugetHttpService {
                 },
             });
 
-            if (maybeHttpProxyAuthHeaderString) {
-                this.instance.defaults.headers.common["Authorization"] = maybeHttpProxyAuthHeaderString;
+            if (nullableHttpProxyAuthHeaderString) {
+                this.instance.defaults.headers.common["Authorization"] = nullableHttpProxyAuthHeaderString;
             }
         } else {
             this.instance = axios.create({
