@@ -8,34 +8,22 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
-import * as vscode from "vscode";
 
-import {
-    ExtensionConfigurations,
-    promptWarningMessageForExternalDependency,
-} from "../../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { NugetVersions } from "../../utils/NugetVersions";
-import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../SpawnedProcess";
 
 export class NugetCommandService {
-    constructor(
-        private readonly vscExtCtx: vscode.ExtensionContext,
-        private readonly outputChannel?: PqSdkOutputChannel,
-    ) {}
-
-    get hasNugetPath(): boolean {
-        return Boolean(ExtensionConfigurations.nugetPath);
-    }
+    constructor(private readonly extensionPath: string, private readonly outputChannel?: PqSdkOutputChannel) {}
 
     private async doListVersionsFromNugetCmd(
+        nugetPath: string = "nuget",
+        nugetFeed: string | undefined = undefined,
         packageName: string = ExtensionConstants.InternalMsftPqSdkToolsNugetName,
         allVersion: boolean = false,
     ): Promise<string> {
-        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
-
-        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
+        const baseNugetFolder: string = path.resolve(this.extensionPath, ExtensionConstants.NugetBaseFolder);
 
         if (!fs.existsSync(baseNugetFolder)) {
             fs.mkdirSync(baseNugetFolder);
@@ -47,11 +35,11 @@ export class NugetCommandService {
             args.push("-AllVersions");
         }
 
-        if (ExtensionConfigurations.nugetFeed) {
-            args.push("-Source", ExtensionConfigurations.nugetFeed);
+        if (nugetFeed) {
+            args.push("-Source", nugetFeed);
         }
 
-        const command: string = ExtensionConfigurations.nugetPath ?? "nuget";
+        const command: string = nugetPath ?? "nuget";
 
         this.outputChannel?.appendDebugLine(`Listing nuget packages using nuget.exe`);
         this.outputChannel?.appendInfoLine(`Running ${command} ${args.join(" ")}`);
@@ -73,7 +61,7 @@ export class NugetCommandService {
         packageName: string = ExtensionConstants.InternalMsftPqSdkToolsNugetName,
         maybeNextVersion: string,
     ): string {
-        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
+        const baseNugetFolder: string = path.resolve(this.extensionPath, ExtensionConstants.NugetBaseFolder);
 
         const pqTestSubPath: string[] = ExtensionConstants.buildNugetPackageSubPath(packageName, maybeNextVersion);
 
@@ -81,13 +69,12 @@ export class NugetCommandService {
     }
 
     private async doSeizeFromNugetCmd(
+        nugetPath: string = "nuget",
+        nugetFeed: string | undefined = undefined,
         packageName: string = ExtensionConstants.InternalMsftPqSdkToolsNugetName,
         nextVersion: string,
-        baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder),
+        baseNugetFolder: string = path.resolve(this.extensionPath, ExtensionConstants.NugetBaseFolder),
     ): Promise<string | undefined> {
-        // use nuget.exe to check the configured feed location
-        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
-
         const pqTestFullPath: string = this.expectedPackagePath(packageName, nextVersion);
 
         if (!fs.existsSync(baseNugetFolder)) {
@@ -103,11 +90,11 @@ export class NugetCommandService {
             baseNugetFolder,
         ];
 
-        if (ExtensionConfigurations.nugetFeed) {
-            args.push("-Source", ExtensionConfigurations.nugetFeed);
+        if (nugetFeed) {
+            args.push("-Source", nugetFeed);
         }
 
-        const command: string = ExtensionConfigurations.nugetPath ?? "nuget";
+        const command: string = nugetPath ?? "nuget";
 
         this.outputChannel?.appendDebugLine(`Installing nuget packages using nuget.exe`);
         this.outputChannel?.appendInfoLine(`Running ${command} ${args.join(" ")}`);
@@ -137,11 +124,22 @@ export class NugetCommandService {
         return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
     }
 
-    public async getPackageReleasedVersions(packageName: string): Promise<NugetVersions[]> {
-        return NugetVersions.createFromNugetListAllOutput(await this.doListVersionsFromNugetCmd(packageName, true));
+    public async getPackageReleasedVersions(
+        nugetPath: string = "nuget",
+        nugetFeed: string | undefined = undefined,
+        packageName: string,
+    ): Promise<NugetVersions[]> {
+        return NugetVersions.createFromNugetListAllOutput(
+            await this.doListVersionsFromNugetCmd(nugetPath, nugetFeed, packageName, true),
+        );
     }
 
-    public downloadAndExtractNugetPackage(packageName: string, packageVersion: string): Promise<string | undefined> {
-        return this.doSeizeFromNugetCmd(packageName, packageVersion);
+    public downloadAndExtractNugetPackage(
+        nugetPath: string = "nuget",
+        nugetFeed: string | undefined = undefined,
+        packageName: string,
+        packageVersion: string,
+    ): Promise<string | undefined> {
+        return this.doSeizeFromNugetCmd(nugetPath, nugetFeed, packageName, packageVersion);
     }
 }

@@ -29,7 +29,7 @@ export class PqSdkNugetPackageService {
         readonly outputChannel?: PqSdkOutputChannel,
     ) {
         this.nugetHttpService = new NugetHttpService(outputChannel);
-        this.nugetCommandService = new NugetCommandService(vscExtCtx, outputChannel);
+        this.nugetCommandService = new NugetCommandService(vscExtCtx.extensionPath, outputChannel);
 
         this.globalEventBus?.on(
             GlobalEvents.VSCodeEvents.onProxySettingsChanged,
@@ -49,6 +49,8 @@ export class PqSdkNugetPackageService {
         if (ExtensionConfigurations.nugetPath) {
             sortedNugetVersions = (
                 await this.nugetCommandService.getPackageReleasedVersions(
+                    ExtensionConfigurations.nugetPath,
+                    ExtensionConfigurations.nugetFeed,
                     ExtensionConstants.PublicMsftPqSdkToolsNugetName,
                 )
             ).sort(NugetVersions.compare);
@@ -90,6 +92,8 @@ export class PqSdkNugetPackageService {
 
         if (ExtensionConfigurations.nugetPath) {
             return this.nugetCommandService.downloadAndExtractNugetPackage(
+                ExtensionConfigurations.nugetPath,
+                ExtensionConfigurations.nugetFeed,
                 ExtensionConstants.InternalMsftPqSdkToolsNugetName,
                 maybeNextVersion || ExtensionConstants.SuggestedPqTestNugetVersion,
             );
