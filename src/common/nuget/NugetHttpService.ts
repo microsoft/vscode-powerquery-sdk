@@ -14,12 +14,12 @@ import { promisify } from "util";
 import { StreamZipAsync } from "node-stream-zip";
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-import { debounce } from "../utils/debounce";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { makeOneTmpDir } from "../utils/osUtils";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { removeDirectoryRecursively } from "../utils/files";
+import { GlobalEventBus, GlobalEvents } from "../../GlobalEventBus";
+import { debounce } from "../../utils/debounce";
+import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
+import { makeOneTmpDir } from "../../utils/osUtils";
+import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { removeDirectoryRecursively } from "../../utils/files";
 
 const streamFinished$deferred: (
     stream: NodeJS.ReadStream | NodeJS.WritableStream | NodeJS.ReadWriteStream,

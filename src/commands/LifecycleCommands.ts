@@ -7,7 +7,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import * as process from "process";
 import * as vscode from "vscode";
 
 import {
@@ -29,10 +28,7 @@ import {
     GenericResult,
     IPQTestService,
 } from "../common/PQTestService";
-import {
-    ExtensionConfigurations,
-    promptWarningMessageForExternalDependency,
-} from "../constants/PowerQuerySdkConfiguration";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
     getCurrentWorkspaceSettingPath,
@@ -44,17 +40,15 @@ import {
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
 import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
-
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
+
 import { debounce } from "../utils/debounce";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { getCtimeOfAFile } from "../utils/files";
 import { IDisposable } from "../common/Disposable";
-import { NugetHttpService } from "../common/NugetHttpService";
-import { NugetVersions } from "../utils/NugetVersions";
+import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { SpawnedProcess } from "../common/SpawnedProcess";
 
 const CommandPrefix: string = `powerquery.sdk.tools`;
 
@@ -81,7 +75,7 @@ export class LifecycleCommands implements IDisposable {
     constructor(
         private readonly vscExtCtx: ExtensionContext,
         readonly globalEventBus: GlobalEventBus,
-        private readonly nugetHttpService: NugetHttpService,
+        private readonly pqSdkNugetPackageService: PqSdkNugetPackageService,
         private readonly pqTestService: IPQTestService,
         private readonly outputChannel: PqSdkOutputChannel,
     ) {
@@ -490,191 +484,23 @@ export class LifecycleCommands implements IDisposable {
         return folder;
     }
 
-    private expectedPqTestPath(maybeNextVersion?: string): string {
-        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
-
-        const pqTestSubPath: string[] = maybeNextVersion
-            ? ExtensionConstants.buildPqTestSubPath(maybeNextVersion)
-            : ExtensionConstants.PqTestSubPath;
-
-        return path.resolve(baseNugetFolder, ...pqTestSubPath);
-    }
-
-    private nugetPqTestExistsSync(maybeNextVersion?: string): boolean {
-        const expectedPqTestPath: string = this.expectedPqTestPath(maybeNextVersion);
-
-        return fs.existsSync(expectedPqTestPath);
-    }
-
-    private async doListPqTestFromNuget(): Promise<string> {
-        await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
-
-        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
-
-        if (!fs.existsSync(baseNugetFolder)) {
-            fs.mkdirSync(baseNugetFolder);
-        }
-
-        const args: string[] = ["list", ExtensionConstants.InternalMsftPqSdkToolsNugetName];
-
-        if (ExtensionConfigurations.nugetFeed) {
-            args.push("-Source", ExtensionConfigurations.nugetFeed);
-        }
-
-        const command: string = ExtensionConfigurations.nugetPath ?? "nuget";
-
-        this.outputChannel.appendDebugLine(`Listing nuget packages using nuget.exe`);
-        this.outputChannel.appendInfoLine(`Running ${command} ${args.join(" ")}`);
-
-        const seizingProcess: SpawnedProcess = new SpawnedProcess(command, args, {
-            cwd: baseNugetFolder,
-            env: {
-                ...process.env,
-                FORCE_NUGET_EXE_INTERACTIVE: "true",
-            },
-        });
-
-        await seizingProcess.deferred$;
-
-        return seizingProcess.stdOut;
-    }
-
-    private async doUpdatePqTestFromNuget(maybeNextVersion?: string | undefined): Promise<string | undefined> {
-        if (ExtensionConfigurations.nugetPath) {
-            // use nuget.exe to check the configured feed location
-            await promptWarningMessageForExternalDependency(Boolean(ExtensionConfigurations.nugetPath), true, true);
-
-            const baseNugetFolder: string = path.resolve(
-                this.vscExtCtx.extensionPath,
-                ExtensionConstants.NugetBaseFolder,
-            );
-
-            const pqTestFullPath: string = this.expectedPqTestPath(maybeNextVersion);
-
-            if (!fs.existsSync(baseNugetFolder)) {
-                fs.mkdirSync(baseNugetFolder);
-            }
-
-            const args: string[] = [
-                "install",
-                ExtensionConstants.InternalMsftPqSdkToolsNugetName,
-                "-Version",
-                maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion,
-                "-OutputDirectory",
-                baseNugetFolder,
-            ];
-
-            if (ExtensionConfigurations.nugetFeed) {
-                args.push("-Source", ExtensionConfigurations.nugetFeed);
-            }
-
-            const command: string = ExtensionConfigurations.nugetPath ?? "nuget";
-
-            this.outputChannel.appendDebugLine(`Installing nuget packages using nuget.exe`);
-            this.outputChannel.appendInfoLine(`Running ${command} ${args.join(" ")}`);
-
-            const seizingProcess: SpawnedProcess = new SpawnedProcess(
-                command,
-                args,
-                {
-                    cwd: baseNugetFolder,
-                    env: {
-                        ...process.env,
-                        FORCE_NUGET_EXE_INTERACTIVE: "true",
-                    },
-                },
-                {
-                    onStdOut: (data: Buffer): void => {
-                        this.outputChannel.appendInfoLine(data.toString("utf8"));
-                    },
-                    onStdErr: (data: Buffer): void => {
-                        this.outputChannel.appendErrorLine(data.toString("utf8"));
-                    },
-                },
-            );
-
-            await seizingProcess.deferred$;
-
-            return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
-        } else {
-            // we gonna seize the pqSkdTools from the public feed
-            const baseNugetFolder: string = path.resolve(
-                this.vscExtCtx.extensionPath,
-                ExtensionConstants.NugetBaseFolder,
-            );
-
-            const pqTestFullPath: string = this.expectedPqTestPath(maybeNextVersion);
-
-            if (!fs.existsSync(baseNugetFolder)) {
-                fs.mkdirSync(baseNugetFolder);
-            }
-
-            if (fs.existsSync(pqTestFullPath)) return pqTestFullPath;
-
-            await this.nugetHttpService.downloadAndExtractNugetPackage(
-                ExtensionConstants.PublicMsftPqSdkToolsNugetName,
-                maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion,
-                path.join(
-                    baseNugetFolder,
-                    `${ExtensionConstants.PublicMsftPqSdkToolsNugetName}.${
-                        maybeNextVersion ?? ExtensionConstants.SuggestedPqTestNugetVersion
-                    }`,
-                ),
-            );
-
-            return fs.existsSync(pqTestFullPath) ? pqTestFullPath : undefined;
-        }
-    }
-
-    private async findMaybeNewPqSdkVersion(): Promise<string | undefined> {
-        if (ExtensionConfigurations.nugetPath) {
-            // use nuget.exe to check the configured feed location
-            const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-            const curVersion: NugetVersions = NugetVersions.createFromPath(pqTestLocation);
-
-            const latestVersion: NugetVersions = NugetVersions.createFromNugetListOutput(
-                await this.doListPqTestFromNuget(),
-            );
-
-            const sortedVersions: [NugetVersions, NugetVersions] = [curVersion, latestVersion].sort(
-                NugetVersions.compare,
-            ) as [NugetVersions, NugetVersions];
-
-            if (!sortedVersions[1].isZero()) {
-                // we found a new version, thus we need to check with users first and update to the latest
-                return sortedVersions[1].toString();
-            } else {
-                return undefined;
-            }
-        } else {
-            // we gonna use http endpoint to query the public feed
-            const sortedNugetVersions: NugetVersions[] = (
-                await this.nugetHttpService.getPackageReleasedVersions(ExtensionConstants.PublicMsftPqSdkToolsNugetName)
-            ).versions
-                .map((releasedVersion: string) => NugetVersions.createFromReleasedVersionString(releasedVersion))
-                .sort(NugetVersions.compare);
-
-            if (sortedNugetVersions.length && !sortedNugetVersions[sortedNugetVersions.length - 1].isZero()) {
-                return sortedNugetVersions[sortedNugetVersions.length - 1].toString();
-            } else {
-                return undefined;
-            }
-        }
-    }
-
     private async doCheckAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         try {
             let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
-            const maybeNewVersion: string | undefined = await this.findMaybeNewPqSdkVersion();
+            const maybeNewVersion: string | undefined =
+                await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
 
             // we should not update to the latest unless the latest nuget doesn't exist on start
             // users might just want to use the previous one purposely
             // therefore do not try to update when, like, pqTestLocation.indexOf(maybeNewVersion) === -1
-            if (!pqTestLocation || !this.pqTestService.pqTestReady || !this.nugetPqTestExistsSync(maybeNewVersion)) {
-                const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(
-                    maybeNewVersion,
-                );
+            if (
+                !pqTestLocation ||
+                !this.pqTestService.pqTestReady ||
+                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(maybeNewVersion)
+            ) {
+                const pqTestExecutableFullPath: string | undefined =
+                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(maybeNewVersion);
 
                 if (!pqTestExecutableFullPath && !skipQueryDialog) {
                     const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
@@ -744,14 +570,14 @@ export class LifecycleCommands implements IDisposable {
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
         try {
             if (!maybeNextVersion) {
-                maybeNextVersion = await this.findMaybeNewPqSdkVersion();
+                maybeNextVersion = await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
             }
 
             let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
             // determine whether we should trigger to seize or not
             if (
-                !this.nugetPqTestExistsSync(maybeNextVersion) ||
+                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(maybeNextVersion) ||
                 !pqTestLocation ||
                 // when manually update, we should eagerly update as long as current path is not of the latest version
                 //  like,
@@ -759,9 +585,8 @@ export class LifecycleCommands implements IDisposable {
                 //      they temporarily switch back to the previous version
                 (maybeNextVersion && pqTestLocation.indexOf(maybeNextVersion) === -1)
             ) {
-                const pqTestExecutableFullPath: string | undefined = await this.doUpdatePqTestFromNuget(
-                    maybeNextVersion,
-                );
+                const pqTestExecutableFullPath: string | undefined =
+                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(maybeNextVersion);
 
                 if (pqTestExecutableFullPath) {
                     pqTestLocation = path.dirname(pqTestExecutableFullPath);
@@ -778,8 +603,9 @@ export class LifecycleCommands implements IDisposable {
             }
 
             // check whether it got seized or not
-            if (this.nugetPqTestExistsSync(maybeNextVersion)) {
-                const pqTestExecutableFullPath: string = this.expectedPqTestPath(maybeNextVersion);
+            if (this.pqSdkNugetPackageService.nugetPqSdkExistsSync(maybeNextVersion)) {
+                const pqTestExecutableFullPath: string =
+                    this.pqSdkNugetPackageService.expectedPqSdkPath(maybeNextVersion);
 
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.lifecycle.command.pqtest.seized.from", {
