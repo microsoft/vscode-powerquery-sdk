@@ -148,7 +148,7 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetPath);
+        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetFeed);
     },
 
     setPQTestLocation(
