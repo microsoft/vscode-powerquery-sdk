@@ -11,6 +11,7 @@
   "extension.pqtest.TestConnectionCommand.title": "Test connection",
   "extension.pqtest.config.externals.msbuildPath.description": "Local path to msbuild.exe installation folder.",
   "extension.pqtest.config.externals.nugetPath.description": "Local path to nuget.exe installation folder.",
+  "extension.pqtest.config.externals.nugetFeed.description": "Suggested nuget feed URL.",
   "extension.pqtest.config.features.autoDetection.description": "When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.",
   "extension.pqtest.config.features.useServiceHost": "Try the new feature using a reusable engine service host other than the command lines",
   "extension.pqtest.config.pqtest.location.description": "Local path to PQTest installation folder.",
