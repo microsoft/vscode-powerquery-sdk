@@ -11,6 +11,8 @@ pr:
 
 pool:
   vmImage: "windows-latest"
+variables:
+  CI: 'true'
 
 steps:
   - task: NodeTool@0

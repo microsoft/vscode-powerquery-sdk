@@ -21,7 +21,8 @@ const InternalNugetFeed = "https://powerbi.pkgs.visualstudio.com/_packaging/Powe
 describe("NugetCommandService unit testes", () => {
     const nugetPath = findExecutable("nuget", [".exe", ""]);
 
-    if (nugetPath) {
+    // disable these test cases for the ci due to auth config
+    if (nugetPath && process.env.CI !== "true") {
         let oneTmpDir: string;
         let nugetCommandService: NugetCommandService;
 
