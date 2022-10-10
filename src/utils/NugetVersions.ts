@@ -35,6 +35,34 @@ export class NugetVersions {
     }
 
     /**
+     * create NugetVersions from the std output like:
+     * MSBuild auto-detection: using msbuild version '*****' from '\Microsoft Visual Studio\2019\*****\MSBuild\Current\Bin'.
+     * Microsoft.PowerQuery.SdkTools 2.110.3
+     * Microsoft.PowerQuery.SdkTools 2.110.2
+     * Microsoft.PowerQuery.SdkTools 2.109.6
+     * Microsoft.PowerQuery.SdkTools 2.107.1
+     * @param stdOutput
+     */
+    public static createFromNugetListAllOutput(stdOutput: string): NugetVersions[] {
+        const result: NugetVersions[] = [];
+
+        if (!stdOutput) return result;
+
+        NugetStdOutputOfVersionRegExp.lastIndex = 0;
+        let matched: RegExpMatchArray | null = NugetStdOutputOfVersionRegExp.exec(stdOutput);
+
+        while (matched && matched.length === 5) {
+            result.push(
+                new NugetVersions(parseInt(matched[2], 10), parseInt(matched[3], 10), parseInt(matched[4], 10)),
+            );
+
+            matched = NugetStdOutputOfVersionRegExp.exec(stdOutput);
+        }
+
+        return result;
+    }
+
+    /**
      * create NugetVersion from a path like:
      * .\vscode-powerquery-sdk\.nuget\Microsoft.PowerQuery.SdkTools.2.107.1\tools\..
      * @param fullPath

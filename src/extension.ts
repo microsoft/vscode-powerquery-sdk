@@ -17,8 +17,8 @@ import { IDisposable } from "./common/Disposable";
 import { isSupportedOs } from "./utils/osUtils";
 import { LifecycleCommands } from "./commands/LifecycleCommands";
 import { LifeCycleTaskTreeView } from "./features/LifeCycleTaskTreeView";
-import { NugetHttpService } from "./common/NugetHttpService";
 import { PowerQueryTaskProvider } from "./features/PowerQueryTaskProvider";
+import { PqSdkNugetPackageService } from "./common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "./features/PqSdkOutputChannel";
 import { PqServiceHostClient } from "./pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
@@ -38,7 +38,12 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         const globalEventBus: GlobalEventBus = new GlobalEventBus(vscExtCtx);
         const pqTestResultViewPanelDisposable: IDisposable = PqTestResultViewPanel.activate(vscExtCtx);
         const pqSdkOutputChannel: PqSdkOutputChannel = new PqSdkOutputChannel();
-        const nugetHttpService: NugetHttpService = new NugetHttpService(globalEventBus, pqSdkOutputChannel);
+
+        const pqSdkNugetPackageService: PqSdkNugetPackageService = new PqSdkNugetPackageService(
+            vscExtCtx,
+            globalEventBus,
+            pqSdkOutputChannel,
+        );
 
         const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
             ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
@@ -65,7 +70,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         const lifecycleCommands: LifecycleCommands = new LifecycleCommands(
             vscExtCtx,
             globalEventBus,
-            nugetHttpService,
+            pqSdkNugetPackageService,
             disposablePqTestServices,
             pqSdkOutputChannel,
         );

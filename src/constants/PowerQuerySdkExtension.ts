@@ -71,8 +71,8 @@ const PqTestSubPath: string[] = [
 
 const MakePQXExecutableName: string = "MakePQX.exe" as const;
 
-function buildPqTestSubPath(pqTestVersion: string): string[] {
-    return [`${InternalMsftPqSdkToolsNugetName}.${pqTestVersion}`, "tools", "PQTest.exe"];
+function buildNugetPackageSubPath(packageName: string, version: string): string[] {
+    return [`${packageName}.${version}`, "tools", "PQTest.exe"];
 }
 
 const NugetDownloadUrl: string = "https://www.nuget.org/downloads" as const;
@@ -101,7 +101,7 @@ export const ExtensionConstants = Object.freeze({
     SuggestedPqTestNugetVersion,
     PqTestSubPath,
     MakePQXExecutableName,
-    buildPqTestSubPath,
+    buildNugetPackageSubPath,
     ConfigNames,
     NugetDownloadUrl,
     MSBuildDownloadUrl,

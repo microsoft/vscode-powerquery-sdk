@@ -41,6 +41,7 @@ export const NugetBaseFolderName: string = ExtensionConstants.NugetBaseFolder;
 export const NugetPackagesDirectory: string = path.join(extensionInstalledDirectory, NugetBaseFolderName);
 
 export const PqTestSubPath: string[] = ExtensionConstants.PqTestSubPath;
-export const buildPqTestSubPath: (version: string) => string[] = ExtensionConstants.buildPqTestSubPath;
+export const buildPqSdkSubPath: (version: string) => string[] = (version: string) =>
+    ExtensionConstants.buildNugetPackageSubPath(ExtensionConstants.InternalMsftPqSdkToolsNugetName, version);
 
 export const PublicMsftPqSdkToolsNugetName: string = ExtensionConstants.PublicMsftPqSdkToolsNugetName;

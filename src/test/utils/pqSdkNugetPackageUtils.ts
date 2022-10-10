@@ -11,7 +11,7 @@ import * as path from "path";
 
 import {
     AWAIT_INTERVAL,
-    buildPqTestSubPath,
+    buildPqSdkSubPath,
     MAX_AWAIT_TIME,
     NugetPackagesDirectory,
     PqTestSubPath,
@@ -30,7 +30,7 @@ export module PqSdkNugetPackages {
     let latestPQSdkNugetVersion: NugetVersions | undefined = undefined;
 
     export function getExpectedPqSdkToolPath(maybeNextVersion?: string): string | undefined {
-        const pqTestSubPath: string[] = maybeNextVersion ? buildPqTestSubPath(maybeNextVersion) : PqTestSubPath;
+        const pqTestSubPath: string[] = maybeNextVersion ? buildPqSdkSubPath(maybeNextVersion) : PqTestSubPath;
 
         return path.resolve(NugetPackagesDirectory, ...pqTestSubPath);
     }
