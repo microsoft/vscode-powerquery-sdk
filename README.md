@@ -1,40 +1,32 @@
 # Power Query Connector SDK for Visual Studio Code
 
+> **_NOTE:_**  The Power Query SDK extension for Visual Studio Code is currently in Public Preview. You can learn more about this extension and the development of Power Query data connectors from the link [aka.ms/PowerQuerySDKDocs](aka.ms/PowerQuerySDKDocs).
+
 Provides functionality related to the development and testing of [Custom Connectors for Power Query and Power BI](https://docs.microsoft.com/en-us/power-query/startingtodevelopcustomconnectors).
 
 Install the latest version of the [Power Query SDK through the Visual Studio Code Marketplace](aka.ms/PowerQuerySDK).
 
+![Animated demonstration GIF of the Power Query SDK for Visual Studio Code](media/VSCodeSDK.gif)
+
+> **_NOTE:_**  You can learn how to manually build and install this project from the article on [build and install](build.md).
+
 ## Features
 
--   Custom connector template
--   Build connector file (.mez)
--   Set credentials
--   Run test queries
--   View query results
+What you can do with this extension:
+
+* Create a new extension project using a custom connector template
+* Build connector file (.mez)
+* Set and manage credentials
+* Run test queries
+* Test your TestConnection function for refresh on the cloud
+* View query results
+* Leverage syntax highlighting and intellisense for writing M script
+* Manage your workspace settings and other project-level configurations
 
 ## Related projects
 
 [vscode-powerquery](https://github.com/microsoft/vscode-powerquery)
 
-## How to build and install from source
-
-Install project dependencies:
-
-```msdos
-npm install
-```
-
-Build the project and create the vsix installer (`npx vsce package`):
-
-```msdos
-npm run vsix
-```
-
-Install the extension from the command line (`code --install-extension <pqsdk.vsix>`):
-
-```msdos
-npm run code-install
-```
 
 ## Contributing
 
