@@ -2,7 +2,7 @@
 
 > **_NOTE:_**  The Power Query SDK extension for Visual Studio Code is currently in Public Preview. You can learn more about this extension and the development of Power Query data connectors from the link [aka.ms/PowerQuerySDKDocs](aka.ms/PowerQuerySDKDocs).
 
-Provides functionality related to the development and testing of [Custom Connectors for Power Query and Power BI](https://docs.microsoft.com/en-us/power-query/startingtodevelopcustomconnectors).
+Provides functionality related to the development and testing of Custom Connectors for Power Query and Power BI.
 
 Install the latest version of the [Power Query SDK through the Visual Studio Code Marketplace](aka.ms/PowerQuerySDK).
 
