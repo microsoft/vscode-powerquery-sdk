@@ -18,7 +18,8 @@
         "noImplicitReturns": true,
         "noUnusedLocals": true,
         "resolveJsonModule": true,
-        "strictPropertyInitialization": true
+        "strictPropertyInitialization": true,
+        "skipLibCheck": true
     },
     "exclude": ["node_modules", ".vscode-test", "webviews", "scripts", "test-resources", "unit-tests"]
 }
