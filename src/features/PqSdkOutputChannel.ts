@@ -21,6 +21,10 @@ export class PqSdkOutputChannel implements OutputChannel, IDisposable {
         this._channel = vscode.window.createOutputChannel(ExtensionConstants.OutputChannelName);
     }
 
+    replace(value: string): void {
+        this._channel.replace(value);
+    }
+
     dispose(): void {
         this._channel.dispose();
     }
