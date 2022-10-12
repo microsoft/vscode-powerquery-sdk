@@ -36,7 +36,7 @@ export module ConnectorProjects {
         await inputBox.sendKeys(targetDirectory);
         await inputBox.sendKeys(Key.ENTER);
 
-        await delay(5e3);
+        await delay(7e3);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
