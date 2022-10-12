@@ -22,7 +22,7 @@ async function doE2eTest() {
     await extTest.installVsix({ vsixFile: path.resolve(process.cwd(), theVsixFilePath) });
 
     // Runs the selected test files in VS Code using mocha and webdriver
-    await extTest.runTests("out/src/test/**/*.spec.js", { cleanup: true });
+    await extTest.runTests("out/src/test/**/*.spec.js", { cleanup: true, resources: [] });
 }
 
 void doE2eTest();
