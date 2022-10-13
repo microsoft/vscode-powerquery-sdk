@@ -60,9 +60,9 @@ const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
         new ThemeIcon("key"),
     ),
     new LifecycleTreeViewItem(
-        extensionI18n["PQSdk.lifecycle.command.list.credentials.title"],
+        extensionI18n["PQSdk.lifecycleTreeView.item.listCredentials.title"],
         {
-            title: extensionI18n["PQSdk.lifecycle.command.list.credentials.title"],
+            title: extensionI18n["PQSdk.lifecycleTreeView.item.listCredentials.title"],
             command: `${LifecycleCommands.ListCredentialCommand}`,
             arguments: [],
         },
