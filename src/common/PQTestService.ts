@@ -102,6 +102,7 @@ export interface ExtensionInfo {
 export interface CreateAuthState {
     DataSourceKind: string;
     AuthenticationKind: string;
+    PathToConnectorFile?: string;
     PathToQueryFile: string;
     // for the key template
     $$KEY$$?: string;

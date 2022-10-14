@@ -584,7 +584,9 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return this.doEnqueueOneTask<GenericResult>({
             operation: "set-credential",
             additionalArgs,
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            pathToConnector:
+                createAuthState.PathToConnectorFile ||
+                resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
             pathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
             stdinStr: payloadStr,
         });

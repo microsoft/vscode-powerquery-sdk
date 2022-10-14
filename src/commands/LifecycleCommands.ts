@@ -1052,7 +1052,7 @@ export class LifecycleCommands implements IDisposable {
                     });
 
                     const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-                        "**/*.query.pq",
+                        "**/*.{query,test}.pq",
                         "**/{bin,obj}/**",
                         1e2,
                     );
@@ -1075,6 +1075,10 @@ export class LifecycleCommands implements IDisposable {
                                 label: one,
                             }));
 
+                            items.push({
+                                label: extensionI18n["PQSdk.lifecycle.command.choose.customizedDataSourceKind.label"],
+                            });
+
                             const picked: vscode.QuickPickItem = await input.showQuickPick({
                                 title,
                                 step: 1,
@@ -1085,9 +1089,17 @@ export class LifecycleCommands implements IDisposable {
                             });
 
                             state.DataSourceKind = picked.label;
-                        } else {
-                            // we did not get a list of data source candidates,
-                            // thus have to allow users inputting freely
+                        }
+
+                        if (
+                            !state.DataSourceKind ||
+                            state.DataSourceKind ===
+                                extensionI18n["PQSdk.lifecycle.command.choose.customizedDataSourceKind.label"]
+                        ) {
+                            // we did not have the DataSourceKind populated,
+                            // or it was set to customized dataSourceKind label
+                            // then we should allow users to input arbitrarily
+                            // eslint-disable-next-line require-atomic-updates
                             state.DataSourceKind = await input.showInputBox({
                                 title,
                                 step: 1,
@@ -1114,22 +1126,75 @@ export class LifecycleCommands implements IDisposable {
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
                     ): Promise<InputStep | void> {
-                        const items: vscode.QuickPickItem[] = connectorQueryFiles.map((one: vscode.Uri) => ({
-                            label: vscode.workspace.asRelativePath(one),
-                            detail: one.fsPath,
-                        }));
+                        if (connectorQueryFiles.length) {
+                            const items: vscode.QuickPickItem[] = connectorQueryFiles.map((one: vscode.Uri) => ({
+                                label: vscode.workspace.asRelativePath(one),
+                                detail: one.fsPath,
+                            }));
 
-                        const picked: vscode.QuickPickItem = await input.showQuickPick({
-                            title,
-                            step: 2,
-                            totalSteps: 3,
-                            placeholder: extensionI18n["PQSdk.lifecycle.command.choose.connectorFile"],
-                            activeItem: items[0],
-                            items,
-                        });
+                            items.push({
+                                label: extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.label"],
+                                detail: extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.detail"],
+                            });
 
-                        // eslint-disable-next-line require-atomic-updates
-                        state.PathToQueryFile = picked.detail;
+                            const picked: vscode.QuickPickItem = await input.showQuickPick({
+                                title,
+                                step: 2,
+                                totalSteps: 3,
+                                placeholder: extensionI18n["PQSdk.lifecycle.command.choose.queryFile"],
+                                activeItem: items[0],
+                                items,
+                            });
+
+                            // eslint-disable-next-line require-atomic-updates
+                            state.PathToQueryFile = picked.detail;
+                        }
+
+                        if (
+                            !state.PathToQueryFile ||
+                            state.PathToQueryFile ===
+                                extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.detail"]
+                        ) {
+                            // we did not have the PathToQueryFile populated,
+                            // or it was set to customized PathToQueryFile detail
+                            // then we should allow users to input arbitrarily
+                            // eslint-disable-next-line require-atomic-updates
+                            state.PathToQueryFile = await input.showInputBox({
+                                title,
+                                step: 2,
+                                totalSteps: 3,
+                                value: "",
+                                prompt: extensionI18n["PQSdk.lifecycle.command.choose.queryFilePath.label"],
+                                ignoreFocusOut: true,
+                                validate: (key: string) =>
+                                    Promise.resolve(
+                                        key.length
+                                            ? undefined
+                                            : extensionI18n["PQSdk.lifecycle.error.empty.PathToQueryFilePath"],
+                                    ),
+                            });
+
+                            // we also need to populate the state.PathToConnectorFile
+                            // since the PathToQueryFilePath might be another query file
+                            state.PathToConnectorFile = path.dirname(state.PathToQueryFile);
+
+                            // need to populate the PathToConnectorFile to re-verify
+                            // eslint-disable-next-line require-atomic-updates
+                            state.PathToConnectorFile = await input.showInputBox({
+                                title,
+                                step: 2,
+                                totalSteps: 3,
+                                value: state.PathToConnectorFile,
+                                prompt: extensionI18n["PQSdk.lifecycle.command.choose.extensionFilePath.label"],
+                                ignoreFocusOut: true,
+                                validate: (key: string) =>
+                                    Promise.resolve(
+                                        key.length
+                                            ? undefined
+                                            : extensionI18n["PQSdk.lifecycle.error.empty.PathToConnectorFile"],
+                                    ),
+                            });
+                        }
 
                         progress.report({ increment: 10 });
 

@@ -776,7 +776,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 params: [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToConnector: createAuthState.PathToConnectorFile || getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
                         // DataSourceKind: createAuthState.DataSourceKind,
                         AuthenticationKind: createAuthState.AuthenticationKind,
