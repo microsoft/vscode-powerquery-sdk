@@ -99,7 +99,7 @@ export function formatArguments(args: string[]): string {
 
     for (const oneArg of args) {
         // pre formatting
-        const isCurrentArgumentParameter: boolean = oneArg.indexOf("--") === 0;
+        const isCurrentArgumentParameter: boolean = oneArg.indexOf("--") === 0 || oneArg.indexOf("-") === 0;
 
         const shouldQuoted: boolean = isLastArgParameter && !isCurrentArgumentParameter;
         const shouldBreakLine: boolean = isCurrentArgumentParameter;
