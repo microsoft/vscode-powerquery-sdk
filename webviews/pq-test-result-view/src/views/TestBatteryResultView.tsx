@@ -39,7 +39,7 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
     );
 
     const errorDetailsString = useMemo<string | null>(() => {
-        if (testRunExecution.Status !== "Passed") {
+        if (testRunExecution.Status !== "Passed" && testRunExecution.Status !== 3) {
             if (testRunExecution.Error?.Message && typeof testRunExecution.Error?.Message === "string") {
                 return testRunExecution.Error?.Message;
             }
