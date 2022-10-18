@@ -7,8 +7,8 @@ issues before filing new issues to avoid duplicates. For new issues, file your b
 feature request as a new Issue.
 
 > Issues posted in this GitHub repository should be related to the vscode-powerquery-sdk extension.
-> Please post issues and general questions regarding Power Query / M and Custom Connector development
-> in the [Power Query section of the Power BI Community Forums](https://community.powerbi.com/t5/Power-Query/bd-p/power-bi-services).
+> You can post general questions regarding Custom Connector development in the [discussions section of this repository](https://github.com/microsoft/vscode-powerquery-sdk/discussions) to get help from the community and the Microsoft team. 
+> Microsoft makes no guarantees or promises to resolve questions or scenarios raised through the discussion section. The support on the discussion section is provided on a best-effort approach to help users of the Power Query SDK.
 
 ## Microsoft Support Policy
 
