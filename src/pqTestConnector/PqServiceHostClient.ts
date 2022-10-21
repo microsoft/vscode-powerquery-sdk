@@ -779,6 +779,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                         PathToConnector: createAuthState.PathToConnectorFile || getFirstWorkspaceFolder()?.uri.fsPath,
                         PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
                         // DataSourceKind: createAuthState.DataSourceKind,
+                        // TODO: We might need to remove this arg when the service host command matches pqtest
                         AuthenticationKind: createAuthState.AuthenticationKind,
                         TemplateValueKey: createAuthState.$$KEY$$,
                         TemplateValueUsername: createAuthState.$$USERNAME$$,

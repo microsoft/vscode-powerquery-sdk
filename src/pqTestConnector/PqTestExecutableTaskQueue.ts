@@ -535,14 +535,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "Permissions": []
             }`;
             /* eslint-enable*/
-        } else if (theAuthKind.toLowerCase() === "oauth") {
-            payloadStr = `{
-                "AuthenticationKind": "OAuth",
-                "AuthenticationProperties": {},
-                "PrivacySetting": "None",
-                "Permissions": []
-            }`;
-
+        } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
             additionalArgs.unshift("--interactive");
         } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {
             theAuthKind = "Anonymous";
@@ -560,21 +553,13 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-        } else if (theAuthKind.toLowerCase() === "aad") {
-            payloadStr = `{
-                "AuthenticationKind": "Aad",
-                "AuthenticationProperties": {},
-                "PrivacySetting": "None",
-                "Permissions": []
-            }`;
-
-            additionalArgs.unshift("--interactive");
         }
 
-        additionalArgs.unshift(`${theAuthKind}`);
-        additionalArgs.unshift(`-ak`);
-
-        // additionalArgs.unshift(`-dsk=${createAuthState.DataSourceKind}`);
+        if (payloadStr === undefined) {
+            // AuthenticationKind must be specified if it's not provided in the json input
+            additionalArgs.unshift(`${theAuthKind}`);
+            additionalArgs.unshift(`-ak`);
+        }
 
         // in case latter we turn additionalArgs an empty array, we should set it undefined at that moment
         if (Array.isArray(additionalArgs) && additionalArgs.length === 0) {
