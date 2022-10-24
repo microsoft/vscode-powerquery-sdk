@@ -18,7 +18,7 @@ body:
     attributes:
       value: ---
 
-  - type: input
+  - type: textarea
     id: goal
     attributes:
       label: Problem
@@ -27,7 +27,7 @@ body:
     validations:
       required: true
 
-  - type: input
+  - type: textarea
     id: solution
     attributes:
       label: Desired Solution
@@ -36,14 +36,14 @@ body:
     validations:
       required: true
 
-  - type: input
+  - type: textarea
     id: alternative
     attributes:
       label: Alternatives and Workarounds
       description: Describe alternatives you've considered
       placeholder: A clear and concise description of any alternative solutions or features you've considered.
 
-  - type: input
+  - type: textarea
     id: context
     attributes:
       label: Additional Context
