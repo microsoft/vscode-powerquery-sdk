@@ -710,12 +710,14 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             if (!pathToQueryFile || !fs.existsSync(pathToQueryFile)) return Promise.resolve();
 
             let currentContent: string = fs.readFileSync(pathToQueryFile, { encoding: "utf8" });
+            let currentEditor: vscode.TextEditor | undefined = undefined;
 
             vscode.window.visibleTextEditors.forEach((oneEditor: vscode.TextEditor) => {
                 if (
                     oneEditor?.document.languageId === "powerquery" &&
                     oneEditor.document.uri.fsPath === pathToQueryFile
                 ) {
+                    currentEditor = oneEditor;
                     currentContent = oneEditor.document.getText();
                 }
             });
@@ -739,7 +741,25 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 ],
             };
 
-            return this.enlistOnePqServiceHostTask<GenericResult>(theRequestMessage);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result: any = await this.enlistOnePqServiceHostTask<any>(theRequestMessage);
+
+            if (result.modifiedDocument && currentEditor) {
+                const theCurrentEditor: vscode.TextEditor = currentEditor as vscode.TextEditor;
+                const firstLine: vscode.TextLine = theCurrentEditor.document.lineAt(0);
+
+                const lastLine: vscode.TextLine = theCurrentEditor.document.lineAt(
+                    theCurrentEditor.document.lineCount - 1,
+                );
+
+                const textRange: vscode.Range = new vscode.Range(firstLine.range.start, lastLine.range.end);
+
+                void theCurrentEditor.edit((editBuilder: vscode.TextEditorEdit) => {
+                    editBuilder.replace(textRange, result.modifiedDocument);
+                });
+            }
+
+            return result;
         } else {
             throw new PqServiceHostServerNotReady();
         }
