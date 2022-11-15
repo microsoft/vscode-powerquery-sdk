@@ -744,7 +744,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const result: any = await this.enlistOnePqServiceHostTask<any>(theRequestMessage);
 
-            if (result.modifiedDocument && currentEditor) {
+            if (result.Kind === 0 && result.Result.modifiedDocument && currentEditor) {
                 const theCurrentEditor: vscode.TextEditor = currentEditor as vscode.TextEditor;
                 const firstLine: vscode.TextLine = theCurrentEditor.document.lineAt(0);
 
@@ -755,7 +755,7 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
                 const textRange: vscode.Range = new vscode.Range(firstLine.range.start, lastLine.range.end);
 
                 void theCurrentEditor.edit((editBuilder: vscode.TextEditorEdit) => {
-                    editBuilder.replace(textRange, result.modifiedDocument);
+                    editBuilder.replace(textRange, result.Result.modifiedDocument);
                 });
             }
 
