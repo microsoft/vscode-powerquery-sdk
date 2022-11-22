@@ -794,8 +794,11 @@ export class PqServiceHostClient implements IPQTestService, IDisposable {
         }
     }
 
-    TestConnection(): Promise<GenericResult> {
+    async TestConnection(): Promise<GenericResult> {
         if (this.serverTransportTuple) {
+            // maybe we need to execute the build task before evaluating.
+            await this.ExecuteBuildTaskAndAwaitIfNeeded();
+
             const theRequestMessage: PqServiceHostRequest = {
                 jsonrpc: JSON_RPC_VERSION,
                 id: this.nextSequenceId,

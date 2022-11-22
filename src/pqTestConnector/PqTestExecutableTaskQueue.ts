@@ -613,7 +613,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         });
     }
 
-    public TestConnection(): Promise<GenericResult> {
+    public async TestConnection(): Promise<GenericResult> {
+        // maybe we need to execute the build task before evaluating.
+        await this.ExecuteBuildTaskAndAwaitIfNeeded();
+
         return this.doEnqueueOneTask<GenericResult>({
             operation: "test-connection",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
