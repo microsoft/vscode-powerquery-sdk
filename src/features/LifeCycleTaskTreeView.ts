@@ -19,6 +19,7 @@ import {
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
 import { debounce } from "../utils/debounce";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { extensionI18n } from "../i18n/extension";
 import { getAnyPqFileBeneathTheFirstWorkspace } from "../utils/vscodes";
 import { LifecycleCommands } from "../commands/LifecycleCommands";
@@ -41,15 +42,6 @@ export class LifecycleTreeViewItem extends TreeItem {
 }
 
 const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
-    new LifecycleTreeViewItem(
-        extensionI18n["PQSdk.lifecycleTreeView.item.setupWorkspace.title"],
-        {
-            title: extensionI18n["PQSdk.lifecycleTreeView.item.setupWorkspace.title"],
-            command: `${LifecycleCommands.SetupCurrentWorkspaceCommand}`,
-            arguments: [],
-        },
-        new ThemeIcon("pencil"),
-    ),
     new LifecycleTreeViewItem(
         extensionI18n["PQSdk.lifecycleTreeView.item.createOneCredential.title"],
         {
@@ -107,6 +99,16 @@ const staticLifecycleTreeViewItem: LifecycleTreeViewItem[] = [
     ),
 ];
 
+const staticSetupWorkspaceTreeViewItem: LifecycleTreeViewItem = new LifecycleTreeViewItem(
+    extensionI18n["PQSdk.lifecycleTreeView.item.setupWorkspace.title"],
+    {
+        title: extensionI18n["PQSdk.lifecycleTreeView.item.setupWorkspace.title"],
+        command: `${LifecycleCommands.SetupCurrentWorkspaceCommand}`,
+        arguments: [],
+    },
+    new ThemeIcon("pencil"),
+);
+
 export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeViewItem> {
     public static TreeViewName: string = `${TreeViewPrefix}.LifeCycleTaskTreeView`;
 
@@ -121,8 +123,15 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
             this.debouncedRefresh();
         });
 
+        // subscribe to DefaultExtensionLocation changed
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation, (_args: any[]) => {
+        globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestExtension, (_args: any[]) => {
+            this.debouncedRefresh();
+        });
+
+        // subscribe to DefaultQueryFileLocation changed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePQTestQuery, (_args: any[]) => {
             this.debouncedRefresh();
         });
     }
@@ -146,6 +155,19 @@ export class LifeCycleTaskTreeView implements TreeDataProvider<LifecycleTreeView
         if (element) return undefined;
 
         if (await this.isValidWorkspace()) {
+            // if we missed DefaultQueryFileLocation or DefaultExtensionLocation
+            if (
+                !ExtensionConfigurations.DefaultQueryFileLocation ||
+                !ExtensionConfigurations.DefaultExtensionLocation
+            ) {
+                // do a shallow copy of the static item list
+                const result: LifecycleTreeViewItem[] = staticLifecycleTreeViewItem.slice();
+                // unshift staticSetupWorkspaceTreeViewItem to the items head
+                result.unshift(staticSetupWorkspaceTreeViewItem);
+
+                return result;
+            }
+
             return staticLifecycleTreeViewItem;
         }
 
