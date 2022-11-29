@@ -87,9 +87,9 @@ jobs:
     needs: build-and-test
     if: success()
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
       - shell: pwsh
-        run: 'echo "[dry-run] npx vsce publish --packagePath $(Get-ChildItem -path . -filter *.vsix -Name)"'
+        run: echo $(Get-ChildItem -path . -filter *.vsix -Name)
       - shell: pwsh
         run: npx vsce -V
   publish:
@@ -97,7 +97,7 @@ jobs:
     needs: build-and-test
     if: success() && (startsWith( github.ref, 'refs/tags/'))
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
       - shell: pwsh
         run: npx vsce publish --packagePath $(Get-ChildItem -path . -filter *.vsix -Name)
         env:
