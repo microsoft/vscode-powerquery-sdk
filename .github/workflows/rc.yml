@@ -2,10 +2,12 @@ name: Release candidate
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ]
     tags:
       - "v*"
+#  todo add pull_request trigger for testing, remove it latter
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build-and-test:
