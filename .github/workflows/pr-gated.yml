@@ -1,4 +1,4 @@
-name: Gated pull reqeust
+name: Gated pull request
 on:
   workflow_dispatch:
   push:
