@@ -7,7 +7,11 @@
 
 import * as Net from "net";
 import * as vscode from "vscode";
+import { join } from "path";
+import { platform } from "process";
+import { randomBytes } from "crypto";
 import { Socket } from "net";
+import { tmpdir } from "os";
 
 import { CancellationToken, DebugConfiguration, ProviderResult, TextEditor, WorkspaceFolder } from "vscode";
 
@@ -54,7 +58,7 @@ class InlineDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory 
     }
 }
 
-class MQueryNodeDebugAdapterServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+class MQueryNodeDebugAdapterNamedPipeServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
     private server?: Net.Server;
 
     createDebugAdapterDescriptor(
@@ -62,16 +66,19 @@ class MQueryNodeDebugAdapterServerDescriptorFactory implements vscode.DebugAdapt
         _executable: vscode.DebugAdapterExecutable | undefined,
     ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
         if (!this.server) {
-            // start listening on a random port
+            // start listening on a random named pipe path
+            const pipeName: string = randomBytes(10).toString("utf8");
+            const pipePath: string = platform === "win32" ? join("\\\\.\\pipe\\", pipeName) : join(tmpdir(), pipeName);
+
             this.server = Net.createServer((socket: Socket) => {
                 const session: MQueryDebugSession = new MQueryDebugSession();
                 session.setRunAsServer(true);
                 session.start(socket as NodeJS.ReadableStream, socket);
-            }).listen(0);
+            }).listen(pipePath);
         }
 
         // make VS Code connect to debug server
-        return new vscode.DebugAdapterServer((this.server.address() as Net.AddressInfo).port);
+        return new vscode.DebugAdapterNamedPipeServer(this.server.address() as string);
     }
 
     dispose(): void {
@@ -106,7 +113,9 @@ export function activateMQueryDebug(vscExtCtx: vscode.ExtensionContext, mode: "i
     );
 
     const factory: vscode.DebugAdapterDescriptorFactory =
-        mode === "server" ? new MQueryNodeDebugAdapterServerDescriptorFactory() : new InlineDebugAdapterFactory();
+        mode === "server"
+            ? new MQueryNodeDebugAdapterNamedPipeServerDescriptorFactory()
+            : new InlineDebugAdapterFactory();
 
     vscExtCtx.subscriptions.push(
         vscode.debug.registerDebugAdapterDescriptorFactory(ExtensionConstants.PQDebugType, factory),

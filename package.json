@@ -298,14 +298,14 @@
                     {
                         "type": "powerquery",
                         "request": "launch",
-                        "name": "%extension.pqtest.initialConfigurations.name%",
+                        "name": "Evaluate power query file.",
                         "program": "${workspaceFolder}/${command:AskForPowerQueryFileName}"
                     }
                 ],
                 "configurationSnippets": [
                     {
                         "label": "powerquery Debug: Launch",
-                        "description": "%extension.pqtest.configurationSnippets.description%",
+                        "description": "A new configuration for testing power query file a user selected.",
                         "body": {
                             "type": "powerquery",
                             "request": "launch",
