@@ -9,7 +9,7 @@ import * as chai from "chai";
 import * as fs from "fs";
 
 import { makeOneTmpDir } from "../../src/utils/osUtils";
-import { removeDirectoryRecursively } from "../../src/utils/files";
+import { tryRemoveDirectoryRecursively } from "../../src/utils/files";
 
 const expect = chai.expect;
 
@@ -19,6 +19,6 @@ describe("Utils unit testes", () => {
 
         expect(fs.existsSync(oneTmpDir)).true;
 
-        await removeDirectoryRecursively(oneTmpDir);
+        await tryRemoveDirectoryRecursively(oneTmpDir);
     });
 });

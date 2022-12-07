@@ -45,6 +45,15 @@ export function removeDirectoryRecursively(directoryFullName: string): Promise<v
     });
 }
 
+export function tryRemoveDirectoryRecursively(directoryFullName: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new Promise<void>((resolve: () => void, _reject: (reason?: any) => void) => {
+        fs.rm(directoryFullName, { recursive: true, force: true }, (_err: NodeJS.ErrnoException | null) => {
+            resolve();
+        });
+    });
+}
+
 export function getCtimeOfAFile(fileFullPath: string): Date {
     if (fs.existsSync(fileFullPath)) {
         const fileStats: fs.Stats = fs.statSync(fileFullPath);

@@ -22,7 +22,7 @@ import {
 
 import { delay } from "../../utils/pids";
 import { makeOneTmpDir } from "../../utils/osUtils";
-import { removeDirectoryRecursively } from "../../utils/files";
+import { tryRemoveDirectoryRecursively } from "../../utils/files";
 
 const expect = chai.expect;
 
@@ -93,7 +93,7 @@ describe("New extension project Tests", () => {
 
         after(() => {
             if (oneTmpDir) {
-                void removeDirectoryRecursively(oneTmpDir);
+                void tryRemoveDirectoryRecursively(oneTmpDir);
                 oneTmpDir = undefined;
             }
         });
@@ -165,7 +165,7 @@ describe("New extension project Tests", () => {
 
         after(() => {
             if (oneTmpDir) {
-                void removeDirectoryRecursively(oneTmpDir);
+                void tryRemoveDirectoryRecursively(oneTmpDir);
                 oneTmpDir = undefined;
             }
         });

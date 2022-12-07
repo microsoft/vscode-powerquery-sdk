@@ -12,7 +12,7 @@ import * as path from "path";
 import { findExecutable } from "../../../src/utils/executables";
 import { makeOneTmpDir } from "../../../src/utils/osUtils";
 import { NugetCommandService } from "../../../src/common/nuget/NugetCommandService";
-import { removeDirectoryRecursively } from "../../../src/utils/files";
+import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 
 const expect = chai.expect;
 const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
@@ -76,13 +76,13 @@ describe("NugetCommandService unit testes", () => {
                 ),
             ).true;
 
-            await removeDirectoryRecursively(oneTmpDir);
+            await tryRemoveDirectoryRecursively(oneTmpDir);
         }).timeout(9e4);
 
         after(() => {
             setTimeout(() => {
                 if (oneTmpDir) {
-                    void removeDirectoryRecursively(oneTmpDir);
+                    void tryRemoveDirectoryRecursively(oneTmpDir);
                     oneTmpDir = "";
                 }
             }, 25);

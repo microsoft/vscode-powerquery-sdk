@@ -11,7 +11,7 @@ import * as path from "path";
 
 import { makeOneTmpDir } from "../../../src/utils/osUtils";
 import { NugetHttpService } from "../../../src/common/nuget/NugetHttpService";
-import { removeDirectoryRecursively } from "../../../src/utils/files";
+import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 
 const expect = chai.expect;
 const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
@@ -34,6 +34,6 @@ describe("NugetHttpService unit testes", () => {
         expect(fs.existsSync(path.resolve(oneTmpDir, "Microsoft.PowerQuery.SdkTools.nuspec"))).true;
         expect(fs.existsSync(path.resolve(oneTmpDir, "tools", "PQTest.exe"))).true;
 
-        await removeDirectoryRecursively(oneTmpDir);
+        await tryRemoveDirectoryRecursively(oneTmpDir);
     }).timeout(3e4);
 });
