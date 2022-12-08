@@ -15,7 +15,7 @@ import { StreamZipAsync } from "node-stream-zip";
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { makeOneTmpDir } from "../../utils/osUtils";
-import { removeDirectoryRecursively } from "../../utils/files";
+import { tryRemoveDirectoryRecursively } from "../../utils/files";
 
 const streamFinished$deferred: (
     stream: NodeJS.ReadStream | NodeJS.WritableStream | NodeJS.ReadWriteStream,
@@ -93,6 +93,6 @@ export class NugetLiteHttpService {
         await zip.extract(null, outputLocation);
         await zip.close();
 
-        await removeDirectoryRecursively(oneTmpDir);
+        await tryRemoveDirectoryRecursively(oneTmpDir);
     }
 }
