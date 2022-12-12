@@ -36,7 +36,7 @@ export const OPEN = "open" as const;
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ERROR = "error" as const;
 
-export type StatusType = "closed" | "connecting" | "message" | "open";
+export type StatusType = "closed" | "connecting" | "open";
 
 export type SocketExtended = Socket & { abort?: boolean };
 
