@@ -35,7 +35,6 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
     onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
     constructor(private readonly taskDefinition: PowerQueryTaskDefinition) {
-        // noop
         this.pqServiceHostClientLight = new PqServiceHostClientLight(this);
     }
 
