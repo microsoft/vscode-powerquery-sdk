@@ -14,6 +14,7 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { extensionI18n } from "../i18n/extension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
+import { PqSdkTaskTerminal } from "./PqSdkTaskTerminal";
 
 const enum TaskLabelPrefix {
     Build = "build",
@@ -134,7 +135,9 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         });
     }
 
-    constructor(protected readonly pqTestService: IPQTestService) {}
+    constructor(protected readonly pqTestService: IPQTestService) {
+        // noop
+    }
 
     public provideTasks(_token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
         const result: vscode.Task[] = [];
@@ -146,11 +149,19 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         result.push(PowerQueryTaskProvider.buildMsbuildTask());
         result.push(PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestService.pqTestLocation));
 
-        pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
-            result.push(
-                PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
-            );
-        });
+        const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
+
+        if (useServiceHost) {
+            pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
+                result.push(PqSdkTaskTerminal.getTaskForPQTestTaskDefinition(taskDef));
+            });
+        } else {
+            pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
+                result.push(
+                    PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
+                );
+            });
+        }
 
         return result;
     }
@@ -196,7 +207,11 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             return undefined;
         }
 
-        if (pqtestExe && !token.isCancellationRequested) {
+        const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
+
+        if (useServiceHost) {
+            return PqSdkTaskTerminal.getTaskForPQTestTaskDefinition(taskDef);
+        } else if (pqtestExe && !token.isCancellationRequested) {
             return PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, pqtestExe);
         }
 

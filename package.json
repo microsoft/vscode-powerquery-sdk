@@ -210,6 +210,10 @@
                     "pathToQueryFile": {
                         "type": "string",
                         "description": "%extension.pqtest.taskDefinitions.properties.pathToQueryFile.description%"
+                    },
+                    "credentialTemplate": {
+                        "type": "object",
+                        "description": "%extension.pqtest.taskDefinitions.properties.credentialTemplate.description%"
                     }
                 }
             }

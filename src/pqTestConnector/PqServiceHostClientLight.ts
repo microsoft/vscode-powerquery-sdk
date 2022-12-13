@@ -10,6 +10,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { ChildProcess } from "child_process";
+import { EventEmitter } from "events";
 import { TextEditor } from "vscode";
 
 import { CLOSED, ERROR, OPEN } from "../common/sockets/SocketClient";
@@ -22,7 +23,7 @@ import { convertStringToInteger } from "../utils/numbers";
 import { executeBuildTaskAndAwaitIfNeeded } from "./PqTestTaskUtils";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { IDisposable } from "../common/Disposable";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../common/SpawnedProcess";
 
 export interface PqServiceHostRequestParamBase {
@@ -83,7 +84,21 @@ function getInternalErrorMessage(innerError: any): string {
 
 type OmittedPqTestMethods = "currentExtensionInfos" | "currentCredentials" | "ForceShutdown" | "Ping";
 
-export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqTestMethods>, IDisposable {
+// eslint-disable-next-line @typescript-eslint/typedef
+export const INIT = "PqServiceHostClientEvent_Init" as const;
+// eslint-disable-next-line @typescript-eslint/typedef
+export const RETRYING = "PqServiceHostClientEvent_Retrying" as const;
+// eslint-disable-next-line @typescript-eslint/typedef
+export const DISCONNECTED = "PqServiceHostClientEvent_Disconnected" as const;
+// eslint-disable-next-line @typescript-eslint/typedef
+export const READY = "PqServiceHostClientEvent_Ready" as const;
+// eslint-disable-next-line @typescript-eslint/typedef
+export const DISPOSED = "PqServiceHostClientEvent_Disposed" as const;
+
+export class PqServiceHostClientLight
+    extends EventEmitter
+    implements Omit<IPQTestService, OmittedPqTestMethods>, IDisposable
+{
     public static readonly ExecutableName: string = "PQServiceHost.exe";
     public static readonly ExecutablePidLockFileName: string = "PQServiceHost.pid";
     public static readonly ExecutablePortLockFileName: string = "PQServiceHost.port";
@@ -101,10 +116,11 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
 
     public get pqServiceHostConnected(): boolean {
         return this.jsonRpcSocketClient?.status === OPEN;
-        // return Boolean(this.pingTimer);
     }
 
-    constructor(protected readonly outputChannel: PqSdkOutputChannel) {}
+    constructor(protected readonly outputChannel: PqSdkOutputChannelLight) {
+        super();
+    }
 
     protected onPostConnected(): void {
         // noop
@@ -118,7 +134,7 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
         // noop
     }
 
-    protected async requestRemoteRpcMethod<P extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase>(
+    public async requestRemoteRpcMethod<P extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase>(
         method: string,
         parameters: P[],
         options: {
@@ -177,6 +193,7 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
 
         try {
             await theJsonRpcSocketClient.open(defaultBackOff);
+            this.emit(READY);
             this.jsonRpcSocketClient = theJsonRpcSocketClient;
         } catch (error: unknown) {
             this.outputChannel.appendErrorLine(`Failed to listen PqServiceHost.exe at ${port} due to ${error}`);
@@ -260,6 +277,7 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
             this.onPreDisConnected();
             void this.jsonRpcSocketClient.close();
             this.jsonRpcSocketClient = undefined;
+            this.emit(DISPOSED);
 
             this.outputChannel.appendInfoLine(`Stop listening PqServiceHost.exe`);
         }
@@ -280,7 +298,13 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
         nextPQTestLocation: string,
         tryNumber: number = 0,
     ): Promise<void> {
-        if (this.doStartAndListenPqServiceHostIfNeededInProgress || tryNumber > 4) return;
+        if (this.doStartAndListenPqServiceHostIfNeededInProgress) return;
+
+        if (tryNumber > 4) {
+            this.emit(DISCONNECTED);
+
+            return;
+        }
 
         try {
             this.doStartAndListenPqServiceHostIfNeededInProgress = true;
@@ -356,6 +380,7 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
 
         setTimeout(() => {
             if (!this.pqServiceHostConnected) {
+                this.emit(RETRYING);
                 void this.doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation, tryNumber + 1);
             }
         }, 750);
@@ -377,7 +402,7 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
             this.outputChannel.appendInfoLine(`PqServiceHost.exe found at ${this.pqTestFullPath}`);
 
             this.onPreRestarting();
-
+            this.emit(INIT);
             void this.doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation);
         }
     }
@@ -525,7 +550,7 @@ export class PqServiceHostClientLight implements Omit<IPQTestService, OmittedPqT
     }
 
     SetCredential(payloadStr: string): Promise<GenericResult> {
-        return this.requestRemoteRpcMethod("v1/PqTestService/RefreshCredential", [
+        return this.requestRemoteRpcMethod("v1/PqTestService/SetCredential", [
             {
                 SessionId: this.sessionId,
                 PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,

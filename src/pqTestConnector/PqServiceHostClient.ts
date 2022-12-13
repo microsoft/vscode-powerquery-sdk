@@ -87,7 +87,7 @@ export class PqServiceHostClient extends PqServiceHostClientLight implements IPQ
         }
     }
 
-    protected override async requestRemoteRpcMethod<
+    public override async requestRemoteRpcMethod<
         P extends PqServiceHostRequestParamBase = PqServiceHostRequestParamBase,
     >(
         method: string,
