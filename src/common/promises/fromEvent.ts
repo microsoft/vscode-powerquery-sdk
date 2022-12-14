@@ -10,7 +10,7 @@
 
 import { AnyFunction } from "./types";
 import { cancelable } from "./cancelable";
-import { CancelToken } from "./CancelToken";
+import { CancellationToken } from "./CancellationToken";
 import { noop } from "./noop";
 import { once } from "./once";
 import WebSocket from "ws";
@@ -29,7 +29,7 @@ export type ExpectedEmitter =
     | WebSocket;
 
 export function makeEventAdder(
-    cancelToken: CancelToken,
+    cancellationToken: CancellationToken,
     emitter: ExpectedEmitter,
     allParametersInArray: boolean = false,
 ): AnyEventListener {
@@ -52,7 +52,7 @@ export function makeEventAdder(
             }
         });
 
-        void cancelToken.promise.then(clean);
+        void cancellationToken.promise.then(clean);
     }
 
     return allParametersInArray
@@ -85,9 +85,9 @@ export interface FromEventOption {
 }
 
 export const fromEvent: (emitter: ExpectedEmitter, event: string, opt?: FromEventOption) => Promise<any> = cancelable(
-    (cancelToken: CancelToken, emitter: ExpectedEmitter, event: string, opt: FromEventOption = {}) =>
+    (cancellationToken: CancellationToken, emitter: ExpectedEmitter, event: string, opt: FromEventOption = {}) =>
         new Promise((resolve: AnyFunction, reject: AnyFunction) => {
-            const add: AnyEventListener = makeEventAdder(cancelToken, emitter, opt.allParametersInArray);
+            const add: AnyEventListener = makeEventAdder(cancellationToken, emitter, opt.allParametersInArray);
             add(event, resolve);
 
             if (!opt.ignoreErrors) {

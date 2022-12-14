@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnyFunction } from "./types";
 import { cancelable } from "./cancelable";
-import { CancelToken } from "./CancelToken";
+import { CancellationToken } from "./CancellationToken";
 
 import { AnyEventListener, ExpectedEmitter, FromEventOption, makeEventAdder } from "./fromEvent";
 
@@ -20,7 +20,7 @@ export const fromEvents: (
     opt?: FromEventOption,
 ) => Promise<any> = cancelable(
     (
-        cancelToken: CancelToken,
+        cancellationToken: CancellationToken,
         emitter: ExpectedEmitter,
         successEvents: string[],
         errorEvents: string[] = ["error"],
@@ -31,7 +31,7 @@ export const fromEvents: (
         }
 
         return new Promise((resolve: AnyFunction, reject: AnyFunction) => {
-            const add: AnyEventListener = makeEventAdder(cancelToken, emitter, opt.allParametersInArray);
+            const add: AnyEventListener = makeEventAdder(cancellationToken, emitter, opt.allParametersInArray);
 
             for (const oneSuccessEvtName of successEvents) {
                 add(oneSuccessEvtName, resolve);

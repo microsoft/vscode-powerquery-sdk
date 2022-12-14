@@ -5,6 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import type { CancellationToken as IVscCancellationToken } from "vscode";
+
 import { AnyFunction, BasicEvent } from "./types";
 import { defer, DeferredResult } from "./defer";
 
@@ -32,9 +34,9 @@ export class Cancel extends BaseError {
     }
 }
 
-export class CancelToken {
-    static readonly none: CancelToken = new CancelToken(InternalActionGetter);
-    static readonly canceled: CancelToken = new CancelToken(InternalActionGetter);
+export class CancellationToken implements IVscCancellationToken {
+    static readonly none: CancellationToken = new CancellationToken(InternalActionGetter);
+    static readonly canceled: CancellationToken = new CancellationToken(InternalActionGetter);
 
     static activateInternalTokens(): void {
         void this.canceled.doCancel("canceled");
@@ -44,13 +46,13 @@ export class CancelToken {
         this.none._promise = Promise.resolve(none);
     }
 
-    static isCancelToken(value: { [index: string | symbol]: unknown } | CancelToken): boolean {
+    static isCancellationToken(value: { [index: string | symbol]: unknown } | CancellationToken): boolean {
         return Boolean(value) && (value as { [index: string | symbol]: unknown })[$$toStringTag] === cancelTokenTag;
     }
 
-    static from(value: { [index: string | symbol]: unknown } | AbortSignal): CancelToken {
-        if (this.isCancelToken(value as { [index: string | symbol]: unknown })) {
-            return value as CancelToken;
+    static from(value: { [index: string | symbol]: unknown } | AbortSignal): CancellationToken {
+        if (this.isCancellationToken(value as { [index: string | symbol]: unknown })) {
+            return value as CancellationToken;
         }
 
         // todo what!!!, nodeJs.AbortSignal missed onabort ??!! add it to global.d.ts
@@ -58,7 +60,7 @@ export class CancelToken {
         const abortSignal: any = value as any;
         // const abortSignal: AbortSignal = value as AbortSignal;
 
-        const token: CancelToken = new CancelToken(InternalActionGetter);
+        const token: CancellationToken = new CancellationToken(InternalActionGetter);
 
         abortSignal.onabort = (): void => {
             void token.doCancel(abortSignal.reason ?? "Aborted");
@@ -72,6 +74,7 @@ export class CancelToken {
     private _promise: Promise<Cancel> | undefined;
     private _resolve: ((value: Cancel) => void) | undefined;
     public onAbort: AnyFunction | undefined;
+    public onCancellationRequested: AnyFunction = noop;
 
     constructor(cancelActionGetter: (action: CancelAction) => void = InternalActionGetter) {
         if (cancelActionGetter !== InternalActionGetter) {
@@ -88,6 +91,10 @@ export class CancelToken {
     }
 
     get aborted(): boolean {
+        return this.requested;
+    }
+
+    get isCancellationRequested(): boolean {
         return this.requested;
     }
 
@@ -171,9 +178,9 @@ export class CancelToken {
         }
     }
 
-    public dependsOn(others: CancelToken[]): void {
+    public dependsOn(others: CancellationToken[]): void {
         for (const other of others) {
-            const { reason }: CancelToken = other;
+            const { reason }: CancellationToken = other;
 
             if (reason) {
                 void this.doCancel(reason);
@@ -209,6 +216,11 @@ export class CancelToken {
         // if we got onAbort event emitter
         if (this.onAbort) {
             this.onAbort();
+        }
+
+        // if we got onAbort event emitter
+        if (this.onCancellationRequested !== noop) {
+            this.onCancellationRequested(this._reason);
         }
 
         const currentHandlers: AnyFunction[] | undefined = this._handlers;
@@ -251,15 +263,15 @@ export class CancelToken {
     }
 }
 
-export class CancelSource {
-    public token: CancelToken;
+export class CancellationTokenSource {
+    public token: CancellationToken;
     public cancel: CancelAction;
-    constructor(dependents: CancelToken[] = []) {
+    constructor(dependents: CancellationToken[] = []) {
         this.cancel = (_: string | Cancel): void => {
             // noop
         };
 
-        this.token = new CancelToken((action: CancelAction) => {
+        this.token = new CancellationToken((action: CancelAction) => {
             this.cancel = action;
         });
 
@@ -269,4 +281,4 @@ export class CancelSource {
     }
 }
 
-CancelToken.activateInternalTokens();
+CancellationToken.activateInternalTokens();
