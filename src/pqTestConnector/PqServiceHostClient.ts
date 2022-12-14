@@ -69,20 +69,21 @@ export class PqServiceHostClient extends PqServiceHostClientLight implements IPQ
         });
     }
 
-    protected override onPostConnected(): void {
+    protected override onConnected(): void {
         this.startToSendPingMessages();
     }
 
-    protected override onPreDisConnected(): void {
+    protected override onDisconnecting(): void {
         this.stopSendingPingMessages();
     }
 
-    protected override onPreRestarting(): void {
-        // we were already listening to a service host
+    protected override onReconnecting(): void {
+        // we have already been listening to a service host
         if (this.pingTimer) {
-            // thus we need to shut it down
+            // there would only one single host expected running per machine
+            // thus, we need to shut the existing one down first
             void this.ForceShutdown();
-            // and clear the pinger interval
+            // and clear the ping interval handler
             this.stopSendingPingMessages();
         }
     }

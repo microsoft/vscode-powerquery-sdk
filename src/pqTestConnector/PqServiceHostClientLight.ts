@@ -122,15 +122,27 @@ export class PqServiceHostClientLight
         super();
     }
 
-    protected onPostConnected(): void {
+    /**
+     * Synchronized post-connection event
+     * @protected
+     */
+    protected onConnected(): void {
         // noop
     }
 
-    protected onPreDisConnected(): void {
+    /**
+     * Synchronized pre-disconnection event
+     * @protected
+     */
+    protected onDisconnecting(): void {
         // noop
     }
 
-    protected onPreRestarting(): void {
+    /**
+     * Synchronized pre-reconnection event
+     * @protected
+     */
+    protected onReconnecting(): void {
         // noop
     }
 
@@ -220,7 +232,7 @@ export class PqServiceHostClientLight
                 this.firstTimeStarted = false;
             }
 
-            this.onPostConnected();
+            this.onConnected();
 
             const handleJsonRpcSocketError: AnyFunction = (event: Error) => {
                 this.outputChannel.appendErrorLine(
@@ -233,7 +245,7 @@ export class PqServiceHostClientLight
                     `Failed to listen PqServiceHost.exe at ${port}, will try to reconnect in 2 sec`,
                 );
 
-                this.onPreDisConnected();
+                this.onDisconnecting();
 
                 setTimeout(() => {
                     this.onPowerQueryTestLocationChanged();
@@ -274,7 +286,7 @@ export class PqServiceHostClientLight
 
     private disposeCurrentJsonRpcSocketClient(): void {
         if (this.jsonRpcSocketClient) {
-            this.onPreDisConnected();
+            this.onDisconnecting();
             void this.jsonRpcSocketClient.close();
             this.jsonRpcSocketClient = undefined;
             this.emit(DISPOSED);
@@ -401,7 +413,7 @@ export class PqServiceHostClientLight
             this.pqTestFullPath = pqServiceHostExe;
             this.outputChannel.appendInfoLine(`PqServiceHost.exe found at ${this.pqTestFullPath}`);
 
-            this.onPreRestarting();
+            this.onReconnecting();
             this.emit(INIT);
             void this.doStartAndListenPqServiceHostIfNeeded(nextPQTestLocation);
         }
