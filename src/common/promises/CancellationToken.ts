@@ -18,7 +18,7 @@ import { noop } from "./noop";
 export type CancelAction = (message: string | Cancel) => void;
 
 // eslint-disable-next-line @typescript-eslint/typedef
-const cancelTokenTag = "CancelToken" as const;
+const cancellationTokenTag = "CancellationToken" as const;
 
 const InternalActionGetter: (action: CancelAction) => void = (_action: CancelAction) => {
     // noop
@@ -47,7 +47,9 @@ export class CancellationToken implements IVscCancellationToken {
     }
 
     static isCancellationToken(value: { [index: string | symbol]: unknown } | CancellationToken): boolean {
-        return Boolean(value) && (value as { [index: string | symbol]: unknown })[$$toStringTag] === cancelTokenTag;
+        return (
+            Boolean(value) && (value as { [index: string | symbol]: unknown })[$$toStringTag] === cancellationTokenTag
+        );
     }
 
     static from(value: { [index: string | symbol]: unknown } | AbortSignal): CancellationToken {
@@ -142,8 +144,8 @@ export class CancellationToken implements IVscCancellationToken {
         }
     }
 
-    get [$$toStringTag](): typeof cancelTokenTag {
-        return cancelTokenTag;
+    get [$$toStringTag](): typeof cancellationTokenTag {
+        return cancellationTokenTag;
     }
 
     public addEventListener(type: string, listener: AnyFunction | { handleEvent: AnyFunction }): void {
