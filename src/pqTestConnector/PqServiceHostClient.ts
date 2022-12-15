@@ -10,17 +10,17 @@ import * as vscode from "vscode";
 import { Credential, ExtensionInfo, IPQTestService } from "../common/PQTestService";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import {
-    PqServiceHostClientLight,
+    PqServiceHostClientLite,
     PqServiceHostRequestParamBase,
     PqServiceHostResponseResult,
-} from "./PqServiceHostClientLight";
+} from "./PqServiceHostClientLite";
 import { IDisposable } from "../common/Disposable";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
-export * from "./PqServiceHostClientLight";
+export * from "./PqServiceHostClientLite";
 
-export class PqServiceHostClient extends PqServiceHostClientLight implements IPQTestService, IDisposable {
+export class PqServiceHostClient extends PqServiceHostClientLite implements IPQTestService, IDisposable {
     private pingTimer: NodeJS.Timer | undefined = undefined;
 
     public override get pqServiceHostConnected(): boolean {

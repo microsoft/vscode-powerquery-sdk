@@ -95,7 +95,7 @@ export const READY = "PqServiceHostClientEvent_Ready" as const;
 // eslint-disable-next-line @typescript-eslint/typedef
 export const DISPOSED = "PqServiceHostClientEvent_Disposed" as const;
 
-export class PqServiceHostClientLight
+export class PqServiceHostClientLite
     extends EventEmitter
     implements Omit<IPQTestService, OmittedPqTestMethods>, IDisposable
 {
@@ -273,7 +273,7 @@ export class PqServiceHostClientLight
             return undefined;
         }
 
-        const pqServiceHostExe: string = path.resolve(nextPQTestLocation, PqServiceHostClientLight.ExecutableName);
+        const pqServiceHostExe: string = path.resolve(nextPQTestLocation, PqServiceHostClientLite.ExecutableName);
 
         if (!fs.existsSync(pqServiceHostExe)) {
             this.outputChannel.appendErrorLine(`PqServiceHost.exe not found at ${pqServiceHostExe}`);
@@ -323,12 +323,12 @@ export class PqServiceHostClientLight
 
             const pidFileFullPath: string = path.resolve(
                 nextPQTestLocation,
-                PqServiceHostClientLight.ExecutablePidLockFileName,
+                PqServiceHostClientLite.ExecutablePidLockFileName,
             );
 
             const portFileFullPath: string = path.resolve(
                 nextPQTestLocation,
-                PqServiceHostClientLight.ExecutablePortLockFileName,
+                PqServiceHostClientLite.ExecutablePortLockFileName,
             );
 
             let pidNumber: number | undefined = this.doSeizeNumberFromLockFile(pidFileFullPath);
@@ -339,7 +339,7 @@ export class PqServiceHostClientLight
                 await delay(250);
 
                 new SpawnedProcess(
-                    path.resolve(nextPQTestLocation, PqServiceHostClientLight.ExecutableName),
+                    path.resolve(nextPQTestLocation, PqServiceHostClientLite.ExecutableName),
                     [],
                     { cwd: this.pqTestLocation, detached: true },
                     {

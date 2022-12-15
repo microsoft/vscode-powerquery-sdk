@@ -8,7 +8,7 @@
 import * as os from "os";
 import * as vscode from "vscode";
 
-import { DISCONNECTED, PqServiceHostClientLight, READY } from "../pqTestConnector/PqServiceHostClientLight";
+import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
 import { fromEvents } from "../common/promises/fromEvents";
@@ -28,32 +28,32 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
         );
     }
 
-    private readonly pqServiceHostClientLight: PqServiceHostClientLight;
+    private readonly pqServiceHostClientLite: PqServiceHostClientLite;
     private writeEmitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
     onDidWrite: vscode.Event<string> = this.writeEmitter.event;
     private readonly closeEmitter: vscode.EventEmitter<number> = new vscode.EventEmitter<number>();
     onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
     constructor(private readonly taskDefinition: PowerQueryTaskDefinition) {
-        this.pqServiceHostClientLight = new PqServiceHostClientLight(this);
+        this.pqServiceHostClientLite = new PqServiceHostClientLite(this);
     }
 
     close(): void {
         // noop
-        this.pqServiceHostClientLight.dispose();
+        this.pqServiceHostClientLite.dispose();
     }
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
-        // activate pqServiceHostClientLight and make it connect to pqServiceHost
-        this.pqServiceHostClientLight.onPowerQueryTestLocationChanged();
+        // activate pqServiceHostClientLite and make it connect to pqServiceHost
+        this.pqServiceHostClientLite.onPowerQueryTestLocationChanged();
 
         try {
-            // wait for the pqServiceHostClientLight's socket got ready
-            await fromEvents(this.pqServiceHostClientLight, [READY], [DISCONNECTED]);
+            // wait for the pqServiceHostClientLite socket got ready
+            await fromEvents(this.pqServiceHostClientLite, [READY], [DISCONNECTED]);
 
             switch (this.taskDefinition.operation) {
                 case "list-credential": {
-                    const result: unknown[] = await this.pqServiceHostClientLight.ListCredentials();
+                    const result: unknown[] = await this.pqServiceHostClientLite.ListCredentials();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.result", {
@@ -65,8 +65,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
                 }
 
                 case "delete-credential": {
-                    const deleteCredentialResult: GenericResult =
-                        await this.pqServiceHostClientLight.DeleteCredential();
+                    const deleteCredentialResult: GenericResult = await this.pqServiceHostClientLite.DeleteCredential();
 
                     this.appendInfoLine(deleteCredentialResult.Message);
                     break;
@@ -74,7 +73,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
                 case "info": {
                     const displayExtensionInfoResult: ExtensionInfo[] =
-                        await this.pqServiceHostClientLight.DisplayExtensionInfo();
+                        await this.pqServiceHostClientLite.DisplayExtensionInfo();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
@@ -91,7 +90,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
                 case "set-credential": {
                     if (this.taskDefinition.credentialTemplate) {
                         const setCredentialGenericResult: GenericResult =
-                            await this.pqServiceHostClientLight.SetCredential(
+                            await this.pqServiceHostClientLite.SetCredential(
                                 JSON.stringify(this.taskDefinition.credentialTemplate),
                             );
 
@@ -111,7 +110,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
                 case "refresh-credential": {
                     const refreshCredentialResult: GenericResult =
-                        await this.pqServiceHostClientLight.RefreshCredential();
+                        await this.pqServiceHostClientLite.RefreshCredential();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.result", {
@@ -124,7 +123,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
                 case "run-test": {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const result: any = await this.pqServiceHostClientLight.RunTestBatteryFromContent(
+                    const result: any = await this.pqServiceHostClientLite.RunTestBatteryFromContent(
                         resolveSubstitutedValues(this.taskDefinition.pathToQueryFile),
                     );
 
@@ -138,7 +137,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
                 }
 
                 case "test-connection": {
-                    const testConnectionResult: GenericResult = await this.pqServiceHostClientLight.TestConnection();
+                    const testConnectionResult: GenericResult = await this.pqServiceHostClientLite.TestConnection();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
@@ -161,7 +160,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
             }
 
             this.closeEmitter.fire(-1);
-            this.pqServiceHostClientLight.dispose();
+            this.pqServiceHostClientLite.dispose();
         }
     }
 

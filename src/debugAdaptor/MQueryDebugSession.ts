@@ -17,7 +17,7 @@ import {
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 
-import { DISCONNECTED, PqServiceHostClientLight, READY } from "../pqTestConnector/PqServiceHostClientLight";
+import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
 import {
@@ -53,7 +53,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
     private readonly configurationDone: WaitNotify = new WaitNotify();
     private readonly processForked: DeferredValue<boolean> = new DeferredValue<boolean>(false);
     private readonly pqTestExecutableOnceTask?: PqTestExecutableOnceTask;
-    private readonly pqServiceHostClientLight?: PqServiceHostClientLight;
+    private readonly pqServiceHostClientLite?: PqServiceHostClientLite;
     private readonly useServiceHost: boolean;
     private currentProgram: string = "";
     private isTerminated: boolean = false;
@@ -66,7 +66,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
         this.useServiceHost = ExtensionConfigurations.featureUseServiceHost;
 
         if (this.useServiceHost) {
-            this.pqServiceHostClientLight = new PqServiceHostClientLight(this);
+            this.pqServiceHostClientLite = new PqServiceHostClientLite(this);
         } else {
             this.pqTestExecutableOnceTask = new PqTestExecutableOnceTask();
 
@@ -176,20 +176,20 @@ export class MQueryDebugSession extends LoggingDebugSession {
     }
 
     private async doLaunchRequest(args: ILaunchRequestArguments): Promise<void> {
-        if (this.useServiceHost && this.pqServiceHostClientLight) {
-            // activate pqServiceHostClientLight and make it connect to pqServiceHost
-            this.pqServiceHostClientLight.onPowerQueryTestLocationChanged();
+        if (this.useServiceHost && this.pqServiceHostClientLite) {
+            // activate pqServiceHostClientLite and make it connect to pqServiceHost
+            this.pqServiceHostClientLite.onPowerQueryTestLocationChanged();
 
             try {
-                // wait for the pqServiceHostClientLight's socket got ready
-                await fromEvents(this.pqServiceHostClientLight, [READY], [DISCONNECTED]);
+                // wait for the pqServiceHostClientLite's socket got ready
+                await fromEvents(this.pqServiceHostClientLite, [READY], [DISCONNECTED]);
 
                 const theOperation: string = args.operation ?? "run-test";
 
                 switch (theOperation) {
                     case "info": {
                         const displayExtensionInfoResult: ExtensionInfo[] =
-                            await this.pqServiceHostClientLight.DisplayExtensionInfo();
+                            await this.pqServiceHostClientLite.DisplayExtensionInfo();
 
                         this.appendInfoLine(
                             resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
@@ -204,8 +204,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
                     }
 
                     case "test-connection": {
-                        const testConnectionResult: GenericResult =
-                            await this.pqServiceHostClientLight.TestConnection();
+                        const testConnectionResult: GenericResult = await this.pqServiceHostClientLite.TestConnection();
 
                         this.appendInfoLine(
                             resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
@@ -218,7 +217,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
 
                     case "run-test": {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const result: any = await this.pqServiceHostClientLight.RunTestBatteryFromContent(
+                        const result: any = await this.pqServiceHostClientLite.RunTestBatteryFromContent(
                             path.resolve(args.program),
                         );
 
@@ -240,11 +239,11 @@ export class MQueryDebugSession extends LoggingDebugSession {
                     this.appendErrorLine(e.toString());
                 }
 
-                this.pqServiceHostClientLight.dispose();
+                this.pqServiceHostClientLite.dispose();
             }
 
             this.sendEvent(new TerminatedEvent());
-            this.pqServiceHostClientLight.dispose();
+            this.pqServiceHostClientLite.dispose();
         }
     }
 
