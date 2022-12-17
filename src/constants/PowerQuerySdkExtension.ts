@@ -61,11 +61,15 @@ const PQDebugType: string = PowerQueryTaskType;
 const NugetBaseFolder: string = ".nuget" as const;
 const InternalMsftPqSdkToolsNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
 const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
-const SuggestedPqTestNugetVersion: string = "2.112.4" as const;
 /**
  *  2.112 or 2.112.x wil limit the version of the sdkTool seized beneath 2.113
  */
 const MaximumPqTestNugetVersion: string = "2.112.x" as const;
+/**
+ * A suggestedPqTestNugetVersion that would be used as the initially tried pqTest version
+ * thus, make sure it is lower than `MaximumPqTestNugetVersion` if it were specified
+ */
+const SuggestedPqTestNugetVersion: string = "2.112.4" as const;
 
 const PqTestSubPath: string[] = [
     `${InternalMsftPqSdkToolsNugetName}.${SuggestedPqTestNugetVersion}`,
