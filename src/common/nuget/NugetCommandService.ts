@@ -134,6 +134,29 @@ export class NugetCommandService {
         );
     }
 
+    public async getSortedPackageReleasedVersions(
+        nugetPath: string = "nuget",
+        nugetFeed: string | undefined = undefined,
+        packageName: string,
+        options: {
+            maximumNugetVersion?: NugetVersions;
+        } = {},
+    ): Promise<NugetVersions[]> {
+        let sortedNugetVersions: NugetVersions[] = (
+            await this.getPackageReleasedVersions(nugetPath, nugetFeed, packageName)
+        ).sort(NugetVersions.compare);
+
+        if (options.maximumNugetVersion) {
+            // filter out any version gt maximumNugetVersion in sortedNugetVersions
+            sortedNugetVersions = sortedNugetVersions.filter(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                (one: NugetVersions) => one.compare(options.maximumNugetVersion!) <= 0,
+            );
+        }
+
+        return sortedNugetVersions;
+    }
+
     public downloadAndExtractNugetPackage(
         nugetPath: string = "nuget",
         nugetFeed: string | undefined = undefined,

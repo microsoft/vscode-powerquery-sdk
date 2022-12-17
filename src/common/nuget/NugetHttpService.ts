@@ -6,131 +6,24 @@
  */
 
 import * as path from "path";
-import * as stream from "stream";
 import * as StreamZip from "node-stream-zip";
 
-import { createWriteStream, WriteStream } from "fs";
-import { promisify } from "util";
 import { StreamZipAsync } from "node-stream-zip";
 
-import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { makeOneTmpDir } from "../../utils/osUtils";
-import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { NugetLiteHttpService } from "./NugetLiteHttpService";
+import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel"; // this pal got vscode modules imported
 import { removeDirectoryRecursively } from "../../utils/files";
 
-const streamFinished$deferred: (
-    stream: NodeJS.ReadStream | NodeJS.WritableStream | NodeJS.ReadWriteStream,
-    options?: stream.FinishedOptions | undefined,
-) => Promise<void> = promisify(stream.finished);
-
-/**
- * Format
- *  https: into https
- *  http: into http
- * @param urlProtocol
- */
-function formatUrlProtocol(urlProtocol: string): string {
-    if (urlProtocol.toLowerCase().indexOf("https") > -1) {
-        return "https";
-    } else if (urlProtocol.toLowerCase().indexOf("http") > -1) {
-        return "http";
-    } else {
-        return urlProtocol;
-    }
-}
-
-export class NugetHttpService {
-    // public static PreReleaseIncludedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,}(?:[-a-z0-9]+)?)$/;
-    // eslint-disable-next-line security/detect-unsafe-regex
-    public static ReleasedVersionRegex: RegExp = /^((?:\.?[0-9]+){3,})$/;
-    public static DefaultBaseUrl: string = "https://api.nuget.org";
-
-    private instance: AxiosInstance = axios.create({
-        baseURL: NugetHttpService.DefaultBaseUrl,
-    });
-    private errorHandler: (error: Error) => void = (error: Error) => {
+export class NugetHttpService extends NugetLiteHttpService {
+    protected override errorHandler: (error: Error) => void = (error: Error) => {
         this.outputChannel?.appendErrorLine(`Failed to request to public nuget endpoints due to ${error}`);
     };
     constructor(private readonly outputChannel?: PqSdkOutputChannel) {
-        this.updateAxiosInstance();
+        super();
     }
 
-    public updateAxiosInstance(
-        baseURL: string = NugetHttpService.DefaultBaseUrl,
-        nullableHttpProxy: string | undefined = undefined,
-        nullableHttpProxyAuthHeaderString: string | undefined = undefined,
-    ): void {
-        if (nullableHttpProxy) {
-            const proxyUrl: URL = new URL(nullableHttpProxy);
-
-            this.instance = axios.create({
-                baseURL,
-                proxy: {
-                    protocol: formatUrlProtocol(proxyUrl.protocol),
-                    host: proxyUrl.hostname,
-                    port: parseInt(proxyUrl.port, 10),
-                },
-            });
-
-            if (nullableHttpProxyAuthHeaderString) {
-                this.instance.defaults.headers.common["Authorization"] = nullableHttpProxyAuthHeaderString;
-            }
-        } else {
-            this.instance = axios.create({
-                baseURL,
-            });
-        }
-    }
-
-    public async getPackageVersions(packageName: string): Promise<{ versions: string[] }> {
-        try {
-            const response: AxiosResponse<{ versions: string[] }> = await this.instance.get(
-                `v3-flatcontainer/${packageName.toLowerCase()}/index.json`,
-            );
-
-            return response.data;
-        } catch (e: unknown) {
-            this.errorHandler(e as Error);
-
-            throw e;
-        }
-    }
-
-    public async getPackageReleasedVersions(packageName: string): Promise<{ versions: string[] }> {
-        const preReleasedVersionIncludeVersions: { versions: string[] } = await this.getPackageVersions(packageName);
-
-        preReleasedVersionIncludeVersions.versions = preReleasedVersionIncludeVersions.versions.filter(
-            (versionStr: string) => NugetHttpService.ReleasedVersionRegex.exec(versionStr),
-        );
-
-        return preReleasedVersionIncludeVersions;
-    }
-
-    public downloadNugetPackage(packageName: string, packageVersion: string, outputLocation: string): Promise<void> {
-        const writer: WriteStream = createWriteStream(outputLocation);
-        const packageNameInLowerCase: string = packageName.toLowerCase();
-
-        try {
-            return this.instance
-                .get(
-                    `v3-flatcontainer/${packageNameInLowerCase}/${packageVersion}/${packageNameInLowerCase}.${packageVersion}.nupkg`,
-                    {
-                        responseType: "stream",
-                    },
-                )
-                .then((response: AxiosResponse) => {
-                    response.data.pipe(writer);
-
-                    return streamFinished$deferred(writer);
-                });
-        } catch (e: unknown) {
-            this.errorHandler(e as Error);
-
-            throw e;
-        }
-    }
-
-    public async downloadAndExtractNugetPackage(
+    public override async downloadAndExtractNugetPackage(
         packageName: string,
         packageVersion: string,
         outputLocation: string,

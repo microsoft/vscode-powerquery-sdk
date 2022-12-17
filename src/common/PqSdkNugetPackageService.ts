@@ -22,6 +22,9 @@ import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 export class PqSdkNugetPackageService {
     private readonly nugetHttpService: NugetHttpService;
     private readonly nugetCommandService: NugetCommandService;
+    private readonly nullableMaximumPqTestNugetVersion?: NugetVersions = ExtensionConstants.MaximumPqTestNugetVersion
+        ? NugetVersions.createFromFuzzyVersionString(ExtensionConstants.MaximumPqTestNugetVersion)
+        : undefined;
 
     constructor(
         readonly vscExtCtx: vscode.ExtensionContext,
@@ -43,24 +46,36 @@ export class PqSdkNugetPackageService {
         );
     }
 
-    public async findNullableNewPqSdkVersion(): Promise<string | undefined> {
+    /**
+     * Return a list of nuget versions less or equal to `options.maximumNugetVersion` if it got specified
+     * Otherwise, return the whole list.
+     * @param options
+     */
+    public async findNullableNewPqSdkVersion(
+        options: {
+            maximumNugetVersion?: NugetVersions;
+        } = {},
+    ): Promise<string | undefined> {
         let sortedNugetVersions: NugetVersions[];
 
+        // always restrain the version found beneath the MaximumPqTestNugetVersion
+        if (!options.maximumNugetVersion) {
+            options.maximumNugetVersion = this.nullableMaximumPqTestNugetVersion;
+        }
+
         if (ExtensionConfigurations.nugetPath) {
-            sortedNugetVersions = (
-                await this.nugetCommandService.getPackageReleasedVersions(
-                    ExtensionConfigurations.nugetPath,
-                    ExtensionConfigurations.nugetFeed,
-                    ExtensionConstants.PublicMsftPqSdkToolsNugetName,
-                )
-            ).sort(NugetVersions.compare);
+            sortedNugetVersions = await this.nugetCommandService.getSortedPackageReleasedVersions(
+                ExtensionConfigurations.nugetPath,
+                ExtensionConfigurations.nugetFeed,
+                ExtensionConstants.PublicMsftPqSdkToolsNugetName,
+                options,
+            );
         } else {
             // we gonna use http endpoint to query the public feed
-            sortedNugetVersions = (
-                await this.nugetHttpService.getPackageReleasedVersions(ExtensionConstants.PublicMsftPqSdkToolsNugetName)
-            ).versions
-                .map((releasedVersion: string) => NugetVersions.createFromReleasedVersionString(releasedVersion))
-                .sort(NugetVersions.compare);
+            sortedNugetVersions = await this.nugetHttpService.getSortedPackageReleasedVersions(
+                ExtensionConstants.PublicMsftPqSdkToolsNugetName,
+                options,
+            );
         }
 
         if (sortedNugetVersions.length && !sortedNugetVersions[sortedNugetVersions.length - 1].isZero()) {

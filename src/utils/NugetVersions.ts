@@ -9,9 +9,10 @@ import * as path from "path";
 
 const NugetStdOutputOfVersionRegExp: RegExp = /(Microsoft\.PowerQuery\.SdkTools[ ])([0-9]+)\.([0-9]+)\.([0-9]+)/g;
 const PathPartOfVersionRegExp: RegExp = /(Microsoft\.PowerQuery\.SdkTools\.)([0-9]+)\.([0-9]+)\.([0-9]+)/g;
-const ReleasedVersionRegExp: RegExp = /([0-9]+)\.([0-9]+)\.([0-9]+)/;
+const ReleasedVersionRegExp: RegExp = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+const NumericRegExp: RegExp = /^[0-9]+$/;
 export class NugetVersions {
-    public static ZERO_VERSION: NugetVersions = new NugetVersions(0, 0, 0);
+    public static ZERO_VERSION: NugetVersions = new NugetVersions("0", "0", "0");
 
     /**
      * create NugetVersion from the std output like:
@@ -28,7 +29,7 @@ export class NugetVersions {
         const matched: RegExpMatchArray | null = NugetStdOutputOfVersionRegExp.exec(stdOutput);
 
         if (matched && matched.length === 5) {
-            result = new NugetVersions(parseInt(matched[2], 10), parseInt(matched[3], 10), parseInt(matched[4], 10));
+            result = new NugetVersions(matched[2], matched[3], matched[4]);
         }
 
         return result;
@@ -52,9 +53,7 @@ export class NugetVersions {
         let matched: RegExpMatchArray | null = NugetStdOutputOfVersionRegExp.exec(stdOutput);
 
         while (matched && matched.length === 5) {
-            result.push(
-                new NugetVersions(parseInt(matched[2], 10), parseInt(matched[3], 10), parseInt(matched[4], 10)),
-            );
+            result.push(new NugetVersions(matched[2], matched[3], matched[4]));
 
             matched = NugetStdOutputOfVersionRegExp.exec(stdOutput);
         }
@@ -77,11 +76,7 @@ export class NugetVersions {
             const matched: RegExpMatchArray | null = PathPartOfVersionRegExp.exec(onePath);
 
             if (matched && matched.length === 5) {
-                result = new NugetVersions(
-                    parseInt(matched[2], 10),
-                    parseInt(matched[3], 10),
-                    parseInt(matched[4], 10),
-                );
+                result = new NugetVersions(matched[2], matched[3], matched[4]);
 
                 return true;
             }
@@ -103,25 +98,70 @@ export class NugetVersions {
         const matched: RegExpMatchArray | null = ReleasedVersionRegExp.exec(releasedVersionString);
 
         if (matched && matched.length === 4) {
-            result = new NugetVersions(parseInt(matched[1], 10), parseInt(matched[2], 10), parseInt(matched[3], 10));
+            result = new NugetVersions(matched[1], matched[2], matched[3]);
+        }
+
+        return result;
+    }
+
+    /**
+     * create NugetVersion from a version like:
+     *      2.107.1
+     *      2
+     *      2.x
+     *      2.107
+     *      2.107.x
+     * @param fuzzyVersionString
+     */
+    public static createFromFuzzyVersionString(fuzzyVersionString: string): NugetVersions {
+        if (!fuzzyVersionString) return NugetVersions.ZERO_VERSION;
+
+        let result: NugetVersions = NugetVersions.ZERO_VERSION;
+        const spitedString: string[] = fuzzyVersionString.split(".");
+
+        if (spitedString && spitedString.length > 0) {
+            result = new NugetVersions(spitedString[0], spitedString[1] ?? "", spitedString[2] ?? "");
         }
 
         return result;
     }
 
     public static compare(l: NugetVersions, r: NugetVersions): number {
-        if (l.major == r.major) {
-            if (l.minor == r.minor) {
-                return l.patch - r.patch;
-            } else {
-                return l.minor - r.minor;
-            }
+        return (
+            NugetVersions.compareIdentifiers(l.major, r.major) ||
+            NugetVersions.compareIdentifiers(l.minor, r.minor) ||
+            NugetVersions.compareIdentifiers(l.patch, r.patch)
+        );
+    }
+
+    private static compareIdentifiers(l: string, r: string): number {
+        const isLNumber: boolean = NumericRegExp.test(l);
+        const isRNumber: boolean = NumericRegExp.test(r);
+
+        let lNumber: number = -1;
+        let rNumber: number = -1;
+
+        if (isLNumber && isRNumber) {
+            lNumber = parseInt(l, 10);
+            rNumber = parseInt(r, 10);
+        }
+
+        if (l === r) {
+            return 0;
+        } else if (isLNumber && !isRNumber) {
+            return -1;
+        } else if (!isLNumber && isRNumber) {
+            return 1;
         } else {
-            return l.major - r.major;
+            return lNumber - rNumber;
         }
     }
 
-    constructor(public readonly major: number, public readonly minor: number, public readonly patch: number) {}
+    constructor(public readonly major: string, public readonly minor: string, public readonly patch: string) {}
+
+    compare(other: NugetVersions): number {
+        return NugetVersions.compare(this, other);
+    }
 
     isZero(): boolean {
         return this === NugetVersions.ZERO_VERSION;
