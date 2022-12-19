@@ -10,6 +10,11 @@ export function replaceAt(str: string, index: number, length: number, replacemen
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function stringifyJson(obj: any): string {
+    return JSON.stringify(obj);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function prettifyJson(obj: any): string {
     return JSON.stringify(obj, null, 4);
 }

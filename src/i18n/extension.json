@@ -42,6 +42,7 @@
   "PQSdk.lifecycle.command.choose.auth": "Choose an authentication method",
   "PQSdk.lifecycle.command.choose.authKind.prompt": "Authentication key value",
   "PQSdk.lifecycle.command.set.credentials.result": "SetCredential {result} ",
+  "PQSdk.lifecycle.command.set.credentials.template.missing.errorMessage": "Failed to set credentials due to credential template object missing.",
   "PQSdk.lifecycle.command.set.credentials.errorMessage": "Failed to set credentials due to ${errorMessage}",
   "PQSdk.lifecycle.command.set.credentials.info": "New {authenticationKind} credential has been generated successfully",
   "PQSdk.lifecycle.command.createAuthState.result": "CreateAuthState {result} ",

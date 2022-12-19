@@ -17,11 +17,17 @@ import {
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 
+import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { ExtensionInfo, GenericResult } from "../common/PQTestService";
 import {
     PqTestExecutableOnceTask,
     PqTestExecutableOnceTaskQueueEvents,
 } from "../pqTestConnector/PqTestExecutableOnceTask";
 import { DeferredValue } from "../common/DeferredValue";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { fromEvents } from "../common/promises/fromEvents";
+import { stringifyJson } from "../utils/strings";
 import { WaitNotify } from "../common/WaitNotify";
 
 /**
@@ -44,55 +50,66 @@ interface ILaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 }
 
 export class MQueryDebugSession extends LoggingDebugSession {
-    private readonly _configurationDone: WaitNotify = new WaitNotify();
-    private readonly _processForked: DeferredValue<boolean> = new DeferredValue<boolean>(false);
-    private readonly _pqTestExecutableOnceTask: PqTestExecutableOnceTask;
+    private readonly configurationDone: WaitNotify = new WaitNotify();
+    private readonly processForked: DeferredValue<boolean> = new DeferredValue<boolean>(false);
+    private readonly pqTestExecutableOnceTask?: PqTestExecutableOnceTask;
+    private readonly pqServiceHostClientLite?: PqServiceHostClientLite;
+    private readonly useServiceHost: boolean;
+    private currentProgram: string = "";
+    private isTerminated: boolean = false;
 
     constructor() {
         super();
         this.setDebuggerLinesStartAt1(false);
         this.setDebuggerColumnsStartAt1(false);
-        this._pqTestExecutableOnceTask = new PqTestExecutableOnceTask();
 
-        this._pqTestExecutableOnceTask.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processCreated, () => {
-            this._processForked.resolve(true);
-        });
+        this.useServiceHost = ExtensionConfigurations.featureUseServiceHost;
 
-        this._pqTestExecutableOnceTask.eventBus.on(
-            PqTestExecutableOnceTaskQueueEvents.onOutput,
-            (type: "stdOutput" | "stdError", text: string) => {
-                let category: string;
+        if (this.useServiceHost) {
+            this.pqServiceHostClientLite = new PqServiceHostClientLite(this);
+        } else {
+            this.pqTestExecutableOnceTask = new PqTestExecutableOnceTask();
 
-                switch (type) {
-                    case "stdOutput":
-                        category = "stdout";
-                        break;
-                    case "stdError":
-                        category = "stderr";
-                        break;
-                    default:
-                        category = "console";
-                        break;
-                }
+            this.pqTestExecutableOnceTask.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processCreated, () => {
+                this.processForked.resolve(true);
+            });
 
-                const e: DebugProtocol.OutputEvent = new OutputEvent(`${text}\n`, category);
-                const maybePathToQueryFile: string = this._pqTestExecutableOnceTask.pathToQueryFile;
+            this.pqTestExecutableOnceTask.eventBus.on(
+                PqTestExecutableOnceTaskQueueEvents.onOutput,
+                (type: "stdOutput" | "stdError", text: string) => {
+                    let category: string;
 
-                if (maybePathToQueryFile) {
-                    e.body.source = this.createSource(this._pqTestExecutableOnceTask.pathToQueryFile);
-                }
+                    switch (type) {
+                        case "stdOutput":
+                            category = "stdout";
+                            break;
+                        case "stdError":
+                            category = "stderr";
+                            break;
+                        default:
+                            category = "console";
+                            break;
+                    }
 
-                this.sendEvent(e);
-            },
-        );
+                    const e: DebugProtocol.OutputEvent = new OutputEvent(`${text}\n`, category);
+                    const maybePathToQueryFile: string = this.pqTestExecutableOnceTask?.pathToQueryFile ?? "";
 
-        this._pqTestExecutableOnceTask.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, () => {
-            this.sendEvent(new TerminatedEvent());
+                    if (maybePathToQueryFile) {
+                        e.body.source = this.createSource(maybePathToQueryFile);
+                    }
 
-            setTimeout(() => {
-                this._pqTestExecutableOnceTask.dispose();
-            }, 0);
-        });
+                    this.sendEvent(e);
+                },
+            );
+
+            this.pqTestExecutableOnceTask.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, () => {
+                this.sendEvent(new TerminatedEvent());
+
+                setTimeout(() => {
+                    this.pqTestExecutableOnceTask?.dispose();
+                }, 0);
+            });
+        }
     }
 
     /**
@@ -130,7 +147,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
     ): void {
         super.configurationDoneRequest(response, args);
         // notify the launchRequest that configuration has finished
-        this._configurationDone.notify();
+        this.configurationDone.notify();
     }
 
     protected override async launchRequest(
@@ -141,15 +158,93 @@ export class MQueryDebugSession extends LoggingDebugSession {
         logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
         // wait 1 second until configuration has finished (and configurationDoneRequest has been called)
-        await this._configurationDone.wait(2e3);
+        await this.configurationDone.wait(2e3);
 
-        // start the program in the runtime, do not await here
-        void this._pqTestExecutableOnceTask.run(args.program, {
-            operation: args.operation ?? "run-test",
-            additionalArgs: args.additionalArgs,
-        });
+        this.currentProgram = args.program;
+
+        if (this.useServiceHost) {
+            void this.doLaunchRequest(args);
+        } else {
+            // start the program in the runtime, do not await here
+            void this.pqTestExecutableOnceTask?.run(args.program, {
+                operation: args.operation ?? "run-test",
+                additionalArgs: args.additionalArgs,
+            });
+        }
 
         this.sendResponse(response);
+    }
+
+    private async doLaunchRequest(args: ILaunchRequestArguments): Promise<void> {
+        if (this.useServiceHost && this.pqServiceHostClientLite) {
+            // activate pqServiceHostClientLite and make it connect to pqServiceHost
+            this.pqServiceHostClientLite.onPowerQueryTestLocationChanged();
+
+            try {
+                // wait for the pqServiceHostClientLite's socket got ready
+                await fromEvents(this.pqServiceHostClientLite, [READY], [DISCONNECTED]);
+
+                const theOperation: string = args.operation ?? "run-test";
+
+                switch (theOperation) {
+                    case "info": {
+                        const displayExtensionInfoResult: ExtensionInfo[] =
+                            await this.pqServiceHostClientLite.DisplayExtensionInfo();
+
+                        this.appendInfoLine(
+                            resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
+                                result: displayExtensionInfoResult
+                                    .map((info: ExtensionInfo) => info.Name ?? "")
+                                    .filter(Boolean)
+                                    .join(","),
+                            }),
+                        );
+
+                        break;
+                    }
+
+                    case "test-connection": {
+                        const testConnectionResult: GenericResult = await this.pqServiceHostClientLite.TestConnection();
+
+                        this.appendInfoLine(
+                            resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
+                                result: stringifyJson(testConnectionResult),
+                            }),
+                        );
+
+                        break;
+                    }
+
+                    case "run-test": {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const result: any = await this.pqServiceHostClientLite.RunTestBatteryFromContent(
+                            path.resolve(args.program),
+                        );
+
+                        this.appendInfoLine(
+                            resolveI18nTemplate("PQSdk.lifecycle.command.run.test.result", {
+                                result: stringifyJson(result),
+                            }),
+                        );
+
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+            } catch (e) {
+                // / noop
+                if (e instanceof Error || typeof e === "string") {
+                    this.appendErrorLine(e.toString());
+                }
+
+                this.pqServiceHostClientLite.dispose();
+            }
+
+            this.sendEvent(new TerminatedEvent());
+            this.pqServiceHostClientLite.dispose();
+        }
     }
 
     protected override async loadedSourcesRequest(
@@ -157,16 +252,42 @@ export class MQueryDebugSession extends LoggingDebugSession {
         _args: DebugProtocol.LoadedSourcesArguments,
         _request?: DebugProtocol.Request,
     ): Promise<void> {
-        await this._processForked.deferred$;
+        await this.processForked.deferred$;
 
         response.body = {
-            sources: [this.createSource(this._pqTestExecutableOnceTask.pathToQueryFile)],
+            sources: [this.createSource(this.pqTestExecutableOnceTask?.pathToQueryFile ?? "")],
         };
 
+        this.isTerminated = true;
         this.sendResponse(response);
     }
 
     private createSource(filePath: string): Source {
         return new Source(path.dirname(filePath), this.convertDebuggerPathToClient(filePath), undefined, undefined);
+    }
+
+    appendLine(value: string, category: "stdout" | "stderr" | "console" = "stdout"): void {
+        const e: DebugProtocol.OutputEvent = new OutputEvent(`${this.prefixLineWithTimeStamp(value)}\n`, category);
+
+        if (this.currentProgram) {
+            e.body.source = this.createSource(path.resolve(this.currentProgram));
+        }
+
+        this.sendEvent(e);
+    }
+
+    private prefixLineWithTimeStamp(line: string): string {
+        const now: Date = new Date();
+
+        return `[${now.toLocaleTimeString()}]\t${line}`;
+    }
+
+    public appendInfoLine(value: string): void {
+        this.appendLine(`[${extensionI18n["PQSdk.common.logLevel.Info"]}]\t${value}`);
+    }
+
+    public appendErrorLine(value: string): void {
+        Boolean(!this.isTerminated) ||
+            this.appendLine(`[${extensionI18n["PQSdk.common.logLevel.Error"]}]\t${value}`, "stderr");
     }
 }

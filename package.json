@@ -210,6 +210,10 @@
                     "pathToQueryFile": {
                         "type": "string",
                         "description": "%extension.pqtest.taskDefinitions.properties.pathToQueryFile.description%"
+                    },
+                    "credentialTemplate": {
+                        "type": "object",
+                        "description": "%extension.pqtest.taskDefinitions.properties.credentialTemplate.description%"
                     }
                 }
             }
@@ -352,6 +356,7 @@
         "@types/glob": "^8.0.0",
         "@types/gulp": "^4.0.9",
         "@types/mocha": "^9.1.1",
+        "@types/sinon": "^10.0.13",
         "@types/node": "^16.11.65",
         "@types/vscode": "^1.62.0",
         "@typescript-eslint/eslint-plugin": "^5.40.0",
@@ -360,6 +365,7 @@
         "@vscode/debugadapter-testsupport": "^1.57.0",
         "@vscode/test-electron": "^1.6.2",
         "chai": "^4.3.6",
+        "sinon": "^14.0.0",
         "eslint": "^8.25.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-license-header": "^0.4.0",

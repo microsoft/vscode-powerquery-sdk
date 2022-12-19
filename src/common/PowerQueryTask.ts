@@ -22,6 +22,7 @@ export interface PQTestTask extends PowerQueryTask {
     readonly pathToConnector?: string;
     readonly pathToQueryFile?: string;
     readonly stdinStr?: string;
+    readonly credentialTemplate?: object;
 }
 
 export interface PowerQueryTaskDefinition extends PQTestTask, vscode.TaskDefinition {}
