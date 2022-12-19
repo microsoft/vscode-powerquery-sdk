@@ -45,3 +45,4 @@ export const buildPqSdkSubPath: (version: string) => string[] = (version: string
     ExtensionConstants.buildNugetPackageSubPath(ExtensionConstants.InternalMsftPqSdkToolsNugetName, version);
 
 export const PublicMsftPqSdkToolsNugetName: string = ExtensionConstants.PublicMsftPqSdkToolsNugetName;
+export const MaximumPqTestNugetVersion: string = ExtensionConstants.MaximumPqTestNugetVersion;

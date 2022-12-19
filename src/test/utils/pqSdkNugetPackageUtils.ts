@@ -13,18 +13,23 @@ import {
     AWAIT_INTERVAL,
     buildPqSdkSubPath,
     MAX_AWAIT_TIME,
+    MaximumPqTestNugetVersion,
     NugetPackagesDirectory,
     PqTestSubPath,
     PublicMsftPqSdkToolsNugetName,
 } from "../common";
 
 import { delay } from "../../utils/pids";
-import { NugetLiteHttpService } from "./NugetLiteHttpService";
+import { NugetLiteHttpService } from "../../common/nuget/NugetLiteHttpService";
 import { NugetVersions } from "../../utils/NugetVersions";
 
 const nugetHttpService = new NugetLiteHttpService();
 
 const expect = chai.expect;
+
+const MaximumPqTestNugetVersions: NugetVersions | undefined = MaximumPqTestNugetVersion
+    ? NugetVersions.createFromFuzzyVersionString(MaximumPqTestNugetVersion)
+    : undefined;
 
 export module PqSdkNugetPackages {
     let latestPQSdkNugetVersion: NugetVersions | undefined = undefined;
@@ -36,13 +41,16 @@ export module PqSdkNugetPackages {
     }
 
     export async function getAllPQSdkVersions(): Promise<NugetVersions[]> {
-        const releasedVersions = await nugetHttpService.getPackageReleasedVersions(PublicMsftPqSdkToolsNugetName);
-
-        expect(releasedVersions.versions.length).gt(0);
-
-        return releasedVersions.versions.map((releasedVersion: string) =>
-            NugetVersions.createFromReleasedVersionString(releasedVersion),
+        const releasedVersions = await nugetHttpService.getSortedPackageReleasedVersions(
+            PublicMsftPqSdkToolsNugetName,
+            {
+                maximumNugetVersion: MaximumPqTestNugetVersions,
+            },
         );
+
+        expect(releasedVersions.length).gt(0);
+
+        return releasedVersions;
     }
 
     export async function assertPqSdkToolExisting(): Promise<void> {

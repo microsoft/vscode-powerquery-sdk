@@ -11,6 +11,7 @@ import * as path from "path";
 
 import { makeOneTmpDir } from "../../../src/utils/osUtils";
 import { NugetHttpService } from "../../../src/common/nuget/NugetHttpService";
+import { NugetVersions } from "../../../src/utils/NugetVersions";
 import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 
 const expect = chai.expect;
@@ -22,6 +23,23 @@ describe("NugetHttpService unit testes", () => {
     it("getPackageReleasedVersions v1", async () => {
         const res = await nugetHttpService.getPackageReleasedVersions(SdkPackageName);
         expect(res.versions.length).gt(1);
+    }).timeout(3e4);
+
+    it("getSortedPackageReleasedVersions v1", async () => {
+        const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(SdkPackageName);
+        expect(allVersions.length).gt(1);
+
+        const _2_110_Versions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
+            SdkPackageName,
+            {
+                maximumNugetVersion: NugetVersions.createFromFuzzyVersionString("2.110.x"),
+            },
+        );
+
+        expect(_2_110_Versions.length).gt(1);
+        expect(_2_110_Versions.length).lt(allVersions.length);
+        expect(_2_110_Versions[_2_110_Versions.length - 1].minor).eq("110");
+        expect(parseInt(allVersions[_2_110_Versions.length].minor, 10)).gt(110);
     }).timeout(3e4);
 
     it("downloadAndExtractNugetPackage v1", async () => {
