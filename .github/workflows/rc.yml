@@ -85,7 +85,7 @@ jobs:
     if: success()
     steps:
       - uses: actions/download-artifact@v3
-      - run: echo $(find . -iname *.vsix) >> $GITHUB_OUTPUT
+      - run: echo $(find . -iname *.vsix)
       - uses: Azure/pipelines@v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/powerbi/Power%20Query'
