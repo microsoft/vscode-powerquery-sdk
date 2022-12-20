@@ -89,6 +89,6 @@ jobs:
       - uses: Azure/pipelines@v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/powerbi/Power%20Query'
-          azure-pipeline-name: 'PowerQuerySdkTools-VSCode-Tools-Official' # name of the Azure pipeline to be triggered
+          azure-pipeline-name: 'PowerQuerySdkTools-VSCode-ToolsOfficial' # name of the Azure pipeline to be triggered
           azure-devops-token: '${{ secrets.PBI_PAT }}'
           azure-pipeline-variables: '{"GITHUB_BRANCH_REF": "${{ github.ref }}"}' # optional stringified json
