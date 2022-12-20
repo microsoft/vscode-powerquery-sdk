@@ -1486,7 +1486,7 @@ export class LifecycleCommands implements IDisposable {
             },
         );
 
-        if (result) {
+        if (result && !ExtensionConfigurations.featureUseServiceHost) {
             await vscode.commands.executeCommand(PqTestResultViewPanel.ShowResultWebViewCommand);
             SimplePqTestResultViewBroker.values.latestPqTestResult.emit(result);
         }

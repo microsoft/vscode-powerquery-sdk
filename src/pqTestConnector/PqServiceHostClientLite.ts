@@ -539,9 +539,11 @@ export class PqServiceHostClientLite
         if (!pathToQueryFile || !fs.existsSync(pathToQueryFile)) return Promise.resolve();
 
         let currentContent: string = fs.readFileSync(pathToQueryFile, { encoding: "utf8" });
+        let currentEditor: vscode.TextEditor | undefined = undefined;
 
         vscode.window.visibleTextEditors.forEach((oneEditor: vscode.TextEditor) => {
             if (oneEditor?.document.languageId === "powerquery" && oneEditor.document.uri.fsPath === pathToQueryFile) {
+                currentEditor = oneEditor;
                 currentContent = oneEditor.document.getText();
             }
         });
@@ -552,13 +554,29 @@ export class PqServiceHostClientLite
         // only for RunTestBatteryFromContent,
         // PathToConnector would be full path of the current working folder
         // PathToQueryFile would be either the saved or unsaved content of the query file to be evaluated
-        return this.requestRemoteRpcMethod("v1/PqTestService/RunTestBatteryFromContent", [
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: any = await this.requestRemoteRpcMethod("v1/PqTestService/RunTestBatteryFromContent", [
             {
                 SessionId: this.sessionId,
                 PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                 PathToQueryFile: currentContent,
             },
         ]);
+
+        if (result.Kind === 0 && result.Result.modifiedDocument && currentEditor) {
+            const theCurrentEditor: vscode.TextEditor = currentEditor as vscode.TextEditor;
+            const firstLine: vscode.TextLine = theCurrentEditor.document.lineAt(0);
+
+            const lastLine: vscode.TextLine = theCurrentEditor.document.lineAt(theCurrentEditor.document.lineCount - 1);
+
+            const textRange: vscode.Range = new vscode.Range(firstLine.range.start, lastLine.range.end);
+
+            void theCurrentEditor.edit((editBuilder: vscode.TextEditorEdit) => {
+                editBuilder.replace(textRange, result.Result.modifiedDocument);
+            });
+        }
+
+        return result;
     }
 
     SetCredential(payloadStr: string): Promise<GenericResult> {
