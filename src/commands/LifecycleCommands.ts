@@ -25,6 +25,8 @@ import {
     ExtensionInfo,
     GenericResult,
     IPQTestService,
+    ParsedDocumentState,
+    ResolveResourceChallengeState,
 } from "../common/PQTestService";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import {
@@ -133,7 +135,9 @@ export class LifecycleCommands implements IDisposable {
             ),
             vscode.commands.registerCommand(
                 LifecycleCommands.GenerateAndSetCredentialCommand,
-                this.commandGuard(this.generateAndSetCredentialCommandV2).bind(this),
+                ExtensionConfigurations.featureUseServiceHost
+                    ? this.commandGuard(this.generateAndSetCredentialCommandUsingHostApi).bind(this)
+                    : this.commandGuard(this.generateAndSetCredentialCommandV2).bind(this),
             ),
             vscode.commands.registerCommand(
                 LifecycleCommands.RefreshCredentialCommand,
@@ -1402,6 +1406,213 @@ export class LifecycleCommands implements IDisposable {
                             errorMessage,
                         }),
                     );
+                }
+
+                progress.report({ increment: 100 });
+            },
+        );
+    }
+
+    public async generateAndSetCredentialCommandUsingHostApi(): Promise<void> {
+        const title: string = extensionI18n["PQSdk.lifecycle.command.generate.credentials.title"];
+
+        await vscode.window.withProgress(
+            {
+                title,
+                location: ProgressLocation.Window,
+                cancellable: true,
+            },
+            async (progress: Progress<{ increment?: number; message?: string }>) => {
+                const pqServiceHostClient: PqServiceHostClient = this.pqTestService as PqServiceHostClient;
+
+                const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
+                    "**/*.{query,test}.pq",
+                    "**/{bin,obj}/**",
+                    1e2,
+                );
+
+                // eslint-disable-next-line no-inner-declarations
+                async function collectInputs(): Promise<ResolveResourceChallengeState> {
+                    const state: Partial<ResolveResourceChallengeState> = {} as Partial<ResolveResourceChallengeState>;
+                    await MultiStepInput.run((input: MultiStepInput) => populateQueryFile(input, state));
+
+                    return state as ResolveResourceChallengeState;
+                }
+
+                // eslint-disable-next-line no-inner-declarations
+                async function populateQueryFile(
+                    input: MultiStepInput,
+                    state: Partial<ResolveResourceChallengeState>,
+                ): Promise<InputStep | void> {
+                    let thePreviousPickedDetail: string | undefined = undefined;
+
+                    if (connectorQueryFiles.length) {
+                        const items: vscode.QuickPickItem[] = connectorQueryFiles.map((one: vscode.Uri) => ({
+                            label: vscode.workspace.asRelativePath(one),
+                            detail: one.fsPath,
+                        }));
+
+                        items.push({
+                            label: extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.label"],
+                            detail: extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.detail"],
+                        });
+
+                        const picked: vscode.QuickPickItem = await input.showQuickPick({
+                            title,
+                            step: 1,
+                            totalSteps: 5,
+                            placeholder: extensionI18n["PQSdk.lifecycle.command.choose.queryFile"],
+                            activeItem: items[0],
+                            items,
+                        });
+
+                        thePreviousPickedDetail = picked.detail;
+
+                        // eslint-disable-next-line require-atomic-updates
+                        if (
+                            thePreviousPickedDetail &&
+                            thePreviousPickedDetail !==
+                                extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.detail"]
+                        ) {
+                            state.DocumentScript = fs.readFileSync(thePreviousPickedDetail, { encoding: "utf8" });
+                        }
+                    }
+
+                    if (
+                        !state.DocumentScript ||
+                        thePreviousPickedDetail ===
+                            extensionI18n["PQSdk.lifecycle.command.choose.customizedDataSourceKind.label"]
+                    ) {
+                        // we did not have the PathToQueryFile populated,
+                        // or it was set to customized PathToQueryFile detail
+                        // then we should allow users to input arbitrarily
+                        // eslint-disable-next-line require-atomic-updates
+                        thePreviousPickedDetail = await input.showInputBox({
+                            title,
+                            step: 2,
+                            totalSteps: 5,
+                            value: "",
+                            prompt: extensionI18n["PQSdk.lifecycle.command.choose.queryFilePath.label"],
+                            ignoreFocusOut: true,
+                            validate: (key: string) =>
+                                Promise.resolve(
+                                    key.length && fs.existsSync(key)
+                                        ? undefined
+                                        : extensionI18n["PQSdk.lifecycle.error.empty.PathToQueryFilePath"],
+                                ),
+                        });
+
+                        // eslint-disable-next-line require-atomic-updates
+                        state.DocumentScript = fs.readFileSync(thePreviousPickedDetail, { encoding: "utf8" });
+                    }
+
+                    progress.report({ increment: 20 });
+
+                    return (input: MultiStepInput) => pickDocumentQueriesIfNeeded(input, state);
+                }
+
+                async function pickDocumentQueriesIfNeeded(
+                    input: MultiStepInput,
+                    state: Partial<ResolveResourceChallengeState>,
+                ): Promise<InputStep | void> {
+                    const result: ParsedDocumentState = await pqServiceHostClient.TryParseDocumentScript(
+                        // DocumentScript should not be nullable when we reaching here
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        state.DocumentScript!,
+                    );
+
+                    if (result.Errors?.length) {
+                        void vscode.window.showWarningMessage(result.Errors[0].Message);
+
+                        return;
+                    } else {
+                        switch (result.DocumentKind) {
+                            case "Section": {
+                                if (!result.Queries?.length) {
+                                    void vscode.window.showWarningMessage("Missing queries in the selected document");
+
+                                    return;
+                                }
+
+                                // we need ask users to select a query out of it
+                                const items: vscode.QuickPickItem[] = result.Queries.filter(
+                                    (one: ParsedDocumentState["Queries"][number]) =>
+                                        one.nameIdentifier.argumentFragmentKind === "Identifier",
+                                ).map((one: ParsedDocumentState["Queries"][number]) => ({
+                                    label: one.nameIdentifier.value,
+                                }));
+
+                                const picked: vscode.QuickPickItem = await input.showQuickPick({
+                                    title,
+                                    step: 3,
+                                    totalSteps: 5,
+                                    placeholder: "Query name",
+                                    activeItem: items[0],
+                                    items,
+                                });
+
+                                // eslint-disable-next-line require-atomic-updates
+                                state.QueryName = picked.label;
+
+                                break;
+                            }
+
+                            case "Expression":
+                            default:
+                                // no need to do anything additional, we are good to continue with the expression
+                                break;
+                        }
+                        // we need to select a query
+                    }
+
+                    progress.report({ increment: 20 });
+
+                    return (input: MultiStepInput) => populateOptionalDataSourceKinds(input, state);
+                }
+
+                async function populateOptionalDataSourceKinds(
+                    input: MultiStepInput,
+                    state: Partial<ResolveResourceChallengeState>,
+                ): Promise<InputStep | void> {
+                    state.ResourceKind = await input.showInputBox({
+                        title,
+                        step: 4,
+                        totalSteps: 5,
+                        value: "",
+                        prompt: "Optional data source kind",
+                        ignoreFocusOut: true,
+                        validate: (_key: string) => Promise.resolve(undefined),
+                    });
+
+                    progress.report({ increment: 20 });
+
+                    return (input: MultiStepInput) => populateOptionalDataSourcePath(input, state);
+                }
+
+                async function populateOptionalDataSourcePath(
+                    input: MultiStepInput,
+                    state: Partial<ResolveResourceChallengeState>,
+                ): Promise<InputStep | void> {
+                    state.ResourcePath = await input.showInputBox({
+                        title,
+                        step: 5,
+                        totalSteps: 5,
+                        value: "",
+                        prompt: "Optional data source path",
+                        ignoreFocusOut: true,
+                        validate: (_key: string) => Promise.resolve(undefined),
+                    });
+
+                    progress.report({ increment: 20 });
+                }
+
+                const resolveResourceChallengeState: ResolveResourceChallengeState = await collectInputs();
+
+                if (!resolveResourceChallengeState.DocumentScript) {
+                    void vscode.window.showWarningMessage("The content of the document select cannot be null");
+                } else {
+                    // do trigger the resolve the resource challenge
+                    await pqServiceHostClient.ResolveResourceChallengeAsync(resolveResourceChallengeState);
                 }
 
                 progress.report({ increment: 100 });

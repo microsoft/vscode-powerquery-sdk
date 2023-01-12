@@ -14,7 +14,15 @@ import { EventEmitter } from "events";
 import { TextEditor } from "vscode";
 
 import { CLOSED, ERROR, OPEN } from "../common/sockets/SocketClient";
-import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "../common/PQTestService";
+import {
+    CreateAuthState,
+    Credential,
+    ExtensionInfo,
+    GenericResult,
+    IPQTestService,
+    ParsedDocumentState,
+    ResolveResourceChallengeState,
+} from "../common/PQTestService";
 import { defaultBackOff, JsonRpcSocketClient } from "../common/sockets/JsonRpcSocketClient";
 import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
 import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
@@ -29,11 +37,67 @@ import { SpawnedProcess } from "../common/SpawnedProcess";
 export interface PqServiceHostRequestParamBase {
     SessionId: string;
     PathToConnector?: string;
+    ExtensionPaths?: string[];
     PathToQueryFile?: string;
+    KeyVaultSecretName?: string;
+    DataSourceKind?: string;
+    DataSourcePath?: string;
+    PrettyPrint?: boolean;
+    EnvironmentConfigurationFile?: string;
+    EnvironmentSetting?: string[];
+    ApplicationPropertyFile?: string;
+    ApplicationProperties?: string[];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 }
+
+export interface PqServiceHostCreateAuthRequest extends PqServiceHostRequestParamBase {
+    AuthenticationKind: string;
+    TemplateValueKey?: string;
+    TemplateValueUsername?: string;
+    TemplateValuePassword?: string;
+    TemplateValueAccessToken?: string;
+    TemplateValueRefreshToken?: string;
+    AllowUserInteraction?: string;
+}
+
+export interface PqServiceHostDeleteCredentialRequest extends PqServiceHostRequestParamBase {
+    AllCredentials?: boolean;
+}
+
+export interface PqServiceHostRunTestRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+    FailOnFoldingFailure?: boolean;
+    AutomaticFileCredentials?: boolean;
+    RunAsAction?: boolean;
+}
+
+export interface PqServiceHostRunTestRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+    FailOnFoldingFailure?: boolean;
+    AutomaticFileCredentials?: boolean;
+    RunAsAction?: boolean;
+}
+
+export interface PqServiceHostSetCredentialRequest extends PqServiceHostRequestParamBase {
+    AuthenticationKind?: string;
+    AllowUserInteraction?: boolean;
+    UseLegacyBrowser?: boolean;
+    UseSystemBrowser?: boolean;
+    InputTemplateString?: string;
+}
+
+export interface PqServiceHostTestConnectionRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+}
+
+export interface PqServiceHostValidateRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+}
+
+export type PqServiceHostResolveResourceChallengeRequest = PqServiceHostRequestParamBase &
+    ResolveResourceChallengeState;
 
 export enum ResponseStatus {
     Null = 0,
@@ -438,7 +502,7 @@ export class PqServiceHostClientLite
     }
 
     DeleteCredential(): Promise<GenericResult> {
-        return this.requestRemoteRpcMethod("v1/PqTestService/DeleteCredential", [
+        return this.requestRemoteRpcMethod<PqServiceHostDeleteCredentialRequest>("v1/PqTestService/DeleteCredential", [
             {
                 SessionId: this.sessionId,
                 PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
@@ -510,7 +574,7 @@ export class PqServiceHostClientLite
             pathToQueryFile = configPQTestQueryFileLocation;
         }
 
-        return this.requestRemoteRpcMethod("v1/PqTestService/RunTestBattery", [
+        return this.requestRemoteRpcMethod<PqServiceHostRunTestRequest>("v1/PqTestService/RunTestBattery", [
             {
                 SessionId: this.sessionId,
                 PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
@@ -555,13 +619,16 @@ export class PqServiceHostClientLite
         // PathToConnector would be full path of the current working folder
         // PathToQueryFile would be either the saved or unsaved content of the query file to be evaluated
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: any = await this.requestRemoteRpcMethod("v1/PqTestService/RunTestBatteryFromContent", [
-            {
-                SessionId: this.sessionId,
-                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
-                PathToQueryFile: currentContent,
-            },
-        ]);
+        const result: any = await this.requestRemoteRpcMethod<PqServiceHostRunTestRequest>(
+            "v1/PqTestService/RunTestBatteryFromContent",
+            [
+                {
+                    SessionId: this.sessionId,
+                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToQueryFile: currentContent,
+                },
+            ],
+        );
 
         if (result.Kind === 0 && result.Result.modifiedDocument && currentEditor) {
             const theCurrentEditor: vscode.TextEditor = currentEditor as vscode.TextEditor;
@@ -580,7 +647,7 @@ export class PqServiceHostClientLite
     }
 
     SetCredential(payloadStr: string): Promise<GenericResult> {
-        return this.requestRemoteRpcMethod("v1/PqTestService/SetCredential", [
+        return this.requestRemoteRpcMethod<PqServiceHostSetCredentialRequest>("v1/PqTestService/SetCredential", [
             {
                 SessionId: this.sessionId,
                 PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
@@ -591,27 +658,62 @@ export class PqServiceHostClientLite
     }
 
     SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
-        return this.requestRemoteRpcMethod("v1/PqTestService/SetCredentialFromCreateAuthState", [
-            {
-                SessionId: this.sessionId,
-                PathToConnector: createAuthState.PathToConnectorFile || getFirstWorkspaceFolder()?.uri.fsPath,
-                PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
-                // DataSourceKind: createAuthState.DataSourceKind,
-                AuthenticationKind: createAuthState.AuthenticationKind,
-                TemplateValueKey: createAuthState.$$KEY$$,
-                TemplateValueUsername: createAuthState.$$USERNAME$$,
-                TemplateValuePassword: createAuthState.$$PASSWORD$$,
-            },
-        ]);
+        return this.requestRemoteRpcMethod<PqServiceHostCreateAuthRequest>(
+            "v1/PqTestService/SetCredentialFromCreateAuthState",
+            [
+                {
+                    SessionId: this.sessionId,
+                    PathToConnector: createAuthState.PathToConnectorFile || getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
+                    // DataSourceKind: createAuthState.DataSourceKind,
+                    AuthenticationKind: createAuthState.AuthenticationKind,
+                    TemplateValueKey: createAuthState.$$KEY$$,
+                    TemplateValueUsername: createAuthState.$$USERNAME$$,
+                    TemplateValuePassword: createAuthState.$$PASSWORD$$,
+                },
+            ],
+        );
     }
 
     TestConnection(): Promise<GenericResult> {
-        return this.requestRemoteRpcMethod("v1/PqTestService/TestConnection", [
+        return this.requestRemoteRpcMethod<PqServiceHostTestConnectionRequest>("v1/PqTestService/TestConnection", [
             {
                 SessionId: this.sessionId,
                 PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
                 PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
             },
         ]);
+    }
+
+    TryParseDocumentScript(documentScript: string): Promise<ParsedDocumentState> {
+        return this.requestRemoteRpcMethod<PqServiceHostTestConnectionRequest>(
+            "v1/DocumentService/TryParseDocumentScript",
+            [
+                {
+                    SessionId: this.sessionId,
+                    // PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    // PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+                    DocumentScript: documentScript,
+                },
+            ],
+        );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ResolveResourceChallengeAsync(state: ResolveResourceChallengeState): Promise<any> {
+        return this.requestRemoteRpcMethod<PqServiceHostResolveResourceChallengeRequest>(
+            "v1/PqTestService/ResolveResourceChallengeAsync",
+            [
+                {
+                    SessionId: this.sessionId,
+                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+                    DocumentScript: state.DocumentScript,
+                    QueryName: state.QueryName,
+                    ResourceKind: state.ResourceKind,
+                    ResourcePath: state.ResourcePath,
+                },
+            ],
+        );
     }
 }

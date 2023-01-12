@@ -111,6 +111,56 @@ export interface CreateAuthState {
     $$PASSWORD$$?: string;
 }
 
+export interface ParsedDocumentState {
+    DocumentKind: "Section" | "Expression";
+    Queries: Array<{
+        nameIdentifier: {
+            argumentFragmentKind:
+                | "Date"
+                | "DateTime"
+                | "DateTimeZone"
+                | "Duration"
+                | "FieldAccess"
+                | "Identifier"
+                | "Logical"
+                | "NaN"
+                | "NegativeInfinity"
+                | "Null"
+                | "Number"
+                | "PositiveInfinity"
+                | "Text"
+                | "Time";
+            fragmentKind:
+                | "Aggregation"
+                | "ArbitrarySubstring"
+                | "Argument"
+                | "ArgumentRecord"
+                | "ArithmeticBinaryTransform"
+                | "ArithmeticFunctionTransform"
+                | "BinaryContents"
+                | "BoundarySubstring"
+                | string;
+            Name: string;
+            value: string;
+        };
+        queryScript: string;
+        steps: unknown[];
+    }>;
+    Errors: Array<{
+        Kind: unknown;
+        Location: unknown;
+        ErrorRange: unknown;
+        Message: string;
+    }>;
+}
+
+export interface ResolveResourceChallengeState {
+    DocumentScript: string;
+    QueryName?: string;
+    ResourceKind?: string;
+    ResourcePath?: string;
+}
+
 export interface IPQTestService {
     readonly pqTestReady: boolean;
     readonly pqTestLocation: string;
