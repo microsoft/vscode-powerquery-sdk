@@ -1565,6 +1565,35 @@ export class LifecycleCommands implements IDisposable {
                         // we need to select a query
                     }
 
+                    // try to infer DataSourceKind DataSourcePath
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const evalRes: any = await pqServiceHostClient.GetPreviewAsync({
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            DocumentScript: state.DocumentScript!,
+                            QueryName: state.QueryName,
+                        });
+
+                        if (
+                            evalRes.ResultType === "Challenge" &&
+                            evalRes.ChallengeType === "Resource" &&
+                            evalRes.DataSources?.length
+                        ) {
+                            const dataSource: { Kind: string; Path: string } | undefined = JSON.parse(
+                                evalRes.DataSources[0],
+                            );
+
+                            if (dataSource) {
+                                // eslint-disable-next-line require-atomic-updates
+                                state.ResourceKind = dataSource.Kind ?? state.ResourceKind;
+                                // eslint-disable-next-line require-atomic-updates
+                                state.ResourcePath = dataSource.Path ?? state.ResourcePath;
+                            }
+                        }
+                    } catch (_e) {
+                        // noop
+                    }
+
                     progress.report({ increment: 20 });
 
                     return (input: MultiStepInput) => populateOptionalDataSourceKinds(input, state);
@@ -1574,11 +1603,12 @@ export class LifecycleCommands implements IDisposable {
                     input: MultiStepInput,
                     state: Partial<ResolveResourceChallengeState>,
                 ): Promise<InputStep | void> {
+                    // eslint-disable-next-line require-atomic-updates
                     state.ResourceKind = await input.showInputBox({
                         title,
                         step: 4,
                         totalSteps: 5,
-                        value: "",
+                        value: state.ResourceKind ?? "",
                         prompt: "Optional data source kind",
                         ignoreFocusOut: true,
                         validate: (_key: string) => Promise.resolve(undefined),
@@ -1593,11 +1623,12 @@ export class LifecycleCommands implements IDisposable {
                     input: MultiStepInput,
                     state: Partial<ResolveResourceChallengeState>,
                 ): Promise<InputStep | void> {
+                    // eslint-disable-next-line require-atomic-updates
                     state.ResourcePath = await input.showInputBox({
                         title,
                         step: 5,
                         totalSteps: 5,
-                        value: "",
+                        value: state.ResourcePath ?? "",
                         prompt: "Optional data source path",
                         ignoreFocusOut: true,
                         validate: (_key: string) => Promise.resolve(undefined),

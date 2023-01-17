@@ -19,6 +19,7 @@ import {
     Credential,
     ExtensionInfo,
     GenericResult,
+    GetPreviewRequest,
     IPQTestService,
     ParsedDocumentState,
     ResolveResourceChallengeState,
@@ -98,6 +99,8 @@ export interface PqServiceHostValidateRequest extends PqServiceHostRequestParamB
 
 export type PqServiceHostResolveResourceChallengeRequest = PqServiceHostRequestParamBase &
     ResolveResourceChallengeState;
+
+export type PqServiceHostGetPreviewRequest = PqServiceHostRequestParamBase & GetPreviewRequest;
 
 export enum ResponseStatus {
     Null = 0,
@@ -715,5 +718,18 @@ export class PqServiceHostClientLite
                 },
             ],
         );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    GetPreviewAsync(state: GetPreviewRequest): Promise<any> {
+        return this.requestRemoteRpcMethod<PqServiceHostGetPreviewRequest>("v1/EvaluationService/GetPreview", [
+            {
+                SessionId: this.sessionId,
+                PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+                DocumentScript: state.DocumentScript,
+                QueryName: state.QueryName,
+            },
+        ]);
     }
 }

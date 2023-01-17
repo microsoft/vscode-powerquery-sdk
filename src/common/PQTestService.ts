@@ -161,6 +161,11 @@ export interface ResolveResourceChallengeState {
     ResourcePath?: string;
 }
 
+export interface GetPreviewRequest {
+    DocumentScript: string;
+    QueryName?: string;
+}
+
 export interface IPQTestService {
     readonly pqTestReady: boolean;
     readonly pqTestLocation: string;
