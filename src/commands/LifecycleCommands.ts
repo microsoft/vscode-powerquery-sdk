@@ -1431,6 +1431,8 @@ export class LifecycleCommands implements IDisposable {
                     1e2,
                 );
 
+                let alreadyHaveTheResource: boolean = false;
+
                 // eslint-disable-next-line no-inner-declarations
                 async function collectInputs(): Promise<ResolveResourceChallengeState> {
                     const state: Partial<ResolveResourceChallengeState> = {} as Partial<ResolveResourceChallengeState>;
@@ -1474,7 +1476,9 @@ export class LifecycleCommands implements IDisposable {
                             thePreviousPickedDetail !==
                                 extensionI18n["PQSdk.lifecycle.command.choose.customizedQueryFilePath.detail"]
                         ) {
-                            state.DocumentScript = fs.readFileSync(thePreviousPickedDetail, { encoding: "utf8" });
+                            state.DocumentScript = fs
+                                .readFileSync(thePreviousPickedDetail, { encoding: "utf8" })
+                                .trim();
                         }
                     }
 
@@ -1574,7 +1578,12 @@ export class LifecycleCommands implements IDisposable {
                             QueryName: state.QueryName,
                         });
 
-                        if (
+                        if (evalRes.ResultType === "Table" || evalRes.ResultType === "BinaryMetadata") {
+                            alreadyHaveTheResource = true;
+
+                            // we already had the datasource for the query, thus need not continue completing the form
+                            return;
+                        } else if (
                             evalRes.ResultType === "Challenge" &&
                             evalRes.ChallengeType === "Resource" &&
                             evalRes.DataSources?.length
@@ -1639,11 +1648,14 @@ export class LifecycleCommands implements IDisposable {
 
                 const resolveResourceChallengeState: ResolveResourceChallengeState = await collectInputs();
 
-                if (!resolveResourceChallengeState.DocumentScript) {
-                    void vscode.window.showWarningMessage("The content of the document select cannot be null");
+                if (alreadyHaveTheResource) {
+                    void vscode.window.showInformationMessage("The resource of the file have already existed");
+                } else if (!resolveResourceChallengeState.DocumentScript) {
+                    void vscode.window.showWarningMessage("The content of the document selected cannot be null");
                 } else {
                     // do trigger the resolve the resource challenge
                     await pqServiceHostClient.ResolveResourceChallengeAsync(resolveResourceChallengeState);
+                    void vscode.window.showInformationMessage("The resource of the file have been resolved");
                 }
 
                 progress.report({ increment: 100 });
