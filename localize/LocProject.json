@@ -5,21 +5,21 @@
       "LocItems": [
         {
           "SourceFile": "package.nls.json",
-          "Languages": "bg-BG;ca-ES;cs-CZ;da-DK;de-DE;el-GR;es-ES;et-EE;eu-ES;fi-FI;fr-FR;gl-ES;hi-IN;hr-HR;hu-HU;id-ID;it-IT;ja-JP;kk-KZ;ko-KR;lt-LT;lv-LV;ms-MY;nb-NO;nl-NL;pl-PL;pt-BR;pt-PT;ro-RO;ru-RU;sk-SK;sl-SI;sr-Cyrl-RS;sr-Latn-RS;sv-SE;th-TH;tr-TR;uk-UA;vi-VN;zh-CN;zh-TW",
+          "Languages": "fr;de;it;es;ja;ko;ru;pt-br;tr;pl;cs;zh-cn;zh-tw",
           "LclFile": "localize\\loc\\package\\{Lang}\\package.nls.json.lcl",
           "CopyOption": "LangIDOnPath",
           "OutputPath": "localize\\i18n"
         },
         {
           "SourceFile": "src\\i18n\\extension.json",
-          "Languages": "bg-BG;ca-ES;cs-CZ;da-DK;de-DE;el-GR;es-ES;et-EE;eu-ES;fi-FI;fr-FR;gl-ES;hi-IN;hr-HR;hu-HU;id-ID;it-IT;ja-JP;kk-KZ;ko-KR;lt-LT;lv-LV;ms-MY;nb-NO;nl-NL;pl-PL;pt-BR;pt-PT;ro-RO;ru-RU;sk-SK;sl-SI;sr-Cyrl-RS;sr-Latn-RS;sv-SE;th-TH;tr-TR;uk-UA;vi-VN;zh-CN;zh-TW",
+          "Languages": "fr;de;it;es;ja;ko;ru;pt-br;tr;pl;cs;zh-cn;zh-tw",
           "LclFile": "localize\\loc\\extension\\{Lang}\\extension.json.lcl",
           "CopyOption": "LangIDOnPath",
           "OutputPath": "localize\\i18n"
         },
         {
           "SourceFile": "webviews\\pq-test-result-view\\public\\i18n\\pq-test-result-view.json",
-          "Languages": "bg-BG;ca-ES;cs-CZ;da-DK;de-DE;el-GR;es-ES;et-EE;eu-ES;fi-FI;fr-FR;gl-ES;hi-IN;hr-HR;hu-HU;id-ID;it-IT;ja-JP;kk-KZ;ko-KR;lt-LT;lv-LV;ms-MY;nb-NO;nl-NL;pl-PL;pt-BR;pt-PT;ro-RO;ru-RU;sk-SK;sl-SI;sr-Cyrl-RS;sr-Latn-RS;sv-SE;th-TH;tr-TR;uk-UA;vi-VN;zh-CN;zh-TW",
+          "Languages": "fr;de;it;es;ja;ko;ru;pt-br;tr;pl;cs;zh-cn;zh-tw",
           "LclFile": "localize\\loc\\pq-test-result-view\\{Lang}\\pq-test-result-view.json.lcl",
           "CopyOption": "LangIDOnPath",
           "OutputPath": "localize\\i18n"
