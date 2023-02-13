@@ -8,7 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { buildPqTestArgs, IPQTestService } from "../common/PQTestService";
+import { buildPqTestArgs, IPQTestClient } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { extensionI18n } from "../i18n/extension";
@@ -135,19 +135,19 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         });
     }
 
-    constructor(protected readonly pqTestService: IPQTestService) {
+    constructor(protected readonly pqTestClient: IPQTestClient) {
         // noop
     }
 
     public provideTasks(_token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
         const result: vscode.Task[] = [];
 
-        if (!this.pqTestService.pqTestReady) {
+        if (!this.pqTestClient.pqTestReady) {
             return result;
         }
 
         result.push(PowerQueryTaskProvider.buildMsbuildTask());
-        result.push(PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestService.pqTestLocation));
+        result.push(PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestClient.pqTestLocation));
 
         const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
@@ -158,7 +158,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         } else {
             pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
                 result.push(
-                    PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
+                    PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestClient.pqTestFullPath),
                 );
             });
         }
@@ -169,7 +169,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     public resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
         const taskDef: PowerQueryTaskDefinition = task.definition as PowerQueryTaskDefinition;
 
-        const pqtestExe: string = this.pqTestService.pqTestFullPath;
+        const pqtestExe: string = this.pqTestClient.pqTestFullPath;
 
         if (taskDef.operation === "msbuild") {
             const msbuildFullPath: string | undefined = ExtensionConfigurations.msbuildPath;
@@ -185,11 +185,11 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             const currentWorkingFolder: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
 
             const makePQXExe: string = path.join(
-                this.pqTestService.pqTestLocation,
+                this.pqTestClient.pqTestLocation,
                 ExtensionConstants.MakePQXExecutableName,
             );
 
-            if (currentWorkingFolder && this.pqTestService.pqTestLocation && !token.isCancellationRequested) {
+            if (currentWorkingFolder && this.pqTestClient.pqTestLocation && !token.isCancellationRequested) {
                 const args: string[] = buildPqTestArgs(taskDef);
                 args.push(currentWorkingFolder);
                 const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(makePQXExe, args);

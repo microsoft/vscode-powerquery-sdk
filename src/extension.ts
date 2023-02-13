@@ -7,7 +7,7 @@
 
 import * as vscode from "vscode";
 
-import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "./common/PQTestService";
+import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestClient } from "./common/PQTestService";
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 import { activateMQueryDebug } from "./debugAdaptor/activateMQueryDebug";
 import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
@@ -42,9 +42,9 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         pqSdkOutputChannel,
     );
 
-    const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
-        ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
-        : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
+        const disposablePqTestServices: IPQTestClient & IDisposable = useServiceHost
+            ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
+            : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
 
     disposablePqTestServices.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {
         const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;

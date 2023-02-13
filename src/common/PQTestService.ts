@@ -6,6 +6,7 @@
  */
 
 import { PQTestTask } from "./PowerQueryTask";
+import { RpcRequestParamBase } from "../pqTestConnector/RpcClient";
 import type { ValueEventEmitter } from "./ValueEventEmitter";
 
 export interface GenericResult {
@@ -167,13 +168,6 @@ export interface GetPreviewRequest {
 }
 
 export interface IPQTestService {
-    readonly pqTestReady: boolean;
-    readonly pqTestLocation: string;
-    readonly pqTestFullPath: string;
-    readonly currentExtensionInfos: ValueEventEmitter<ExtensionInfo[]>;
-    readonly currentCredentials: ValueEventEmitter<Credential[]>;
-    readonly onPowerQueryTestLocationChanged: () => void;
-    readonly ExecuteBuildTaskAndAwaitIfNeeded: () => Promise<void>;
     readonly DeleteCredential: () => Promise<GenericResult>;
     readonly DisplayExtensionInfo: () => Promise<ExtensionInfo[]>;
     readonly ListCredentials: () => Promise<Credential[]>;
@@ -185,6 +179,107 @@ export interface IPQTestService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly RunTestBattery: (pathToQueryFile?: string) => Promise<any>;
     readonly TestConnection: () => Promise<GenericResult>;
+}
+
+export interface PqServiceHostRequestParamBase extends RpcRequestParamBase {
+    ExtensionPaths?: string[];
+    KeyVaultSecretName?: string;
+    DataSourceKind?: string;
+    DataSourcePath?: string;
+    PrettyPrint?: boolean;
+    EnvironmentConfigurationFile?: string;
+    EnvironmentSetting?: string[];
+    ApplicationPropertyFile?: string;
+    ApplicationProperties?: string[];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+}
+
+export interface PqServiceHostCreateAuthRequest extends PqServiceHostRequestParamBase {
+    AuthenticationKind: string;
+    TemplateValueKey?: string;
+    TemplateValueUsername?: string;
+    TemplateValuePassword?: string;
+    TemplateValueAccessToken?: string;
+    TemplateValueRefreshToken?: string;
+    AllowUserInteraction?: string;
+}
+
+export interface PqServiceHostDeleteCredentialRequest extends PqServiceHostRequestParamBase {
+    AllCredentials?: boolean;
+}
+
+export interface PqServiceHostRunTestRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+    FailOnFoldingFailure?: boolean;
+    AutomaticFileCredentials?: boolean;
+    RunAsAction?: boolean;
+}
+
+export interface PqServiceHostRunTestRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+    FailOnFoldingFailure?: boolean;
+    AutomaticFileCredentials?: boolean;
+    RunAsAction?: boolean;
+}
+
+export interface PqServiceHostSetCredentialRequest extends PqServiceHostRequestParamBase {
+    AuthenticationKind?: string;
+    AllowUserInteraction?: boolean;
+    UseLegacyBrowser?: boolean;
+    UseSystemBrowser?: boolean;
+    InputTemplateString?: string;
+}
+
+export interface PqServiceHostTestConnectionRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+}
+
+export interface PqServiceHostValidateRequest extends PqServiceHostRequestParamBase {
+    LogMashupEngineTraceLevel?: string;
+}
+
+export type PqServiceHostResolveResourceChallengeRequest = PqServiceHostRequestParamBase &
+    ResolveResourceChallengeState;
+
+export type PqServiceHostGetPreviewRequest = PqServiceHostRequestParamBase & GetPreviewRequest;
+
+export interface IHealthService {
+    readonly ForceShutdown: () => Promise<number>;
+    readonly Ping: () => Promise<number>;
+}
+
+export interface IDocumentService {
+    readonly TryParseDocumentScript: (documentScript: string) => Promise<ParsedDocumentState>;
+}
+
+export interface IEvaluationService {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    readonly GetPreviewAsync: (state: GetPreviewRequest) => Promise<any>;
+}
+
+export interface IPQTestClient {
+    readonly pqTestReady: boolean;
+    readonly pqTestLocation: string;
+    readonly pqTestFullPath: string;
+    readonly currentExtensionInfos: ValueEventEmitter<ExtensionInfo[]>;
+    readonly currentCredentials: ValueEventEmitter<Credential[]>;
+    readonly onPowerQueryTestLocationChanged: () => void;
+    readonly ExecuteBuildTaskAndAwaitIfNeeded: () => Promise<void>;
+    readonly pqTestService: IPQTestService;
+}
+
+export interface IPQServiceHostClient extends IPQTestClient {
+    readonly healthService: IHealthService;
+    readonly pqTestService: IPQTestService & {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        readonly RunTestBatteryFromContent: (pathToQueryFile?: string) => Promise<any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        readonly ResolveResourceChallengeAsync: (state: ResolveResourceChallengeState) => Promise<any>;
+    };
+    readonly documentService: IDocumentService;
+    readonly evaluationService: IEvaluationService;
 }
 
 const CommonArgs: string[] = ["--prettyPrint"];

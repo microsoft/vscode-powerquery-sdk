@@ -17,7 +17,7 @@ import {
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 
-import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
+import { DISCONNECTED, READY } from "../pqTestConnector/RpcClient";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
 import {
@@ -27,6 +27,7 @@ import {
 import { DeferredValue } from "../common/DeferredValue";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { fromEvents } from "../common/promises/fromEvents";
+import { PqServiceHostClientLite } from "../pqTestConnector/PqServiceHostClientLite";
 import { stringifyJson } from "../utils/strings";
 import { WaitNotify } from "../common/WaitNotify";
 
@@ -189,7 +190,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
                 switch (theOperation) {
                     case "info": {
                         const displayExtensionInfoResult: ExtensionInfo[] =
-                            await this.pqServiceHostClientLite.DisplayExtensionInfo();
+                            await this.pqServiceHostClientLite.pqTestService.DisplayExtensionInfo();
 
                         this.appendInfoLine(
                             resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
@@ -204,7 +205,8 @@ export class MQueryDebugSession extends LoggingDebugSession {
                     }
 
                     case "test-connection": {
-                        const testConnectionResult: GenericResult = await this.pqServiceHostClientLite.TestConnection();
+                        const testConnectionResult: GenericResult =
+                            await this.pqServiceHostClientLite.pqTestService.TestConnection();
 
                         this.appendInfoLine(
                             resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
@@ -217,7 +219,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
 
                     case "run-test": {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const result: any = await this.pqServiceHostClientLite.RunTestBatteryFromContent(
+                        const result: any = await this.pqServiceHostClientLite.pqTestService.RunTestBatteryFromContent(
                             path.resolve(args.program),
                         );
 

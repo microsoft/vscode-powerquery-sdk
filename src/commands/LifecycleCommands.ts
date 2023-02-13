@@ -9,22 +9,13 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import {
-    ExtensionContext,
-    InputBoxOptions,
-    Progress,
-    ProgressLocation,
-    Uri,
-    workspace as vscWorkspace,
-    WorkspaceFolder,
-} from "vscode";
+import { ExtensionContext, Progress, ProgressLocation, Uri, workspace as vscWorkspace, WorkspaceFolder } from "vscode";
 
 import {
-    AuthenticationKind,
     CreateAuthState,
     ExtensionInfo,
     GenericResult,
-    IPQTestService,
+    IPQTestClient,
     ParsedDocumentState,
     ResolveResourceChallengeState,
 } from "../common/PQTestService";
@@ -39,7 +30,6 @@ import {
 } from "../utils/vscodes";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
-import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 
@@ -50,6 +40,8 @@ import { getCtimeOfAFile } from "../utils/files";
 import { IDisposable } from "../common/Disposable";
 import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
+import { RpcServerNotReady } from "../pqTestConnector/RpcClient";
 
 const CommandPrefix: string = `powerquery.sdk.tools`;
 
@@ -78,7 +70,7 @@ export class LifecycleCommands implements IDisposable {
         private readonly vscExtCtx: ExtensionContext,
         readonly globalEventBus: GlobalEventBus,
         private readonly pqSdkNugetPackageService: PqSdkNugetPackageService,
-        private readonly pqTestService: IPQTestService,
+        private readonly pqClient: IPQTestClient,
         private readonly outputChannel: PqSdkOutputChannel,
     ) {
         globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangeExternalVersionTag, () => {
@@ -167,7 +159,7 @@ export class LifecycleCommands implements IDisposable {
     private intervalTaskHandler: NodeJS.Timeout | undefined;
     private activateIntervalTasks(): void {
         // update lastCtimeOfMezFileWhoseInfoSeized once its info:static-type-check got re-eval
-        this.pqTestService.currentExtensionInfos.subscribe(() => {
+        this.pqClient.currentExtensionInfos.subscribe(() => {
             const currentPQTestExtensionFileLocation: string | undefined =
                 ExtensionConfigurations.DefaultExtensionLocation;
 
@@ -220,11 +212,11 @@ export class LifecycleCommands implements IDisposable {
             resolvedPQTestExtensionFileLocation &&
             fs.existsSync(resolvedPQTestExtensionFileLocation) &&
             (!ExtensionConfigurations.featureUseServiceHost ||
-                (this.pqTestService as PqServiceHostClient).pqServiceHostConnected)
+                (this.pqClient as PqServiceHostClient).pqServiceHostConnected)
         ) {
             const currentCtime: Date = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
-            if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
+            if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized && this.pqClient.pqTestReady) {
                 // first check where we got an onGoing one or not,
                 // if the ongGoing one were newer or equaled to the current one, just return
                 if (
@@ -356,7 +348,7 @@ export class LifecycleCommands implements IDisposable {
     ): (...args: any[]) => Promise<any> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return debounce(async (...args: any[]): Promise<any> => {
-            let pqTestServiceReady: boolean = this.pqTestService.pqTestReady;
+            let pqTestServiceReady: boolean = this.pqClient.pqTestReady;
 
             if (!pqTestServiceReady) {
                 const curPqTestPath: string | undefined = await this.checkAndTryToUpdatePqTest();
@@ -371,7 +363,7 @@ export class LifecycleCommands implements IDisposable {
     public async doBuildProjectCommand(): Promise<void> {
         await this.initPqSdkTool$deferred;
 
-        return this.pqTestService.ExecuteBuildTaskAndAwaitIfNeeded();
+        return this.pqClient.ExecuteBuildTaskAndAwaitIfNeeded();
     }
 
     public setupCurrentlyOpenedWorkspaceCommand(): Promise<unknown> {
@@ -530,7 +522,7 @@ export class LifecycleCommands implements IDisposable {
             // therefore do not try to update when, like, pqTestLocation.indexOf(maybeNewVersion) === -1
             if (
                 !pqTestLocation ||
-                !this.pqTestService.pqTestReady ||
+                !this.pqClient.pqTestReady ||
                 !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(theNextVersion)
             ) {
                 let pqTestExecutableFullPath: string | undefined =
@@ -603,7 +595,7 @@ export class LifecycleCommands implements IDisposable {
 
         if (histPqTestLocation === newPqTestLocation) {
             // update the pqtest location by force in case it equals the previous one
-            this.pqTestService.onPowerQueryTestLocationChanged();
+            this.pqClient.onPowerQueryTestLocationChangedByConfig(ExtensionConfigurations);
         }
     }
 
@@ -764,7 +756,7 @@ export class LifecycleCommands implements IDisposable {
                 this.outputChannel.show();
 
                 try {
-                    const result: GenericResult = await this.pqTestService.DeleteCredential();
+                    const result: GenericResult = await this.pqClient.pqTestService.DeleteCredential();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.delete.credentials.result", {
@@ -799,7 +791,7 @@ export class LifecycleCommands implements IDisposable {
                 this.outputChannel.show();
 
                 try {
-                    const result: ExtensionInfo[] = await this.pqTestService.DisplayExtensionInfo();
+                    const result: ExtensionInfo[] = await this.pqClient.pqTestService.DisplayExtensionInfo();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
@@ -819,8 +811,8 @@ export class LifecycleCommands implements IDisposable {
                     if (
                         !(
                             ExtensionConfigurations.featureUseServiceHost &&
-                            !(this.pqTestService as PqServiceHostClient).pqServiceHostConnected &&
-                            error instanceof PqServiceHostServerNotReady
+                            !(this.pqClient as PqServiceHostClient).pqServiceHostConnected &&
+                            error instanceof RpcServerNotReady
                         )
                     ) {
                         const errorMessage: string = error instanceof Error ? error.message : error;
@@ -850,7 +842,7 @@ export class LifecycleCommands implements IDisposable {
                 this.outputChannel.show();
 
                 try {
-                    const result: unknown[] = await this.pqTestService.ListCredentials();
+                    const result: unknown[] = await this.pqClient.pqTestService.ListCredentials();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.result", {
@@ -863,146 +855,6 @@ export class LifecycleCommands implements IDisposable {
 
                     void vscode.window.showErrorMessage(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.errorMessage", {
-                            errorMessage,
-                        }),
-                    );
-                }
-
-                progress.report({ increment: 100 });
-            },
-        );
-    }
-
-    private async doPopulateOneSubstitutedValue(
-        templateStr: string,
-        title: string,
-        valueName: string,
-        options?: Partial<InputBoxOptions>,
-    ): Promise<string> {
-        const valueKey: string | undefined = await vscode.window.showInputBox({
-            title,
-            placeHolder: valueName,
-            validateInput(value: string): string | Thenable<string | undefined | null> | undefined | null {
-                if (!value) {
-                    return resolveI18nTemplate("PQSdk.lifecycle.error.invalid.empty.value", {
-                        valueName,
-                    });
-                }
-
-                return undefined;
-            },
-            ...options,
-        });
-
-        if (valueKey) {
-            templateStr = templateStr.replace(valueName, valueKey);
-        }
-
-        return templateStr;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async populateCredentialTemplate(template: any): Promise<string> {
-        const theAuthenticationKind: AuthenticationKind = template.AuthenticationKind as AuthenticationKind;
-        let templateStr: string = JSON.stringify(template);
-
-        switch (theAuthenticationKind) {
-            case "Key":
-                // $$KEY$$
-                templateStr = await this.doPopulateOneSubstitutedValue(
-                    templateStr,
-                    extensionI18n["PQSdk.lifecycle.credential.key.label"],
-                    "$$KEY$$",
-                );
-
-                break;
-            case "Aad":
-            case "OAuth":
-                // $$ACCESS_TOKEN$$
-                templateStr = await this.doPopulateOneSubstitutedValue(
-                    templateStr,
-                    extensionI18n["PQSdk.lifecycle.credential.accessToken.label"],
-                    "$$ACCESS_TOKEN$$",
-                );
-
-                // $$REFRESH_TOKEN$$
-                templateStr = await this.doPopulateOneSubstitutedValue(
-                    templateStr,
-                    extensionI18n["PQSdk.lifecycle.credential.refreshToken.label"],
-                    "$$REFRESH_TOKEN$$",
-                );
-
-                break;
-            case "UsernamePassword":
-            case "Windows":
-                // $$USERNAME$$
-                templateStr = await this.doPopulateOneSubstitutedValue(
-                    templateStr,
-                    extensionI18n["PQSdk.lifecycle.credential.username.label"],
-                    "$$USERNAME$$",
-                );
-
-                // $$PASSWORD$$
-                templateStr = await this.doPopulateOneSubstitutedValue(
-                    templateStr,
-                    extensionI18n["PQSdk.lifecycle.credential.password.label"],
-                    "$$PASSWORD$$",
-                    {
-                        password: true,
-                    },
-                );
-
-                break;
-            case "Anonymous":
-            default:
-                break;
-        }
-
-        return templateStr;
-    }
-
-    public async generateAndSetCredentialCommand(): Promise<void> {
-        await vscode.window.withProgress(
-            {
-                title: extensionI18n["PQSdk.lifecycle.command.generate.credentials.title"],
-                location: ProgressLocation.Window,
-                cancellable: true,
-            },
-            async (progress: Progress<{ increment?: number; message?: string }>) => {
-                progress.report({ increment: 0 });
-                this.outputChannel.show();
-
-                try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const credentialPayload: any = await this.pqTestService.GenerateCredentialTemplate();
-
-                    this.outputChannel.appendInfoLine(
-                        resolveI18nTemplate("PQSdk.lifecycle.command.generate.credentials.result", {
-                            result: prettifyJson(credentialPayload),
-                        }),
-                    );
-
-                    const credentialPayloadStr: string = await this.populateCredentialTemplate(credentialPayload);
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const result: any = await this.pqTestService.SetCredential(credentialPayloadStr);
-
-                    this.outputChannel.appendInfoLine(
-                        resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.result", {
-                            result: prettifyJson(result),
-                        }),
-                    );
-
-                    void vscode.window.showInformationMessage(
-                        resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.info", {
-                            authenticationKind: credentialPayload.AuthenticationKind,
-                        }),
-                    );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
-
-                    void vscode.window.showErrorMessage(
-                        resolveI18nTemplate("PQSdk.lifecycle.command.set.credentials.errorMessage", {
                             errorMessage,
                         }),
                     );
@@ -1058,8 +910,8 @@ export class LifecycleCommands implements IDisposable {
 
                 try {
                     const currentExtensionInfos: ExtensionInfo[] =
-                        this.pqTestService.currentExtensionInfos.value ??
-                        (await this.pqTestService.DisplayExtensionInfo());
+                        this.pqClient.currentExtensionInfos.value ??
+                        (await this.pqClient.pqTestService.DisplayExtensionInfo());
 
                     const dataSourceKinds: string[] = Array.from(
                         new Set(
@@ -1370,9 +1222,8 @@ export class LifecycleCommands implements IDisposable {
                         void vscode.window.showWarningMessage(maybeErrorMessage);
                     } else {
                         try {
-                            const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
-                                createAuthState,
-                            );
+                            const result: GenericResult =
+                                await this.pqClient.pqTestService.SetCredentialFromCreateAuthState(createAuthState);
 
                             this.outputChannel.appendInfoLine(
                                 resolveI18nTemplate("PQSdk.lifecycle.command.createAuthState.result", {
@@ -1423,7 +1274,7 @@ export class LifecycleCommands implements IDisposable {
                 cancellable: true,
             },
             async (progress: Progress<{ increment?: number; message?: string }>) => {
-                const pqServiceHostClient: PqServiceHostClient = this.pqTestService as PqServiceHostClient;
+                const pqServiceHostClient: PqServiceHostClient = this.pqClient as PqServiceHostClient;
 
                 const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
                     "**/*.{query,test}.pq",
@@ -1519,11 +1370,12 @@ export class LifecycleCommands implements IDisposable {
                     input: MultiStepInput,
                     state: Partial<ResolveResourceChallengeState>,
                 ): Promise<InputStep | void> {
-                    const result: ParsedDocumentState = await pqServiceHostClient.TryParseDocumentScript(
-                        // DocumentScript should not be nullable when we reaching here
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        state.DocumentScript!,
-                    );
+                    const result: ParsedDocumentState =
+                        await pqServiceHostClient.documentService.TryParseDocumentScript(
+                            // DocumentScript should not be nullable when we reaching here
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            state.DocumentScript!,
+                        );
 
                     if (result.Errors?.length) {
                         void vscode.window.showWarningMessage(result.Errors[0].Message);
@@ -1572,7 +1424,7 @@ export class LifecycleCommands implements IDisposable {
                     // try to infer DataSourceKind DataSourcePath
                     try {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const evalRes: any = await pqServiceHostClient.GetPreviewAsync({
+                        const evalRes: any = await pqServiceHostClient.evaluationService.GetPreviewAsync({
                             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             DocumentScript: state.DocumentScript!,
                             QueryName: state.QueryName,
@@ -1654,7 +1506,10 @@ export class LifecycleCommands implements IDisposable {
                     void vscode.window.showWarningMessage("The content of the document selected cannot be null");
                 } else {
                     // do trigger the resolve the resource challenge
-                    await pqServiceHostClient.ResolveResourceChallengeAsync(resolveResourceChallengeState);
+                    await pqServiceHostClient.pqTestService.ResolveResourceChallengeAsync(
+                        resolveResourceChallengeState,
+                    );
+
                     void vscode.window.showInformationMessage("The resource of the file have been resolved");
                 }
 
@@ -1675,7 +1530,7 @@ export class LifecycleCommands implements IDisposable {
                 this.outputChannel.show();
 
                 try {
-                    const result: GenericResult = await this.pqTestService.RefreshCredential();
+                    const result: GenericResult = await this.pqClient.pqTestService.RefreshCredential();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.result", {
@@ -1713,11 +1568,11 @@ export class LifecycleCommands implements IDisposable {
 
                 try {
                     if (ExtensionConfigurations.featureUseServiceHost) {
-                        result = await (this.pqTestService as PqServiceHostClient).RunTestBatteryFromContent(
+                        result = await (this.pqClient as PqServiceHostClient).pqTestService.RunTestBatteryFromContent(
                             pathToQueryFile?.fsPath,
                         );
                     } else {
-                        result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
+                        result = await this.pqClient.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
                     }
 
                     this.outputChannel.appendInfoLine(
@@ -1758,7 +1613,7 @@ export class LifecycleCommands implements IDisposable {
                 this.outputChannel.show();
 
                 try {
-                    const result: GenericResult = await this.pqTestService.TestConnection();
+                    const result: GenericResult = await this.pqClient.pqTestService.TestConnection();
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {

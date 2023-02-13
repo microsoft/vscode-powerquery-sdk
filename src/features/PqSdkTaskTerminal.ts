@@ -8,11 +8,12 @@
 import * as os from "os";
 import * as vscode from "vscode";
 
-import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
+import { DISCONNECTED, READY } from "../pqTestConnector/RpcClient";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
 import { fromEvents } from "../common/promises/fromEvents";
 import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
+import { PqServiceHostClientLite } from "../pqTestConnector/PqServiceHostClientLite";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { stringifyJson } from "../utils/strings";
 
@@ -53,7 +54,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
             switch (this.taskDefinition.operation) {
                 case "list-credential": {
-                    const result: unknown[] = await this.pqServiceHostClientLite.ListCredentials();
+                    const result: unknown[] = await this.pqServiceHostClientLite.pqTestService.ListCredentials();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.result", {
@@ -65,7 +66,8 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
                 }
 
                 case "delete-credential": {
-                    const deleteCredentialResult: GenericResult = await this.pqServiceHostClientLite.DeleteCredential();
+                    const deleteCredentialResult: GenericResult =
+                        await this.pqServiceHostClientLite.pqTestService.DeleteCredential();
 
                     this.appendInfoLine(deleteCredentialResult.Message);
                     break;
@@ -73,7 +75,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
                 case "info": {
                     const displayExtensionInfoResult: ExtensionInfo[] =
-                        await this.pqServiceHostClientLite.DisplayExtensionInfo();
+                        await this.pqServiceHostClientLite.pqTestService.DisplayExtensionInfo();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
@@ -90,7 +92,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
                 case "set-credential": {
                     if (this.taskDefinition.credentialTemplate) {
                         const setCredentialGenericResult: GenericResult =
-                            await this.pqServiceHostClientLite.SetCredential(
+                            await this.pqServiceHostClientLite.pqTestService.SetCredential(
                                 JSON.stringify(this.taskDefinition.credentialTemplate),
                             );
 
@@ -110,7 +112,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
                 case "refresh-credential": {
                     const refreshCredentialResult: GenericResult =
-                        await this.pqServiceHostClientLite.RefreshCredential();
+                        await this.pqServiceHostClientLite.pqTestService.RefreshCredential();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.result", {
@@ -123,7 +125,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
                 case "run-test": {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const result: any = await this.pqServiceHostClientLite.RunTestBatteryFromContent(
+                    const result: any = await this.pqServiceHostClientLite.pqTestService.RunTestBatteryFromContent(
                         resolveSubstitutedValues(this.taskDefinition.pathToQueryFile),
                     );
 
@@ -137,7 +139,8 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
                 }
 
                 case "test-connection": {
-                    const testConnectionResult: GenericResult = await this.pqServiceHostClientLite.TestConnection();
+                    const testConnectionResult: GenericResult =
+                        await this.pqServiceHostClientLite.pqTestService.TestConnection();
 
                     this.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
