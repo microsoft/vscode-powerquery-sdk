@@ -37,7 +37,7 @@ const noCacheGetInit = {
     headers: noCacheHeaders,
 };
 
-export function handleLocaleChange(nextLocal = "en-US"): Promise<unknown> {
+export function handleLocaleChange(nextLocal = "en"): Promise<unknown> {
     let targetUrl = defaultLocaleJsonUrl;
     if (!activateDefaultLocaleJsonDeferred) {
         activateDefaultLocaleJsonDeferred = (async () => {
@@ -49,10 +49,10 @@ export function handleLocaleChange(nextLocal = "en-US"): Promise<unknown> {
             return defaultLocaleJson;
         })();
     }
-    if (nextLocal === "en-Us") {
+    if (nextLocal.toLowerCase() === "en") {
         return activateDefaultLocaleJsonDeferred;
     } else {
-        targetUrl = `i18n/pq-test-result-view.${nextLocal}.json`;
+        targetUrl = `i18n/pq-test-result-view.${nextLocal.toLowerCase()}.json`;
     }
 
     const activateCurrentLocaleJsonDeferred = (async () => {

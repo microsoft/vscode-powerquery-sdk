@@ -23,13 +23,7 @@ export const ExtensionConfigurations = {
         return config.get(ExtensionConstants.ConfigNames.http.proxyAuthorization);
     },
     get pqLocale(): string {
-        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
-            ExtensionConstants.ConfigNames.PowerQuery.name,
-        );
-
-        const result: string | undefined = config.get(ExtensionConstants.ConfigNames.PowerQuery.properties.locale);
-
-        return result ?? vscode.env.language;
+        return vscode.env.language.toLowerCase() ?? "en";
     },
     get pqMode(): PqModeType {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(

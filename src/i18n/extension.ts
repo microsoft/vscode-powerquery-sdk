@@ -17,7 +17,7 @@ export type ExtensionI18nRecord = typeof defaultJson;
 export type ExtensionI18nKeys = RecordKeys<ExtensionI18nRecord>;
 
 const currentFolder: string = __dirname;
-let currentLocale: string = "en-US";
+let currentLocale: string = "en";
 let currentLocaleJson: Partial<ExtensionI18nRecord> = defaultJson;
 
 function createExtensionI18nRecord(): ExtensionI18nRecord {
