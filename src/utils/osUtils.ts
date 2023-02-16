@@ -24,5 +24,5 @@ export function isSupportedOs(): boolean {
     const platform: string = os.platform();
     const arch: string = os.arch();
 
-    return platform === "win32" && arch === "x64";
+    return platform === "win32" && (arch === "x64" || arch === "arm64");
 }
