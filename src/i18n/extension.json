@@ -6,7 +6,6 @@
   "PQSdk.common.logLevel.Trace": "Trace",
   "PQSdk.common.logLevel.Info": "Info",
   "PQSdk.common.logLevel.Error": "Error",
-  "PQSdk.boostrap.unsupported.arch": "Unsupported platform or architecture found, currently Power query SDK would only support Windows x86_64 or arm64",
   "PQSdk.debugger.error.cannot.find.program": "Cannot find a program to debug",
   "PQSdk.lifecycle.command.update.lastCtimeOfMezFile": "Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}",
   "PQSdk.lifecycle.command.detect.newerMezFile": "Detected a newer mez file, about to infer its latest info. {currentCtime}, {diffCtime}",
