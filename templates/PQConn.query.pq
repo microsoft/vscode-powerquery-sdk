@@ -1,4 +1,4 @@
-﻿// Use this file to write queries to test your data connector
+// Use this file to write queries to test your data connector
 let
     result = {{ProjectName}}.Contents()
 in
