@@ -26,10 +26,10 @@ import {
     PqServiceHostTestConnectionRequest,
     ResolveResourceChallengeState,
 } from "../common/PQTestService";
-import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
 import { executeBuildTaskAndAwaitIfNeeded } from "./PqTestTaskUtils";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
+import { resolveSubstitutedValues } from "../utils/vscodes";
 import { RpcClient } from "./RpcClient";
 
 type OmittedPqTestMethods = "currentExtensionInfos" | "currentCredentials";
@@ -83,7 +83,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
             this.requestRemoteRpcMethod<PqServiceHostDeleteCredentialRequest>("v1/PqTestService/DeleteCredential", [
                 {
                     SessionId: this.sessionId,
-                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     AllCredentials: true,
                 },
             ]),
@@ -93,7 +93,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     },
                 ],
                 { shouldParsePayload: true },
@@ -110,7 +110,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                         PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                     },
                 ],
@@ -120,7 +120,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
             this.requestRemoteRpcMethod<PqServiceHostSetCredentialRequest>("v1/PqTestService/SetCredential", [
                 {
                     SessionId: this.sessionId,
-                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                     InputTemplateString: payloadStr,
                 },
@@ -131,7 +131,9 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: createAuthState.PathToConnectorFile || getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToConnector:
+                            createAuthState.PathToConnectorFile ||
+                            resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                         PathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
                         // DataSourceKind: createAuthState.DataSourceKind,
                         AuthenticationKind: createAuthState.AuthenticationKind,
@@ -145,7 +147,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
             this.requestRemoteRpcMethod("v1/PqTestService/RefreshCredential", [
                 {
                     SessionId: this.sessionId,
-                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                 },
             ]),
@@ -168,7 +170,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
             return this.requestRemoteRpcMethod<PqServiceHostRunTestRequest>("v1/PqTestService/RunTestBattery", [
                 {
                     SessionId: this.sessionId,
-                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     PathToQueryFile: pathToQueryFile,
                 },
             ]);
@@ -177,7 +179,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
             this.requestRemoteRpcMethod<PqServiceHostTestConnectionRequest>("v1/PqTestService/TestConnection", [
                 {
                     SessionId: this.sessionId,
-                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                 },
             ]),
@@ -224,7 +226,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                         PathToQueryFile: currentContent,
                     },
                 ],
@@ -253,7 +255,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 [
                     {
                         SessionId: this.sessionId,
-                        PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                         PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                         DocumentScript: state.DocumentScript,
                         QueryName: state.QueryName,
@@ -286,7 +288,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 [
                     {
                         SessionId: this.sessionId,
-                        // PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                        // PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                         // PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                         DocumentScript: documentScript,
                     },
@@ -299,7 +301,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
             this.requestRemoteRpcMethod<PqServiceHostGetPreviewRequest>("v1/EvaluationService/GetPreview", [
                 {
                     SessionId: this.sessionId,
-                    PathToConnector: getFirstWorkspaceFolder()?.uri.fsPath,
+                    PathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
                     PathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
                     DocumentScript: state.DocumentScript,
                     QueryName: state.QueryName,
