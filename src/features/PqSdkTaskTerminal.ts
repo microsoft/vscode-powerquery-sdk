@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 import { DISCONNECTED, READY } from "../pqTestConnector/RpcClient";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { fromEvents } from "../common/promises/fromEvents";
 import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
 import { PqServiceHostClientLite } from "../pqTestConnector/PqServiceHostClientLite";
@@ -46,7 +47,7 @@ export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
         // activate pqServiceHostClientLite and make it connect to pqServiceHost
-        this.pqServiceHostClientLite.onPowerQueryTestLocationChanged();
+        this.pqServiceHostClientLite.onPowerQueryTestLocationChangedByConfig(ExtensionConfigurations);
 
         try {
             // wait for the pqServiceHostClientLite socket got ready

@@ -265,7 +265,7 @@ export interface IPQTestClient {
     readonly pqTestFullPath: string;
     readonly currentExtensionInfos: ValueEventEmitter<ExtensionInfo[]>;
     readonly currentCredentials: ValueEventEmitter<Credential[]>;
-    readonly onPowerQueryTestLocationChanged: () => void;
+    readonly onPowerQueryTestLocationChangedByConfig: (config: { PQTestLocation: string | undefined }) => void;
     readonly ExecuteBuildTaskAndAwaitIfNeeded: () => Promise<void>;
     readonly pqTestService: IPQTestService;
 }

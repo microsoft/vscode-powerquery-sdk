@@ -179,7 +179,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
     private async doLaunchRequest(args: ILaunchRequestArguments): Promise<void> {
         if (this.useServiceHost && this.pqServiceHostClientLite) {
             // activate pqServiceHostClientLite and make it connect to pqServiceHost
-            this.pqServiceHostClientLite.onPowerQueryTestLocationChanged();
+            this.pqServiceHostClientLite.onPowerQueryTestLocationChangedByConfig(ExtensionConfigurations);
 
             try {
                 // wait for the pqServiceHostClientLite's socket got ready

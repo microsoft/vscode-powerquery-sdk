@@ -18,9 +18,8 @@ import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
 import { AnyFunction } from "../common/promises/types";
 import { BaseError } from "../common/errors";
 import { convertStringToInteger } from "../utils/numbers";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { IDisposable } from "../common/Disposable";
-import { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
+import type { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../common/SpawnedProcess";
 
 export interface RpcRequestParamBase {
@@ -99,6 +98,8 @@ export class RpcClient extends EventEmitter implements IDisposable {
     public static readonly ExecutableName: string = "PQServiceHost.exe";
     public static readonly ExecutablePidLockFileName: string = "PQServiceHost.pid";
     public static readonly ExecutablePortLockFileName: string = "PQServiceHost.port";
+
+    private _isDisposed: boolean = false;
 
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
@@ -224,7 +225,9 @@ export class RpcClient extends EventEmitter implements IDisposable {
                 this.onDisconnecting();
 
                 setTimeout(() => {
-                    this.onPowerQueryTestLocationChanged();
+                    if (!this._isDisposed) {
+                        this.onPowerQueryTestLocationChangedByConfig(this.currentConfigs);
+                    }
                 }, 250);
 
                 theJsonRpcSocketClient.off(CLOSED, handleJsonRpcSocketExiting);
@@ -295,6 +298,8 @@ export class RpcClient extends EventEmitter implements IDisposable {
         }
 
         try {
+            // since we are about to start the pqServiceHost, this client is definitely not disposed.
+            this._isDisposed = false;
             this.doStartAndListenPqServiceHostIfNeededInProgress = true;
 
             const pidFileFullPath: string = path.resolve(nextPQTestLocation, RpcClient.ExecutablePidLockFileName);
@@ -368,9 +373,19 @@ export class RpcClient extends EventEmitter implements IDisposable {
         }, 750);
     }
 
-    public onPowerQueryTestLocationChanged(): void {
+    private currentConfigs: { PQTestLocation: string | undefined } = { PQTestLocation: undefined };
+    /**
+     * Event handler of the PQSdkTool folder change event
+     * And it could also act as the init event consumer for a new connection
+     * @param configs the configs of a getter PQTestLocation returning
+     * the folder containing the executable like:
+     *      D:\Repo\PowerQuerySdkTools\out\AnyCPU\Release\SdkTools\tools
+     */
+    public onPowerQueryTestLocationChangedByConfig(configs: typeof this.currentConfigs): void {
+        this.currentConfigs = configs;
         // PQTestLocation getter
-        const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+        const nextPQTestLocation: string | undefined = configs.PQTestLocation;
+
         const pqServiceHostExe: string | undefined = this.resolvePQServiceHostPath(nextPQTestLocation);
 
         if (!pqServiceHostExe || !nextPQTestLocation) {
@@ -390,6 +405,8 @@ export class RpcClient extends EventEmitter implements IDisposable {
     }
 
     public dispose(): void {
+        this._isDisposed = true;
+
         for (const oneDisposable of this._disposables) {
             oneDisposable.dispose();
         }

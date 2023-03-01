@@ -13,7 +13,7 @@ import { cancelable } from "./cancelable";
 import { CancellationToken } from "./CancellationToken";
 import { noop } from "./noop";
 import { once } from "./once";
-import WebSocket from "ws";
+import type WebSocket from "ws";
 
 export type AnyEventListener = (type: string, callback: AnyFunction) => void;
 

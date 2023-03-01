@@ -45,11 +45,11 @@ export class PqServiceHostClient extends PqServiceHostClientLite implements IPQS
         this._disposables.unshift(
             this.globalEventBus.subscribeOneEvent(
                 GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation,
-                this.onPowerQueryTestLocationChanged.bind(this),
+                this.onPowerQueryTestLocationChangedByConfig.bind(this, ExtensionConfigurations),
             ),
         );
 
-        this.onPowerQueryTestLocationChanged();
+        this.onPowerQueryTestLocationChangedByConfig(ExtensionConfigurations);
 
         vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
             if (

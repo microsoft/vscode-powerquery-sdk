@@ -36,6 +36,13 @@ export module VscSideBars {
         return theFile?.click();
     }
 
+    export async function clickListCredentials(pqSdkViewSection: ViewSection): Promise<void> {
+        const listCredentialsTitle = extensionI18n["PQSdk.lifecycleTreeView.item.listCredentials.title"];
+        const listCredentialsItem = await pqSdkViewSection.findItem(listCredentialsTitle);
+        listCredentialsItem?.click();
+        await delay(750);
+    }
+
     export async function clickClearAllCredentials(pqSdkViewSection: ViewSection): Promise<void> {
         const deleteAllCredentialsTitle = extensionI18n["PQSdk.lifecycleTreeView.item.deleteAllCredentials.title"];
         const clearAllCredentialsItem = await pqSdkViewSection.findItem(deleteAllCredentialsTitle);

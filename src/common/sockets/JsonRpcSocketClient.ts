@@ -15,13 +15,13 @@ import {
     SocketMessageReader,
     SocketMessageWriter,
 } from "vscode-jsonrpc/node";
-import { fibonacciNumbers } from "../iterables/FibonacciNumbers";
-import { NumberGenerator } from "../iterables/NumberIterator";
+import { EventEmitter } from "events";
 
 import { CLOSED, OPEN, SocketClient, SocketConnectionError } from "./SocketClient";
 import { AnyFunction } from "../promises/types";
 import { BaseError } from "../errors";
-import { noop } from "../promises/noop";
+import { fibonacciNumbers } from "../iterables/FibonacciNumbers";
+import { NumberGenerator } from "../iterables/NumberIterator";
 
 const JSON_RPC_VERSION: string = "2.0";
 
@@ -78,6 +78,7 @@ function defaultOnMessage(message: any): void {
 export type DeferredJsonRpcTask = { resolve: AnyFunction; reject: AnyFunction };
 
 export class JsonRpcSocketClient extends SocketClient {
+    public readonly notificationMessageEmitter: EventEmitter = new EventEmitter();
     private readonly _handle: (message: any) => Promise<any>;
     private readonly _deferredDictionary: Map<number, DeferredJsonRpcTask> = new Map();
     private reader?: SocketMessageReader;
@@ -116,7 +117,11 @@ export class JsonRpcSocketClient extends SocketClient {
 
             return this._getDeferred(rawJsonRpcResponseMessage.id)?.resolve(rawJsonRpcResponseMessage.result);
         } else if (Message.isNotification(rawJsonRpcMessage)) {
-            return this._handle(rawJsonRpcMessage).catch(noop);
+            Array.isArray(rawJsonRpcMessage.params)
+                ? this.notificationMessageEmitter.emit(rawJsonRpcMessage.method, ...rawJsonRpcMessage.params)
+                : this.notificationMessageEmitter.emit(rawJsonRpcMessage.method, rawJsonRpcMessage.params);
+
+            return Promise.resolve(rawJsonRpcMessage);
         } else {
             return this._handle(rawJsonRpcMessage).then((result: ResponseBase) => result.result);
         }

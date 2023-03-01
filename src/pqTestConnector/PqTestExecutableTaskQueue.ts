@@ -126,11 +126,11 @@ export class PqTestExecutableTaskQueue implements IPQTestClient, IDisposable {
         this._disposables.unshift(
             this.globalEventBus.subscribeOneEvent(
                 GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation,
-                this.onPowerQueryTestLocationChanged.bind(this),
+                this.onPowerQueryTestLocationChangedByConfig.bind(this, this.currentConfigs),
             ),
         );
 
-        this.onPowerQueryTestLocationChanged();
+        this.onPowerQueryTestLocationChangedByConfig(this.currentConfigs);
 
         vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
             if (
@@ -387,9 +387,12 @@ export class PqTestExecutableTaskQueue implements IPQTestClient, IDisposable {
         return result;
     }
 
-    public onPowerQueryTestLocationChanged(): void {
+    private currentConfigs: { PQTestLocation: string | undefined } = { PQTestLocation: undefined };
+    public onPowerQueryTestLocationChangedByConfig(configs: typeof this.currentConfigs): void {
+        this.currentConfigs = configs;
         // PQTestLocation getter
-        const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+        const nextPQTestLocation: string | undefined = configs.PQTestLocation;
+
         const pqTestExe: string | undefined = this.resolvePQTestPath(nextPQTestLocation);
 
         if (!pqTestExe || !nextPQTestLocation) {

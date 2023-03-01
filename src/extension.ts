@@ -42,9 +42,9 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         pqSdkOutputChannel,
     );
 
-        const disposablePqTestServices: IPQTestClient & IDisposable = useServiceHost
-            ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
-            : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
+    const disposablePqTestServices: IPQTestClient & IDisposable = useServiceHost
+        ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
+        : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
 
     disposablePqTestServices.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {
         const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
@@ -66,7 +66,6 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // lifecycleCommands instance has not been a disposable yet
     const lifecycleCommands: LifecycleCommands = new LifecycleCommands(
         vscExtCtx,
-        globalEventBus,
         pqSdkNugetPackageService,
         disposablePqTestServices,
         pqSdkOutputChannel,
