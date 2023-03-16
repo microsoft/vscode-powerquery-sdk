@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Listar credenciais]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Atualizar credenciais]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -62,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Evaluate current power query file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Avaliar o arquivo de consulta de energia atual]]></Val>
+            <Val><![CDATA[Avalie o arquivo de consulta de energia atual]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -71,7 +77,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tool]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Atualizar Ferramenta do SDK]]></Val>
+            <Val><![CDATA[Atualizar Ferramenta SDK]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -80,7 +86,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Configurar workspace]]></Val>
+            <Val><![CDATA[Espaço de trabalho de configuração]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Caminho local para msbuild.exe de instalação.]]></Val>
+            <Val><![CDATA[Caminho local para a pasta de instalação msbuild.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -107,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suggested nuget feed URL.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[URL do feed nuget sugerida.]]></Val>
+            <Val><![CDATA[URL do feed nuget sugerido.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Caminho local para nuget.exe de instalação.]]></Val>
+            <Val><![CDATA[Caminho local para a pasta de instalação do nuget.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Quando definido como false, o SDK não tenta detectar automaticamente os workspaces do conector e solicita a criação de um arquivo de configurações.]]></Val>
+            <Val><![CDATA[Quando definido como falso, o SDK não tenta detectar automaticamente os espaços de trabalho do conector e solicita a criação de um arquivo de configurações.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -143,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Especifique módulos de origem de extensão do conector (.mez/.pqm).<br>Essa opção pode ser especificada mais de uma vez.]]></Val>
+            <Val><![CDATA[Especifique os módulos de fonte de extensão do conector (.mez/.pqm).<br>Esta opção pode ser especificada mais de uma vez.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -179,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest operation string]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Cadeia de caracteres de operação PQTest]]></Val>
+            <Val><![CDATA[Cadeia de caracteres da operação PQTest]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -188,7 +194,7 @@
         <Str Cat="Text">
           <Val><![CDATA[info: Returns all module information]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[informações: retorna todas as informações do módulo]]></Val>
+            <Val><![CDATA[info: Retorna todas as informações do módulo]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -197,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[run-test: test connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[run-test: conexão de teste]]></Val>
+            <Val><![CDATA[teste de execução: teste de conexão]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -206,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[test-connection: test the connection of current connector]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[test-connection: testar a conexão do conector atual]]></Val>
+            <Val><![CDATA[test-connection: testa a conexão do conector atual]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -215,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Caminho absoluto para um arquivo de consulta de energia.]]></Val>
+            <Val><![CDATA[Caminho absoluto para um arquivo de consulta avançada.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -224,7 +230,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Enable logging of the Debug]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Habilitar registro em log da Depuração]]></Val>
+            <Val><![CDATA[Habilitar o registro do Debug]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -233,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power query SDK]]></Val>
+            <Val><![CDATA[SDK de consulta avançada]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -269,7 +275,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Path to the connector file (--extension)]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Caminho para o arquivo do conector (--extension)]]></Val>
+            <Val><![CDATA[Caminho para o arquivo do conector (--extensão)]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -287,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Para usar os recursos de extensão, você precisa criar um projeto de extensão do Power Query.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Para saber mais sobre como criar uma extensão, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+            <Val><![CDATA[Para usar os recursos de extensão, você precisa criar um projeto de extensão de consulta do Power.]A;[Criar um projeto de extensão]5D;(comando:powerquery.sdk.tools.CreateNewProjectCommand)]A;Para saber mais sobre como criar uma extensão, [leia nossos documentos]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
