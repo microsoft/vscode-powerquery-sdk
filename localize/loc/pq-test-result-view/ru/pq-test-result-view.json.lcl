@@ -50,7 +50,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Output]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Вывод]]></Val>
+            <Val><![CDATA[Выходные данные]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
