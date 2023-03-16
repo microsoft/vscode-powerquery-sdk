@@ -1,7 +1,7 @@
 {
-  "common.dismiss.label": "Close",
-  "common.error.label": "Error",
-  "testBatteryResView.Table.Output.Title": "Output",
-  "testBatteryResView.Table.Output.Summary": "Summary",
-  "testBatteryResView.Table.Output.DataSource": "DataSource"
+  "common.dismiss.label": "閉じる",
+  "common.error.label": "エラー",
+  "testBatteryResView.Table.Output.Title": "出力",
+  "testBatteryResView.Table.Output.Summary": "概要",
+  "testBatteryResView.Table.Output.DataSource": "データソース"
 }

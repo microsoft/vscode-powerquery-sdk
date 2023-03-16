@@ -1,7 +1,7 @@
 {
-  "common.dismiss.label": "Close",
-  "common.error.label": "Error",
-  "testBatteryResView.Table.Output.Title": "Output",
-  "testBatteryResView.Table.Output.Summary": "Summary",
+  "common.dismiss.label": "Закрыть",
+  "common.error.label": "Ошибка",
+  "testBatteryResView.Table.Output.Title": "Вывод",
+  "testBatteryResView.Table.Output.Summary": "Сводка",
   "testBatteryResView.Table.Output.DataSource": "DataSource"
 }

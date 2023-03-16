@@ -1,7 +1,7 @@
 {
-  "common.dismiss.label": "Close",
-  "common.error.label": "Error",
-  "testBatteryResView.Table.Output.Title": "Output",
-  "testBatteryResView.Table.Output.Summary": "Summary",
-  "testBatteryResView.Table.Output.DataSource": "DataSource"
+  "common.dismiss.label": "닫기",
+  "common.error.label": "오류",
+  "testBatteryResView.Table.Output.Title": "출력",
+  "testBatteryResView.Table.Output.Summary": "요약",
+  "testBatteryResView.Table.Output.DataSource": "데이터 소스"
 }

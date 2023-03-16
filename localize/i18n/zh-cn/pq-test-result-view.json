@@ -1,7 +1,7 @@
 {
-  "common.dismiss.label": "Close",
-  "common.error.label": "Error",
-  "testBatteryResView.Table.Output.Title": "Output",
-  "testBatteryResView.Table.Output.Summary": "Summary",
+  "common.dismiss.label": "关闭",
+  "common.error.label": "错误",
+  "testBatteryResView.Table.Output.Title": "输出",
+  "testBatteryResView.Table.Output.Summary": "摘要",
   "testBatteryResView.Table.Output.DataSource": "DataSource"
 }

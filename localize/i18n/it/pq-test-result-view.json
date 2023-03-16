@@ -1,7 +1,7 @@
 {
-  "common.dismiss.label": "Close",
-  "common.error.label": "Error",
+  "common.dismiss.label": "Chiudi",
+  "common.error.label": "Errore",
   "testBatteryResView.Table.Output.Title": "Output",
-  "testBatteryResView.Table.Output.Summary": "Summary",
+  "testBatteryResView.Table.Output.Summary": "Riepilogo",
   "testBatteryResView.Table.Output.DataSource": "DataSource"
 }
