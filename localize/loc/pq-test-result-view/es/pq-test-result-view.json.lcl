@@ -32,7 +32,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DataSource]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DataSource]]></Val>
+            <Val><![CDATA[Origen de datos]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

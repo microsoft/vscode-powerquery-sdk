@@ -86,7 +86,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Choose an authentication method]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Escolher um método de autenticação]]></Val>
+            <Val><![CDATA[Escolha um método de autenticação]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -104,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a data source kind]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Inserir um tipo de fonte de dados]]></Val>
+            <Val><![CDATA[Insira um tipo de fonte de dados]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -113,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Arbitrary query/test file path using the credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Caminho arbitrário do arquivo de teste/consulta usando a credencial]]></Val>
+            <Val><![CDATA[Caminho de arquivo de consulta/teste arbitrário usando a credencial]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -122,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a query/test file path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Inserir um caminho de arquivo de consulta/teste]]></Val>
+            <Val><![CDATA[Insira um caminho de arquivo de consulta/teste]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -139,6 +139,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.choose.dataSourceKind.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Data source kind]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Tipo de fonte de dados]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -182,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create {authenticationKind} credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Falha ao criar {authenticationKind} credencial devido a {errorMessage}]]></Val>
+            <Val><![CDATA[Falha ao criar a credencial {authenticationKind} devido a {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -209,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DeleteCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado de DeleteCredential {result}]]></Val>
+            <Val><![CDATA[DeleteCredential resultado {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -236,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to display extension info due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Falha ao exibir informações de extensão devido a {errorMessage}]]></Val>
+            <Val><![CDATA[Falha ao exibir as informações da extensão devido a {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -245,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado de DisplayExtensionInfo {result}]]></Val>
+            <Val><![CDATA[Resultado DisplayExtensionInfo {resultado}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -290,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[ListCredentials result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado de ListCredentials {result}]]></Val>
+            <Val><![CDATA[Resultado ListCredentials {resultado}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -308,7 +311,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to manually update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Falha ao atualizar manualmente o pacote PowerQuery.SdkTools devido {errorMessage}]]></Val>
+            <Val><![CDATA[Falha ao atualizar manualmente o pacote PowerQuery.SdkTools devido a {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -317,7 +320,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {newProjName}.pq and other files have been created at {targetFolder}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Novos {newProjName}.pq e outros arquivos foram criados em {targetFolder}]]></Val>
+            <Val><![CDATA[Novo {newProjName}.pq e outros arquivos foram criados em {targetFolder}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -325,12 +328,18 @@
       <Item ItemId=";PQSdk.lifecycle.command.new.project.placeHolder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Alphanumeric characters only]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Somente caracteres alfanuméricos]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycle.command.new.project.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[New project name]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Novo nome do projeto]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -365,7 +374,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RefreshCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado de RefreshCredential {result}]]></Val>
+            <Val><![CDATA[Resultado RefreshCredential {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -382,6 +391,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.run.test.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Falha ao executar a consulta devido a {errorMessage}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -389,7 +401,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RunTestBattery result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado de RunTestBattery {result}]]></Val>
+            <Val><![CDATA[Resultado RunTestBattery {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -398,7 +410,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Running a test]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Executando um teste]]></Val>
+            <Val><![CDATA[Fazendo um teste]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -416,7 +428,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set {configName} to {configValue}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Definir {configName} para {configValue}]]></Val>
+            <Val><![CDATA[Defina {configName} como {configValue}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -434,7 +446,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {authenticationKind} credential has been generated successfully]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nova {authenticationKind} nova credencial foi gerada com êxito]]></Val>
+            <Val><![CDATA[A nova credencial {authenticationKind} foi gerada com êxito]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -452,7 +464,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to credential template object missing.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Falha ao definir credenciais devido à falta de objeto de modelo de credencial.]]></Val>
+            <Val><![CDATA[Falha ao definir as credenciais devido à falta do objeto do modelo de credencial.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -460,6 +472,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.test.connection.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Falha ao executar a consulta devido a {errorMessage}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -467,7 +482,7 @@
         <Str Cat="Text">
           <Val><![CDATA[TestConnection result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado de TestConnection {result}]]></Val>
+            <Val><![CDATA[Resultado TestConnection {resultado}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -485,7 +500,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Atualizar o último ctime de um arquivo mez inferido para {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
+            <Val><![CDATA[Atualize o último ctime de um arquivo mez inferido para {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -494,7 +509,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Falha ao atualizar o pacote PowerQuery.SdkTools devido {errorMessage}]]></Val>
+            <Val><![CDATA[Falha ao atualizar o pacote PowerQuery.SdkTools devido a {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -503,7 +518,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot find the file set to the powerquery.sdk.defaultExtension, open setting.json to ensure it got populated correctly.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Não é possível localizar o arquivo definido como powerquery.sdk.defaultExtension, abra setting.json para garantir que ele foi preenchido corretamente.]]></Val>
+            <Val><![CDATA[Não foi possível encontrar o arquivo definido como powerquery.sdk.defaultExtension, abra setting.json para garantir que ele foi preenchido corretamente.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -520,6 +535,9 @@
       <Item ItemId=";PQSdk.lifecycle.credential.key.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Credential key]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Chave de credencial]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -554,7 +572,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Extension file path cannot be empty]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[O caminho do arquivo de extensão não pode ficar vazio]]></Val>
+            <Val><![CDATA[O caminho do arquivo de extensão não pode estar vazio]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -590,7 +608,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Value {valueName} cannot be empty.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[O valor {valueName} pode estar vazio.]]></Val>
+            <Val><![CDATA[O valor {valueName} não pode estar vazio.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -599,7 +617,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid credentials: missing DataSourceKind, AuthenticationKind or the Query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Credenciais inválidas: DataSourceKind, AuthenticationKind ou o arquivo de Consulta ausente.]]></Val>
+            <Val><![CDATA[Credenciais inválidas: DataSourceKind, AuthenticationKind ou o arquivo Query ausentes.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -608,7 +626,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing key property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Propriedade de chave {authenticationKind} credenciais inválidas]]></Val>
+            <Val><![CDATA[Credenciais {authenticationKind} inválidas sem propriedade de chave]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -617,7 +635,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing username or password property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Credenciais inválidas {authenticationKind} nome de usuário ou propriedade de senha ausentes]]></Val>
+            <Val><![CDATA[Credenciais {authenticationKind} inválidas sem propriedade de nome de usuário ou senha]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -635,7 +653,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power Query arquivos detectados. Deseja habilitar o Power Query SDK do workspace atual?]]></Val>
+            <Val><![CDATA[Arquivos do Power Query detectados. Gostaria de habilitar o SDK do Power Query para o espaço de trabalho atual?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -644,7 +662,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location must be provided before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Tools local deve ser fornecido antes de continuar]]></Val>
+            <Val><![CDATA[A localização das Ferramentas do SDK deve ser fornecida antes de continuar]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -662,7 +680,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location has not been configured]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Tools local não foi configurado]]></Val>
+            <Val><![CDATA[A localização das Ferramentas do SDK não foi configurada]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -706,12 +724,18 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.listCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Listar credenciais]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycleTreeView.item.refreshCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Atualizar credenciais]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -719,7 +743,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Configurar workspace]]></Val>
+            <Val><![CDATA[Espaço de trabalho de configuração]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -728,7 +752,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Run TestConnection function]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Executar função TestConnection]]></Val>
+            <Val><![CDATA[Execute a função TestConnection]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -746,7 +770,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tools]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Atualizar SDK Tools]]></Val>
+            <Val><![CDATA[Atualizar ferramentas do SDK]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -755,7 +779,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Build connector project using MakePQX]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Compilar projeto de conector usando MakePQX]]></Val>
+            <Val><![CDATA[Crie um projeto de conector usando MakePQX]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -764,7 +788,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe not found at {pqtestExe}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe encontrado em {pqtestExe}.]]></Val>
+            <Val><![CDATA[PQTest.exe não encontrado em {pqtestExe}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -773,7 +797,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Directory powerquery.sdk.tools.location: '{nextPQTestLocation}' does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Diretório powerquery.sdk.tools.location: '{nextPQTestLocation}' não existe.]]></Val>
+            <Val><![CDATA[O diretório powerquery.sdk.tools.location: '{nextPQTestLocation}' não existe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -782,7 +806,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Configuration value: powerquery.sdk.tools.location is not set.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Valor de configuração: powerquery.sdk.tools.location não definido.]]></Val>
+            <Val><![CDATA[Valor de configuração: powerquery.sdk.tools.location não está definido.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -791,7 +815,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task began]5D; Bifurcação PQTask {operation} executável de pid: {pid}.]]></Val>
+            <Val><![CDATA[[Tarefa de depuração iniciada]5D; Fork PQTask {operação} executável do pid: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -800,7 +824,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+            <Val><![CDATA[[Tarefa de depuração encerrada de forma anormal]5D; pqtest {operação} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -809,7 +833,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[Tarefa de depuração encontrada]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -827,7 +851,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task began]5D; Bifurcação PQTask {operation} executável de pid: {pid}.]]></Val>
+            <Val><![CDATA[[A tarefa começou]5D; Fork PQTask {operation} executável do pid: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -836,7 +860,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+            <Val><![CDATA[[Tarefa encerrada de forma anormal]5D; pqtest {operação} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -845,7 +869,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} executable pid({pid}) exited.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task finished]5D; PQTask bifurcado {operation} pid({pid}) executável encerrado.]]></Val>
+            <Val><![CDATA[[Tarefa concluída]5D; PQTask bifurcado {operação} executável pid({pid}) encerrado.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -854,7 +878,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[Tarefa encontrada]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -863,7 +887,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest result]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Resultado do PQTest]]></Val>
+            <Val><![CDATA[Resultado PQTest]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
