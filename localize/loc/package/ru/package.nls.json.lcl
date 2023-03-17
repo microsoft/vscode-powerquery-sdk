@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Список учетных данных]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Обновить учетные данные]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -62,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Evaluate current power query file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Оценить текущий файл power query]]></Val>
+            <Val><![CDATA[Оценить текущий файл Power Query]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -71,7 +77,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tool]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Обновление средства SDK]]></Val>
+            <Val><![CDATA[Обновить SDK Tools]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -80,7 +86,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Настройка рабочей области]]></Val>
+            <Val><![CDATA[Настроить рабочую область]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Локальный путь к msbuild.exe папке установки.]]></Val>
+            <Val><![CDATA[Локальный путь к папке установки msbuild.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Локальный путь к nuget.exe папке установки.]]></Val>
+            <Val><![CDATA[Локальный путь к папке установки nuget.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Если установлено значение false, пакет SDK не будет пытаться автоматически обнаружить рабочие области соединителя и запрашивать создание файла параметров.]]></Val>
+            <Val><![CDATA[Если задано значение "false", пакет SDK не будет пытаться автоматически обнаруживать рабочие области соединителя и запрашивать создание файла параметров.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -134,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Попробуйте новую функцию с помощью узла службы обработчика повторного использования, отличного от командных строк]]></Val>
+            <Val><![CDATA[Попробуйте новую функцию с использованием узла службы многократно используемой подсистемы, а не командных строк]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -143,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Укажите исходные модули расширения соединителя (.mez/.pqm).<br>Этот параметр можно указать несколько раз.]]></Val>
+            <Val><![CDATA[Укажите исходные модули расширения соединителя (.mez/.pqm).<br>Значение этого параметра можно указать несколько раз.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -188,7 +194,7 @@
         <Str Cat="Text">
           <Val><![CDATA[info: Returns all module information]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[info: Возвращает все сведения о модуле]]></Val>
+            <Val><![CDATA[Сведения: возвращает все сведения о модуле]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -197,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[run-test: test connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[run-test: тестовая связь]]></Val>
+            <Val><![CDATA[run-test: тестирование подключения]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -215,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Абсолютный путь к файлу запроса питания.]]></Val>
+            <Val><![CDATA[Абсолютный путь к файлу Power Query.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -233,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Пакет SDK запроса питания]]></Val>
+            <Val><![CDATA[Пакет SDK для Power Query]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -287,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Чтобы использовать функции расширения, необходимо создать проект расширения Power Query.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Дополнительные сведения о создании расширения см. в [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+            <Val><![CDATA[Чтобы использовать функции расширения, необходимо создать проект расширения Power Query.]A;[Создание проекта расширения]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Дополнительные сведения о создании расширения см. в [документации]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

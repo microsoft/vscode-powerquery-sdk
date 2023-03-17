@@ -14,7 +14,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create an extension project]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[建立擴充功能專案]]></Val>
+            <Val><![CDATA[建立延伸模組專案]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[列出認證]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[重新整理認證]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[msbuild.exe安裝資料夾的本機路徑。]]></Val>
+            <Val><![CDATA[msbuild.exe 安裝資料夾的本機路徑。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -107,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suggested nuget feed URL.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[建議的 Nuget 摘要 URL。]]></Val>
+            <Val><![CDATA[建議的 NuGet 摘要 URL。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[nuget.exe安裝資料夾的本機路徑。]]></Val>
+            <Val><![CDATA[nuget.exe 安裝資料夾的本機路徑。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[設定為 false 時，SDK 不會嘗試自動偵測連接器工作區，並提示您建立設定檔案。]]></Val>
+            <Val><![CDATA[設為 false 時，SDK 不會嘗試自動偵測連接器工作區，並提示您建立設定檔案。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -134,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[請使用命令列以外的可重複使用的引擎服務主機來嘗試新功能]]></Val>
+            <Val><![CDATA[使用命令列以外可重複使用的引擎服務主機來嘗試新功能]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -143,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[指定連接器擴充功能來源模組 (.mez/.pqm).<br>此選項可以指定一次以上。]]></Val>
+            <Val><![CDATA[指定連接器延伸來源模組 (.mez/.pqm)。<br>此選項可以指定一次以上。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -161,7 +167,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Query file containing section document or M expression (.m/.pq).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[包含區段檔或 M 運算式的查詢檔案(.m/.pq)。]]></Val>
+            <Val><![CDATA[包含區段文件或 M 運算式的查詢檔案 (.m/.pq)。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -187,18 +193,27 @@
       <Item ItemId=";extension.pqtest.debugger.properties.operation.info.description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[info: Returns all module information]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[資訊: 傳回所有模組資訊]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.debugger.properties.operation.runTest.description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[run-test: test connection]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[run-test: 測試連線]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.debugger.properties.operation.testConnection.description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[test-connection: test the connection of current connector]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[test-connection: 測試目前連接器的連線]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -224,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power query SDK]]></Val>
+            <Val><![CDATA[Power Query SDK]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -251,7 +266,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The operation to run]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[要執行的操作]]></Val>
+            <Val><![CDATA[要執行的作業]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -260,7 +275,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Path to the connector file (--extension)]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[連接器檔案的路徑 (--副檔名)]]></Val>
+            <Val><![CDATA[連接器檔案的路徑 (--extension)]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -277,6 +292,9 @@
       <Item ItemId=";extension.pqtest.welcome.contents" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[若要使用延伸模組功能，您需要建立 Power Query 延伸模組專案。]A;[建立延伸模組專案]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;若要深入了解如何建立延伸模組，請 [閱讀我們的文件]5D;(https://aka.ms/PowerQuerySDKDocs)。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>

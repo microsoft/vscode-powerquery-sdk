@@ -41,7 +41,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Anmeldeinformationen festlegen]]></Val>
+            <Val><![CDATA[Anmeldeinformation festlegen]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Anmeldeinformationen auflisten]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Anmeldeinformationen aktualisieren]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -62,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Evaluate current power query file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Aktuelle Energieabfragedatei auswerten]]></Val>
+            <Val><![CDATA[Aktuelle Power Query-Datei auswerten]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Lokaler Pfad zu msbuild.exe Installationsordner.]]></Val>
+            <Val><![CDATA[Lokaler Pfad zum Installationsordner von „msbuild.exe“.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -107,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suggested nuget feed URL.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vorgeschlagene NUGET-Feed-URL.]]></Val>
+            <Val><![CDATA[Vorgeschlagene NuGet-Feed-URL.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Lokaler Pfad zu nuget.exe Installationsordner.]]></Val>
+            <Val><![CDATA[Lokaler Pfad zum Installationsordner von „nuget.exe“.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bei Festlegung auf FALSE versucht das SDK nicht, Connectorarbeitsbereiche automatisch zu erkennen und zum Erstellen einer Einstellungsdatei aufzufordern.]]></Val>
+            <Val><![CDATA[Bei Festlegung auf „False“ versucht das SDK nicht, Connectorarbeitsbereiche automatisch zu erkennen, und fordert nicht zum Erstellen einer Einstellungsdatei auf.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -134,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Verwenden Sie das neue Feature mit einem anderen wiederverwendbaren Engine-Diensthost als den Befehlszeilen.]]></Val>
+            <Val><![CDATA[Verwenden Sie das neue Feature mit einem anderen wiederverwendbaren Moduldiensthost als den Befehlszeilen.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -143,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Geben Sie Die Quellmodule der Connectorerweiterung (.mez/.pqm) an<br>Diese Option kann mehrmals angegeben werden.]]></Val>
+            <Val><![CDATA[Geben Sie die Quellmodule der Connectorerweiterung (.mez/.pqm) an.<br>Diese Option kann mehrfach angegeben werden.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -170,7 +176,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Additional arguments for the debugging task]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zusätzliche Argumente für die Debugaufgabe]]></Val>
+            <Val><![CDATA[Zusätzliche Argumente für den Debugtask]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -188,7 +194,7 @@
         <Str Cat="Text">
           <Val><![CDATA[info: Returns all module information]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[info: Gibt alle Modulinformationen zurück.]]></Val>
+            <Val><![CDATA[info: Gibt alle Modulinformationen zurück]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -197,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[run-test: test connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Testlauf: Verbindung testen]]></Val>
+            <Val><![CDATA[run-test: Verbindung testen]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -206,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[test-connection: test the connection of current connector]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[test-connection: Test der Verbindung des aktuellen Connectors]]></Val>
+            <Val><![CDATA[test-connection: Die Verbindung des aktuellen Connectors testen]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -215,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Absoluter Pfad zu einer Energieabfragedatei.]]></Val>
+            <Val><![CDATA[Absoluter Pfad zu einer Power Query-Datei.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -233,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power query SDK]]></Val>
+            <Val><![CDATA[Power Query SDK]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -251,7 +257,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Credential template object.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Anmeldeinformationsvorlagenobjekt.]]></Val>
+            <Val><![CDATA[Vorlagenobjekt für Anmeldeinformationen.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -287,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Um Erweiterungsfeatures zu verwenden, müssen Sie ein Power Query-Erweiterungsprojekt erstellen.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Weitere Informationen zum Erstellen einer Erweiterung [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+            <Val><![CDATA[Um Erweiterungsfeatures zu verwenden, müssen Sie ein Power Query-Erweiterungsprojekt erstellen.]A;[Erstellen eines Erweiterungsprojekts]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Weitere Informationen zum Erstellen einer Erweiterung [finden Sie in der Dokumentation]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
