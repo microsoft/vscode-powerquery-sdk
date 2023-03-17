@@ -23,7 +23,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Enable]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Etkinleştirme]]></Val>
+            <Val><![CDATA[Etkinleştir]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -32,7 +32,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Debug]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Hata Ayıklama]]></Val>
+            <Val><![CDATA[Hata Ayıkla]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -59,7 +59,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Trace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[İzleme]]></Val>
+            <Val><![CDATA[İzle]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -68,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open {fileName}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Açık {fileName}]]></Val>
+            <Val><![CDATA[{fileName} dosyasını aç]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -113,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Arbitrary query/test file path using the credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgilerini kullanarak rastgele sorgu/test dosyası yolu]]></Val>
+            <Val><![CDATA[Kimlik bilgilerini kullanan rastgele sorgu/test dosyası yolu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -122,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a query/test file path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Sorgu/test dosyası yolu girin]]></Val>
+            <Val><![CDATA[Sorgu/test dosyası yolu gir]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -158,7 +158,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Choose a query/test file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bir sorgu/test dosyası seçin]]></Val>
+            <Val><![CDATA[Sorgu/test dosyası seçin]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -176,7 +176,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgisi, kimlik bilgisi {errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle kimlik bilgisi oluşturulamadı]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -185,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create {authenticationKind} credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgisi {authenticationKind} oluşturulamadı{errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle {authenticationKind} kimlik bilgisi oluşturulamadı]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -203,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to delete credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgileri bu hata nedeniyle {errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle kimlik bilgileri silinemedi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -212,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DeleteCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DeleteCredential sonuç {result}]]></Val>
+            <Val><![CDATA[DeleteCredential sonucu {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -230,7 +230,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Detected a newer mez file, about to infer its latest info. {currentCtime}, {diffCtime}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Daha yeni bir mez dosyası algılandı, en son bilgileri çıkarsanıyor. {currentCtime}, {diffCtime}]]></Val>
+            <Val><![CDATA[Daha yeni bir mez dosyası algılandı. Dosyanın en son bilgileri çıkarsanmak üzere. {currentCtime}, {diffCtime}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -239,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to display extension info due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bu hata nedeniyle uzantı bilgileri {errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle uzantı bilgileri görüntülenemedi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -248,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DisplayExtensionInfo sonuç {result}]]></Val>
+            <Val><![CDATA[DisplayExtensionInfo sonucu {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -284,7 +284,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to list credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgileri bu hata nedeniyle {errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle kimlik bilgileri listenemedi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -293,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[ListCredentials result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ListCredentials sonuç {result}]]></Val>
+            <Val><![CDATA[ListCredentials sonucu {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -311,7 +311,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to manually update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bu hata nedeniyle PowerQuery.SdkTools paketi el ile {errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle PowerQuery.SdkTools paketi el ile güncelleştirilemedi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -320,7 +320,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {newProjName}.pq and other files have been created at {targetFolder}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Yeni {newProjName}.pq ve diğer dosyalar şu anda {targetFolder}]]></Val>
+            <Val><![CDATA[{targetFolder} konumunda yeni {newProjName}.pq ve diğer dosyalar oluşturuldu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -328,6 +328,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.new.project.placeHolder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Alphanumeric characters only]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Yalnızca alfasayısal karakterler]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -344,7 +347,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has been extracted from nuget and put at {pqTestExecutableFullPath}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe nuget'ten ayıklandı ve {pqTestExecutableFullPath}.]]></Val>
+            <Val><![CDATA[PQTest.exe nuget'ten ayıklandı ve {pqTestExecutableFullPath} konumuna yerleştirildi.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -353,7 +356,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Current PQTest.exe has been configured at {pqTestLocation}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Geçerli PQTest.exe, şu anda {pqTestLocation}.]]></Val>
+            <Val><![CDATA[Geçerli PQTest.exe, {pqTestLocation} konumunda yapılandırıldı.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -362,7 +365,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to refresh credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgileri bu hata nedeniyle yenilenemedi{errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle kimlik bilgileri yenilenemedi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -371,7 +374,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RefreshCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[RefreshCredential sonuç {result}]]></Val>
+            <Val><![CDATA[RefreshCredential sonucu {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -388,6 +391,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.run.test.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[{errorMessage} hatası nedeniyle sorgu çalıştırılamadı]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -395,7 +401,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RunTestBattery result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[RunTestBattery sonuç {result}]]></Val>
+            <Val><![CDATA[RunTestBattery sonucu {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -404,7 +410,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Running a test]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Test çalıştırılıyor]]></Val>
+            <Val><![CDATA[Test çalıştılıyor]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -413,7 +419,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Select workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Çalışma alanı seçin]]></Val>
+            <Val><![CDATA[Çalışma alanı seç]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -422,7 +428,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set {configName} to {configValue}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{configName} olarak {configValue}]]></Val>
+            <Val><![CDATA[{configName} öğesini {configValue} olarak ayarla]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -431,7 +437,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to ${errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[${errorMessage} nedeniyle kimlik bilgileri{errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle kimlik bilgileri ayarlanamadı]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -466,6 +472,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.test.connection.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[{errorMessage} hatası nedeniyle sorgu çalıştırılamadı]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -473,7 +482,7 @@
         <Str Cat="Text">
           <Val><![CDATA[TestConnection result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[TestConnection sonuç {result}]]></Val>
+            <Val><![CDATA[TestConnection sonucu {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -482,7 +491,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Testing the connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bağlantı test ediliyor]]></Val>
+            <Val><![CDATA[Bağlantı oluşturuluyor...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -491,7 +500,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Çıkarsanan bir mez dosyasının son ctime'sini {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
+            <Val><![CDATA[Çıkarsanan mez dosyasının son ctime değerini {lastCtimeOfMezFileWhoseInfoSeized} olarak güncelleştir]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -500,7 +509,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PowerQuery.SdkTools paketi bir hata nedeniyle {errorMessage}]]></Val>
+            <Val><![CDATA[{errorMessage} hatası nedeniyle PowerQuery.SdkTools paketi güncelleştirilemedi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -509,7 +518,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot find the file set to the powerquery.sdk.defaultExtension, open setting.json to ensure it got populated correctly.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Powerquery.sdk.defaultExtension olarak ayarlanmış dosya bulunamıyor, doğru doldurulması için setting.json dosyasını açın.]]></Val>
+            <Val><![CDATA[Powerquery.sdk.defaultExtension olarak ayarlanmış dosya bulunamıyor, doğru doldurulduğundan emin olmak için setting.json dosyasını açın.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -526,6 +535,9 @@
       <Item ItemId=";PQSdk.lifecycle.credential.key.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Credential key]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Kimlik bilgisi anahtarı]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -542,7 +554,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Refresh token]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Yenileme belirteci]]></Val>
+            <Val><![CDATA[Belirteci yenile]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -596,7 +608,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Value {valueName} cannot be empty.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Değer {valueName} boş olamaz.]]></Val>
+            <Val><![CDATA[{valueName} değeri boş olamaz.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -614,7 +626,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing key property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Geçersiz {authenticationKind} kimlik bilgisinde anahtar özelliği eksik]]></Val>
+            <Val><![CDATA[Geçersiz {authenticationKind} kimlik bilgilerinde anahtar özelliği eksik]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -623,7 +635,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing username or password property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Geçersiz {authenticationKind} kimlik bilgisinde kullanıcı adı veya parola özelliği eksik]]></Val>
+            <Val><![CDATA[Geçersiz {authenticationKind} kimlik bilgilerinde kullanıcı adı veya parola özelliği eksik]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -650,7 +662,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location must be provided before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Tools önce bir konum belirtilmelidir]]></Val>
+            <Val><![CDATA[Devam etmeden önce SDK Tools konumu belirtilmelidir]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -659,7 +671,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has not been extracted from nuget package.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe nuget paketinden ayıklanmadı.]]></Val>
+            <Val><![CDATA[PQTest.exe, nuget paketinden ayıklanmadı.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -677,7 +689,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgisini ayarla]]></Val>
+            <Val><![CDATA[Kimlik bilgilerini ayarla]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -712,12 +724,18 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.listCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Kimlik bilgilerini listele]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycleTreeView.item.refreshCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Kimlik bilgilerini yenile]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -752,7 +770,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tools]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Güncelleştirme SDK Tools]]></Val>
+            <Val><![CDATA[SDK Tools’u Güncelleştir]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -761,7 +779,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Build connector project using MakePQX]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[MakePQX kullanarak bağlayıcı projesi oluşturun]]></Val>
+            <Val><![CDATA[MakePQX kullanarak bağlayıcı projesi oluştur]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -770,7 +788,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe not found at {pqtestExe}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe konumda {pqtestExe}.]]></Val>
+            <Val><![CDATA[{pqtestExe} konumunda PQTest.exe bulunamadı.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -797,7 +815,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} pid yürütülebilir dosyası: {pid}.]]></Val>
+            <Val><![CDATA[[Hata ayıklama görevi başladı]5D; Çatal PQTask {operation} pid yürütülebilir dosyası: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -806,7 +824,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+            <Val><![CDATA[[Hata ayıklama görevi anormal şekilde çıktı]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -815,7 +833,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[Hata ayıklama görevi bulundu]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -824,7 +842,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe found at {pqTestFullPath}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe konumda {pqTestFullPath}]]></Val>
+            <Val><![CDATA[{pqTestFullPath} konumunda PQTest.exe bulundu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -833,7 +851,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task began]5D; Fork PQTask {operation} pid yürütülebilir dosyası: {pid}.]]></Val>
+            <Val><![CDATA[[Görev başladı]5D; Çatal PQTask {operation} pid yürütülebilir dosyası: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -842,7 +860,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+            <Val><![CDATA[[Görev anormal şekilde çıktı]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -851,7 +869,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} executable pid({pid}) exited.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task finished]5D; pid({operation}) yürütülebilir PQTask {pid} çıkıldı.]]></Val>
+            <Val><![CDATA[[Görev tamamlandı]5D; Çatallı PQTask {operation} yürütülebilir pid({pid}) öğesinden çıkıldı.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -860,7 +878,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[Görev bulundu]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

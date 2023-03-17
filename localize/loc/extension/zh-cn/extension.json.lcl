@@ -68,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open {fileName}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[打开{fileName}]]></Val>
+            <Val><![CDATA[打开 {fileName}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -139,6 +139,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.choose.dataSourceKind.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Data source kind]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[数据源种类]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -146,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Extension file path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[扩展文件路径]]></Val>
+            <Val><![CDATA[扩展名文件路径]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -173,7 +176,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，无法创建凭据]]></Val>
+            <Val><![CDATA[由于 {errorMessage} 无法创建凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -182,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create {authenticationKind} credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，未能创建{authenticationKind}凭据]]></Val>
+            <Val><![CDATA[由于 {errorMessage} 无法创建 {authenticationKind} 凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -200,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to delete credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，无法删除凭据]]></Val>
+            <Val><![CDATA[由于 {errorMessage} 无法删除凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -209,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DeleteCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DeleteCredential 结果{result}]]></Val>
+            <Val><![CDATA[DeleteCredential 结果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -236,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to display extension info due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，未能显示扩展信息]]></Val>
+            <Val><![CDATA[无法显示扩展信息，因为 {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -245,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DisplayExtensionInfo 结果{result}]]></Val>
+            <Val><![CDATA[DisplayExtensionInfo 结果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -254,7 +257,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Displaying extension info]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[正在显示扩展信息]]></Val>
+            <Val><![CDATA[显示扩展信息]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -263,7 +266,7 @@
         <Str Cat="Text">
           <Val><![CDATA[GenerateCredentialTemplate {result} ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[GenerateCredentialTemplate {result} ]]></Val>
+            <Val><![CDATA[GenerateCredentialTemplate {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -281,7 +284,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to list credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，无法列出凭据]]></Val>
+            <Val><![CDATA[由于 {errorMessage} 无法列出凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -290,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[ListCredentials result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ListCredentials 结果{result}]]></Val>
+            <Val><![CDATA[ListCredentials 结果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -299,7 +302,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Listing credentials]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[正在列出凭据]]></Val>
+            <Val><![CDATA[列出凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -308,7 +311,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to manually update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，无法手动更新 PowerQuery.SdkTools 包]]></Val>
+            <Val><![CDATA[由于 {errorMessage}，无法手动更新 PowerQuery.SdkTools 包]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -317,7 +320,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {newProjName}.pq and other files have been created at {targetFolder}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[已在{targetFolder}创建新的 {newProjName}.pq 和其他文件]]></Val>
+            <Val><![CDATA[已在 {targetFolder} 创建新的 {newProjName}.pq 和其他文件]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -325,6 +328,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.new.project.placeHolder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Alphanumeric characters only]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[只能输入字母数字字符]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -341,7 +347,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has been extracted from nuget and put at {pqTestExecutableFullPath}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[已从 nuget 中提取PQTest.exe并将其置于{pqTestExecutableFullPath}。]]></Val>
+            <Val><![CDATA[PQTest.exe 已从 nuget 中提取，并放置在 {pqTestExecutableFullPath} 中。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -350,7 +356,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Current PQTest.exe has been configured at {pqTestLocation}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[已在{pqTestLocation}配置当前PQTest.exe。]]></Val>
+            <Val><![CDATA[已在 {pqTestLocation} 配置当前 PQTest.exe。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -359,7 +365,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to refresh credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，无法刷新凭据]]></Val>
+            <Val><![CDATA[由于 {errorMessage} 无法刷新凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -368,7 +374,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RefreshCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[RefreshCredential 结果{result}]]></Val>
+            <Val><![CDATA[RefreshCredential 结果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -385,6 +391,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.run.test.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[无法运行查询，因为 {errorMessage}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -392,7 +401,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RunTestBattery result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[RunTestBattery 结果{result}]]></Val>
+            <Val><![CDATA[RunTestBattery 结果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -401,7 +410,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Running a test]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[正在运行测试]]></Val>
+            <Val><![CDATA[运行测试]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -419,7 +428,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set {configName} to {configValue}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[将{configName}设置为{configValue}]]></Val>
+            <Val><![CDATA[将 {configName} 设置为 {configValue}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -428,7 +437,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to ${errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于 ${errorMessage}，无法设置凭据]]></Val>
+            <Val><![CDATA[由于 ${errorMessage} 无法设置凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -437,7 +446,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {authenticationKind} credential has been generated successfully]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[已成功生成新的{authenticationKind}凭据]]></Val>
+            <Val><![CDATA[已成功生成新的 {authenticationKind} 凭据]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -446,7 +455,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SetCredential {result} ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SetCredential {result} ]]></Val>
+            <Val><![CDATA[SetCredential {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -455,7 +464,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to credential template object missing.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[无法设置凭据，因为缺少凭据模板对象。]]></Val>
+            <Val><![CDATA[由于缺少凭据模板对象，无法设置凭据。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -463,6 +472,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.test.connection.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[无法运行查询，因为 {errorMessage}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -470,7 +482,7 @@
         <Str Cat="Text">
           <Val><![CDATA[TestConnection result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[TestConnection 结果{result}]]></Val>
+            <Val><![CDATA[TestConnection 结果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -479,7 +491,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Testing the connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[正在测试连接]]></Val>
+            <Val><![CDATA[正在创建连接]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -488,7 +500,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[将推断的 mez 文件的最后一个 ctime 更新为{lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
+            <Val><![CDATA[将推断的 mez 文件的最后一个 ctime 更新为 {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -497,7 +509,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[由于{errorMessage}，未能更新 PowerQuery.SdkTools 包]]></Val>
+            <Val><![CDATA[由于 {errorMessage}，无法更新 PowerQuery.SdkTools 包]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -587,7 +599,7 @@
         <Str Cat="Text">
           <Val><![CDATA[A project name value must be set before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[必须先设置项目名称值，然后才能继续操作]]></Val>
+            <Val><![CDATA[在继续操作之前，必须设置项目名称值]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -596,7 +608,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Value {valueName} cannot be empty.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[值{valueName}不能为空。]]></Val>
+            <Val><![CDATA[值 {valueName} 不能为空。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -604,6 +616,9 @@
       <Item ItemId=";PQSdk.lifecycle.error.invalid.missing.dataSourceKindAndAuthKind" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Invalid credentials: missing DataSourceKind, AuthenticationKind or the Query file.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[无效凭据: 缺少 DataSourceKind、AuthenticationKind 或 Query 文件。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -611,7 +626,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing key property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[无效的{authenticationKind}凭据缺少密钥属性]]></Val>
+            <Val><![CDATA[缺少密钥属性的 {authenticationKind} 凭据无效]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -620,7 +635,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing username or password property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[无效的{authenticationKind}凭据缺少用户名或密码属性]]></Val>
+            <Val><![CDATA[缺少用户名或密码属性的 {authenticationKind} 凭据无效]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -629,7 +644,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Only alphanumeric are allowed.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[仅允许使用字母数字。]]></Val>
+            <Val><![CDATA[只允许使用字母数字。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -637,6 +652,9 @@
       <Item ItemId=";PQSdk.lifecycle.prompt.update.workspace" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[检测到 Power Query 文件。是否要为当前工作区启用 Power Query SDK?]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -644,7 +662,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location must be provided before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[必须先提供SDK Tools位置，然后才能继续]]></Val>
+            <Val><![CDATA[在继续操作之前，必须提供 SDK Tools 位置]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -653,7 +671,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has not been extracted from nuget package.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[尚未从 nuget 包中提取PQTest.exe。]]></Val>
+            <Val><![CDATA[尚未从 nuget 包中提取 PQTest.exe。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -662,7 +680,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location has not been configured]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[尚未配置SDK Tools位置]]></Val>
+            <Val><![CDATA[尚未配置 SDK Tools 位置]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -670,6 +688,9 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.createOneCredential.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Set credential]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[设置凭据]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -703,12 +724,18 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.listCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[列出凭据]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycleTreeView.item.refreshCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[刷新凭据]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -716,7 +743,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[设置工作区]]></Val>
+            <Val><![CDATA[安装工作区]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -733,6 +760,9 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.updateSdk.currentVersion.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Current version: {currentPqSdkNugetVersion}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[当前版本: {currentPqSdkNugetVersion}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -740,7 +770,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tools]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[更新SDK Tools]]></Val>
+            <Val><![CDATA[更新 SDK 工具]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -758,7 +788,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe not found at {pqtestExe}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[在{pqtestExe}中找不到PQTest.exe。]]></Val>
+            <Val><![CDATA[在 {pqtestExe} 中找不到 PQTest.exe。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -766,24 +796,36 @@
       <Item ItemId=";PQSdk.taskQueue.error.pqtestLocationDoesntExist" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Directory powerquery.sdk.tools.location: '{nextPQTestLocation}' does not exist.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[目录 powerquery.sdk.tools.location: '{nextPQTestLocation}' 不存在。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.taskQueue.error.pqtestLocationNotSet" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Configuration value: powerquery.sdk.tools.location is not set.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[配置值: 未设置 powerquery.sdk.tools.location。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.taskQueue.info.debugTaskBegan" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[[调试任务已开始]5D; pid 为 {pid} 的分支 PQTask {operation} 可执行文件。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.taskQueue.info.debugTaskExitAbnormally" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[[调试任务异常退出]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -791,7 +833,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[找到调试任务]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -800,7 +842,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe found at {pqTestFullPath}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[在{pqTestFullPath}找到的PQTest.exe]]></Val>
+            <Val><![CDATA[在 {pqTestFullPath} 找到 PQTest.exe]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -808,12 +850,18 @@
       <Item ItemId=";PQSdk.taskQueue.info.taskBegan" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[[Task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[[任务已开始]5D; pid 为 {pid} 的分支 PQTask {operation} 可执行文件。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.taskQueue.info.taskExitAbnormally" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[[任务异常退出]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -821,7 +869,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} executable pid({pid}) exited.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task finished]5D;分叉 PQTask {operation}可执行 pid({pid})退出。]]></Val>
+            <Val><![CDATA[[任务已完成]5D; 分叉 PQTask {operation} 可执行 pid({pid})已退出。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -830,7 +878,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[找到任务]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

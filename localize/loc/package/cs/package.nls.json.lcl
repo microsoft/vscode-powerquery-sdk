@@ -14,7 +14,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create an extension project]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vytvořit projekt rozšíření]]></Val>
+            <Val><![CDATA[Vytvoření projektu rozšíření]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Vypsat přihlašovací údaje]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Aktualizovat přihlašovací údaje]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Místní cesta k instalační složce msbuild.exe]]></Val>
+            <Val><![CDATA[Místní cesta k instalační složce msbuild.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -107,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suggested nuget feed URL.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Navrhovaná adresa URL informačního kanálu NuGet]]></Val>
+            <Val><![CDATA[Navrhovaná adresa URL informačního kanálu nuget.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Místní cesta k instalační složce nuget.exe]]></Val>
+            <Val><![CDATA[Místní cesta k instalační složce nuget.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Když se tato hodnota nastaví na false, sada SDK se nepokusí automaticky zjišťovat pracovní prostory konektorů a zobrazovat výzvu k vytvoření souboru nastavení.]]></Val>
+            <Val><![CDATA[Pokud je tato hodnota nastavená na false, sada SDK se nepokusí automaticky rozpoznat pracovní prostory konektoru a vyzve k vytvoření souboru nastavení.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -134,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vyzkoušejte novou funkci pomocí hostitele služby opakovaně použitelného modulu, který se liší od příkazového řádku.]]></Val>
+            <Val><![CDATA[Vyzkoušejte novou funkci pomocí hostitele služby modulu, který se dá použít opakovaně, kromě příkazového řádku.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -152,7 +158,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to PQTest installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Místní cesta k instalační složce PQTest]]></Val>
+            <Val><![CDATA[Místní cesta k instalační složce PQTest.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -188,7 +194,7 @@
         <Str Cat="Text">
           <Val><![CDATA[info: Returns all module information]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[informace: Vrátí všechny informace o modulu.]]></Val>
+            <Val><![CDATA[info: Vrátí všechny informace o modulu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -206,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[test-connection: test the connection of current connector]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[testovací připojení: otestovat připojení aktuálního konektoru]]></Val>
+            <Val><![CDATA[test-connection: otestování připojení aktuálního konektoru]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -215,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Absolutní cesta k souboru power query]]></Val>
+            <Val><![CDATA[Absolutní cesta k souboru power query.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -233,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power query SDK]]></Val>
+            <Val><![CDATA[Sada SDK pro Power query]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -242,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Additional commandline arguments for the operation]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Další argumenty příkazového řádku pro operaci]]></Val>
+            <Val><![CDATA[Další argumenty příkazového řádku pro danou operaci]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -251,7 +257,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Credential template object.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Objekt šablony přihlašovacích údajů]]></Val>
+            <Val><![CDATA[Objekt šablony přihlašovacích údajů.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -286,6 +292,9 @@
       <Item ItemId=";extension.pqtest.welcome.contents" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Pokud chcete používat funkce rozšíření, musíte vytvořit projekt rozšíření Power Query.]A;[Vytvoření projektu rozšíření]5D; (command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Další informace o tom, jak vytvořit rozšíření, najdete v [dokumentaci]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>

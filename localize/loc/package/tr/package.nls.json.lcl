@@ -41,7 +41,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kimlik bilgisini ayarla]]></Val>
+            <Val><![CDATA[Kimlik bilgilerini ayarla]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Kimlik bilgilerini listele]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Kimlik bilgilerini yenile]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -71,7 +77,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tool]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Aracını Güncelleştir]]></Val>
+            <Val><![CDATA[SDK Tools’u Güncelleştir]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Yükleme klasörünün msbuild.exe yolu.]]></Val>
+            <Val><![CDATA[msbuild.exe yükleme klasörünün yerel yolu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Yükleme klasörünün nuget.exe yolu.]]></Val>
+            <Val><![CDATA[nuget.exe yükleme klasörünün yerel yolu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[False olarak ayarlandığında SDK, bağlayıcı çalışma alanlarını otomatik olarak algılamaya ve bir ayar dosyası oluşturma isteminde bulunarak bunu denemez.]]></Val>
+            <Val><![CDATA[False olarak ayarlandığında SDK, bağlayıcı çalışma alanlarını otomatik olarak algılamayı ve ayar dosyası oluşturma istemini denemez.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -143,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bağlayıcı uzantısı kaynak modüllerini (.mez/.pqm) belirtin. <br>Bu seçenek birden çok kez belirtilebilir.]]></Val>
+            <Val><![CDATA[Bağlayıcı uzantısı kaynak modüllerini (.mez/.pqm) belirtin.<br>Bu seçenek birden çok kez belirtilebilir.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -215,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bir power query dosyasının mutlak yolu.]]></Val>
+            <Val><![CDATA[Power query dosyasının mutlak yolu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -287,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Uzantı özelliklerini kullanmak için bir Power query uzantı projesi oluşturmanız gerekir.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Uzantı oluşturma hakkında daha fazla bilgi edinmek için [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+            <Val><![CDATA[Uzantı özelliklerini kullanmak için bir Power query uzantısı projesi oluşturmanız gerekir.]A; [Uzantı projesi oluşturma]5D; (command:powerquery.sdk.tools.CreateNewProjectCommand)]A; Uzantı oluşturma hakkında daha fazla bilgi edinmek için [belgelerimizi okuyun]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

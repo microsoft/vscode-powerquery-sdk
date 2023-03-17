@@ -23,7 +23,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Enable]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[활성화]]></Val>
+            <Val><![CDATA[사용]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -139,6 +139,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.choose.dataSourceKind.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Data source kind]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[데이터 원본 종류]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -173,7 +176,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 자격 증명을 만들지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 자격 증명을 만들지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -182,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create {authenticationKind} credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 {authenticationKind} 자격 증명을 만들지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 {authenticationKind} 자격 증명을 만들지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -200,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to delete credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 자격 증명을 삭제하지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 자격 증명을 삭제하지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -236,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to display extension info due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 확장 정보를 표시하지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 확장 정보를 표시하지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -245,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DisplayExtensionInfo 결과 {result}]]></Val>
+            <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -281,7 +284,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to list credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 자격 증명을 나열하지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 자격 증명을 나열하지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -308,7 +311,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to manually update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 PowerQuery.SdkTools 패키지를 수동으로 업데이트하지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 PowerQuery.SdkTools 패키지를 수동으로 업데이트하지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -317,7 +320,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {newProjName}.pq and other files have been created at {targetFolder}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{targetFolder} 새 {newProjName}.pq 및 기타 파일을 만들었습니다.]]></Val>
+            <Val><![CDATA[{targetFolder}에 새 {newProjName}.pq 및 기타 파일을 만들었습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -325,6 +328,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.new.project.placeHolder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Alphanumeric characters only]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[영숫자 문자만]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -341,7 +347,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has been extracted from nuget and put at {pqTestExecutableFullPath}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe nuget에서 추출되어 {pqTestExecutableFullPath}.]]></Val>
+            <Val><![CDATA[NuGet에서 PQTest.exe를 추출하여 {pqTestExecutableFullPath}에 배치했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -350,7 +356,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Current PQTest.exe has been configured at {pqTestLocation}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[현재 PQTest.exe {pqTestLocation} 구성되었습니다.]]></Val>
+            <Val><![CDATA[현재 PQTest.exe를 {pqTestLocation}에 구성했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -359,7 +365,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to refresh credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 자격 증명을 새로 고치지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 자격 증명을 새로 고치지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -385,6 +391,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.run.test.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[{errorMessage}(으)로 인해 쿼리를 실행하지 못했습니다.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -419,7 +428,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set {configName} to {configValue}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{configName} 설정하여 {configValue}]]></Val>
+            <Val><![CDATA[{configName}을(를) {configValue}(으)로 설정]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -428,7 +437,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to ${errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[${errorMessage} 때문에 자격 증명을 설정하지 못했습니다.]]></Val>
+            <Val><![CDATA[${errorMessage}(으)로 인해 자격 증명을 설정하지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -437,7 +446,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {authenticationKind} credential has been generated successfully]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[새 {authenticationKind} 자격 증명이 생성되었습니다.]]></Val>
+            <Val><![CDATA[새 {authenticationKind} 자격 증명을 생성했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -463,6 +472,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.test.connection.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[{errorMessage}(으)로 인해 쿼리를 실행하지 못했습니다.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -488,7 +500,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[유추된 mez 파일의 마지막 ctime을 {lastCtimeOfMezFileWhoseInfoSeized} 업데이트]]></Val>
+            <Val><![CDATA[유추된 mez 파일의 마지막 ctime을 {lastCtimeOfMezFileWhoseInfoSeized}(으)로 업데이트]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -497,7 +509,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage} 인해 PowerQuery.SdkTools 패키지를 업데이트하지 못했습니다.]]></Val>
+            <Val><![CDATA[{errorMessage}(으)로 인해 PowerQuery.SdkTools 패키지를 업데이트하지 못했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -506,7 +518,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot find the file set to the powerquery.sdk.defaultExtension, open setting.json to ensure it got populated correctly.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[powerquery.sdk.defaultExtension으로 설정된 파일을 찾을 수 없습니다. setting.json을 열어 올바르게 채워지도록 하세요.]]></Val>
+            <Val><![CDATA[powerquery.sdk.defaultExtension으로 설정된 파일을 찾을 수 없습니다. setting.json을 열어 올바르게 채우세요.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -523,6 +535,9 @@
       <Item ItemId=";PQSdk.lifecycle.credential.key.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Credential key]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[자격 증명 키]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -593,7 +608,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Value {valueName} cannot be empty.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[값 {valueName} 비워 둘 수 없습니다.]]></Val>
+            <Val><![CDATA[{valueName} 값은 비워 둘 수 없습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -602,7 +617,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid credentials: missing DataSourceKind, AuthenticationKind or the Query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[잘못된 자격 증명: DataSourceKind, AuthenticationKind 또는 쿼리 파일이 없습니다.]]></Val>
+            <Val><![CDATA[잘못된 자격 증명: DataSourceKind, AuthenticationKind 또는 Query 파일이 없습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -611,7 +626,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing key property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[잘못된 {authenticationKind} 자격 증명에 키 속성이 없습니다.]]></Val>
+            <Val><![CDATA[키 속성이 없는 잘못된 {authenticationKind} 자격 증명]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -620,7 +635,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing username or password property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[잘못된 {authenticationKind} 자격 증명에 사용자 이름 또는 암호 속성이 없습니다.]]></Val>
+            <Val><![CDATA[사용자 이름 또는 암호 속성이 없는 잘못된 {authenticationKind} 자격 증명]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -656,7 +671,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has not been extracted from nuget package.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe nuget 패키지에서 추출되지 않았습니다.]]></Val>
+            <Val><![CDATA[PQTest.exe를 NuGet 패키지에서 추출하지 않았습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -665,7 +680,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location has not been configured]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Tools 위치가 구성되지 않았습니다.]]></Val>
+            <Val><![CDATA[SDK Tools 위치를 구성하지 않았습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -709,12 +724,18 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.listCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[자격 증명 나열]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycleTreeView.item.refreshCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[자격 증명 새로 고침]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -749,7 +770,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tools]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[업데이트 SDK Tools]]></Val>
+            <Val><![CDATA[SDK Tools 업데이트]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -767,7 +788,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe not found at {pqtestExe}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{pqtestExe} PQTest.exe 찾을 수 없습니다.]]></Val>
+            <Val><![CDATA[{pqtestExe}에서 PQTest.exe를 찾을 수 없습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -776,7 +797,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Directory powerquery.sdk.tools.location: '{nextPQTestLocation}' does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[디렉터리 powerquery.sdk.tools.location: '{nextPQTestLocation}' 없습니다.]]></Val>
+            <Val><![CDATA[powerquery.sdk.tools.location 디렉터리: '{nextPQTestLocation}'이(가) 없습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -785,7 +806,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Configuration value: powerquery.sdk.tools.location is not set.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[구성 값: powerquery.sdk.tools.location이 설정되지 않았습니다.]]></Val>
+            <Val><![CDATA[구성 값: powerquery.sdk.tools.location을 설정하지 않았습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -794,7 +815,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} pid의 실행 파일: {pid}.]]></Val>
+            <Val><![CDATA[[디버그 작업을 시작함]5D; 포크 PQTask {operation} pid 실행 파일: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -803,7 +824,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+            <Val><![CDATA[[디버그 작업이 비정상적으로 종료됨]5D; pqtest {operation} pid({pid}) 종료({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -812,7 +833,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[디버그 작업을 발견함]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -821,7 +842,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe found at {pqTestFullPath}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{pqTestFullPath} 찾은 PQTest.exe]]></Val>
+            <Val><![CDATA[{pqTestFullPath}에서 PQTest.exe를 찾았습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -830,7 +851,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task began]5D; Fork PQTask {operation} pid의 실행 파일: {pid}.]]></Val>
+            <Val><![CDATA[[작업을 시작함]5D; 포크 PQTask {operation} pid 실행 파일: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -839,7 +860,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
+            <Val><![CDATA[[작업이 비정상적으로 종료됨]5D; pqtest {operation} pid({pid}) 종료({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -848,7 +869,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} executable pid({pid}) exited.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} 실행 파일 pid({pid})가 종료되었습니다.]]></Val>
+            <Val><![CDATA[[작업이 완료됨]5D; 포크된 PQTask {operation} pid 실행 파일({pid})이 종료되었습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -857,7 +878,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[작업을 발견함]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -14,7 +14,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create an extension project]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Crea un progetto di estensione]]></Val>
+            <Val><![CDATA[Creare un progetto di estensione]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Elenca credenziali]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Aggiorna credenziali]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -80,7 +86,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Configura area di lavoro]]></Val>
+            <Val><![CDATA[Configurare l'area di lavoro]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -98,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Percorso locale della cartella di installazione msbuild.exe.]]></Val>
+            <Val><![CDATA[Percorso locale della cartella di installazione di msbuild.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -116,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Percorso locale della cartella di installazione nuget.exe.]]></Val>
+            <Val><![CDATA[Percorso locale della cartella di installazione di nuget.exe.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Se impostato su false, l'SDK non prova a rilevare automaticamente le aree di lavoro del connettore e chiede di creare un file di impostazioni.]]></Val>
+            <Val><![CDATA[Se impostato su false, l'SDK non tenta di rilevare automaticamente le aree di lavoro del connettore e chiede di creare un file di impostazioni.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -134,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Provare la nuova funzionalità usando un host del servizio motore riutilizzabile diverso dalle righe di comando]]></Val>
+            <Val><![CDATA[Provare la nuova funzionalità usando un host servizio motore riutilizzabile diverso dalle righe di comando]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -197,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[run-test: test connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[run-test: connessione di test]]></Val>
+            <Val><![CDATA[esecuzione-test: test connessione]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -206,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[test-connection: test the connection of current connector]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[test-connection: verifica la connessione del connettore corrente]]></Val>
+            <Val><![CDATA[test-connessione: testare la connessione del connettore corrente]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -233,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power query SDK]]></Val>
+            <Val><![CDATA[SDK Power Query]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -269,7 +275,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Path to the connector file (--extension)]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Percorso del file del connettore (--extension)]]></Val>
+            <Val><![CDATA[Percorso del file del connettore (--estensione)]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -287,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Per usare le funzionalità dell'estensione, è necessario creare un progetto di estensione di Power Query.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;Per altre informazioni su come creare un'estensione, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+            <Val><![CDATA[Per usare le funzionalità di estensione, è necessario creare un progetto di estensione Power Query.]A; [Creare un progetto di estensione]5D; (comando:powerquery.sdk.tools.CreateNewProjectCommand)]A; Per altre informazioni su come creare un'estensione, [leggere la documentazione]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
