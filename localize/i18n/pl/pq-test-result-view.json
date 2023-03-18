@@ -3,5 +3,5 @@
   "common.error.label": "Błąd",
   "testBatteryResView.Table.Output.Title": "Dane wyjściowe",
   "testBatteryResView.Table.Output.Summary": "Podsumowanie",
-  "testBatteryResView.Table.Output.DataSource": "Źródło danych"
+  "testBatteryResView.Table.Output.DataSource": "DataSource"
 }

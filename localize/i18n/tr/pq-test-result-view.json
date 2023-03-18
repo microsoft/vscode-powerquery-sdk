@@ -1,7 +1,7 @@
 {
   "common.dismiss.label": "Kapat",
   "common.error.label": "Hata",
-  "testBatteryResView.Table.Output.Title": "Çıkış",
+  "testBatteryResView.Table.Output.Title": "Çıktı",
   "testBatteryResView.Table.Output.Summary": "Özet",
   "testBatteryResView.Table.Output.DataSource": "DataSource"
 }
