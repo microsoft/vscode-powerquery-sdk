@@ -3,5 +3,5 @@
   "common.error.label": "오류",
   "testBatteryResView.Table.Output.Title": "출력",
   "testBatteryResView.Table.Output.Summary": "요약",
-  "testBatteryResView.Table.Output.DataSource": "데이터 소스"
+  "testBatteryResView.Table.Output.DataSource": "DataSource"
 }
