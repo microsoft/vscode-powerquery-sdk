@@ -68,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open {fileName}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Otevřít {fileName}]]></Val>
+            <Val><![CDATA[Otevřít soubor {fileName}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -104,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a data source kind]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zadejte druh zdroje dat.]]></Val>
+            <Val><![CDATA[Zadání druhu zdroje dat]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -113,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Arbitrary query/test file path using the credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Libovolná cesta k dotazu nebo testovacímu souboru pomocí přihlašovacích údajů]]></Val>
+            <Val><![CDATA[Cesta k libovolnému dotazu nebo testovacímu souboru pomocí přihlašovacích údajů]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -122,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a query/test file path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zadejte cestu k souboru dotazu nebo testu.]]></Val>
+            <Val><![CDATA[Zadejte cestu k souboru dotazu/testu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -158,7 +158,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Choose a query/test file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zvolte soubor dotazu nebo testu.]]></Val>
+            <Val><![CDATA[Zvolte soubor dotazu/testu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -176,7 +176,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kvůli {errorMessage} se nepovedlo vytvořit přihlašovací údaje.]]></Val>
+            <Val><![CDATA[Nepovedlo se vytvořit přihlašovací údaje kvůli {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -185,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create {authenticationKind} credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kvůli {errorMessage} se nepovedlo vytvořit přihlašovací údaje {authenticationKind}.]]></Val>
+            <Val><![CDATA[Nepovedlo se vytvořit přihlašovací údaje {authenticationKind} kvůli {errorMessage}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -194,7 +194,7 @@
         <Str Cat="Text">
           <Val><![CDATA[CreateAuthState {result} ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} CreateAuthState ]]></Val>
+            <Val><![CDATA[CreateAuthState {result} ]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -203,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to delete credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nepovedlo se odstranit přihlašovací údaje kvůli {errorMessage}]]></Val>
+            <Val><![CDATA[Nepovedlo se odstranit přihlašovací údaje kvůli {errorMessage}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -212,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DeleteCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} výsledku DeleteCredential]]></Val>
+            <Val><![CDATA[Výsledek deleteCredential {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -221,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Deleting credentials]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Odstraňují se přihlašovací údaje.]]></Val>
+            <Val><![CDATA[Odstraňují se přihlašovací údaje]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -239,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to display extension info due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kvůli {errorMessage} se nepovedlo zobrazit informace o rozšíření.]]></Val>
+            <Val><![CDATA[Kvůli {errorMessage} se nepovedlo zobrazit informace o rozšíření]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -248,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} výsledků DisplayExtensionInfo]]></Val>
+            <Val><![CDATA[Výsledek DisplayExtensionInfo {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -257,7 +257,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Displaying extension info]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zobrazují se informace o rozšíření.]]></Val>
+            <Val><![CDATA[Zobrazují se informace o rozšíření]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -266,7 +266,7 @@
         <Str Cat="Text">
           <Val><![CDATA[GenerateCredentialTemplate {result} ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} GenerateCredentialTemplate ]]></Val>
+            <Val><![CDATA[GenerateCredentialTemplate {result} ]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -275,7 +275,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Generating credential]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Generování přihlašovacích údajů]]></Val>
+            <Val><![CDATA[Generování přihlašovacího údaje]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -284,7 +284,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to list credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nepovedlo se vypsat přihlašovací údaje kvůli {errorMessage}]]></Val>
+            <Val><![CDATA[Nepovedlo se vypsat přihlašovací údaje kvůli {errorMessage}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -293,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[ListCredentials result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} výsledků ListCredentials]]></Val>
+            <Val><![CDATA[Výsledek ListCredentials {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -302,7 +302,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Listing credentials]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Výpis přihlašovacích údajů]]></Val>
+            <Val><![CDATA[Vypisování přihlašovacích údajů]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -320,7 +320,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {newProjName}.pq and other files have been created at {targetFolder}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[V {targetFolder} se vytvořily nové soubory {newProjName}.pq a další soubory.]]></Val>
+            <Val><![CDATA[V {targetFolder} se vytvořily nové soubory {newProjName}.pq a další soubory]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -328,12 +328,18 @@
       <Item ItemId=";PQSdk.lifecycle.command.new.project.placeHolder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Alphanumeric characters only]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Pouze alfanumerické znaky]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycle.command.new.project.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[New project name]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Název nového projektu]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -341,7 +347,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has been extracted from nuget and put at {pqTestExecutableFullPath}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe se extrahoval z nugetu a vložil se do {pqTestExecutableFullPath}.]]></Val>
+            <Val><![CDATA[Soubor PQTest.exe byl extrahován z nuget a vložen do {pqTestExecutableFullPath}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -350,7 +356,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Current PQTest.exe has been configured at {pqTestLocation}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Aktuální PQTest.exe byl nakonfigurován v {pqTestLocation}.]]></Val>
+            <Val><![CDATA[Aktuální PQTest.exe se nakonfiguroval na {pqTestLocation}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -359,7 +365,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to refresh credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nepovedlo se aktualizovat přihlašovací údaje kvůli {errorMessage}]]></Val>
+            <Val><![CDATA[Nepovedlo se aktualizovat přihlašovací údaje kvůli {errorMessage}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -368,7 +374,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RefreshCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} výsledků RefreshCredential]]></Val>
+            <Val><![CDATA[Výsledek RefreshCredential {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -385,6 +391,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.run.test.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Dotaz se nepovedlo spustit kvůli {errorMessage}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -392,7 +401,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RunTestBattery result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} výsledku RunTestBattery]]></Val>
+            <Val><![CDATA[Výsledek RunTestBattery {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -401,7 +410,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Running a test]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Spuštění testu]]></Val>
+            <Val><![CDATA[Probíhá test]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -419,7 +428,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set {configName} to {configValue}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nastavit {configName} na {configValue}]]></Val>
+            <Val><![CDATA[Nastavit konfiguraci {configName} na {configValue}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -437,7 +446,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {authenticationKind} credential has been generated successfully]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nové přihlašovací údaje {authenticationKind} se úspěšně vygeneroval.]]></Val>
+            <Val><![CDATA[Nový přihlašovací údaj {authenticationKind} se úspěšně vygeneroval.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -446,7 +455,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SetCredential {result} ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} SetCredential ]]></Val>
+            <Val><![CDATA[SetCredential {result} ]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -455,7 +464,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to credential template object missing.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nepovedlo se nastavit přihlašovací údaje, protože chybí objekt šablony přihlašovacích údajů.]]></Val>
+            <Val><![CDATA[Nastavení přihlašovacích údajů se nezdařilo z důvodu chybějícího objektu šablony přihlašovacích údajů.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -463,6 +472,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.test.connection.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Dotaz se nepovedlo spustit kvůli {errorMessage}]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -470,7 +482,7 @@
         <Str Cat="Text">
           <Val><![CDATA[TestConnection result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{result} výsledku TestConnection]]></Val>
+            <Val><![CDATA[Výsledek TestConnection {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -479,7 +491,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Testing the connection]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Testuje se připojení.]]></Val>
+            <Val><![CDATA[Testování připojení]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -506,7 +518,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot find the file set to the powerquery.sdk.defaultExtension, open setting.json to ensure it got populated correctly.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nejde najít soubor nastavený na powerquery.sdk.defaultExtension. Otevřete setting.json, abyste zajistili správné naplnění.]]></Val>
+            <Val><![CDATA[Nepovedlo se najít soubor nastavený na powerquery.sdk.defaultExtension. Otevřete soubor setting.json, abyste měli jistotu, že se správně vyplnil.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -523,6 +535,9 @@
       <Item ItemId=";PQSdk.lifecycle.credential.key.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Credential key]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Klíč přihlašovacích údajů]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -557,7 +572,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Extension file path cannot be empty]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Cesta k souboru rozšíření nemůže být prázdná.]]></Val>
+            <Val><![CDATA[Cesta k souboru přípony nemůže být prázdná]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -566,7 +581,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Query/test file path cannot be empty]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Cesta k souboru dotazu/testu nemůže být prázdná.]]></Val>
+            <Val><![CDATA[Cesta k souboru dotazu/testu nemůže být prázdná]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -575,7 +590,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Data source kind cannot be empty]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Druh zdroje dat nemůže být prázdný.]]></Val>
+            <Val><![CDATA[Druh zdroje dat nemůže být prázdný]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -584,7 +599,7 @@
         <Str Cat="Text">
           <Val><![CDATA[A project name value must be set before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Než budete pokračovat, musí se nastavit hodnota názvu projektu.]]></Val>
+            <Val><![CDATA[Než budete pokračovat, musí se nastavit hodnota názvu projektu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -602,7 +617,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid credentials: missing DataSourceKind, AuthenticationKind or the Query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Neplatné přihlašovací údaje: Chybí DataSourceKind, AuthenticationKind nebo soubor dotazu.]]></Val>
+            <Val><![CDATA[Neplatné přihlašovací údaje: Chybí dataSourceKind, AuthenticationKind nebo soubor dotazu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -620,7 +635,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing username or password property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[V neplatných přihlašovacích údajích {authenticationKind} chybí vlastnost uživatelského jména nebo hesla.]]></Val>
+            <Val><![CDATA[V neplatných přihlašovacích údajích {authenticationKind} chybí vlastnost uživatelské jméno nebo heslo]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -629,7 +644,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Only alphanumeric are allowed.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Povolují se jen alfanumerické znaky.]]></Val>
+            <Val><![CDATA[Jsou povoleny pouze alfanumerické znaky.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -638,7 +653,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[byly zjištěny Power Query soubory. Chcete povolit sadu Power Query SDK pro aktuální pracovní prostor?]]></Val>
+            <Val><![CDATA[byly zjištěny soubory Power Query. Chcete povolit sadu Power Query SDK pro aktuální pracovní prostor?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -647,7 +662,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location must be provided before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Než budete pokračovat, musíte zadat SDK Tools umístění.]]></Val>
+            <Val><![CDATA[Než budete pokračovat, musí se zadat SDK Tools umístění.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -656,7 +671,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has not been extracted from nuget package.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe nebyl extrahován z balíčku NuGet.]]></Val>
+            <Val><![CDATA[Soubor PQTest.exe nebyl extrahován z balíčku nuget.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -665,7 +680,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location has not been configured]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Tools umístění není nakonfigurované.]]></Val>
+            <Val><![CDATA[Umístění nástroje SDK Tools nebylo nakonfigurováno]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -709,12 +724,18 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.listCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Vypsat přihlašovací údaje]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycleTreeView.item.refreshCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Aktualizovat přihlašovací údaje]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -758,7 +779,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Build connector project using MakePQX]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Sestavit projekt konektoru pomocí MakePQX]]></Val>
+            <Val><![CDATA[Sestavení projektu konektoru pomocí MakePQX]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -767,7 +788,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe not found at {pqtestExe}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe se v {pqtestExe} nepovedlo najít.]]></Val>
+            <Val><![CDATA[Soubor PQTest.exe nebyl v {pqtestExe} nalezen.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -776,7 +797,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Directory powerquery.sdk.tools.location: '{nextPQTestLocation}' does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Adresář powerquery.sdk.tools.location: '{nextPQTestLocation}' neexistuje.]]></Val>
+            <Val><![CDATA[Adresář powerquery.sdk.tools.location: {nextPQTestLocation} neexistuje.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -794,7 +815,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task began]5D; fork PQTask {operation} spustitelný soubor PID: {pid}.]]></Val>
+            <Val><![CDATA[[Byla zahájena úloha ladění.]5D; Fork PQTask {operation} spustitelného souboru PID: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -803,7 +824,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task exited abnormally]5D; stderr {operation} pid({pid}) {exitCode}: {stdErr}]]></Val>
+            <Val><![CDATA[[Úloha ladění se neobvykle ukončila]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -812,7 +833,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[Nalezena úloha ladění]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -821,7 +842,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe found at {pqTestFullPath}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exe nalezen v {pqTestFullPath}]]></Val>
+            <Val><![CDATA[Soubor PQTest.exe byl nalezen v {pqTestFullPath}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -830,7 +851,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task began]5D; fork PQTask {operation} spustitelný soubor PID: {pid}.]]></Val>
+            <Val><![CDATA[[Úloha zahájena]5D; Fork PQTask {operation} spustitelného souboru PID: {pid}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -839,7 +860,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task exited abnormally]5D; stderr {operation} pid({pid}) {exitCode}: {stdErr}]]></Val>
+            <Val><![CDATA[[Úloha se neobvykle ukončila]5D; stderr pqtest {operation} pid({pid}) exit({exitCode}) : {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -848,7 +869,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} executable pid({pid}) exited.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task finished]5D; byl ukončen program forked PQTask {operation} spustitelného souboru pid({pid}).]]></Val>
+            <Val><![CDATA[[Úloha dokončena]5D; Forked PQTask {operation} spustitelný soubor pid({pid}) byl ukončen.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -857,7 +878,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[Úloha nalezena]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -68,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open {fileName}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{fileName}を開く]]></Val>
+            <Val><![CDATA[{fileName} を開く]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -104,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a data source kind]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[データ ソースの種類を入力してください]]></Val>
+            <Val><![CDATA[データ ソースの種類を入力する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -122,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Input a query/test file path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[クエリ/テスト ファイルのパスを入力してください]]></Val>
+            <Val><![CDATA[クエリ/テスト ファイルのパスを入力する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -131,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Choose the data source kind]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[データ ソースの種類の選択]]></Val>
+            <Val><![CDATA[データ ソースの種類を選択する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -139,6 +139,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.choose.dataSourceKind.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Data source kind]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[データ ソースの種類:]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -146,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Extension file path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[拡張子ファイルのパス]]></Val>
+            <Val><![CDATA[拡張機能ファイルのパス]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -155,7 +158,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Choose a query/test file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[クエリ/テスト ファイルの選択]]></Val>
+            <Val><![CDATA[クエリ/テスト ファイルを選択する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -173,7 +176,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、資格情報を作成できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、資格情報を作成できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -182,7 +185,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to create {authenticationKind} credential due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、{authenticationKind}資格情報を作成できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、{authenticationKind} 資格情報を作成できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -191,7 +194,7 @@
         <Str Cat="Text">
           <Val><![CDATA[CreateAuthState {result} ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[CreateAuthState {result}]]></Val>
+            <Val><![CDATA[CreateAuthState {result} ]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -200,7 +203,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to delete credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、資格情報を削除できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、資格情報を削除できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -209,7 +212,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DeleteCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DeleteCredential の結果{result}]]></Val>
+            <Val><![CDATA[DeleteCredential の結果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -227,7 +230,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Detected a newer mez file, about to infer its latest info. {currentCtime}, {diffCtime}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[最新の情報を推測しようとしている新しい mez ファイルが検出されました。{currentCtime}、{diffCtime}]]></Val>
+            <Val><![CDATA[最新情報 {currentCtime}、{diffCtime} を推定しようとしている、より新しい mez ファイルを検出しました]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -236,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to display extension info due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、拡張機能の情報を表示できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、拡張情報を表示できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -245,7 +248,7 @@
         <Str Cat="Text">
           <Val><![CDATA[DisplayExtensionInfo result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[DisplayExtensionInfo の結果{result}]]></Val>
+            <Val><![CDATA[DisplayExtensionInfo の結果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -281,7 +284,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to list credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、資格情報を一覧表示できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、資格情報の一覧を作成できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -290,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[ListCredentials result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ListCredentials の結果{result}]]></Val>
+            <Val><![CDATA[ListCredentials の結果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -308,7 +311,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to manually update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、PowerQuery.SdkTools パッケージを手動で更新できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、PowerQuery.SdkTools パッケージを手動で更新できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -317,7 +320,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {newProjName}.pq and other files have been created at {targetFolder}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[新しい{newProjName}.pq およびその他のファイルが{targetFolder}に作成されました]]></Val>
+            <Val><![CDATA[新しい {newProjName}.pq とその他のファイルが {targetFolder} に作成されました]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -325,6 +328,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.new.project.placeHolder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Alphanumeric characters only]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[英数字のみ]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -341,7 +347,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has been extracted from nuget and put at {pqTestExecutableFullPath}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exeが nuget から抽出され、{pqTestExecutableFullPath}に配置されました。]]></Val>
+            <Val><![CDATA[PQTest.exe は nuget から抽出され、{pqTestExecutableFullPath} に配置されています。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -350,7 +356,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Current PQTest.exe has been configured at {pqTestLocation}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[現在のPQTest.exeは{pqTestLocation}で構成されています。]]></Val>
+            <Val><![CDATA[現在の PQTest.exe は {pqTestLocation} で構成されています。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -359,7 +365,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to refresh credentials due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}のため、資格情報を更新できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、資格情報を更新できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -368,7 +374,7 @@
         <Str Cat="Text">
           <Val><![CDATA[RefreshCredential result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[RefreshCredential の結果{result}]]></Val>
+            <Val><![CDATA[RefreshCredential の結果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -385,6 +391,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.run.test.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[{errorMessage} のため、クエリを実行できませんでした]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -410,7 +419,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Select workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ワークスペースの選択]]></Val>
+            <Val><![CDATA[ワークスペースを選択する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -419,7 +428,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Set {configName} to {configValue}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{configName}を{configValue}に設定]]></Val>
+            <Val><![CDATA[{configName} を {configValue} に設定する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -428,7 +437,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to set credentials due to ${errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[${errorMessage}が原因で資格情報を設定できませんでした]]></Val>
+            <Val><![CDATA[${errorMessage} のため、資格情報を設定できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -437,7 +446,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New {authenticationKind} credential has been generated successfully]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[新しい{authenticationKind}資格情報が正常に生成されました]]></Val>
+            <Val><![CDATA[新しい {authenticationKind} 資格情報が正常に生成されました]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -463,6 +472,9 @@
       <Item ItemId=";PQSdk.lifecycle.command.test.connection.errorMessage" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to run the query due to {errorMessage}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[{errorMessage} のため、クエリを実行できませんでした]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -470,7 +482,7 @@
         <Str Cat="Text">
           <Val><![CDATA[TestConnection result {result}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[TestConnection の結果{result}]]></Val>
+            <Val><![CDATA[TestConnection の結果 {result}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -488,7 +500,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update last ctime of an inferred mez file to {lastCtimeOfMezFileWhoseInfoSeized}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[推定 mez ファイルの最後の ctime を{lastCtimeOfMezFileWhoseInfoSeized}に更新します]]></Val>
+            <Val><![CDATA[推測された mez ファイルの最後の ctime を {lastCtimeOfMezFileWhoseInfoSeized} に更新します]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -497,7 +509,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Failed to update PowerQuery.SdkTools package due to {errorMessage}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{errorMessage}により、PowerQuery.SdkTools パッケージを更新できませんでした]]></Val>
+            <Val><![CDATA[{errorMessage} のため、PowerQuery.SdkTools パッケージを更新できませんでした]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -560,7 +572,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Extension file path cannot be empty]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[拡張子ファイルのパスを空にすることはできません]]></Val>
+            <Val><![CDATA[拡張ファイル パスを空にすることはできません]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -569,7 +581,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Query/test file path cannot be empty]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[クエリ/テスト ファイルのパスを空にすることはできません]]></Val>
+            <Val><![CDATA[クエリ/テスト ファイル パスを空にすることはできません]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -596,7 +608,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Value {valueName} cannot be empty.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[値{valueName}を空にすることはできません。]]></Val>
+            <Val><![CDATA[値 {valueName} を空にすることはできません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -614,7 +626,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing key property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[無効な{authenticationKind}資格情報にキー プロパティがありません]]></Val>
+            <Val><![CDATA[無効な {authenticationKind} 資格情報にキー プロパティがありません]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -623,7 +635,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Invalid {authenticationKind} credentials missing username or password property]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ユーザー名またはパスワードのプロパティが見つからない{authenticationKind}資格情報が無効です]]></Val>
+            <Val><![CDATA[無効な {authenticationKind} 資格情報にユーザー名またはパスワードのプロパティがありません]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -632,7 +644,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Only alphanumeric are allowed.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[使用できるのは英数字のみです。]]></Val>
+            <Val><![CDATA[英数字のみを使用できます。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -641,7 +653,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power Query files detected. Would you like to enable the Power Query SDK for the current workspace?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power Queryファイルが検出されました。現在のワークスペースのPower Query SDK を有効にしますか?]]></Val>
+            <Val><![CDATA[Power Query ファイルが検出されました。 現在のワークスペースで Power Query SDK を有効にしますか?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -650,7 +662,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location must be provided before continuing]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[続行する前SDK Tools場所を指定する必要があります]]></Val>
+            <Val><![CDATA[続行する前に、SDK ツールの場所を指定する必要があります]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -659,7 +671,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe has not been extracted from nuget package.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest.exeが NuGet パッケージから抽出されていません。]]></Val>
+            <Val><![CDATA[PQTest.exe は nuget パッケージから抽出されていません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -668,7 +680,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SDK Tools location has not been configured]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Tools場所が構成されていません]]></Val>
+            <Val><![CDATA[SDK ツールの場所が構成されていません]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -676,6 +688,9 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.createOneCredential.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Set credential]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[資格情報を設定する]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -683,7 +698,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Clear ALL credentials]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[すべての資格情報をクリア]]></Val>
+            <Val><![CDATA[すべての資格情報をクリアする]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -701,7 +716,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Evaluate current file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[現在のファイルの評価]]></Val>
+            <Val><![CDATA[現在のファイルを評価する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -709,12 +724,18 @@
       <Item ItemId=";PQSdk.lifecycleTreeView.item.listCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[資格情報を一覧表示する]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";PQSdk.lifecycleTreeView.item.refreshCredentials.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[資格情報を更新する]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -722,7 +743,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ワークスペースのセットアップ]]></Val>
+            <Val><![CDATA[ワークスペースをセットアップする]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -731,7 +752,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Run TestConnection function]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[TestConnection 関数の実行]]></Val>
+            <Val><![CDATA[TestConnection 関数を実行する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -749,7 +770,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Update SDK Tools]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SDK Toolsの更新]]></Val>
+            <Val><![CDATA[SDK ツールを更新する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -767,7 +788,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe not found at {pqtestExe}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{pqtestExe}にPQTest.exeが見つかりません。]]></Val>
+            <Val><![CDATA[{pqtestExe} に PQTest.exe が見つかりません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -776,7 +797,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Directory powerquery.sdk.tools.location: '{nextPQTestLocation}' does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ディレクトリ powerquery.sdk.tools.location: '{nextPQTestLocation}'が存在しません。]]></Val>
+            <Val><![CDATA[ディレクトリ powerquery.sdk.tools.location: '{nextPQTestLocation}' は存在しません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -794,7 +815,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task began]5D; Fork PQTask {operation} pid: {pid} の実行可能ファイルです。]]></Val>
+            <Val><![CDATA[[デバッグ タスクが開始されました]5D; pid: {pid} の PQTask {operation} 実行可能ファイルをフォークします。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -803,7 +824,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[pid({pid}) exit({exitCode}) stderr {operation} pqtest [Debug task exited abnormally]5D;: {stdErr}]]></Val>
+            <Val><![CDATA[[デバッグ タスクが異常終了しました]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -812,7 +833,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Debug task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[デバッグ タスクが見つかりました]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -821,7 +842,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest.exe found at {pqTestFullPath}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{pqTestFullPath}で見つかったPQTest.exe]]></Val>
+            <Val><![CDATA[{pqTestFullPath} で PQTest.exe が見つかりました]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -830,7 +851,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task began]5D; Fork PQTask {operation} executable of pid: {pid}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task began]5D; Fork PQTask {operation} pid: {pid} の実行可能ファイルです。]]></Val>
+            <Val><![CDATA[[タスクが開始されました]5D; pid: {pid} の PQTask {operation} 実行可能ファイルをフォークします。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -839,7 +860,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task exited abnormally]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[pid({pid}) exit({exitCode}) stderr {operation} pqtest [Task exited abnormally]5D;: {stdErr}]]></Val>
+            <Val><![CDATA[[タスクが異常終了しました]5D; pqtest {operation} pid({pid}) exit({exitCode}) stderr: {stdErr}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -848,7 +869,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task finished]5D; Forked PQTask {operation} executable pid({pid}) exited.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task finished]5D;フォークされた PQTask {operation}実行可能な pid({pid}) が終了しました。]]></Val>
+            <Val><![CDATA[[タスクが終了しました]5D; フォークされた PQTask {operation} 実行可能 pid({pid}) が終了しました。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -857,7 +878,7 @@
         <Str Cat="Text">
           <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[[Task found]5D; {pqTestExeFullPath} {arguments}]]></Val>
+            <Val><![CDATA[[タスクが見つかりました]5D; {pqTestExeFullPath} {arguments}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -866,7 +887,7 @@
         <Str Cat="Text">
           <Val><![CDATA[PQTest result]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PQTest の結果]]></Val>
+            <Val><![CDATA[PQTest 結果]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

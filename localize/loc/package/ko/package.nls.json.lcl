@@ -49,12 +49,18 @@
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[자격 증명 나열]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[자격 증명 새로 고침]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -62,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Evaluate current power query file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[현재 파워 쿼리 파일 평가]]></Val>
+            <Val><![CDATA[현재 Power Query 파일 평가]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -107,7 +113,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suggested nuget feed URL.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[제안된 Nuget 피드 URL입니다.]]></Val>
+            <Val><![CDATA[추천 NuGet 피드 URL입니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -125,7 +131,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[false로 설정하면 SDK는 커넥터 작업 영역을 자동으로 검색하고 설정 파일을 만들라는 메시지를 표시하지 않습니다.]]></Val>
+            <Val><![CDATA[false로 설정하면 SDK에서 커넥터 작업 영역을 자동으로 검색하고 설정 파일을 만들라는 메시지를 표시하지 않습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -134,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[명령줄 이외의 재사용 가능한 엔진 서비스 호스트를 사용하여 새 기능을 사용해 보세요.]]></Val>
+            <Val><![CDATA[명령줄 외 재사용 가능한 엔진 서비스 호스트를 사용하여 새 기능을 사용해 보세요.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -143,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[커넥터 확장 소스 모듈(.mez/.pqm)을 지정합니다.<br>이 옵션은 두 번 이상 지정할 수 있습니다.]]></Val>
+            <Val><![CDATA[커넥터 확장 원본 모듈(.mez/.pqm)을 지정합니다.<br>이 옵션은 두 번 이상 지정할 수 있습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -161,7 +167,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Query file containing section document or M expression (.m/.pq).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[섹션 문서 또는 M 식(.m/.pq)이 포함된 쿼리 파일입니다.]]></Val>
+            <Val><![CDATA[섹션 문서 또는 M 식(.m/.pq)을 포함하는 쿼리 파일입니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -215,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[파워 쿼리 파일의 절대 경로입니다.]]></Val>
+            <Val><![CDATA[Power Query 파일의 절대 경로입니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -233,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[파워 쿼리 SDK]]></Val>
+            <Val><![CDATA[Power Query SDK]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -287,7 +293,7 @@
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[확장 기능을 사용하려면 파워 쿼리 확장 프로젝트를 만들어야 합니다.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;확장을 만드는 방법에 대해 자세히 알아보려면 [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+            <Val><![CDATA[확장 기능을 사용하려면 Power Query 확장 프로젝트를 만들어야 합니다.]A;[확장 프로젝트 만들기]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;확장을 만드는 방법을 자세히 알아보려면 [우리 문서를 읽으세요]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

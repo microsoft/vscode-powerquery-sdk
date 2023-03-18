@@ -40,18 +40,27 @@
       <Item ItemId=";extension.pqtest.GenerateAndSetCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Set credential]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[设置凭据]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.ListCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[List credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[列出凭据]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.RefreshCredentialCommand.title" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Refresh credentials]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[刷新凭据]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -59,7 +68,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Evaluate current power query file]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[评估当前电源查询文件]]></Val>
+            <Val><![CDATA[评估当前 Power Query 文件]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -77,7 +86,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Setup workspace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[设置工作区]]></Val>
+            <Val><![CDATA[安装工作区]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -95,7 +104,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to msbuild.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[msbuild.exe安装文件夹的本地路径。]]></Val>
+            <Val><![CDATA[msbuild.exe 安装文件夹的本地路径。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -113,7 +122,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Local path to nuget.exe installation folder.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[nuget.exe安装文件夹的本地路径。]]></Val>
+            <Val><![CDATA[nuget.exe 安装文件夹的本地路径。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -131,7 +140,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Try the new feature using a reusable engine service host other than the command lines]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[使用命令行以外的可重用引擎服务主机尝试新功能]]></Val>
+            <Val><![CDATA[使用命令行以外的可重用引擎服务主机试用新功能]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -140,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[指定连接器扩展源模块(.mez/.pqm).<br>此选项可以多次指定。]]></Val>
+            <Val><![CDATA[指定连接器扩展源模块(.mez/.pqm)。<br>此选项可以多次指定。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -158,7 +167,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Query file containing section document or M expression (.m/.pq).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[包含节文档或 M 表达式的查询文件(.m/.pq)。]]></Val>
+            <Val><![CDATA[包含节文档或 M 表达式 (.m/.pq) 的查询文件。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -184,18 +193,27 @@
       <Item ItemId=";extension.pqtest.debugger.properties.operation.info.description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[info: Returns all module information]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[信息: 返回所有模块信息]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.debugger.properties.operation.runTest.description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[run-test: test connection]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[run-test: 测试连接]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";extension.pqtest.debugger.properties.operation.testConnection.description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[test-connection: test the connection of current connector]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[test-connection: 测试当前连接器的连接]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -203,7 +221,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Absolute path to a power query file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[电源查询文件的绝对路径。]]></Val>
+            <Val><![CDATA[Power Query 文件的绝对路径。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -221,7 +239,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Power query SDK]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Power query SDK]]></Val>
+            <Val><![CDATA[Power Query SDK]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -274,6 +292,9 @@
       <Item ItemId=";extension.pqtest.welcome.contents" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[In order to use extension features, you need to create an Power query extension project.]A;[Create an extension project]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;To learn more about how to create an extension, [read our docs]5D;(https://aka.ms/PowerQuerySDKDocs).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[若要使用扩展功能，需要创建 Power query 扩展项目。]A;[创建扩展项目]5D;(command:powerquery.sdk.tools.CreateNewProjectCommand)]A;若要详细了解如何创建扩展，[请阅读我们的文档]5D;(https://aka.ms/PowerQuerySDKDocs)。]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
