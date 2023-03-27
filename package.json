@@ -186,11 +186,11 @@
                         "Customized"
                     ],
                     "enumDescriptions": [
-                        "The stable version",
-                        "The latest version, working only with explict nuget path",
-                        "Use a user provided version value"
+                        "%extension.pqtest.config.externals.versionTag.recommended.description%",
+                        "%extension.pqtest.config.externals.versionTag.latest.description%",
+                        "%extension.pqtest.config.externals.versionTag.customized.description%"
                     ],
-                    "description": "The version tag of the external tools to be seized.",
+                    "description": "%extension.pqtest.config.externals.versionTag.description%",
                     "default": "Recommended",
                     "order": 50
                 },
@@ -218,7 +218,7 @@
                     "scope": "machine-overridable",
                     "type": "string",
                     "order": 71,
-                    "description": "The current version of the pqTest."
+                    "description": "%extension.pqtest.config.pqtest.version.description%"
                 }
             }
         },
