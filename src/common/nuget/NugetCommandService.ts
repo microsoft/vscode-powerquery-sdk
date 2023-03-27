@@ -9,6 +9,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
 
+import { assertNotNull } from "../../utils/assertUtils";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { NugetVersions } from "../../utils/NugetVersions";
 import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
@@ -147,10 +148,11 @@ export class NugetCommandService {
         ).sort(NugetVersions.compare);
 
         if (options.maximumNugetVersion) {
+            const maximumNugetVersion: NugetVersions = assertNotNull(options.maximumNugetVersion);
+
             // filter out any version gt maximumNugetVersion in sortedNugetVersions
             sortedNugetVersions = sortedNugetVersions.filter(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (one: NugetVersions) => one.compare(options.maximumNugetVersion!) <= 0,
+                (one: NugetVersions) => one.compare(maximumNugetVersion) <= 0,
             );
         }
 

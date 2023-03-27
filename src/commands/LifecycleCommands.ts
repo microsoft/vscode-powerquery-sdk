@@ -19,8 +19,6 @@ import {
     WorkspaceFolder,
 } from "vscode";
 
-import { GlobalEventBus } from "../GlobalEventBus";
-
 import {
     AuthenticationKind,
     CreateAuthState,
@@ -37,6 +35,7 @@ import {
     substitutedWorkspaceFolderBasenameIfNeeded,
     updateCurrentLocalPqModeIfNeeded,
 } from "../utils/vscodes";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
 import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
@@ -71,6 +70,7 @@ export class LifecycleCommands implements IDisposable {
     private isSuggestingSetupCurrentWorkspace: boolean = false;
     private readonly initPqSdkTool$deferred: Promise<string | undefined>;
     private checkAndTryToUpdatePqTestDeferred$: Promise<string | undefined> | undefined;
+    private currentPqTestVersion: string = ExtensionConstants.SuggestedPqTestNugetVersion;
 
     constructor(
         private readonly vscExtCtx: ExtensionContext,
@@ -79,6 +79,32 @@ export class LifecycleCommands implements IDisposable {
         private readonly pqTestService: IPQTestService,
         private readonly outputChannel: PqSdkOutputChannel,
     ) {
+        globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangeExternalVersionTag, () => {
+            // when externalVersionTag changed, we need to re-invoke manuallyUpdatePqTest,
+            // and it will
+            //      re-infer the version we expected
+            //      stop the exiting running one if any
+            //      start the new one if needed
+            void this.manuallyUpdatePqTest();
+        });
+
+        globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePqTestVersion, () => {
+            // when PqTestVersion changed in the mode non-customized version tag, users might have it updated
+            // thus we need to compare it with current expected version and reset it back the one we expected
+            if (
+                ExtensionConfigurations.externalsVersionTag !== "Customized" &&
+                this.currentPqTestVersion !== ExtensionConfigurations.PQTestVersion
+            ) {
+                void ExtensionConfigurations.setPQTestVersion(this.currentPqTestVersion);
+            } else if (
+                ExtensionConfigurations.externalsVersionTag == "Customized" &&
+                this.currentPqTestVersion !== ExtensionConfigurations.PQTestVersion
+            ) {
+                // need to trigger debounced manuallyUpdatePqTest
+                void this.debouncedManuallyUpdatePqTest();
+            }
+        });
+
         vscExtCtx.subscriptions.push(
             vscode.commands.registerCommand(LifecycleCommands.SeizePqTestCommand, this.manuallyUpdatePqTest.bind(this)),
             vscode.commands.registerCommand(
@@ -167,7 +193,7 @@ export class LifecycleCommands implements IDisposable {
     }
 
     private intervalTask(): void {
-        // this task gonna be invoked repeatedly, thus make sure it is as lite as possible
+        // this task would be invoked repeatedly, thus make sure it is as lite as possible
         void this.promptSettingIncorrectOrInvokeInfoTaskIfNeeded();
     }
 
@@ -486,10 +512,14 @@ export class LifecycleCommands implements IDisposable {
 
     private async doCheckAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         try {
-            let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+            const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
             const maybeNewVersion: string | undefined =
                 await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
+
+            // have to use || over here, we want to turn empty string into a valid version
+            // '' ?? other -> '', '' || other -> other
+            const theNextVersion: string = maybeNewVersion || ExtensionConstants.SuggestedPqTestNugetVersion;
 
             // we should not update to the latest unless the latest nuget doesn't exist on start
             // users might just want to use the previous one purposely
@@ -497,10 +527,10 @@ export class LifecycleCommands implements IDisposable {
             if (
                 !pqTestLocation ||
                 !this.pqTestService.pqTestReady ||
-                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(maybeNewVersion)
+                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(theNextVersion)
             ) {
-                const pqTestExecutableFullPath: string | undefined =
-                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(maybeNewVersion);
+                let pqTestExecutableFullPath: string | undefined =
+                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(theNextVersion);
 
                 if (!pqTestExecutableFullPath && !skipQueryDialog) {
                     const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
@@ -514,22 +544,12 @@ export class LifecycleCommands implements IDisposable {
                     });
 
                     if (pqTestLocationUrls?.[0]) {
-                        pqTestLocation = pqTestLocationUrls[0].fsPath;
+                        pqTestExecutableFullPath = pqTestLocationUrls[0].fsPath;
                     }
                 }
 
                 if (pqTestExecutableFullPath) {
-                    // convert pqTestLocation of exe to its dirname
-                    pqTestLocation = path.dirname(pqTestExecutableFullPath);
-                    const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-                    const newPqTestLocation: string = pqTestLocation;
-
-                    await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
-
-                    if (histPqTestLocation === newPqTestLocation) {
-                        // update the pqtest location by force in case it equals the previous one
-                        this.pqTestService.onPowerQueryTestLocationChanged();
-                    }
+                    await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
                 }
             }
 
@@ -552,7 +572,9 @@ export class LifecycleCommands implements IDisposable {
 
     /**
      * check and only update pqTest if needed like: not ready, not existing, the latest one doesn't exist either
-     * @param skipQueryDialog
+     * and this method should be invoked only once
+     *
+     * @param skipQueryDialog skip to pop up a dialog to let users fill in the pqTest.exe path
      * @private
      */
     private checkAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
@@ -563,8 +585,28 @@ export class LifecycleCommands implements IDisposable {
         return this.checkAndTryToUpdatePqTestDeferred$;
     }
 
+    private async doUpdatePqTestLocationAndStartItIfNeeded(
+        pqTestExecutableFullPath: string,
+        theNextVersion: string,
+    ): Promise<void> {
+        // convert pqTestLocation of exe to its dirname
+        const newPqTestLocation: string = path.dirname(pqTestExecutableFullPath);
+        const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+
+        await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
+        this.currentPqTestVersion = theNextVersion;
+        await ExtensionConfigurations.setPQTestVersion(theNextVersion);
+
+        if (histPqTestLocation === newPqTestLocation) {
+            // update the pqtest location by force in case it equals the previous one
+            this.pqTestService.onPowerQueryTestLocationChanged();
+        }
+    }
+
     /**
-     * eagerly update the pqTest as long as currently it is not configured to the latest
+     * Eagerly update the pqTest as long as currently it is not configured to the latest
+     * This method could be invoked multiple times instead
+     *
      * @param maybeNextVersion
      */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
@@ -573,32 +615,27 @@ export class LifecycleCommands implements IDisposable {
                 maybeNextVersion = await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
             }
 
-            let pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+            // have to use || over here, we want to turn empty string into a valid version
+            // '' ?? other -> '', '' || other -> other
+            const theNextVersion: string = maybeNextVersion || ExtensionConstants.SuggestedPqTestNugetVersion;
+
+            const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
             // determine whether we should trigger to seize or not
             if (
-                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(maybeNextVersion) ||
+                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(theNextVersion) ||
                 !pqTestLocation ||
                 // when manually update, we should eagerly update as long as current path is not of the latest version
                 //  like,
                 //      users might want to switch back to the latest some time after
                 //      they temporarily switch back to the previous version
-                (maybeNextVersion && pqTestLocation.indexOf(maybeNextVersion) === -1)
+                pqTestLocation.indexOf(theNextVersion) === -1
             ) {
                 const pqTestExecutableFullPath: string | undefined =
-                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(maybeNextVersion);
+                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(theNextVersion);
 
                 if (pqTestExecutableFullPath) {
-                    pqTestLocation = path.dirname(pqTestExecutableFullPath);
-                    const histPqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-                    const newPqTestLocation: string = pqTestLocation;
-
-                    await ExtensionConfigurations.setPQTestLocation(newPqTestLocation);
-
-                    if (histPqTestLocation === newPqTestLocation) {
-                        // update the pqtest location by force in case it equals the previous one
-                        this.pqTestService.onPowerQueryTestLocationChanged();
-                    }
+                    await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
                 }
             }
 
@@ -641,6 +678,11 @@ export class LifecycleCommands implements IDisposable {
         return undefined;
     }
 
+    public debouncedManuallyUpdatePqTest: (maybeNextVersion?: string) => Promise<string | undefined> = debounce(
+        (maybeNextVersion?: string) => this.manuallyUpdatePqTest(maybeNextVersion),
+        2e3,
+    ).bind(this) as typeof this.manuallyUpdatePqTest;
+
     public async generateOneNewProject(): Promise<void> {
         const newProjName: string | undefined = await vscode.window.showInputBox({
             title: extensionI18n["PQSdk.lifecycle.command.new.project.title"],
@@ -660,7 +702,7 @@ export class LifecycleCommands implements IDisposable {
             const firstWorkspaceFolder: WorkspaceFolder | undefined = getFirstWorkspaceFolder();
 
             if (firstWorkspaceFolder) {
-                // we gotta workspace and let's generate files into the first workspace
+                // we got the workspace and let's generate files into the first workspace
                 const targetFolder: string = this.doGenerateOneProjectIntoOneFolderFromTemplates(
                     firstWorkspaceFolder.uri.fsPath,
                     newProjName,

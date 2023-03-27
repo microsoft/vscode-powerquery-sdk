@@ -14,6 +14,7 @@ import { promisify } from "util";
 import { StreamZipAsync } from "node-stream-zip";
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { assertNotNull } from "../../utils/assertUtils";
 import { makeOneTmpDir } from "../../utils/osUtils";
 import { NugetVersions } from "../../utils/NugetVersions";
 import { tryRemoveDirectoryRecursively } from "../../utils/files";
@@ -125,10 +126,11 @@ export class NugetLiteHttpService {
             .sort(NugetVersions.compare);
 
         if (options.maximumNugetVersion) {
+            const maximumNugetVersion: NugetVersions = assertNotNull(options.maximumNugetVersion);
+
             // filter out any version gt maximumNugetVersion in sortedNugetVersions
             sortedNugetVersions = sortedNugetVersions.filter(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (one: NugetVersions) => one.compare(options.maximumNugetVersion!) <= 0,
+                (one: NugetVersions) => one.compare(maximumNugetVersion) <= 0,
             );
         }
 

@@ -35,6 +35,8 @@ export const GlobalEvents = Object.freeze({
         ConfigDidChangePowerQueryTestLocation: "ConfigDidChangePowerQueryTestLocation" as const,
         ConfigDidChangePQTestExtension: "ConfigDidChangePQTestExtension" as const,
         ConfigDidChangePQTestQuery: "ConfigDidChangePQTestQuery" as const,
+        ConfigDidChangeExternalVersionTag: "ConfigDidChangeExternalVersionTag" as const,
+        ConfigDidChangePqTestVersion: "ConfigDidChangePqTestVersion" as const,
     }),
 });
 type GlobalEventTypes = ExtractEventTypes<typeof GlobalEvents>;
@@ -122,6 +124,18 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
                                 void vscode.commands.executeCommand("workbench.action.reloadWindow");
                             }
                         })();
+                    } else if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsVersionTag}`,
+                        )
+                    ) {
+                        this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangeExternalVersionTag);
+                    } else if (
+                        evt.affectsConfiguration(
+                            `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestVersion}`,
+                        )
+                    ) {
+                        this.emit(GlobalEvents.VSCodeEvents.ConfigDidChangePqTestVersion);
                     }
                 } else if (evt.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuery.name)) {
                     if (

@@ -116,74 +116,109 @@
         "configuration": {
             "title": "Power Query SDK",
             "properties": {
+                "powerquery.sdk.features.autoDetection": {
+                    "scope": "machine-overridable",
+                    "type": "boolean",
+                    "description": "%extension.pqtest.config.features.autoDetection.description%",
+                    "default": true,
+                    "order": 9
+                },
                 "powerquery.sdk.project.autoDetection": {
                     "scope": "machine-overridable",
                     "type": "boolean",
                     "description": "%extension.pqtest.config.features.autoDetection.description%",
                     "default": true,
+                    "order": 10,
                     "deprecationMessage": "Deprecated: Please use powerquery.sdk.features.autoDetection instead.",
                     "markdownDeprecationMessage": "**Deprecated**: Please use `#powerquery.sdk.features.autoDetection#` instead."
                 },
-                "powerquery.sdk.pqtest.location": {
+                "powerquery.sdk.features.useServiceHost": {
                     "scope": "machine-overridable",
+                    "type": "boolean",
+                    "default": false,
+                    "order": 10,
+                    "description": "%extension.pqtest.config.features.useServiceHost%"
+                },
+                "powerquery.sdk.defaultExtension": {
+                    "scope": "window",
                     "type": "string",
-                    "deprecationMessage": "Deprecated: Please use powerquery.sdk.tools.location instead.",
-                    "description": "%extension.pqtest.config.pqtest.location.description%"
+                    "order": 29,
+                    "description": "%extension.pqtest.config.pqtest.extension.description%"
+                },
+                "powerquery.sdk.defaultQueryFile": {
+                    "scope": "window",
+                    "type": "string",
+                    "order": 29,
+                    "description": "%extension.pqtest.config.pqtest.queryFile.description%"
                 },
                 "powerquery.sdk.pqtest.extension": {
                     "scope": "window",
                     "type": "string",
+                    "order": 30,
                     "deprecationMessage": "Deprecated: Please use powerquery.sdk.defaultExtension instead.",
                     "description": "%extension.pqtest.config.pqtest.extension.description%"
                 },
                 "powerquery.sdk.pqtest.queryFile": {
                     "scope": "window",
                     "type": "string",
+                    "order": 30,
                     "deprecationMessage": "Deprecated: Please use powerquery.sdk.defaultQueryFile instead.",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"
                 },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
                     "type": "string",
+                    "order": 50,
                     "description": "%extension.pqtest.config.externals.msbuildPath.description%"
                 },
                 "powerquery.sdk.externals.nugetPath": {
                     "scope": "machine-overridable",
                     "type": "string",
+                    "order": 50,
                     "description": "%extension.pqtest.config.externals.nugetPath.description%"
+                },
+                "powerquery.sdk.externals.versionTag": {
+                    "scope": "machine-overridable",
+                    "type": "string",
+                    "enum": [
+                        "Recommended",
+                        "Latest",
+                        "Customized"
+                    ],
+                    "enumDescriptions": [
+                        "The stable version",
+                        "The latest version, working only with explict nuget path",
+                        "Use a user provided version value"
+                    ],
+                    "description": "The version tag of the external tools to be seized.",
+                    "default": "Recommended",
+                    "order": 50
                 },
                 "powerquery.sdk.externals.nugetFeed": {
                     "scope": "window",
                     "type": "string",
+                    "order": 50,
                     "description": "%extension.pqtest.config.externals.nugetFeed.description%",
                     "default": ""
                 },
                 "powerquery.sdk.tools.location": {
                     "scope": "machine-overridable",
                     "type": "string",
+                    "order": 69,
                     "description": "%extension.pqtest.config.pqtest.location.description%"
                 },
-                "powerquery.sdk.defaultExtension": {
-                    "scope": "window",
-                    "type": "string",
-                    "description": "%extension.pqtest.config.pqtest.extension.description%"
-                },
-                "powerquery.sdk.defaultQueryFile": {
-                    "scope": "window",
-                    "type": "string",
-                    "description": "%extension.pqtest.config.pqtest.queryFile.description%"
-                },
-                "powerquery.sdk.features.autoDetection": {
+                "powerquery.sdk.pqtest.location": {
                     "scope": "machine-overridable",
-                    "type": "boolean",
-                    "description": "%extension.pqtest.config.features.autoDetection.description%",
-                    "default": true
+                    "type": "string",
+                    "order": 70,
+                    "deprecationMessage": "Deprecated: Please use powerquery.sdk.tools.location instead.",
+                    "description": "%extension.pqtest.config.pqtest.location.description%"
                 },
-                "powerquery.sdk.features.useServiceHost": {
+                "powerquery.sdk.tools.version": {
                     "scope": "machine-overridable",
-                    "type": "boolean",
-                    "default": false,
-                    "description": "%extension.pqtest.config.features.useServiceHost%"
+                    "type": "string",
+                    "order": 71,
+                    "description": "The current version of the pqTest."
                 }
             }
         },
