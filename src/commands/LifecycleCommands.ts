@@ -92,12 +92,12 @@ export class LifecycleCommands implements IDisposable {
             // when PqTestVersion changed in the mode non-customized version tag, users might have it updated
             // thus we need to compare it with current expected version and reset it back the one we expected
             if (
-                ExtensionConfigurations.externalsVersionTag !== "Customized" &&
+                ExtensionConfigurations.externalsVersionTag !== "Custom" &&
                 this.currentPqTestVersion !== ExtensionConfigurations.PQTestVersion
             ) {
                 void ExtensionConfigurations.setPQTestVersion(this.currentPqTestVersion);
             } else if (
-                ExtensionConfigurations.externalsVersionTag == "Customized" &&
+                ExtensionConfigurations.externalsVersionTag == "Custom" &&
                 this.currentPqTestVersion !== ExtensionConfigurations.PQTestVersion
             ) {
                 // need to trigger debounced manuallyUpdatePqTest

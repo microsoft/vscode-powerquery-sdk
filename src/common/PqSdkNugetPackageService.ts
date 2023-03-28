@@ -86,7 +86,7 @@ export class PqSdkNugetPackageService {
             );
         }
 
-        if (ExtensionConfigurations.externalsVersionTag === "Customized") {
+        if (ExtensionConfigurations.externalsVersionTag === "Custom") {
             // need to find the closest version among the result list:
             const expectedNugetVersion: NugetVersions = NugetVersions.createFromFuzzyVersionString(
                 ExtensionConfigurations.PQTestVersion || ExtensionConstants.SuggestedPqTestNugetVersion,

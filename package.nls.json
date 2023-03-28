@@ -12,7 +12,7 @@
     "extension.pqtest.config.externals.msbuildPath.description": "Local path to msbuild.exe installation folder.",
     "extension.pqtest.config.externals.nugetPath.description": "Local path to nuget.exe installation folder.",
     "extension.pqtest.config.externals.nugetFeed.description": "Suggested nuget feed URL.",
-    "extension.pqtest.config.externals.versionTag.description": "The version tag of the PQ Sdk tools to be seized.",
+    "extension.pqtest.config.externals.versionTag.description": "The version tag of the PQ SDK tools to be downloaded.",
     "extension.pqtest.config.externals.versionTag.recommended.description": "The stable version",
     "extension.pqtest.config.externals.versionTag.latest.description": "The latest version",
     "extension.pqtest.config.externals.versionTag.customized.description": "Use a user provided version value",

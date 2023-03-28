@@ -183,7 +183,7 @@
                     "enum": [
                         "Recommended",
                         "Latest",
-                        "Customized"
+                        "Custom"
                     ],
                     "enumDescriptions": [
                         "%extension.pqtest.config.externals.versionTag.recommended.description%",
