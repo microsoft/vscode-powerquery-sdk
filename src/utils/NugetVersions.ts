@@ -134,6 +134,48 @@ export class NugetVersions {
         );
     }
 
+    public static distance(l: NugetVersions, r: NugetVersions): number {
+        const majorDist: number = NugetVersions.compareIdentifiers(l.major, r.major) * 1e6;
+
+        if (majorDist !== 0) {
+            return majorDist;
+        } else {
+            const minorDist: number = NugetVersions.compareIdentifiers(l.minor, r.minor) * 1e3;
+
+            if (minorDist !== 0) {
+                return minorDist;
+            }
+
+            return NugetVersions.compareIdentifiers(l.patch, r.patch);
+        }
+    }
+
+    public static findClosetAmong(sortedVersionArr: NugetVersions[], expectedVersion: NugetVersions): NugetVersions {
+        if (sortedVersionArr.length === 0) {
+            return NugetVersions.ZERO_VERSION;
+        } else if (sortedVersionArr.length === 1) {
+            return sortedVersionArr[0];
+        }
+
+        let closestVersion: NugetVersions = sortedVersionArr[0];
+        let minDistance: number = NugetVersions.distance(expectedVersion, closestVersion);
+
+        for (let i: number = 1; i < sortedVersionArr.length; i++) {
+            const distance: number = NugetVersions.distance(expectedVersion, sortedVersionArr[i]);
+
+            if (distance < 0) {
+                break;
+            }
+
+            if (distance <= minDistance) {
+                closestVersion = sortedVersionArr[i];
+                minDistance = distance;
+            }
+        }
+
+        return closestVersion;
+    }
+
     private static compareIdentifiers(l: string, r: string): number {
         const isLNumber: boolean = NumericRegExp.test(l);
         const isRNumber: boolean = NumericRegExp.test(r);

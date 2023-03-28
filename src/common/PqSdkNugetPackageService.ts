@@ -48,7 +48,9 @@ export class PqSdkNugetPackageService {
 
     /**
      * Return a list of nuget versions less or equal to `options.maximumNugetVersion` if it got specified
-     * Otherwise, return the whole list.
+     * Otherwise,
+     *      return the latest version in `Latest` version tag mode
+     *      return the closest version in `Customized` version tag mode
      * @param options
      */
     public async findNullableNewPqSdkVersion(
@@ -58,9 +60,15 @@ export class PqSdkNugetPackageService {
     ): Promise<string | undefined> {
         let sortedNugetVersions: NugetVersions[];
 
-        // always restrain the version found beneath the MaximumPqTestNugetVersion
-        if (!options.maximumNugetVersion) {
-            options.maximumNugetVersion = this.nullableMaximumPqTestNugetVersion;
+        if (ExtensionConfigurations.externalsVersionTag === "Recommended") {
+            // force limiting the maximum versions of the nuget list result
+            if (!options.maximumNugetVersion) {
+                // always restrain the version found beneath the MaximumPqTestNugetVersion
+                options.maximumNugetVersion = this.nullableMaximumPqTestNugetVersion;
+            }
+        } else {
+            // in other cases, always force returning the whole list of the nuget versions
+            options = {};
         }
 
         if (ExtensionConfigurations.nugetPath) {
@@ -78,7 +86,21 @@ export class PqSdkNugetPackageService {
             );
         }
 
-        if (sortedNugetVersions.length && !sortedNugetVersions[sortedNugetVersions.length - 1].isZero()) {
+        if (ExtensionConfigurations.externalsVersionTag === "Custom") {
+            // need to find the closest version among the result list:
+            const expectedNugetVersion: NugetVersions = NugetVersions.createFromFuzzyVersionString(
+                ExtensionConfigurations.PQTestVersion || ExtensionConstants.SuggestedPqTestNugetVersion,
+            );
+
+            const closestVersion: NugetVersions = NugetVersions.findClosetAmong(
+                sortedNugetVersions,
+                expectedNugetVersion,
+            );
+
+            return closestVersion === NugetVersions.ZERO_VERSION
+                ? ExtensionConstants.SuggestedPqTestNugetVersion
+                : closestVersion.toString();
+        } else if (sortedNugetVersions.length && !sortedNugetVersions[sortedNugetVersions.length - 1].isZero()) {
             return sortedNugetVersions[sortedNugetVersions.length - 1].toString();
         } else {
             return undefined;

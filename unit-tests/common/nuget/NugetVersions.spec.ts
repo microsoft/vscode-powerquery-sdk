@@ -10,6 +10,31 @@ import { NugetVersions } from "../../../src/utils/NugetVersions";
 
 const expect = chai.expect;
 
+const dummyNugetVersionsArrV1 = [
+    NugetVersions.createFromReleasedVersionString("2.2.1"),
+    NugetVersions.createFromReleasedVersionString("1.1.0"),
+    NugetVersions.createFromReleasedVersionString("1.3.0"),
+    NugetVersions.createFromReleasedVersionString("1.2.0"),
+    NugetVersions.createFromReleasedVersionString("2.0.0"),
+    NugetVersions.createFromReleasedVersionString("2.1.1"),
+    NugetVersions.createFromReleasedVersionString("2.1.0"),
+    NugetVersions.createFromReleasedVersionString("1.2.1"),
+    NugetVersions.createFromReleasedVersionString("1.0.0"),
+    NugetVersions.createFromReleasedVersionString("2.2.0"),
+].sort(NugetVersions.compare);
+
+const dummyNugetVersionsArrV2 = [
+    NugetVersions.createFromReleasedVersionString("2.116.201"),
+    NugetVersions.createFromReleasedVersionString("2.114.4"),
+    NugetVersions.createFromReleasedVersionString("2.112.4"),
+    NugetVersions.createFromReleasedVersionString("2.111.5"),
+    NugetVersions.createFromReleasedVersionString("2.111.3"),
+    NugetVersions.createFromReleasedVersionString("2.110.3"),
+    NugetVersions.createFromReleasedVersionString("2.110.2"),
+    NugetVersions.createFromReleasedVersionString("2.110.1"),
+    NugetVersions.createFromReleasedVersionString("2.109.6"),
+].sort(NugetVersions.compare);
+
 describe("NugetVersions.spec unit testes", () => {
     it("createFromReleasedVersionString v1", () => {
         const nugetVersions = NugetVersions.createFromReleasedVersionString("2.107.1");
@@ -67,5 +92,99 @@ describe("NugetVersions.spec unit testes", () => {
         expect(nugetVersions.patch).eq("");
         expect(nugetVersionsJunior.compare(nugetVersions)).lt(0);
         expect(nugetVersionsSenior.compare(nugetVersions)).gt(0);
+    });
+
+    it("findClosestVersion v1", () => {
+        let expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("1.2.1");
+        let closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV1, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("1");
+        expect(closestNuGetVersion.minor).eq("2");
+        expect(closestNuGetVersion.patch).eq("1");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("1.3.3");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV1, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("1");
+        expect(closestNuGetVersion.minor).eq("3");
+        expect(closestNuGetVersion.patch).eq("0");
+    });
+
+    it("findClosestVersion v2", () => {
+        let expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.114.4");
+        let closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("114");
+        expect(closestNuGetVersion.patch).eq("4");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("116");
+        expect(closestNuGetVersion.patch).eq("201");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("116");
+        expect(closestNuGetVersion.patch).eq("201");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.1");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("109");
+        expect(closestNuGetVersion.patch).eq("6");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.11");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("109");
+        expect(closestNuGetVersion.patch).eq("6");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.110");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("110");
+        expect(closestNuGetVersion.patch).eq("3");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.110.");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("110");
+        expect(closestNuGetVersion.patch).eq("3");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.110.x");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("110");
+        expect(closestNuGetVersion.patch).eq("3");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.110.4");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("110");
+        expect(closestNuGetVersion.patch).eq("3");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.115");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("114");
+        expect(closestNuGetVersion.patch).eq("4");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.115.1000000000000000000");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("114");
+        expect(closestNuGetVersion.patch).eq("4");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.116");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("116");
+        expect(closestNuGetVersion.patch).eq("201");
+
+        expectedNugetVersion = NugetVersions.createFromFuzzyVersionString("2.116.201");
+        closestNuGetVersion = NugetVersions.findClosetAmong(dummyNugetVersionsArrV2, expectedNugetVersion);
+        expect(closestNuGetVersion.major).eq("2");
+        expect(closestNuGetVersion.minor).eq("116");
+        expect(closestNuGetVersion.patch).eq("201");
     });
 });

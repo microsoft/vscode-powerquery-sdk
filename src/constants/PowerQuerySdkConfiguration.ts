@@ -8,7 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { ExtensionConstants, PqModeType } from "./PowerQuerySdkExtension";
+import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -145,6 +145,16 @@ export const ExtensionConfigurations = {
         return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsNugetFeed);
     },
 
+    get externalsVersionTag(): SdkExternalsVersionTags {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsVersionTag,
+        ) as SdkExternalsVersionTags;
+    },
+
     setPQTestLocation(
         pqTestLocation: string | undefined,
         configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
@@ -171,6 +181,30 @@ export const ExtensionConfigurations = {
             // adaptability of a deprecated config item
             config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestLocation)
         );
+    },
+
+    setPQTestVersion(
+        pqTestVersion: string | undefined,
+        configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
+    ): Thenable<void> {
+        // we should not cache it
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.update(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestVersion,
+            pqTestVersion,
+            configurationTarget,
+        );
+    },
+    get PQTestVersion(): string | undefined {
+        // we should not cache it
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestVersion);
     },
 
     setDefaultExtensionLocation(

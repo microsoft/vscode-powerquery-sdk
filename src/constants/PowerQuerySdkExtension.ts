@@ -11,6 +11,7 @@ import * as os from "os";
 const ExtensionId: string = "vscode-powerquery-sdk";
 
 export type PqModeType = "Power Query" | "SDK";
+export type SdkExternalsVersionTags = "Recommended" | "Latest" | "Custom";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 const ConfigNames = {
@@ -35,7 +36,9 @@ const ConfigNames = {
             externalsMsbuildPath: "externals.msbuildPath" as const,
             externalsNugetPath: "externals.nugetPath" as const,
             externalsNugetFeed: "externals.nugetFeed" as const,
+            externalsVersionTag: "externals.versionTag" as const,
             pqTestLocation: "tools.location" as const,
+            pqTestVersion: "tools.version" as const,
             defaultExtensionLocation: "defaultExtension" as const,
             defaultQueryFileLocation: "defaultQueryFile" as const,
             featureUseServiceHost: "features.useServiceHost" as const,
