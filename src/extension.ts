@@ -66,6 +66,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // lifecycleCommands instance has not been a disposable yet
     const lifecycleCommands: LifecycleCommands = new LifecycleCommands(
         vscExtCtx,
+        globalEventBus,
         pqSdkNugetPackageService,
         disposablePqTestServices,
         pqSdkOutputChannel,
