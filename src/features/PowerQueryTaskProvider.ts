@@ -81,10 +81,7 @@ const makePQXCompileTaskDefinition: PowerQueryTaskDefinition = {
     type: ExtensionConstants.PowerQueryTaskType,
     operation: "compile",
     label: extensionI18n["PQSdk.taskProvider.makePQx.compile.label"],
-    additionalArgs: vscode.workspace.workspaceFolders?.[0]
-        ? // make sure PQXCompile use currentDirectly\bin as the output folder
-          ["-d", path.join(vscode.workspace.workspaceFolders?.[0].uri.fsPath, "bin")]
-        : [],
+    additionalArgs: [],
 };
 
 interface PendingTaskResolver {

@@ -1,4 +1,4 @@
 {
   "powerquery.sdk.defaultQueryFile": "${workspaceFolder}\\${workspaceFolderBasename}.query.pq",
-  "powerquery.sdk.defaultExtension": "${workspaceFolder}\\bin\\${workspaceFolderBasename}.mez"
+  "powerquery.sdk.defaultExtension": "${workspaceFolder}\\bin\\AnyCPU\\Debug\\${workspaceFolderBasename}.mez"
 }
