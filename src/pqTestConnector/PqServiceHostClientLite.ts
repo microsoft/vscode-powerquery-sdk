@@ -232,7 +232,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 ],
             );
 
-            if (result.Kind === 0 && result.Result.modifiedDocument && currentEditor) {
+            if (result.Kind === 0 && result.CompletedResult.modifiedDocument && currentEditor) {
                 const theCurrentEditor: vscode.TextEditor = currentEditor as vscode.TextEditor;
                 const firstLine: vscode.TextLine = theCurrentEditor.document.lineAt(0);
 
@@ -243,7 +243,7 @@ export class PqServiceHostClientLite extends RpcClient implements Omit<IPQServic
                 const textRange: vscode.Range = new vscode.Range(firstLine.range.start, lastLine.range.end);
 
                 void theCurrentEditor.edit((editBuilder: vscode.TextEditorEdit) => {
-                    editBuilder.replace(textRange, result.Result.modifiedDocument);
+                    editBuilder.replace(textRange, result.CompletedResult.modifiedDocument);
                 });
             }
 
