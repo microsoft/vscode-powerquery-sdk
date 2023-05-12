@@ -27,6 +27,7 @@ const dummyNugetVersionsArrV2 = [
     NugetVersions.createFromReleasedVersionString("2.116.201"),
     NugetVersions.createFromReleasedVersionString("2.114.4"),
     NugetVersions.createFromReleasedVersionString("2.112.4"),
+    NugetVersions.createFromReleasedVersionString("2.112.3"),
     NugetVersions.createFromReleasedVersionString("2.111.5"),
     NugetVersions.createFromReleasedVersionString("2.111.3"),
     NugetVersions.createFromReleasedVersionString("2.110.3"),
@@ -186,5 +187,24 @@ describe("NugetVersions.spec unit testes", () => {
         expect(closestNuGetVersion.major).eq("2");
         expect(closestNuGetVersion.minor).eq("116");
         expect(closestNuGetVersion.patch).eq("201");
+    });
+
+    it("filter out nuget version arr v1", () => {
+        let maximumPqTestNugetVersion: NugetVersions = NugetVersions.createFromFuzzyVersionString("2.112.x");
+        let minimumPqTestNugetVersion: NugetVersions = NugetVersions.createFromFuzzyVersionString("2.110.x");
+
+        let filteredVersion = dummyNugetVersionsArrV2;
+
+        filteredVersion = filteredVersion.filter((one: NugetVersions) => one.compare(maximumPqTestNugetVersion) <= 0);
+
+        filteredVersion = filteredVersion.filter((one: NugetVersions) => minimumPqTestNugetVersion.compare(one) <= 0);
+
+        expect(filteredVersion.length === 4).ok;
+        expect(filteredVersion[0].major).eq("2");
+        expect(filteredVersion[0].minor).eq("111");
+        expect(filteredVersion[0].patch).eq("3");
+        expect(filteredVersion[3].major).eq("2");
+        expect(filteredVersion[3].minor).eq("112");
+        expect(filteredVersion[3].patch).eq("4");
     });
 });

@@ -115,6 +115,7 @@ export class NugetLiteHttpService {
         packageName: string,
         options: {
             maximumNugetVersion?: NugetVersions;
+            minimumNugetVersion?: NugetVersions;
         } = {},
     ): Promise<NugetVersions[]> {
         const preReleasedVersionIncludeVersions: { versions: string[] } = await this.getPackageReleasedVersions(
@@ -131,6 +132,15 @@ export class NugetLiteHttpService {
             // filter out any version gt maximumNugetVersion in sortedNugetVersions
             sortedNugetVersions = sortedNugetVersions.filter(
                 (one: NugetVersions) => one.compare(maximumNugetVersion) <= 0,
+            );
+        }
+
+        if (options.minimumNugetVersion) {
+            const minimumNugetVersion: NugetVersions = assertNotNull(options.minimumNugetVersion);
+
+            // filter out any version gt maximumNugetVersion in sortedNugetVersions
+            sortedNugetVersions = sortedNugetVersions.filter(
+                (one: NugetVersions) => minimumNugetVersion.compare(one) <= 0,
             );
         }
 
