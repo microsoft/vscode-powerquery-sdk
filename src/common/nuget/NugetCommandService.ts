@@ -141,6 +141,7 @@ export class NugetCommandService {
         packageName: string,
         options: {
             maximumNugetVersion?: NugetVersions;
+            minimumNugetVersion?: NugetVersions;
         } = {},
     ): Promise<NugetVersions[]> {
         let sortedNugetVersions: NugetVersions[] = (
@@ -153,6 +154,15 @@ export class NugetCommandService {
             // filter out any version gt maximumNugetVersion in sortedNugetVersions
             sortedNugetVersions = sortedNugetVersions.filter(
                 (one: NugetVersions) => one.compare(maximumNugetVersion) <= 0,
+            );
+        }
+
+        if (options.minimumNugetVersion) {
+            const minimumNugetVersion: NugetVersions = assertNotNull(options.minimumNugetVersion);
+
+            // filter out any version gt maximumNugetVersion in sortedNugetVersions
+            sortedNugetVersions = sortedNugetVersions.filter(
+                (one: NugetVersions) => minimumNugetVersion.compare(one) <= 0,
             );
         }
 

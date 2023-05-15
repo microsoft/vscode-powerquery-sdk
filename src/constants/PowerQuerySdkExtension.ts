@@ -65,9 +65,15 @@ const NugetBaseFolder: string = ".nuget" as const;
 const InternalMsftPqSdkToolsNugetName: string = "Microsoft.PowerQuery.SdkTools" as const;
 const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
 /**
- *  2.114 or 2.114.x wil limit the version of the sdkTool seized beneath 2.115
+ *  Inclusive maximum nuget version
+ *  2.117 or 2.117.x wil limit the version of the sdkTool seized beneath 2.118
  */
 const MaximumPqTestNugetVersion: string = "2.114.x" as const;
+/**
+ *  Exclusive minimum nuget version
+ *  2.114 or 2.114.x wil limit the version of the sdkTool seized above 2.114.x like 2.115.0
+ */
+const MinimumPqTestNugetVersion: string = "2.112.x" as const;
 /**
  * A suggestedPqTestNugetVersion that would be used as the initially tried pqTest version
  * thus, make sure it is lower than `MaximumPqTestNugetVersion` if it were specified
@@ -111,6 +117,7 @@ export const ExtensionConstants = Object.freeze({
     PublicMsftPqSdkToolsNugetName,
     SuggestedPqTestNugetVersion,
     MaximumPqTestNugetVersion,
+    MinimumPqTestNugetVersion,
     PqTestSubPath,
     MakePQXExecutableName,
     buildNugetPackageSubPath,

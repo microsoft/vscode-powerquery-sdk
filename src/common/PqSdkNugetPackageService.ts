@@ -25,6 +25,9 @@ export class PqSdkNugetPackageService {
     private readonly nullableMaximumPqTestNugetVersion?: NugetVersions = ExtensionConstants.MaximumPqTestNugetVersion
         ? NugetVersions.createFromFuzzyVersionString(ExtensionConstants.MaximumPqTestNugetVersion)
         : undefined;
+    private readonly nullableMinimumPqTestNugetVersion?: NugetVersions = ExtensionConstants.MinimumPqTestNugetVersion
+        ? NugetVersions.createFromFuzzyVersionString(ExtensionConstants.MinimumPqTestNugetVersion)
+        : undefined;
 
     constructor(
         readonly vscExtCtx: vscode.ExtensionContext,
@@ -56,6 +59,7 @@ export class PqSdkNugetPackageService {
     public async findNullableNewPqSdkVersion(
         options: {
             maximumNugetVersion?: NugetVersions;
+            minimumNugetVersion?: NugetVersions;
         } = {},
     ): Promise<string | undefined> {
         let sortedNugetVersions: NugetVersions[];
@@ -65,6 +69,11 @@ export class PqSdkNugetPackageService {
             if (!options.maximumNugetVersion) {
                 // always restrain the version found beneath the MaximumPqTestNugetVersion
                 options.maximumNugetVersion = this.nullableMaximumPqTestNugetVersion;
+            }
+
+            if (!options.minimumNugetVersion) {
+                // always restrain the version found above the MinimumPqTestNugetVersion
+                options.minimumNugetVersion = this.nullableMinimumPqTestNugetVersion;
             }
         } else {
             // in other cases, always force returning the whole list of the nuget versions
