@@ -40,7 +40,7 @@ export module PqSdkNugetPackages {
         return path.resolve(NugetPackagesDirectory, ...pqTestSubPath);
     }
 
-    export async function getAllPQSdkVersions(): Promise<NugetVersions[]> {
+    export async function getAllPQSdkVersionsBelowItsMaximumNugetVersion(): Promise<NugetVersions[]> {
         const releasedVersions = await nugetHttpService.getSortedPackageReleasedVersions(
             PublicMsftPqSdkToolsNugetName,
             {
@@ -53,11 +53,14 @@ export module PqSdkNugetPackages {
         return releasedVersions;
     }
 
-    export async function assertPqSdkToolExisting(): Promise<void> {
+    /** *
+     *  Return the full path of the PQSdkTool folder
+     */
+    export async function assertPqSdkToolExisting(): Promise<string> {
         let i = 0;
 
         if (!latestPQSdkNugetVersion) {
-            const allNugetVersions: NugetVersions[] = await getAllPQSdkVersions();
+            const allNugetVersions: NugetVersions[] = await getAllPQSdkVersionsBelowItsMaximumNugetVersion();
 
             // eslint-disable-next-line require-atomic-updates
             latestPQSdkNugetVersion = allNugetVersions[allNugetVersions.length - 1];
@@ -79,10 +82,12 @@ export module PqSdkNugetPackages {
             if (fs.existsSync(expectedPqTestExePath)) {
                 expect(true).true;
 
-                return;
+                return path.dirname(mayBeExpectedPQSDKToolExePath!)!;
             }
         }
 
         expect(false).true;
+        // I need this line to please tsc and its return type check
+        throw "never reached";
     }
 }

@@ -6,6 +6,7 @@
  */
 
 import * as chai from "chai";
+import * as path from "path";
 
 import { Workbench } from "vscode-extension-tester";
 
@@ -21,7 +22,9 @@ import {
 } from "../utils";
 
 import { delay } from "../../utils/pids";
+import { fromEvents } from "../../common/promises/fromEvents";
 import { makeOneTmpDir } from "../../utils/osUtils";
+import { PqTestConnectors } from "../utils/pqTestConnectors";
 import { tryRemoveDirectoryRecursively } from "../../utils/files";
 
 const expect = chai.expect;
@@ -107,7 +110,7 @@ describe("New extension project Tests", () => {
             const workbench = new Workbench();
             await VscSettings.ensureUseServiceHostEnabled(workbench);
 
-            await PqSdkNugetPackages.assertPqSdkToolExisting();
+            const pqSdkToolFullPath: string = await PqSdkNugetPackages.assertPqSdkToolExisting();
 
             await ConnectorProjects.createOneNewExtensionProject(workbench, newExtensionName, oneTmpDir!);
 
@@ -125,42 +128,62 @@ describe("New extension project Tests", () => {
             // await few time to ensure new mez got built
             await delay(15e3);
 
-            // Clear ALL credentials
-            await VscSideBars.clickClearAllCredentials(pqSdkViewSection);
+            // connect to the running pqServiceHost
+            const e2eRpcClient: PqTestConnectors.E2EPqTestClient =
+                await PqTestConnectors.createPqServiceHostClientLiteAndConnect(pqSdkToolFullPath);
 
-            await VscSideBars.clickSetCredentialAndPick(pqSdkViewSection, [
-                newExtensionName,
-                `${newExtensionName}.query.pq`,
-                "Anonymous",
-            ]);
+            // activate the e2e test service and subscribe debugger events of Flow events
+            await e2eRpcClient.RegisterDebuggerListener();
 
-            // await few time to ensure notification popped up
-            await delay(10e3);
-            // New Anonymous credential has been generated successfully
-            await VscNotifications.assetNotificationsLength(1);
+            try {
+                // Clear ALL credentials
+                await VscSideBars.clickClearAllCredentials(pqSdkViewSection);
 
-            await VscSideBars.openFileFromDefaultViewSection(
-                newExtensionName,
-                `${newExtensionName}.query.pq`,
-                workbench,
-            );
+                // manually set an anonymous credential
+                await e2eRpcClient.SetDefaultAnonymousCredentialByPath(
+                    path.join(oneTmpDir!, newExtensionName),
+                    newExtensionName,
+                );
 
-            await VscEditors.evalCurPqOfAnEditor(`${newExtensionName}.query.pq`, workbench);
+                // await few time to ensure notification popped up
+                await delay(750);
 
-            // PQTest result
+                // list credentials
+                await VscSideBars.clickListCredentials(pqSdkViewSection);
 
-            // await few time to ensure pqtest result popped up
-            await delay(10e3);
+                // open a query file and start to evaluate
+                await VscSideBars.openFileFromDefaultViewSection(
+                    newExtensionName,
+                    `${newExtensionName}.query.pq`,
+                    workbench,
+                );
 
-            await VscEditors.assertPqTestResultEditorExisting(workbench);
+                // subscribe EditQueriesAsync event first before starting the pqServiceHost
+                const editQueriesOpenedPromise: Promise<unknown> = fromEvents(
+                    e2eRpcClient.pqUIFlowEvent,
+                    ["EditQueriesAsync"],
+                    [],
+                );
 
-            const outputView = await VscOutputChannels.bringUpPQSdkOutputChannel();
+                await VscEditors.evalCurPqOfAnEditor(`${newExtensionName}.query.pq`, workbench);
 
-            const currentPqSdkOutputText = await outputView.getText();
-            expect(currentPqSdkOutputText.indexOf(`Hello from ${newExtensionName}: (no message)`)).gt(-1);
-            await outputView.clearText();
+                // PQDesktop UiFlow result
 
-            await VscTitleBar.closeFolder(workbench);
+                // await few time to ensure pqtest result popped up
+                await delay(10e3);
+
+                // we just ensure we got the pqDesktop opened
+                await editQueriesOpenedPromise;
+
+                // send a cancel request to close all opened webviews
+                await e2eRpcClient.CancelAllOpenedWebview();
+
+                await VscTitleBar.closeFolder(workbench);
+            } finally {
+                await e2eRpcClient.DeregisterDebuggerListener();
+
+                e2eRpcClient.dispose();
+            }
         }).timeout(0);
 
         after(() => {

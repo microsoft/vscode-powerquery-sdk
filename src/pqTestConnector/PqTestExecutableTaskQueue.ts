@@ -19,7 +19,7 @@ import {
     Credential,
     ExtensionInfo,
     GenericResult,
-    IPQTestService,
+    IPQTestClient,
 } from "../common/PQTestService";
 import { Disposable, IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
@@ -80,7 +80,7 @@ export class PqTestExecutableDetailedTaskError extends Error {
     }
 }
 
-export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
+export class PqTestExecutableTaskQueue implements IPQTestClient, IDisposable {
     public static readonly ExecutableName: string = "PQTest.exe";
     public static readonly ExecutablePidLockFileName: string = "pqTest.pid";
 
@@ -126,11 +126,11 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         this._disposables.unshift(
             this.globalEventBus.subscribeOneEvent(
                 GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation,
-                this.onPowerQueryTestLocationChanged.bind(this),
+                this.onPowerQueryTestLocationChangedByConfig.bind(this, ExtensionConfigurations),
             ),
         );
 
-        this.onPowerQueryTestLocationChanged();
+        this.onPowerQueryTestLocationChangedByConfig(ExtensionConfigurations);
 
         vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => {
             if (
@@ -387,9 +387,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         return result;
     }
 
-    public onPowerQueryTestLocationChanged(): void {
+    public onPowerQueryTestLocationChangedByConfig(configs: { PQTestLocation: string | undefined }): void {
         // PQTestLocation getter
-        const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+        const nextPQTestLocation: string | undefined = configs.PQTestLocation;
+
         const pqTestExe: string | undefined = this.resolvePQTestPath(nextPQTestLocation);
 
         if (!pqTestExe || !nextPQTestLocation) {
@@ -419,7 +420,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
                 if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
                     // trigger one display extension info task to populate modules in the pq-lang ext
-                    void this.DisplayExtensionInfo();
+                    void this.pqTestService.DisplayExtensionInfo();
                 }
 
                 this.firstTimeReady = false;
@@ -462,59 +463,49 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         );
     }
 
-    public DeleteCredential(): Promise<GenericResult> {
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "delete-credential",
-            additionalArgs: [`--ALL`],
-        });
-    }
+    public readonly pqTestService: IPQTestClient["pqTestService"] = {
+        DeleteCredential: () =>
+            this.doEnqueueOneTask<GenericResult>({
+                operation: "delete-credential",
+                additionalArgs: [`--ALL`],
+            }),
+        DisplayExtensionInfo: () =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            this.doEnqueueOneTask<any>({
+                operation: "info",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            }),
+        ListCredentials: () =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            this.doEnqueueOneTask<any[]>({
+                operation: "list-credential",
+            }),
+        GenerateCredentialTemplate: () =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            this.doEnqueueOneTask<any>({
+                operation: "credential-template",
+                // additionalArgs: [`--authentication-kind ${authenticationKind}`],
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            }),
+        SetCredential: (payloadStr: string) =>
+            this.doEnqueueOneTask<GenericResult>({
+                operation: "set-credential",
+                // additionalArgs: [`${JSON.stringify(payload)}`],
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+                stdinStr: payloadStr,
+            }),
+        SetCredentialFromCreateAuthState: (createAuthState: CreateAuthState) => {
+            // it feels like set-credential task has to wait for the std input
+            let payloadStr: string | undefined = undefined;
 
-    public DisplayExtensionInfo(): Promise<ExtensionInfo[]> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
-            operation: "info",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-        });
-    }
+            let additionalArgs: string[] | undefined = [];
+            let theAuthKind: string = createAuthState.AuthenticationKind;
 
-    public ListCredentials(): Promise<Credential[]> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any[]>({
-            operation: "list-credential",
-        });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public GenerateCredentialTemplate(): Promise<any[]> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
-            operation: "credential-template",
-            // additionalArgs: [`--authentication-kind ${authenticationKind}`],
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-        });
-    }
-
-    public SetCredential(payloadStr: string): Promise<GenericResult> {
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "set-credential",
-            // additionalArgs: [`${JSON.stringify(payload)}`],
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-            stdinStr: payloadStr,
-        });
-    }
-
-    public SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
-        // it feels like set-credential task has to wait for the std input
-        let payloadStr: string | undefined = undefined;
-
-        let additionalArgs: string[] | undefined = [];
-        let theAuthKind: string = createAuthState.AuthenticationKind;
-
-        if (theAuthKind.toLowerCase() === "key") {
-            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
-            payloadStr = `{
+            if (theAuthKind.toLowerCase() === "key") {
+                /* eslint-disable @typescript-eslint/no-non-null-assertion*/
+                payloadStr = `{
                 "AuthenticationKind": "Key",
                 "AuthenticationProperties": {
                     "Key": "${createAuthState.$$KEY$$!}"
@@ -522,10 +513,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-            /* eslint-enable*/
-        } else if (theAuthKind.toLowerCase() === "usernamepassword") {
-            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
-            payloadStr = `{
+                /* eslint-enable*/
+            } else if (theAuthKind.toLowerCase() === "usernamepassword") {
+                /* eslint-disable @typescript-eslint/no-non-null-assertion*/
+                payloadStr = `{
                 "AuthenticationKind": "UsernamePassword",
                 "AuthenticationProperties": {
                     "Username": "${createAuthState.$$USERNAME$$!}",
@@ -534,93 +525,89 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-            /* eslint-enable*/
-        } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
-            additionalArgs.unshift("--interactive");
-        } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {
-            theAuthKind = "Anonymous";
+                /* eslint-enable*/
+            } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
+                additionalArgs.unshift("--interactive");
+            } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {
+                theAuthKind = "Anonymous";
 
-            payloadStr = `{
+                payloadStr = `{
                 "AuthenticationKind": "Anonymous",
                 "AuthenticationProperties": {},
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-        } else if (theAuthKind.toLowerCase() === "windows") {
-            payloadStr = `{
+            } else if (theAuthKind.toLowerCase() === "windows") {
+                payloadStr = `{
                 "AuthenticationKind": "Windows",
                 "AuthenticationProperties": {},
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-        }
+            }
 
-        if (payloadStr === undefined) {
-            // AuthenticationKind must be specified if it's not provided in the json input
-            additionalArgs.unshift(`${theAuthKind}`);
-            additionalArgs.unshift(`-ak`);
-        }
+            if (payloadStr === undefined) {
+                // AuthenticationKind must be specified if it's not provided in the json input
+                additionalArgs.unshift(`${theAuthKind}`);
+                additionalArgs.unshift(`-ak`);
+            }
 
-        // in case latter we turn additionalArgs an empty array, we should set it undefined at that moment
-        if (Array.isArray(additionalArgs) && additionalArgs.length === 0) {
-            additionalArgs = undefined;
-        }
+            // in case latter we turn additionalArgs an empty array, we should set it undefined at that moment
+            if (Array.isArray(additionalArgs) && additionalArgs.length === 0) {
+                additionalArgs = undefined;
+            }
 
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "set-credential",
-            additionalArgs,
-            pathToConnector:
-                createAuthState.PathToConnectorFile ||
-                resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
-            stdinStr: payloadStr,
-        });
-    }
+            return this.doEnqueueOneTask<GenericResult>({
+                operation: "set-credential",
+                additionalArgs,
+                pathToConnector:
+                    createAuthState.PathToConnectorFile ||
+                    resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
+                stdinStr: payloadStr,
+            });
+        },
+        RefreshCredential: () =>
+            this.doEnqueueOneTask<GenericResult>({
+                operation: "refresh-credential",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            }),
+        RunTestBattery: async (pathToQueryFile: string = "") => {
+            // maybe we need to execute the build task before evaluating.
+            await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
-    public RefreshCredential(): Promise<GenericResult> {
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "refresh-credential",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-        });
-    }
+            const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
+            const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
+                ExtensionConfigurations.DefaultQueryFileLocation,
+            );
 
-        const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
+            // todo maybe we could export this lang id to from the lang svc extension
+            if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
+                pathToQueryFile = activeTextEditor.document.uri.fsPath;
+            }
 
-        const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-            ExtensionConfigurations.DefaultQueryFileLocation,
-        );
+            if (!pathToQueryFile && configPQTestQueryFileLocation) {
+                pathToQueryFile = configPQTestQueryFileLocation;
+            }
 
-        // todo maybe we could export this lang id to from the lang svc extension
-        if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
-            pathToQueryFile = activeTextEditor.document.uri.fsPath;
-        }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return this.doEnqueueOneTask<any>({
+                operation: "run-test",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile,
+            });
+        },
+        TestConnection: async () => {
+            // maybe we need to execute the build task before evaluating.
+            await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
-        if (!pathToQueryFile && configPQTestQueryFileLocation) {
-            pathToQueryFile = configPQTestQueryFileLocation;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
-            operation: "run-test",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile,
-        });
-    }
-
-    public async TestConnection(): Promise<GenericResult> {
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
-
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "test-connection",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-        });
-    }
+            return this.doEnqueueOneTask<GenericResult>({
+                operation: "test-connection",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            });
+        },
+    };
 }
