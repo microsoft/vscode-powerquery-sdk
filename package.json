@@ -15,8 +15,7 @@
         "url": "https://github.com/microsoft/vscode-powerquery-sdk/issues"
     },
     "engines": {
-        "node": ">=16.13.2 <17",
-        "npm": ">=8.5.0",
+        "node": ">=18.0.0",
         "vscode": "^1.62.0"
     },
     "capabilities": {
@@ -391,7 +390,7 @@
         "@types/glob": "^8.0.0",
         "@types/gulp": "^4.0.9",
         "@types/mocha": "^9.1.1",
-        "@types/node": "^16.11.65",
+        "@types/node": "^18.19.9",
         "@types/sinon": "^10.0.13",
         "@types/vscode": "^1.62.0",
         "@typescript-eslint/eslint-plugin": "^5.40.0",
