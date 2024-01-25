@@ -7,6 +7,5 @@ module.exports = {
         "@typescript-eslint/prefer-namespace-keyword": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-namespace": "off",
-        "license-header/header": ["error", "../../resources/license-header.js"],
     },
 };
