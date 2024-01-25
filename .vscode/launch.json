@@ -6,6 +6,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug current .ts file",
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "args": [
+                "${file}"
+            ],
+        },
+        {
             "name": "Run Extension",
             "type": "extensionHost",
             "request": "launch",

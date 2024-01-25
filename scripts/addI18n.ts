@@ -6,10 +6,11 @@
  */
 
 import * as fs from "fs";
-import * as gulp from "gulp";
+// import * as gulp from "gulp";
 import * as nls from "vscode-nls-dev";
 import * as path from "path";
 import * as process from "process";
+import * as vfs from "vinyl-fs";
 
 const projectDirectory: string = process.cwd();
 const i18nDirectory: string = path.join(projectDirectory, "localize", "i18n");
@@ -65,8 +66,6 @@ for (const oneLangId of allLangDirectories) {
 
 const supportedLanguages: nls.Language[] = allLangDirectories.map((id: string) => ({ id, folderName: id }));
 
-gulp.src(["package.nls.json"], {
-    cwd: projectDirectory,
-})
+vfs.src(["package.nls.json"], { cwd: projectDirectory })
     .pipe(nls.createAdditionalLanguageFiles(supportedLanguages, path.join("localize", "i18nDist"), "."))
-    .pipe(gulp.dest(".", { cwd: projectDirectory }));
+    .pipe(vfs.dest(".", { cwd: projectDirectory }))

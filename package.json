@@ -406,7 +406,6 @@
         "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-security": "^1.5.0",
         "glob": "^8.0.3",
-        "gulp": "^4.0.2",
         "husky": "^8.0.1",
         "lint-staged": "^13.2.1",
         "mocha": "^9.2.2",
@@ -417,8 +416,9 @@
         "ts-node": "^10.9.1",
         "tsconfig-paths-webpack-plugin": "^3.5.2",
         "typescript": "^4.8.4",
+        "vinyl-fs": "^4.0.0",
         "vscode-extension-tester": "^5.0.0",
-        "vscode-nls-dev": "^4.0.3",
+        "vscode-nls-dev": "^4.0.4",
         "webpack": "^5.76.0",
         "webpack-cli": "^4.10.0"
     },
