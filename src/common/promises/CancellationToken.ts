@@ -52,14 +52,20 @@ export class CancellationToken implements IVscCancellationToken {
         );
     }
 
-    static from(value: { [index: string | symbol]: unknown } | AbortSignal): CancellationToken {
+    // TODO: Review from and fromAbortSignal logic.
+
+    static from(value: { [index: string | symbol]: unknown } | CancellationToken): CancellationToken {
         if (this.isCancellationToken(value as { [index: string | symbol]: unknown })) {
             return value as CancellationToken;
         }
 
+        return CancellationToken.none;
+    }
+
+    static fromAbortSignal(signal: AbortSignal): CancellationToken {
         // todo what!!!, nodeJs.AbortSignal missed onabort ??!! add it to global.d.ts
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const abortSignal: any = value as any;
+        const abortSignal: any = signal as any;
         // const abortSignal: AbortSignal = value as AbortSignal;
 
         const token: CancellationToken = new CancellationToken(InternalActionGetter);

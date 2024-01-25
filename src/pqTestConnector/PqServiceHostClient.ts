@@ -21,7 +21,7 @@ import { ValueEventEmitter } from "../common/ValueEventEmitter";
 export * from "./PqServiceHostClientLite";
 
 export class PqServiceHostClient extends PqServiceHostClientLite implements IPQTestService, IDisposable {
-    private pingTimer: NodeJS.Timer | undefined = undefined;
+    private pingTimer: NodeJS.Timeout | undefined = undefined;
 
     public override get pqServiceHostConnected(): boolean {
         return Boolean(this.pingTimer);
