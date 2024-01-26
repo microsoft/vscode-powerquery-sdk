@@ -56,7 +56,7 @@ export class GlobalEventBus extends DisposableEventEmitter<GlobalEventTypes> imp
 
             this.firstWorkspaceRootFilesWatcher = fs.watch(
                 firstWorkspace.uri.fsPath,
-                (_event: WatchEventType, _filename: string) => {
+                (_event: WatchEventType, _filename: string | null) => {
                     this.emit(GlobalEvents.workspaces.filesChangedAtWorkspace);
                 },
             );

@@ -431,7 +431,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
     }
 
-    protected onPQTestExecutablePidChanged(event: WatchEventType, _filename: string): void {
+    protected onPQTestExecutablePidChanged(event: WatchEventType, _filename: string | Buffer | null): void {
         if (event === "change") {
             // it might be the pid changed
             // if no running pid found, dequeue and execute one pending tasks if any

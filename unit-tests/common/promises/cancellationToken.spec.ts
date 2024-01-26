@@ -32,7 +32,7 @@ describe("Promises::CancellationTokenModule", () => {
 
         it("return the abortController", () => {
             const controller = new AbortController();
-            const token = CancellationToken.from(controller.signal);
+            const token = CancellationToken.fromAbortSignal(controller.signal);
 
             expect(token).instanceof(CancellationToken);
             expect(token.requested).false;

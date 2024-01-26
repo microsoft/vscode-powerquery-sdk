@@ -1,33 +1,33 @@
 name: Gated pull request
 on:
-  workflow_dispatch:
-  pull_request:
-    branches: [ main ]
+    workflow_dispatch:
+    pull_request:
+        branches: [main]
 
 jobs:
-  build-and-test:
-    runs-on: windows-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      - name: setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.14"
-      - run: node -v
-      - run: npm ci
-      - run: npm run audit
-      - run: npm run test:unit-test
-      - run: npm run vsix
-      - name: retry 5 times e2e test cases
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 5
-          command: npm run test:e2e
-      - name: upload VSIX to artifactory
-        uses: actions/upload-artifact@v3
-        with:
-          name: vsix-artifact
-          path: |
-            *.vsix
+    build-and-test:
+        runs-on: windows-latest
+        steps:
+            - name: checkout
+              uses: actions/checkout@v3
+            - name: setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18.15"
+            - run: node -v
+            - run: npm ci
+            - run: npm run audit
+            - run: npm run test:unit-test
+            - run: npm run vsix
+            - name: retry 5 times e2e test cases
+              uses: nick-fields/retry@v2
+              with:
+                  timeout_minutes: 10
+                  max_attempts: 5
+                  command: npm run test:e2e
+            - name: upload VSIX to artifactory
+              uses: actions/upload-artifact@v3
+              with:
+                  name: vsix-artifact
+                  path: |
+                      *.vsix
