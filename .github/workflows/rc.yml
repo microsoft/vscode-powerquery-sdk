@@ -1,94 +1,94 @@
 name: Release candidate
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-    tags:
-      - "v*"
+    workflow_dispatch:
+    push:
+        branches: [main]
+        tags:
+            - "v*"
 
 jobs:
-  build-and-test:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            platform: win32
-            arch: x64
-            npm_config_arch: x64
-#          - os: windows-latest
-#            platform: win32
-#            arch: ia32
-#            npm_config_arch: ia32
-          - os: windows-latest
-            platform: win32
-            arch: arm64
-            npm_config_arch: arm
-#          - os: ubuntu-latest
-#            platform: linux
-#            arch: x64
-#            npm_config_arch: x64
-#          - os: ubuntu-latest
-#            platform: linux
-#            arch: arm64
-#            npm_config_arch: arm64
-#          - os: ubuntu-latest
-#            platform: linux
-#            arch: armhf
-#            npm_config_arch: arm
-#          - os: ubuntu-latest
-#            platform: alpine
-#            arch: x64
-#            npm_config_arch: x64
-#          - os: macos-latest
-#            platform: darwin
-#            arch: x64
-#            npm_config_arch: x64
-#          - os: macos-latest
-#            platform: darwin
-#            arch: arm64
-#            npm_config_arch: arm64
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      - name: setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.14"
-      - run: node -v
-      - run: npm ci
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          there were no target related nodejs codes released to the extensions
-#          thus do not set the npm_config_arch
-#          npm_config_arch: ${{ matrix.npm_config_arch }}
-      - shell: pwsh
-        run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
-      - run: npm run audit
-      - run: npm run test:unit-test
-      - run: npx vsce package --target ${{ env.target }}
-      - name: retry 5 times e2e test cases
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 5
-          command: npm run test:e2e
-      - name: upload VSIX to artifactory
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.target }}
-          path: |
-            *.vsix
-  touch-ado:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: success()
-    steps:
-      - uses: actions/download-artifact@v3
-      - run: echo $(find . -iname *.vsix)
-      - uses: Azure/pipelines@v1.2
-        with:
-          azure-devops-project-url: 'https://dev.azure.com/powerbi/Power%20Query'
-          azure-pipeline-name: 'PowerQuerySdkTools-VSCode-ToolsOfficial' # name of the Azure pipeline to be triggered
-          azure-devops-token: '${{ secrets.PBI_PAT }}'
-          azure-pipeline-variables: '{"GITHUB_BRANCH_REF": "${{ github.ref }}"}' # optional stringified json
+    build-and-test:
+        strategy:
+            matrix:
+                include:
+                    - os: windows-latest
+                      platform: win32
+                      arch: x64
+                      npm_config_arch: x64
+                    #          - os: windows-latest
+                    #            platform: win32
+                    #            arch: ia32
+                    #            npm_config_arch: ia32
+                    - os: windows-latest
+                      platform: win32
+                      arch: arm64
+                      npm_config_arch: arm
+        #          - os: ubuntu-latest
+        #            platform: linux
+        #            arch: x64
+        #            npm_config_arch: x64
+        #          - os: ubuntu-latest
+        #            platform: linux
+        #            arch: arm64
+        #            npm_config_arch: arm64
+        #          - os: ubuntu-latest
+        #            platform: linux
+        #            arch: armhf
+        #            npm_config_arch: arm
+        #          - os: ubuntu-latest
+        #            platform: alpine
+        #            arch: x64
+        #            npm_config_arch: x64
+        #          - os: macos-latest
+        #            platform: darwin
+        #            arch: x64
+        #            npm_config_arch: x64
+        #          - os: macos-latest
+        #            platform: darwin
+        #            arch: arm64
+        #            npm_config_arch: arm64
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: checkout
+              uses: actions/checkout@v3
+            - name: setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18.19"
+            - run: node -v
+            - run: npm ci
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            #          there were no target related nodejs codes released to the extensions
+            #          thus do not set the npm_config_arch
+            #          npm_config_arch: ${{ matrix.npm_config_arch }}
+            - shell: pwsh
+              run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
+            - run: npm run audit
+            - run: npm run test:unit-test
+            - run: npx vsce package --target ${{ env.target }}
+            - name: retry 5 times e2e test cases
+              uses: nick-fields/retry@v2
+              with:
+                  timeout_minutes: 10
+                  max_attempts: 5
+                  command: npm run test:e2e
+            - name: upload VSIX to artifactory
+              uses: actions/upload-artifact@v3
+              with:
+                  name: ${{ env.target }}
+                  path: |
+                      *.vsix
+    touch-ado:
+        runs-on: ubuntu-latest
+        needs: build-and-test
+        if: success()
+        steps:
+            - uses: actions/download-artifact@v3
+            - run: echo $(find . -iname *.vsix)
+            - uses: Azure/pipelines@v1.2
+              with:
+                  azure-devops-project-url: "https://dev.azure.com/powerbi/Power%20Query"
+                  azure-pipeline-name: "PowerQuerySdkTools-VSCode-ToolsOfficial" # name of the Azure pipeline to be triggered
+                  azure-devops-token: "${{ secrets.PBI_PAT }}"
+                  azure-pipeline-variables: '{"GITHUB_BRANCH_REF": "${{ github.ref }}"}' # optional stringified json
