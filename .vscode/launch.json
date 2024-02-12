@@ -9,13 +9,8 @@
             "type": "node",
             "request": "launch",
             "name": "Debug current .ts file",
-            "runtimeArgs": [
-                "-r",
-                "ts-node/register"
-            ],
-            "args": [
-                "${file}"
-            ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "args": ["${file}"]
         },
         {
             "name": "Run Extension",
@@ -32,6 +27,7 @@
             "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
             "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "preLaunchTask": "Develop_Extensions",
+            "sourceMaps": true,
             "env": {
                 "WEBVIEW_DEV_MODE": "true"
             }
