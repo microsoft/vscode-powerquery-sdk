@@ -378,7 +378,8 @@
         "test:e2e:nobuild": "ts-node scripts/test-e2e.ts",
         "test": "npm run test:unit-test && npm run test:e2e",
         "vsix": "npx vsce package --target win32-x64",
-        "code-install": "ts-node scripts/install.ts"
+        "code-install": "ts-node scripts/install.ts",
+        "test-ui": "vscode-test"
     },
     "dependencies": {
         "axios": "^1.1.2",
