@@ -26,6 +26,7 @@ export const AWAIT_INTERVAL: number = 5e3;
 export const extensionId: string = rootPackageJson.name;
 export const extensionVersion: string = rootPackageJson.version;
 export const extensionPublisher: string = rootPackageJson.publisher;
+export const extensionLanguageServiceId: string = ExtensionConstants.PQLanguageServiceExtensionId;
 
 export const homeDirectory = os.homedir();
 export const extensionDevelopmentPath = path.resolve(__dirname, "../../../");

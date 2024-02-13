@@ -70,7 +70,11 @@
         },
         {
             "label": "tasks: watch-tests",
-            "dependsOn": ["npm: watch", "npm: watch-tests"],
+            "dependsOn": [
+                "Watch_VSC_PQ_SDK",
+                "Dev_PQTest_Result_WebView",
+                "npm: watch-tests"
+            ],
             "problemMatcher": []
         }
     ]

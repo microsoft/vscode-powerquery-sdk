@@ -379,7 +379,7 @@
         "test": "npm run test:unit-test && npm run test:e2e",
         "vsix": "npx vsce package --target win32-x64",
         "code-install": "ts-node scripts/install.ts",
-        "test-ui": "vscode-test"
+        "test-ui": "node ./out/src/test/runTest.js"
     },
     "dependencies": {
         "axios": "^1.1.2",

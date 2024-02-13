@@ -9,13 +9,8 @@
             "type": "node",
             "request": "launch",
             "name": "Debug current .ts file",
-            "runtimeArgs": [
-                "-r",
-                "ts-node/register"
-            ],
-            "args": [
-                "${file}"
-            ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "args": ["${file}"]
         },
         {
             "name": "Run Extension",
@@ -43,7 +38,8 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/src/test/suite/index"
+                "--extensionTestsPath=${workspaceFolder}/out/src/test/suite/index",
+                "--extensions-dir=${workspaceFolder}/.vscode-test/extensions"
             ],
             "outFiles": ["${workspaceFolder}/out/**/*.js"],
             "preLaunchTask": "tasks: watch-tests"

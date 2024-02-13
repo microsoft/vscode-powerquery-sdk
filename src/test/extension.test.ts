@@ -6,17 +6,28 @@
  */
 
 import * as assert from "assert";
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from "vscode";
-// import * as myExtension from '../../extension';
+
+import * as TestUtils from "./TestUtils";
+
+import { extensionLanguageServiceId } from "./common";
+
+const languageServiceId: string = extensionLanguageServiceId;
 
 suite("Extension Test Suite", () => {
-    vscode.window.showInformationMessage("Start all tests.");
+    suiteSetup(TestUtils.activateExtension);
 
-    test("Sample test", () => {
-        assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-        assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+    test("Language service extension", async () => {
+        const languageServiceExtension =
+            vscode.extensions.getExtension(languageServiceId) ||
+            assert.fail(`Failed to get language service extension: ${languageServiceId}`);
+
+        if (!languageServiceExtension.isActive) {
+            await languageServiceExtension.activate();
+        }
+
+        await TestUtils.CreateAsyncTestResult(() => {
+            assert.equal(languageServiceExtension.isActive, true, "Language service extension failed to activate");
+        });
     });
 });

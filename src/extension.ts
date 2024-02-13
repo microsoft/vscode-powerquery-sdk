@@ -11,6 +11,7 @@ import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 import { activateMQueryDebug } from "./debugAdaptor/activateMQueryDebug";
 import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "./constants/PowerQuerySdkExtension";
 import { GlobalEventBus } from "./GlobalEventBus";
 import { IDisposable } from "./common/Disposable";
 import { LifecycleCommands } from "./commands/LifecycleCommands";
@@ -24,7 +25,7 @@ import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const vscPowerQuery: any = vscode.extensions.getExtension("powerquery.vscode-powerquery")?.exports;
+    const vscPowerQuery: any = vscode.extensions.getExtension(ExtensionConstants.PQLanguageServiceExtensionId)?.exports;
 
     const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
