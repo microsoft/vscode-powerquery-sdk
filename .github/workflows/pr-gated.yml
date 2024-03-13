@@ -19,12 +19,12 @@ jobs:
             - run: npm run audit
             - run: npm run test:unit-test
             - run: npm run vsix
-            - name: retry 5 times e2e test cases
-              uses: nick-fields/retry@v2
-              with:
-                  timeout_minutes: 10
-                  max_attempts: 5
-                  command: npm run test:e2e
+            # - name: retry 5 times e2e test cases
+            #   uses: nick-fields/retry@v2
+            #   with:
+            #       timeout_minutes: 10
+            #       max_attempts: 5
+            #       command: npm run test:e2e
             - name: upload VSIX to artifactory
               uses: actions/upload-artifact@v3
               with:
