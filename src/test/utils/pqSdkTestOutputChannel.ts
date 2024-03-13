@@ -8,11 +8,21 @@
 import type { PqSdkOutputChannelLight } from "../../features/PqSdkOutputChannel";
 
 export class PqSdkTestOutputChannel implements PqSdkOutputChannelLight {
+    private readonly _lines: string[] = [];
+
     public appendInfoLine(value: string): void {
-        console.info(`\t\t[test] ${value}`);
+        this._lines.push(`\t\t[test][info] ${value}`);
     }
 
     public appendErrorLine(value: string): void {
-        console.error(`\t\t[test] ${value}`);
+        this._lines.push(`\t\t[test][error] ${value}`);
+    }
+
+    public emit(): void {
+        for (const line of this._lines) {
+            console.log(line);
+        }
+
+        this._lines.length = 0;
     }
 }
