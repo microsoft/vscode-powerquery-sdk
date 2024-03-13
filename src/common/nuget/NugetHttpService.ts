@@ -43,7 +43,6 @@ export class NugetHttpService extends NugetLiteHttpService {
 
         setTimeout(async () => {
             try {
-                this.outputChannel?.appendErrorLine(`Timeout when downloading ${packageName} ${packageVersion}`);
                 await removeDirectoryRecursively(oneTmpDir);
             } catch (e: unknown) {
                 this.outputChannel?.appendErrorLine(`Cannot remove ${oneTmpDir} due to ${e}`);
