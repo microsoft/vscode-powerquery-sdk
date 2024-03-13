@@ -13,12 +13,13 @@ import { makeOneTmpDir } from "../../../src/utils/osUtils";
 import { NugetHttpService } from "../../../src/common/nuget/NugetHttpService";
 import { NugetVersions } from "../../../src/utils/NugetVersions";
 import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
+import { PqSdkTestOutputChannel } from "../../../src/test/utils/pqSdkTestOutputChannel";
 
 const expect = chai.expect;
 const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
 
 describe("NugetHttpService unit testes", () => {
-    const nugetHttpService = new NugetHttpService();
+    const nugetHttpService = new NugetHttpService(new PqSdkTestOutputChannel());
 
     it("getPackageReleasedVersions v1", async () => {
         const res = await nugetHttpService.getPackageReleasedVersions(SdkPackageName);

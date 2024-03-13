@@ -12,14 +12,14 @@ import { StreamZipAsync } from "node-stream-zip";
 
 import { makeOneTmpDir } from "../../utils/osUtils";
 import { NugetLiteHttpService } from "./NugetLiteHttpService";
-import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel"; // this pal got vscode modules imported
+import type { PqSdkOutputChannelLight } from "../../features/PqSdkOutputChannel";
 import { removeDirectoryRecursively } from "../../utils/files";
 
 export class NugetHttpService extends NugetLiteHttpService {
     protected override errorHandler: (error: Error) => void = (error: Error) => {
         this.outputChannel?.appendErrorLine(`Failed to request to public nuget endpoints due to ${error}`);
     };
-    constructor(private readonly outputChannel?: PqSdkOutputChannel) {
+    constructor(private readonly outputChannel?: PqSdkOutputChannelLight) {
         super();
     }
 
