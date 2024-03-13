@@ -372,7 +372,7 @@
         "compile-tests": "rimraf out && tsc -p . --outDir out",
         "watch-tests": "rimraf out && tsc -p . -w --outDir out",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
-        "audit": "npm audit --production",
+        "audit": "npm audit --omit=dev",
         "lint": "eslint src --ext ts",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
         "test:e2e": "npm run compile-tests && ts-node scripts/test-e2e.ts",
