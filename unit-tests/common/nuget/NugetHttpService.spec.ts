@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { makeOneTmpDir } from "../../../src/utils/osUtils";
+import { MAX_AWAIT_TIME } from "../../../src/test/common";
 import { NugetHttpService } from "../../../src/common/nuget/NugetHttpService";
 import { NugetVersions } from "../../../src/utils/NugetVersions";
 import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
@@ -24,7 +25,7 @@ describe("NugetHttpService unit testes", () => {
     it("getPackageReleasedVersions v1", async () => {
         const res = await nugetHttpService.getPackageReleasedVersions(SdkPackageName);
         expect(res.versions.length).gt(1);
-    }).timeout(3e4);
+    }).timeout(MAX_AWAIT_TIME);
 
     it("getSortedPackageReleasedVersions v1", async () => {
         const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(SdkPackageName);
@@ -41,7 +42,7 @@ describe("NugetHttpService unit testes", () => {
         expect(_2_110_Versions.length).lt(allVersions.length);
         expect(_2_110_Versions[_2_110_Versions.length - 1].minor).eq("110");
         expect(parseInt(allVersions[_2_110_Versions.length].minor, 10)).gt(110);
-    }).timeout(3e4);
+    }).timeout(MAX_AWAIT_TIME);
 
     it("downloadAndExtractNugetPackage v1", async () => {
         const oneTmpDir = makeOneTmpDir();
@@ -54,5 +55,5 @@ describe("NugetHttpService unit testes", () => {
         expect(fs.existsSync(path.resolve(oneTmpDir, "tools", "PQTest.exe"))).true;
 
         await tryRemoveDirectoryRecursively(oneTmpDir);
-    }).timeout(3e4);
+    }).timeout(MAX_AWAIT_TIME);
 });
