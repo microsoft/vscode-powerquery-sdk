@@ -28,11 +28,14 @@ export class NugetHttpService extends NugetLiteHttpService {
         packageVersion: string,
         outputLocation: string,
     ): Promise<void> {
-        this.outputChannel?.appendInfoLine(`Start to download ${packageName} ${packageVersion}`);
         const oneTmpDir: string = makeOneTmpDir();
-
         const targetFilePath: string = path.join(oneTmpDir, `${packageName}.${packageVersion}.zip`);
-        await this.downloadNugetPackage(packageName, packageVersion, targetFilePath);
+
+        this.outputChannel?.appendInfoLine(`Start to download ${packageName} ${packageVersion}`);
+
+        await this.downloadNugetPackage(packageName, packageVersion, targetFilePath).then(() => {
+            this.outputChannel?.appendInfoLine(`Nuget package download completed.`);
+        });
 
         const zip: StreamZipAsync = new StreamZip.async({ file: targetFilePath });
         await zip.extract(null, outputLocation);
@@ -40,6 +43,7 @@ export class NugetHttpService extends NugetLiteHttpService {
 
         setTimeout(async () => {
             try {
+                this.outputChannel?.appendErrorLine(`Timeout when downloading ${packageName} ${packageVersion}`);
                 await removeDirectoryRecursively(oneTmpDir);
             } catch (e: unknown) {
                 this.outputChannel?.appendErrorLine(`Cannot remove ${oneTmpDir} due to ${e}`);

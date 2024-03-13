@@ -9,10 +9,10 @@ import type { PqSdkOutputChannelLight } from "../../features/PqSdkOutputChannel"
 
 export class PqSdkTestOutputChannel implements PqSdkOutputChannelLight {
     public appendInfoLine(value: string): void {
-        console.info(value);
+        console.info(`\t\t[test] ${value}`);
     }
 
     public appendErrorLine(value: string): void {
-        console.error(value);
+        console.error(`\t\t[test] ${value}`);
     }
 }

@@ -19,7 +19,7 @@ import { PqSdkTestOutputChannel } from "../../../src/test/utils/pqSdkTestOutputC
 const expect = chai.expect;
 const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
 
-describe("NugetHttpService unit testes", () => {
+describe("NugetHttpService unit tests", () => {
     const nugetHttpService = new NugetHttpService(new PqSdkTestOutputChannel());
 
     it("getPackageReleasedVersions v1", async () => {
