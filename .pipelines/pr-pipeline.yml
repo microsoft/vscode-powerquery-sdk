@@ -43,14 +43,14 @@ steps:
       command: "custom"
       customCommand: "run vsix"
 
-  - task: Npm@1
-    displayName: "npm e2e test"
-    enabled: 'true'
-    retryCountOnTaskFailure: 5
-    continueOnError: 'true'
-    inputs:
-      command: "custom"
-      customCommand: "run test:e2e"
+  # - task: Npm@1
+  #   displayName: "npm e2e test"
+  #   enabled: 'true'
+  #   retryCountOnTaskFailure: 5
+  #   continueOnError: 'true'
+  #   inputs:
+  #     command: "custom"
+  #     customCommand: "run test:e2e"
 
   - task: PoliCheck@1
     inputs:

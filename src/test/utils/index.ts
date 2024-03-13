@@ -10,6 +10,7 @@ export { VscEditors } from "./editorUtils";
 export { VscNotifications } from "./notificationUtils";
 export { VscOutputChannels } from "./outputChannelUtils";
 export { PqSdkNugetPackages } from "./pqSdkNugetPackageUtils";
+export { PqSdkTestOutputChannel } from "./pqSdkTestOutputChannel";
 export { VscSettings } from "./settingUtils";
 export { VscSideBars } from "./sideBarUtils";
 export { VscTitleBar } from "./titleBarUtils";

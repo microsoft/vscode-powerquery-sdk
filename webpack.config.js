@@ -11,7 +11,7 @@ module.exports = function (env, argv) {
     return {
         target: "node", // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
         mode: argv.mode === "production" ? "production" : "development", // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
-        devtool: argv.mode === "production" ? undefined : "eval-source-map",
+        devtool: argv.mode === "production" ? undefined : "source-map",
 
         entry: {
             debugAdapter: "./src/debugAdapter.ts",
