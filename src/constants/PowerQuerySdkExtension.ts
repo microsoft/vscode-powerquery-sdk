@@ -68,7 +68,7 @@ const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
  *  Inclusive maximum nuget version
  *  2.117 or 2.117.x wil limit the version of the sdkTool seized beneath 2.118
  */
-const MaximumPqTestNugetVersion: string = "2.128.x" as const;
+const MaximumPqTestNugetVersion: string = "2.130.x" as const;
 /**
  *  Exclusive minimum nuget version
  *  2.114 or 2.114.x wil limit the version of the sdkTool seized above 2.114.x like 2.115.0
@@ -78,7 +78,7 @@ const MinimumPqTestNugetVersion: string = "2.118.x" as const;
  * A suggestedPqTestNugetVersion that would be used as the initially tried pqTest version
  * thus, make sure it is lower than `MaximumPqTestNugetVersion` if it were specified
  */
-const SuggestedPqTestNugetVersion: string = "2.127.1" as const;
+const SuggestedPqTestNugetVersion: string = "2.127.2" as const;
 
 const PqTestSubPath: string[] = [
     `${InternalMsftPqSdkToolsNugetName}.${SuggestedPqTestNugetVersion}`,
