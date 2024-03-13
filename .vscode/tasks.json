@@ -70,7 +70,7 @@
         },
         {
             "label": "tasks: watch-tests",
-            "dependsOn": ["npm: watch", "npm: watch-tests"],
+            "dependsOn": ["Develop_Extensions", "npm: watch-tests"],
             "problemMatcher": []
         }
     ]
