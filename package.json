@@ -362,13 +362,13 @@
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "audit": "npm audit --omit=dev",
         "lint": "eslint src --ext ts",
-        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
-        "test:e2e": "npm run compile-tests && ts-node scripts/test-e2e.ts",
-        "test:e2e:nobuild": "ts-node scripts/test-e2e.ts",
         "test": "npm run test:unit-test && npm run test:e2e",
+        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
+        "test:e2e": "npm run compile-tests && npm run test-ui",
         "vsix": "npx vsce package --target win32-x64",
         "code-install": "ts-node scripts/install.ts",
-        "test-ui": "node ./out/src/test/runTest.js"
+        "test-ui": "node ./out/src/test/runTest.js",
+        "test:e2e:old": "npm run compile-tests && ts-node scripts/test-e2e.ts"
     },
     "dependencies": {
         "axios": "^1.6.7",
@@ -387,7 +387,7 @@
         "@typescript-eslint/parser": "^5.62.0",
         "@vscode/debugadapter": "^1.65.0",
         "@vscode/debugadapter-testsupport": "^1.65.0",
-        "@vscode/test-electron": "^1.6.2",
+        "@vscode/test-electron": "^2.3.9",
         "@vscode/vsce": "^2.24.0",
         "chai": "^4.4.1",
         "eslint": "^8.57.0",
