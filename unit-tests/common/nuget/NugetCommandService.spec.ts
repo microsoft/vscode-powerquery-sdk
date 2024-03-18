@@ -18,7 +18,7 @@ const expect = chai.expect;
 const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
 const InternalNugetFeed = "https://powerbi.pkgs.visualstudio.com/_packaging/PowerBiComponents/nuget/v3/index.json";
 
-describe("NugetCommandService unit testes", () => {
+describe("NugetCommandService unit tests", () => {
     const nugetPath = findExecutable("nuget", [".exe", ""]);
 
     // disable these test cases for the ci due to auth config

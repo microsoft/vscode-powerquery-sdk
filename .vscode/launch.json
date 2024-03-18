@@ -33,14 +33,16 @@
             }
         },
         {
-            "name": "Extension Tests",
+            "name": "Extension UI Tests",
             "type": "extensionHost",
             "request": "launch",
+            "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+                "--extensionTestsPath=${workspaceFolder}/out/src/test/suite/index",
+                "--extensions-dir=${workspaceFolder}/.vscode-test/extensions"
             ],
-            "outFiles": ["${workspaceFolder}/out/**/*.js", "${workspaceFolder}/dist/**/*.js"],
+            "outFiles": ["${workspaceFolder}/out/**/*.js"],
             "preLaunchTask": "tasks: watch-tests"
         }
     ]

@@ -20,7 +20,10 @@ const expect = chai.expect;
 const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
 
 describe("NugetHttpService unit tests", () => {
-    const nugetHttpService = new NugetHttpService(new PqSdkTestOutputChannel());
+    const testOutputChannel = new PqSdkTestOutputChannel();
+    const nugetHttpService = new NugetHttpService(testOutputChannel);
+
+    afterEach(() => testOutputChannel.emit());
 
     it("getPackageReleasedVersions v1", async () => {
         const res = await nugetHttpService.getPackageReleasedVersions(SdkPackageName);

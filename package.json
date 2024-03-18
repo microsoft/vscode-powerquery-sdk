@@ -2,20 +2,19 @@
     "name": "vscode-powerquery-sdk",
     "displayName": "Power Query SDK",
     "description": "Power Query Connector SDK",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "author": "Microsoft Corporation",
     "license": "MIT",
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/microsoft/vscode-powerquery-sdk.git",
-        "directory": "client"
+        "url": "git+https://github.com/microsoft/vscode-powerquery-sdk.git"
     },
     "issues": {
         "url": "https://github.com/microsoft/vscode-powerquery-sdk/issues"
     },
     "engines": {
-        "node": ">=18.0.0 <=18.15.0",
+        "node": ">=18.17.0",
         "vscode": "^1.87.0"
     },
     "capabilities": {
@@ -29,17 +28,6 @@
     "activationEvents": [
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
-        "onCommand:powerquery.sdk.tools.CreateNewProjectCommand",
-        "onCommand:powerquery.sdk.tools.SeizePqTestCommand",
-        "onCommand:powerquery.sdk.tools.SetupCurrentWorkspaceCommand",
-        "onCommand:powerquery.sdk.tools.DeleteCredentialCommand",
-        "onCommand:powerquery.sdk.tools.DisplayExtensionInfoCommand",
-        "onCommand:powerquery.sdk.tools.ListCredentialCommand",
-        "onCommand:powerquery.sdk.tools.GenerateAndSetCredentialCommand",
-        "onCommand:powerquery.sdk.tools.RefreshCredentialCommand",
-        "onCommand:powerquery.sdk.tools.RunTestBatteryCommand",
-        "onCommand:powerquery.sdk.tools.TestConnectionCommand",
-        "onView:powerquery.sdk.tools.LifeCycleTaskTreeView",
         "onWebviewPanel:powerquery.sdk.tools.ResultWebView",
         "onLanguage:powerquery"
     ],
@@ -374,12 +362,13 @@
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "audit": "npm audit --omit=dev",
         "lint": "eslint src --ext ts",
-        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
-        "test:e2e": "npm run compile-tests && ts-node scripts/test-e2e.ts",
-        "test:e2e:nobuild": "ts-node scripts/test-e2e.ts",
         "test": "npm run test:unit-test && npm run test:e2e",
+        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
+        "test:e2e": "npm run compile-tests && npm run test-ui",
         "vsix": "npx vsce package --target win32-x64",
-        "code-install": "ts-node scripts/install.ts"
+        "code-install": "ts-node scripts/install.ts",
+        "test-ui": "node ./out/src/test/runTest.js",
+        "test:e2e:old": "npm run compile-tests && ts-node scripts/test-e2e.ts"
     },
     "dependencies": {
         "axios": "^1.6.7",
@@ -398,7 +387,7 @@
         "@typescript-eslint/parser": "^5.62.0",
         "@vscode/debugadapter": "^1.65.0",
         "@vscode/debugadapter-testsupport": "^1.65.0",
-        "@vscode/test-electron": "^1.6.2",
+        "@vscode/test-electron": "^2.3.9",
         "@vscode/vsce": "^2.24.0",
         "chai": "^4.4.1",
         "eslint": "^8.57.0",

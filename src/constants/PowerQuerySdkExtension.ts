@@ -57,6 +57,7 @@ const ConfigPathToTestConnectionFile: string =
     "}";
 
 const PQLanguageId: string = "powerquery";
+const PQLanguageServiceExtensionId: string = "powerquery.vscode-powerquery";
 const OutputChannelName: string = "Power Query SDK";
 const PowerQueryTaskType: string = PQLanguageId;
 const PQDebugType: string = PowerQueryTaskType;
@@ -109,6 +110,7 @@ export const ExtensionConstants = Object.freeze({
     ConfigPathToConnector,
     ConfigPathToTestConnectionFile,
     PQLanguageId,
+    PQLanguageServiceExtensionId,
     OutputChannelName,
     PowerQueryTaskType,
     PQDebugType,
