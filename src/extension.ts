@@ -7,6 +7,8 @@
 
 import * as vscode from "vscode";
 
+import * as PQLSExt from "./common/vscode-powerquery.api.d";
+
 import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "./common/PQTestService";
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 import { activateMQueryDebug } from "./debugAdaptor/activateMQueryDebug";
@@ -22,10 +24,12 @@ import { PqSdkOutputChannel } from "./features/PqSdkOutputChannel";
 import { PqServiceHostClient } from "./pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
+import { stringifyJson } from "./utils/strings";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const vscPowerQuery: any = vscode.extensions.getExtension(ExtensionConstants.PQLanguageServiceExtensionId)?.exports;
+    const vscPowerQuery: PQLSExt.PowerQueryApi = vscode.extensions.getExtension(
+        ExtensionConstants.PQLanguageServiceExtensionId,
+    )?.exports;
 
     const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
@@ -51,7 +55,9 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
 
         if (theUri) {
-            vscPowerQuery.onModuleLibraryUpdated(theUri.toString(), convertExtensionInfoToLibraryJson(infos));
+            const libraryExports: PQLSExt.LibraryJson = convertExtensionInfoToLibraryJson(infos);
+            pqSdkOutputChannel?.appendDebugLine(`onModuleLibraryUpdated: ${stringifyJson(libraryExports)}`);
+            vscPowerQuery.onModuleLibraryUpdated(theUri.toString(), libraryExports);
         }
     });
 
