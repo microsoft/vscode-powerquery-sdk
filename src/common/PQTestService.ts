@@ -5,6 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as PQLSExt from "./vscode-powerquery.api.d";
+
 import { PQTestTask } from "./PowerQueryTask";
 import type { ValueEventEmitter } from "./ValueEventEmitter";
 
@@ -134,43 +136,33 @@ export interface IPQTestService {
 
 const CommonArgs: string[] = ["--prettyPrint"];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function convertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[]): any[] {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: any[] = [];
+export function convertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[]): PQLSExt.LibraryJson {
+    const libraryExports: PQLSExt.LibraryExportJson[] = [];
 
     for (const oneInfo of extensionInfos) {
         if (oneInfo.Members && Array.isArray(oneInfo.Members)) {
-            for (const oneInfoMemeber of oneInfo.Members) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const one: any = {};
+            for (const oneInfoMember of oneInfo.Members) {
+                // TODO: language extension expects a single member rather than an array.
+                // if (oneInfoMember.Documentation && Array.isArray(oneInfoMember.Documentation)) {
+                //     one.documentation = [];
 
-                one.name = oneInfoMemeber.Name;
-                one.completionItemType = oneInfoMemeber.CompletionItemType;
-                one.isDataSource = oneInfoMemeber.IsDataSource;
-                one.dataType = oneInfoMemeber.DataTypeOrReturnType;
+                //     for (const oneInfoMemberDoc of oneInfoMember.Documentation) {
+                //         one.documentation.push({
+                //             description: oneInfoMemberDoc.Description ?? null,
+                //             longDescription: oneInfoMemberDoc.LongDescription ?? null,
+                //         });
+                //     }
+                // } else {
+                //     one.documentation = null;
+                // }
 
-                if (oneInfoMemeber.Documentation && Array.isArray(oneInfoMemeber.Documentation)) {
-                    one.documentation = [];
+                const functionParameters: PQLSExt.LibraryFunctionParameterJson[] = [];
 
-                    for (const oneInfoMemberDoc of oneInfoMemeber.Documentation) {
-                        one.documentation.push({
-                            description: oneInfoMemberDoc.Description ?? null,
-                            longDescription: oneInfoMemberDoc.LongDescription ?? null,
-                            category: oneInfoMemberDoc.Category ?? null,
-                        });
-                    }
-                } else {
-                    one.documentation = null;
-                }
-
-                if (oneInfoMemeber.FunctionParameters && Array.isArray(oneInfoMemeber.FunctionParameters)) {
-                    one.functionParameters = [];
-
-                    for (const oneInfoMemberPara of oneInfoMemeber.FunctionParameters) {
-                        one.functionParameters.push({
+                if (oneInfoMember.FunctionParameters && Array.isArray(oneInfoMember.FunctionParameters)) {
+                    for (const oneInfoMemberPara of oneInfoMember.FunctionParameters) {
+                        functionParameters.push({
                             name: oneInfoMemberPara.Name,
-                            parameterType: oneInfoMemberPara.ParameterType,
+                            type: oneInfoMemberPara.ParameterType,
                             isRequired: oneInfoMemberPara.IsRequired,
                             isNullable: oneInfoMemberPara.IsNullable,
                             caption: oneInfoMemberPara.Caption ?? null,
@@ -194,16 +186,23 @@ export function convertExtensionInfoToLibraryJson(extensionInfos: ExtensionInfo[
                             enumCaptions: oneInfoMemberPara.EnumCaptions ?? null,
                         });
                     }
-                } else {
-                    one.functionParameters = null;
                 }
 
-                result.push(one);
+                const one: PQLSExt.LibraryExportJson = {
+                    name: oneInfoMember.Name,
+                    documentation: null,
+                    completionItemKind: oneInfoMember.CompletionItemType,
+                    functionParameters: functionParameters.length > 0 ? functionParameters : null,
+                    isDataSource: oneInfoMember.IsDataSource,
+                    type: oneInfoMember.DataTypeOrReturnType,
+                };
+
+                libraryExports.push(one);
             }
         }
     }
 
-    return result;
+    return libraryExports;
 }
 
 export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {

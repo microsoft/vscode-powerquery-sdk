@@ -30,4 +30,6 @@ suite("Extension Test Suite", () => {
             assert.equal(languageServiceExtension.isActive, true, "Language service extension failed to activate");
         });
     });
+
+    // TODO: Add onModuleLibraryUpdated test when language service extension returns a result that can be validated.
 });
