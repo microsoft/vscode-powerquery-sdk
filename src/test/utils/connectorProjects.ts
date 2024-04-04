@@ -9,7 +9,7 @@ import * as chai from "chai";
 import * as fs from "fs";
 import * as path from "path";
 
-import { InputBox, Key, Workbench } from "vscode-extension-tester";
+import { InputBox, Key, Workbench } from "vscode-extension-tester-monaco-page-objects";
 
 import { defaultPqCommandCategory, rootI18n } from "../common";
 import { delay } from "../../utils/pids";

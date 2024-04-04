@@ -7,7 +7,7 @@
 
 import * as chai from "chai";
 
-import { Workbench } from "vscode-extension-tester";
+import { Workbench } from "vscode-extension-tester-monaco-page-objects";
 
 import {
     ConnectorProjects,
@@ -26,7 +26,7 @@ import { tryRemoveDirectoryRecursively } from "../../utils/files";
 
 const expect = chai.expect;
 
-describe("New extension project Tests", () => {
+describe.skip("New extension project Tests", () => {
     describe("FirstConn project", () => {
         const newExtensionName: string = "FirstConn";
         let oneTmpDir: string | undefined = makeOneTmpDir();

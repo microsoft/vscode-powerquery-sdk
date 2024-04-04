@@ -5,7 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { Workbench } from "vscode-extension-tester";
+import { Workbench } from "vscode-extension-tester-monaco-page-objects";
 
 import { PqSdkNugetPackages } from "../utils";
 

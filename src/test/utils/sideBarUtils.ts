@@ -5,7 +5,13 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { DefaultTreeSection, InputBox, SideBarView, ViewSection, Workbench } from "vscode-extension-tester";
+import {
+    DefaultTreeSection,
+    InputBox,
+    SideBarView,
+    ViewSection,
+    Workbench,
+} from "vscode-extension-tester-monaco-page-objects";
 
 import { extensionI18n, rootI18n } from "../common";
 import { delay } from "../../utils/pids";
