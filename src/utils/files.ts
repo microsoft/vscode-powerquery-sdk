@@ -54,11 +54,15 @@ export function tryRemoveDirectoryRecursively(directoryFullName: string): Promis
     });
 }
 
-export function getCtimeOfAFile(fileFullPath: string): Date {
+// The timestamp indicating the last time the file status was changed.
+export function getMtimeOfAFile(fileFullPath: string): Date {
     if (fs.existsSync(fileFullPath)) {
         const fileStats: fs.Stats = fs.statSync(fileFullPath);
 
-        return fileStats.ctime;
+        // ctime: The timestamp indicating the last time the file status was changed.
+        // mtime: The timestamp indicating the last time this file was modified.
+        // so we should use mtime over here.
+        return fileStats.mtime;
     }
 
     return new Date(0);

@@ -10,7 +10,7 @@ import path from "path";
 import vscode from "vscode";
 
 import { getAnyMProjFilesBeneathTheFirstWorkspace, getFirstWorkspaceFolder } from "../utils/vscodes";
-import { getCtimeOfAFile, globFiles } from "../utils/files";
+import { getMtimeOfAFile, globFiles } from "../utils/files";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { findExecutable } from "../utils/executables";
 import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
@@ -33,8 +33,8 @@ export async function executeBuildTaskAndAwaitIfNeeded(
         }
 
         if (currentlyAllMezFiles.length === 1) {
-            const theCtimeOfTheFile: Date = getCtimeOfAFile(currentlyAllMezFiles[0]);
-            needToRebuildBeforeEvaluation = theCtimeOfTheFile <= lastPqRelatedFileTouchedDate;
+            const theMtimeOfTheFile: Date = getMtimeOfAFile(currentlyAllMezFiles[0]);
+            needToRebuildBeforeEvaluation = theMtimeOfTheFile <= lastPqRelatedFileTouchedDate;
         } else {
             needToRebuildBeforeEvaluation = true;
         }

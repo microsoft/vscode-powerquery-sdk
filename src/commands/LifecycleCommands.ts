@@ -44,7 +44,7 @@ import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings
 import { debounce } from "../utils/debounce";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
-import { getCtimeOfAFile } from "../utils/files";
+import { getMtimeOfAFile } from "../utils/files";
 import { IDisposable } from "../common/Disposable";
 import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
@@ -162,7 +162,7 @@ export class LifecycleCommands implements IDisposable {
 
     private intervalTaskHandler: NodeJS.Timeout | undefined;
     private activateIntervalTasks(): void {
-        // update lastCtimeOfMezFileWhoseInfoSeized once its info:static-type-check got re-eval
+        // update lastMtimeOfMezFileWhoseInfoSeized once its info:static-type-check got re-eval
         this.pqTestService.currentExtensionInfos.subscribe(() => {
             const currentPQTestExtensionFileLocation: string | undefined =
                 ExtensionConfigurations.DefaultExtensionLocation;
@@ -172,11 +172,11 @@ export class LifecycleCommands implements IDisposable {
                 : undefined;
 
             if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
-                this.lastCtimeOfMezFileWhoseInfoSeized = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
+                this.lastMtimeOfMezFileWhoseInfoSeized = getMtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.lifecycle.command.update.lastCtimeOfMezFile", {
-                        lastCtimeOfMezFileWhoseInfoSeized: String(this.lastCtimeOfMezFileWhoseInfoSeized.getTime()),
+                        lastCtimeOfMezFileWhoseInfoSeized: String(this.lastMtimeOfMezFileWhoseInfoSeized.getTime()),
                     }),
                 );
             }
@@ -198,7 +198,7 @@ export class LifecycleCommands implements IDisposable {
     }
 
     private currentIncorrectConnectorPathInSettingGotPromptedBefore: boolean = false;
-    private lastCtimeOfMezFileWhoseInfoSeized: Date = new Date(0);
+    private lastMtimeOfMezFileWhoseInfoSeized: Date = new Date(0);
     private onGoingDisplayLatestExtensionInfoCommand:
         | {
               ctime: Date;
@@ -218,14 +218,14 @@ export class LifecycleCommands implements IDisposable {
             (!ExtensionConfigurations.featureUseServiceHost ||
                 (this.pqTestService as PqServiceHostClient).pqServiceHostConnected)
         ) {
-            const currentCtime: Date = getCtimeOfAFile(resolvedPQTestExtensionFileLocation);
+            const currentMtime: Date = getMtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
-            if (currentCtime > this.lastCtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
+            if (currentMtime > this.lastMtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
                 // first check where we got an onGoing one or not,
                 // if the ongGoing one were newer or equaled to the current one, just return
                 if (
                     this.onGoingDisplayLatestExtensionInfoCommand &&
-                    this.onGoingDisplayLatestExtensionInfoCommand.ctime >= currentCtime
+                    this.onGoingDisplayLatestExtensionInfoCommand.ctime >= currentMtime
                 ) {
                     return;
                 }
@@ -233,17 +233,17 @@ export class LifecycleCommands implements IDisposable {
                 // we need to invoke a info task
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.lifecycle.command.detect.newerMezFile", {
-                        currentCtime: String(currentCtime.getTime()),
-                        diffCtime: String(currentCtime.getTime() - this.lastCtimeOfMezFileWhoseInfoSeized.getTime()),
+                        currentCtime: String(currentMtime.getTime()),
+                        diffCtime: String(currentMtime.getTime() - this.lastMtimeOfMezFileWhoseInfoSeized.getTime()),
                     }),
                 );
 
                 this.onGoingDisplayLatestExtensionInfoCommand = {
-                    ctime: currentCtime,
-                    deferred: this.displayLatestExtensionInfoCommand(currentCtime).finally(() => {
-                        if (this.onGoingDisplayLatestExtensionInfoCommand?.ctime === currentCtime) {
+                    ctime: currentMtime,
+                    deferred: this.displayLatestExtensionInfoCommand(currentMtime).finally(() => {
+                        if (this.onGoingDisplayLatestExtensionInfoCommand?.ctime === currentMtime) {
                             this.onGoingDisplayLatestExtensionInfoCommand = undefined;
-                            this.lastCtimeOfMezFileWhoseInfoSeized = currentCtime;
+                            this.lastMtimeOfMezFileWhoseInfoSeized = currentMtime;
                         }
                     }),
                 };
