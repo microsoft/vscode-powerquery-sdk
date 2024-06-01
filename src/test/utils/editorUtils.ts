@@ -6,7 +6,7 @@
  */
 
 import * as chai from "chai";
-import { EditorView, Workbench } from "vscode-extension-tester";
+import { EditorView, Workbench } from "vscode-extension-tester-monaco-page-objects";
 import { extensionI18n, rootI18n } from "../common";
 
 const expect = chai.expect;

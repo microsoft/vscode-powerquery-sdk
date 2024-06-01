@@ -34,7 +34,7 @@ export const extensionInstalledDirectory = path.join(
     homeDirectory,
     ".vscode",
     "extensions",
-    `${extensionPublisher.toLowerCase()}.${extensionId.toLowerCase()}-${extensionVersion.toLowerCase()}`,
+    `${extensionPublisher.toLowerCase()}.${extensionId.toLowerCase()}-${extensionVersion.toLowerCase()}-win32-x64`,
 );
 
 export const NugetBaseFolderName: string = ExtensionConstants.NugetBaseFolder;

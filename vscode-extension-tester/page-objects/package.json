@@ -1,0 +1,33 @@
+{
+  "name": "vscode-extension-tester-monaco-page-objects",
+  "private": true,
+  "description": "Page Objects for Monaco Editor",
+  "main": "out/index.js",
+  "types": "out/index.d.ts",
+  "files": [
+    "out/**/*.js",
+    "out/**/*.d.ts"
+  ],
+  "scripts": {
+    "build": "rimraf out/ && tsc"
+  },
+  "devDependencies": {
+    "@types/clone-deep": "^4.0.4",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^18.19.21",
+    "@types/selenium-webdriver": "^4.1.22",
+    "rimraf": "^5.0.5",
+    "typescript": "*"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "clone-deep": "^4.0.1",
+    "compare-versions": "^6.1.0",
+    "fs-extra": "^11.2.0",
+    "ts-essentials": "^9.4.1"
+  },
+  "peerDependencies": {
+    "selenium-webdriver": ">=4.6.1",
+    "typescript": ">=4.6.2"
+  }
+}

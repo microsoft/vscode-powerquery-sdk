@@ -7,7 +7,7 @@
 
 import * as chai from "chai";
 
-import { Workbench } from "vscode-extension-tester";
+import { Workbench } from "vscode-extension-tester-monaco-page-objects";
 
 const expect = chai.expect;
 

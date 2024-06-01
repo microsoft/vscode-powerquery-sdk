@@ -7,7 +7,7 @@
 import * as path from "path";
 import * as os from "os";
 
-import { ExTester } from "vscode-extension-tester";
+import { ExTester } from "./tester/exTester";
 import { getFirstVsixFileDirectlyBeneathOneDirectory } from "./utils/vsixs";
 
 const theVsixFilePath: string = getFirstVsixFileDirectlyBeneathOneDirectory(process.cwd());
@@ -19,7 +19,7 @@ async function doE2eTest() {
     const extTest = new ExTester(testerResourceFolder);
 
     // Performs all necessary setup: getting VSCode + ChromeDriver into the test instance
-    await extTest.downloadCode();
+    await extTest.downloadCode('stable');
     await extTest.downloadChromeDriver();
 
     // Install the extension into the test instance of VS Code

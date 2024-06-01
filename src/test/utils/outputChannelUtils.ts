@@ -7,7 +7,7 @@
 
 import * as chai from "chai";
 
-import { BottomBarPanel, OutputView } from "vscode-extension-tester";
+import { BottomBarPanel, OutputView } from "vscode-extension-tester-monaco-page-objects";
 
 import { delay } from "../../utils/pids";
 import { pqSdkOutputChannelName } from "../common";
