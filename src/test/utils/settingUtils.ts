@@ -5,7 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { Setting, SettingsEditor, Workbench } from "vscode-extension-tester";
+import { Setting, SettingsEditor, Workbench } from "vscode-extension-tester-monaco-page-objects";
 import { delay } from "../../utils/pids";
 
 export module VscSettings {
