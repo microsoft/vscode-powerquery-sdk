@@ -13,29 +13,31 @@ import { makeOneTmpDir } from "../../../src/utils/osUtils";
 import { MAX_AWAIT_TIME } from "../../../src/test/common";
 import { NugetHttpService } from "../../../src/common/nuget/NugetHttpService";
 import { NugetVersions } from "../../../src/utils/NugetVersions";
-import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 import { PqSdkTestOutputChannel } from "../../../src/test/utils/pqSdkTestOutputChannel";
+import { TestConstants } from "../testConstants";
+import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 
 const expect = chai.expect;
-const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
 
-describe("NugetHttpService unit tests", () => {
+describe(`${TestConstants.ExternalTestFlag} NugetHttpService unit tests`, () => {
     const testOutputChannel = new PqSdkTestOutputChannel();
     const nugetHttpService = new NugetHttpService(testOutputChannel);
 
     afterEach(() => testOutputChannel.emit());
 
     it("getPackageReleasedVersions v1", async () => {
-        const res = await nugetHttpService.getPackageReleasedVersions(SdkPackageName);
+        const res = await nugetHttpService.getPackageReleasedVersions(TestConstants.SdkPackageName);
         expect(res.versions.length).gt(1);
     }).timeout(MAX_AWAIT_TIME);
 
     it("getSortedPackageReleasedVersions v1", async () => {
-        const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(SdkPackageName);
+        const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
+            TestConstants.SdkPackageName,
+        );
         expect(allVersions.length).gt(1);
 
         const _2_110_Versions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
-            SdkPackageName,
+            TestConstants.SdkPackageName,
             {
                 maximumNugetVersion: NugetVersions.createFromFuzzyVersionString("2.110.x"),
             },
@@ -49,10 +51,10 @@ describe("NugetHttpService unit tests", () => {
 
     it("downloadAndExtractNugetPackage v1", async () => {
         const oneTmpDir = makeOneTmpDir();
-        const res = await nugetHttpService.getPackageReleasedVersions(SdkPackageName);
+        const res = await nugetHttpService.getPackageReleasedVersions(TestConstants.SdkPackageName);
         expect(res.versions.length).gt(1);
         const theVersion = res.versions[res.versions.length - 1];
-        await nugetHttpService.downloadAndExtractNugetPackage(SdkPackageName, theVersion, oneTmpDir);
+        await nugetHttpService.downloadAndExtractNugetPackage(TestConstants.SdkPackageName, theVersion, oneTmpDir);
 
         expect(fs.existsSync(path.resolve(oneTmpDir, "Microsoft.PowerQuery.SdkTools.nuspec"))).true;
         expect(fs.existsSync(path.resolve(oneTmpDir, "tools", "PQTest.exe"))).true;
