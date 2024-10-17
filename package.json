@@ -364,6 +364,7 @@
         "lint": "eslint src --ext ts",
         "test": "npm run test:unit-test && npm run test:e2e",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\"",
+        "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\"",
         "test:e2e": "npm run compile-tests && npm run test-ui",
         "vsix": "npx vsce package --target win32-x64",
         "code-install": "ts-node scripts/install.ts",
