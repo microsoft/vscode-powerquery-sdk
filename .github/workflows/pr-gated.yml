@@ -25,6 +25,12 @@ jobs:
                   timeout_minutes: 10
                   max_attempts: 5
                   command: npm run test:e2e
+            - name: Publish Test Results
+              uses: EnricoMi/publish-unit-test-result-action/windows@v2
+              if: always()
+              with:
+                  files: |
+                      test-results.xml
             - name: upload VSIX to artifactory
               uses: actions/upload-artifact@v4
               with:
