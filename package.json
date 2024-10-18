@@ -347,6 +347,7 @@
         ]
     },
     "scripts": {
+        "audit": "npm audit --omit=dev",
         "build": "npm run build:pq-test-result-view",
         "build:pq-test-result-view": "cd webviews/pq-test-result-view && npm run build",
         "clean": "ts-node scripts/clean.ts",
