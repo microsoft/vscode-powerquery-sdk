@@ -40,7 +40,7 @@ module.exports = function (env, argv) {
             rules: [
                 {
                     test: /\.ts$/,
-                    exclude: /node_modules/,
+                    exclude: [/node_modules/, path.resolve(__dirname, "src/test/")],
                     use: [
                         {
                             loader: "ts-loader",

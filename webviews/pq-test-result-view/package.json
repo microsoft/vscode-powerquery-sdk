@@ -10,7 +10,7 @@
         "audit": "npm audit"
     },
     "engines": {
-        "node": ">=18.17.0"
+        "node": ">=20"
     },
     "dependencies": {
         "@fluentui/react": "^8.115.7",
