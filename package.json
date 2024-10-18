@@ -378,7 +378,6 @@
     },
     "devDependencies": {
         "@types/chai": "^4.3.12",
-        "@types/glob": "^8.1.0",
         "@types/gulp": "^4.0.17",
         "@types/mocha": "^10.0.6",
         "@types/node": "^20.14.8",
@@ -396,7 +395,7 @@
         "eslint-plugin-license-header": "^0.4.0",
         "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-security": "^1.7.1",
-        "glob": "^8.1.0",
+        "glob": "^11.0.0",
         "husky": "^8.0.3",
         "lint-staged": "^15.2.10",
         "mocha": "^10.4.0",

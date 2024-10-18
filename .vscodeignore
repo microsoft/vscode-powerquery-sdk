@@ -1,3 +1,4 @@
+.github/
 .pipelines/
 .nuget/
 .idea/
@@ -22,3 +23,6 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 pqTest.pid
+**/test-results.xml
+**/*.mjs
+mochaReporterConfig.json
