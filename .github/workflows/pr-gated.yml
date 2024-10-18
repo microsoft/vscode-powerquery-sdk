@@ -26,7 +26,7 @@ jobs:
                   max_attempts: 5
                   command: npm run test:e2e
             - name: upload VSIX to artifactory
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: vsix-artifact
                   path: |
