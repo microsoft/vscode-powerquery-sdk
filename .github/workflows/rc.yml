@@ -74,7 +74,7 @@ jobs:
             #       max_attempts: 5
             #       command: npm run test:e2e
             - name: upload VSIX to artifactory
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: ${{ env.target }}
                   path: |
@@ -84,7 +84,7 @@ jobs:
         needs: build-and-test
         if: success()
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
             - run: echo $(find . -iname *.vsix)
             - uses: Azure/pipelines@v1.2
               with:
