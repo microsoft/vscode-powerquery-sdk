@@ -12,13 +12,12 @@ import * as path from "path";
 import { findExecutable } from "../../../src/utils/executables";
 import { makeOneTmpDir } from "../../../src/utils/osUtils";
 import { NugetCommandService } from "../../../src/common/nuget/NugetCommandService";
+import { TestConstants } from "../testConstants";
 import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 
 const expect = chai.expect;
-const SdkPackageName = "Microsoft.PowerQuery.SdkTools";
-const InternalNugetFeed = "https://powerbi.pkgs.visualstudio.com/_packaging/PowerBiComponents/nuget/v3/index.json";
 
-describe("NugetCommandService unit tests", () => {
+describe(`${TestConstants.ExternalTestFlag} NugetCommandService unit tests`, () => {
     const nugetPath = findExecutable("nuget", [".exe", ""]);
 
     // disable these test cases for the ci due to auth config
@@ -34,8 +33,8 @@ describe("NugetCommandService unit tests", () => {
         it("getPackageReleasedVersions v1", async () => {
             const res = await nugetCommandService.getPackageReleasedVersions(
                 nugetPath,
-                InternalNugetFeed,
-                SdkPackageName,
+                TestConstants.InternalNugetFeed,
+                TestConstants.SdkPackageName,
             );
 
             expect(res.length).gt(1);
@@ -44,8 +43,8 @@ describe("NugetCommandService unit tests", () => {
         it("downloadAndExtractNugetPackage v1", async () => {
             const res = await nugetCommandService.getPackageReleasedVersions(
                 nugetPath,
-                InternalNugetFeed,
-                SdkPackageName,
+                TestConstants.InternalNugetFeed,
+                TestConstants.SdkPackageName,
             );
 
             expect(res.length).gt(1);
@@ -54,8 +53,8 @@ describe("NugetCommandService unit tests", () => {
 
             await nugetCommandService.downloadAndExtractNugetPackage(
                 nugetPath,
-                InternalNugetFeed,
-                SdkPackageName,
+                TestConstants.InternalNugetFeed,
+                TestConstants.SdkPackageName,
                 theVersionStr,
             );
 
@@ -64,7 +63,7 @@ describe("NugetCommandService unit tests", () => {
                     path.resolve(
                         oneTmpDir,
                         ".nuget",
-                        `${SdkPackageName}.${theVersionStr}`,
+                        `${TestConstants.SdkPackageName}.${theVersionStr}`,
                         `Microsoft.PowerQuery.SdkTools.${theVersionStr}.nupkg`,
                     ),
                 ),
@@ -72,7 +71,13 @@ describe("NugetCommandService unit tests", () => {
 
             expect(
                 fs.existsSync(
-                    path.resolve(oneTmpDir, ".nuget", `${SdkPackageName}.${theVersionStr}`, "tools", "PQTest.exe"),
+                    path.resolve(
+                        oneTmpDir,
+                        ".nuget",
+                        `${TestConstants.SdkPackageName}.${theVersionStr}`,
+                        "tools",
+                        "PQTest.exe",
+                    ),
                 ),
             ).true;
 
