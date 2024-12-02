@@ -366,7 +366,7 @@
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
         "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
         "test-ui": "node ./out/src/test/runTest.js",
-        "vsix": "npx vsce package --target win32-x64",
+        "vsix": "npx @vscode/vsce@latest package --target win32-x64",
         "vscode:prepublish": "npm run package",
         "watch": "webpack --mode development --watch",
         "watch-tests": "rimraf out && tsc -p . -w --outDir out"
@@ -388,7 +388,6 @@
         "@vscode/debugadapter": "^1.65.0",
         "@vscode/debugadapter-testsupport": "^1.65.0",
         "@vscode/test-electron": "^2.4.1",
-        "@vscode/vsce": "^3.2.0",
         "chai": "^4.4.1",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^8.10.0",
