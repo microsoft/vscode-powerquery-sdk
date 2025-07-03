@@ -33,8 +33,8 @@ module.exports = {
                 use: [{ loader: "file-loader" }],
             },
             {
-                test: /\.scss|\.css$/,
-                use: ["style-loader", "css-loader", "sass-loader"],
+                test: /\.css$/,
+                use: ["style-loader", "css-loader"],
             },
             {
                 test: /\.tsx?$/,

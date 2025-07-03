@@ -11,7 +11,7 @@ import { ThemeProvider } from "@fluentui/react/lib/Theme";
 import { useVSCodeContextProps, VSCodeContextProvider } from "./contexts/VscodeContexts";
 import { TestBatteryResultView } from "./views/TestBatteryResultView";
 
-import "./App.scss";
+import "./App.css";
 
 const Entry: React.FC<{}> = React.memo(() => {
     const { latestPqTestResult, fluentTheme } = useVSCodeContextProps();
