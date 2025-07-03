@@ -24,6 +24,7 @@ import { PqSdkOutputChannel } from "./features/PqSdkOutputChannel";
 import { PqServiceHostClient } from "./pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
+import { SchemaManagementService } from "./common/SchemaManagementService";
 import { stringifyJson } from "./utils/strings";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
@@ -46,6 +47,18 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         globalEventBus,
         pqSdkOutputChannel,
     );
+
+    const schemaManagementService: SchemaManagementService = new SchemaManagementService(vscExtCtx, pqSdkOutputChannel);
+
+    // Ensure schema is available on activation if NuGet package exists
+    if (!schemaManagementService.userSettingsSchemaExists()) {
+        const currentVersion: string =
+            ExtensionConfigurations.PQTestVersion || ExtensionConstants.SuggestedPqTestNugetVersion;
+
+        if (pqSdkNugetPackageService.nugetPqSdkExistsSync(currentVersion)) {
+            schemaManagementService.copyUserSettingsSchemaFromNugetPackage(currentVersion);
+        }
+    }
 
     const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
         ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
@@ -77,6 +90,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         pqSdkNugetPackageService,
         disposablePqTestServices,
         pqSdkOutputChannel,
+        schemaManagementService,
     );
 
     const lifeCycleTaskTreeViewDataProvider: LifeCycleTaskTreeView = new LifeCycleTaskTreeView(globalEventBus);

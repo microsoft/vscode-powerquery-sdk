@@ -240,6 +240,12 @@
                 }
             }
         ],
+        "jsonValidation": [
+            {
+                "fileMatch": "*.testsettings.json",
+                "url": "./schemas/UserSettings.schema.json"
+            }
+        ],
         "views": {
             "explorer": [
                 {
