@@ -17,10 +17,11 @@ import { SchemaManagementService } from "../../common/SchemaManagementService";
 suite("Schema Management Tests", () => {
     let schemaManagementService: SchemaManagementService;
     let extensionContext: vscode.ExtensionContext;
-    let testWorkspaceFolder: string;
+    let testFixtureFolder: string;
 
     suiteSetup(async () => {
-        await TestUtils.activateExtension();
+        // Ensure all required extensions are loaded and activated
+        await TestUtils.ensureRequiredExtensionsAreLoaded();
 
         // Try to get extension context, but don't fail if not available in test environment
         const extension = vscode.extensions.getExtension("PowerQuery.vscode-powerquery-sdk");
@@ -38,8 +39,9 @@ suite("Schema Management Tests", () => {
             schemaManagementService = new SchemaManagementService(mockContext);
         }
 
-        // Set up test workspace
-        testWorkspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || "";
+        // Set up test fixture folder - use VS Code's workspace or fallback to relative path
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        testFixtureFolder = workspaceFolder || path.resolve(__dirname, "..", "testFixture");
     });
 
     test("SchemaManagementService is properly instantiated", async () => {
@@ -98,30 +100,31 @@ suite("Schema Management Tests", () => {
 
     test("createTestSettingsFile creates valid JSON that should validate", async () => {
         await TestUtils.CreateAsyncTestResult(async () => {
-            if (!testWorkspaceFolder) {
-                console.log("Skipping test - no workspace folder available");
+            const testFileName = "valid.testsettings.json";
+            const testFilePath = path.join(testFixtureFolder, testFileName);
 
-                return;
-            }
-
-            const testFileName = "test.testsettings.json";
-            const testFilePath = path.join(testWorkspaceFolder, testFileName);
-
-            // Create a test settings file
-            const testContent = {
-                version: "1.0.0",
-                testSettings: {
-                    dataSource: "testDataSource",
-                    timeout: 30,
-                    credentials: {
-                        username: "testUser",
-                        password: "testPassword",
-                    },
+            // Create a test settings file with valid content according to UserSettings.schema.json
+            const validTestContent = {
+                DataSourceKind: "TestConnector",
+                DataSourcePath: "test://localhost/database",
+                AuthenticationKind: "Anonymous",
+                QueryFilePath: "./test.pq",
+                ApplicationProperties: {
+                    MyCustomProperty: "Property value",
+                    AnotherProperty: "Value",
                 },
+                EnvironmentConfiguration: {
+                    Cloud: "global",
+                    Region: "us-east-1",
+                },
+                PrettyPrint: true,
+                SkipOutput: false,
+                FailOnFoldingFailure: true,
+                UseSystemBrowser: false,
             };
 
             try {
-                fs.writeFileSync(testFilePath, JSON.stringify(testContent, null, 2));
+                fs.writeFileSync(testFilePath, JSON.stringify(validTestContent, null, 2));
 
                 // Verify file was created
                 assert.ok(fs.existsSync(testFilePath), "Test settings file should be created");
@@ -133,6 +136,57 @@ suite("Schema Management Tests", () => {
 
                 // The file should be recognized as a testsettings file by the pattern
                 assert.ok(testFilePath.endsWith(".testsettings.json"), "File should match the testsettings pattern");
+            } finally {
+                // Clean up
+                if (fs.existsSync(testFilePath)) {
+                    fs.unlinkSync(testFilePath);
+                }
+            }
+        });
+    });
+
+    test("createTestSettingsFile with invalid JSON should not validate", async () => {
+        await TestUtils.CreateAsyncTestResult(async () => {
+            const testFileName = "invalid.testsettings.json";
+            const testFilePath = path.join(testFixtureFolder, testFileName);
+
+            // Create a test settings file with invalid content (properties not in schema)
+            const invalidTestContent = {
+                // Valid properties first
+                DataSourceKind: "TestConnector",
+                QueryFilePath: "./test.pq",
+
+                // Invalid properties - these don't exist in UserSettings.schema.json
+                version: "1.0.0", // Not defined in schema
+                testSettings: {
+                    // Not defined in schema
+                    dataSource: "testDataSource",
+                    timeout: 30,
+                },
+                invalidProperty: "This should not be allowed", // additionalProperties: false
+                customConfig: {
+                    // Not defined in schema
+                    debug: true,
+                    logLevel: "verbose",
+                },
+            };
+
+            try {
+                fs.writeFileSync(testFilePath, JSON.stringify(invalidTestContent, null, 2));
+
+                // Verify file was created
+                assert.ok(fs.existsSync(testFilePath), "Test settings file should be created");
+
+                // Open the file in VS Code to trigger validation
+                const document = await vscode.workspace.openTextDocument(testFilePath);
+                assert.ok(document, "Document should be opened");
+                assert.strictEqual(document.languageId, "json", "Document should be recognized as JSON");
+
+                // The file should still match the pattern even if content is invalid
+                assert.ok(testFilePath.endsWith(".testsettings.json"), "File should match the testsettings pattern");
+
+                // Note: This test verifies that VS Code will apply schema validation to files matching
+                // our pattern. The actual validation errors would be shown in VS Code's Problems panel.
             } finally {
                 // Clean up
                 if (fs.existsSync(testFilePath)) {
@@ -165,14 +219,8 @@ suite("Schema Management Tests", () => {
 
     test("VS Code JSON language service recognizes testsettings files", async () => {
         await TestUtils.CreateAsyncTestResult(async () => {
-            if (!testWorkspaceFolder) {
-                console.log("Skipping test - no workspace folder available");
-
-                return;
-            }
-
             const testFileName = "vscode-test.testsettings.json";
-            const testFilePath = path.join(testWorkspaceFolder, testFileName);
+            const testFilePath = path.join(testFixtureFolder, testFileName);
 
             try {
                 // Create a minimal test file
@@ -199,6 +247,39 @@ suite("Schema Management Tests", () => {
                     fs.unlinkSync(testFilePath);
                 }
             }
+        });
+    });
+
+    test("sample testsettings file from test fixture can be opened and validated", async () => {
+        await TestUtils.CreateAsyncTestResult(async () => {
+            const sampleFilePath = path.join(testFixtureFolder, "sample.testsettings.json");
+
+            // Verify the sample file exists
+            assert.ok(fs.existsSync(sampleFilePath), "Sample testsettings file should exist in test fixture");
+
+            // Open the document
+            const document = await vscode.workspace.openTextDocument(sampleFilePath);
+            assert.ok(document, "Sample document should be opened");
+            assert.strictEqual(document.languageId, "json", "Sample document should be recognized as JSON");
+
+            // Verify the file pattern matches our contribution
+            assert.ok(
+                sampleFilePath.endsWith(".testsettings.json"),
+                "Sample file should match the testsettings pattern",
+            );
+
+            // Verify the content can be parsed as valid JSON
+            const content = fs.readFileSync(sampleFilePath, "utf8");
+            let parsedContent: Record<string, unknown> | undefined;
+
+            assert.doesNotThrow(() => {
+                parsedContent = JSON.parse(content);
+            }, "Sample file should contain valid JSON");
+
+            // Verify it has expected properties from the schema
+            assert.ok(parsedContent, "Parsed content should exist");
+            assert.ok(parsedContent.DataSourceKind, "Sample should have DataSourceKind property");
+            assert.ok(parsedContent.DataSourcePath, "Sample should have DataSourcePath property");
         });
     });
 

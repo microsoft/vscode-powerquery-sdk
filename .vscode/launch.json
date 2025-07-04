@@ -36,14 +36,9 @@
             "name": "Extension UI Tests",
             "type": "extensionHost",
             "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/src/test/suite/index",
-                "--extensions-dir=${workspaceFolder}/.vscode-test/extensions"
-            ],
-            "outFiles": ["${workspaceFolder}/out/**/*.js"],
-            "preLaunchTask": "tasks: watch-tests"
+            "testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
+            "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+            "preLaunchTask": "npm: compile-tests"
         }
     ]
 }

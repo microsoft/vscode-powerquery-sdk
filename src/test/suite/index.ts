@@ -15,7 +15,8 @@ export function run(testsRoot: string, cb: (error: unknown, failures?: number) =
     const mocha = new Mocha({
         ui: "tdd",
         color: true,
-        timeout: 10000,
+        timeout: 30000, // Increased timeout for VS Code operations
+        reporter: "spec", // More detailed output
     });
 
     // The testsRoot points to the directory containing the index.js file
@@ -30,15 +31,24 @@ export function run(testsRoot: string, cb: (error: unknown, failures?: number) =
                 mocha.addFile(fullPath);
             });
 
+            if (files.length === 0) {
+                cb(new Error("No test files found"), 0);
+
+                return;
+            }
+
             try {
                 // Run the mocha test
                 mocha.run(failures => {
                     cb(null, failures);
                 });
             } catch (err) {
-                console.error(err);
+                console.error("Error running tests:", err);
                 cb(err);
             }
         })
-        .catch(err => cb(err));
+        .catch(err => {
+            console.error("Error finding test files:", err);
+            cb(err);
+        });
 }

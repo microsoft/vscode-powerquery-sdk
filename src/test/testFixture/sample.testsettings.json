@@ -1,0 +1,12 @@
+{
+    "DataSourceKind": "SampleConnector",
+    "DataSourcePath": "sample://localhost/testdb",
+    "AuthenticationKind": "Anonymous",
+    "QueryFilePath": "./sample.pq",
+    "ApplicationProperties": {
+        "Environment": "Test",
+        "Version": "1.0"
+    },
+    "PrettyPrint": true,
+    "SkipOutput": false
+}
