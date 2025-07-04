@@ -18,23 +18,8 @@ suite("Extension Test Suite", () => {
     suiteSetup(TestUtils.ensureRequiredExtensionsAreLoaded);
 
     test("Language service extension", async () => {
-        // Debug: List all available extensions
-        const allExtensions = vscode.extensions.all.map(ext => ext.id);
-
-        console.log(
-            "Available extensions:",
-            allExtensions.filter(id => id.includes("powerquery")),
-        );
-
         const languageServiceExtension = vscode.extensions.getExtension(languageServiceId);
-
-        if (!languageServiceExtension) {
-            console.log(`Language service extension not found: ${languageServiceId}`);
-            console.log("This may be expected in the test environment.");
-            // Don't fail the test if the extension isn't available in test environment
-
-            return;
-        }
+        assert.ok(languageServiceExtension, `Extension not found: ${languageServiceId}`);
 
         if (!languageServiceExtension.isActive) {
             await languageServiceExtension.activate();
