@@ -369,7 +369,6 @@
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "test": "npm run test:unit-test && npm run test:e2e",
         "test:e2e": "npm run compile-tests && vscode-test",
-        "test:e2e:old": "npm run compile-tests && ts-node scripts/test-e2e.ts",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
         "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
         "test-ui": "vscode-test",
@@ -391,6 +390,7 @@
         "@types/node": "^20.14.8",
         "@types/sinon": "^10.0.20",
         "@types/vscode": "^1.95.0",
+        "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "@typescript-eslint/parser": "^8.36.0",
         "@vscode/debugadapter": "^1.65.0",
@@ -417,10 +417,10 @@
         "tsconfig-paths-webpack-plugin": "^4.2.0",
         "typescript": "^4.9.5",
         "vinyl-fs": "^4.0.2",
-        "vscode-extension-tester": "^8.16.2",
         "vscode-nls-dev": "^4.0.4",
         "webpack": "^5.99.9",
-        "webpack-cli": "^6.0.1"
+        "webpack-cli": "^6.0.1",
+        "ws": "^8.18.3"
     },
     "lint-staged": {
         "!(src)/**/*.{ts}": [

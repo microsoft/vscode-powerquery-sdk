@@ -20,7 +20,7 @@ import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 const expect = chai.expect;
 
 describe(`${TestConstants.ExternalTestFlag} NugetHttpService unit tests`, () => {
-    const testOutputChannel = new PqSdkTestOutputChannel();
+    const testOutputChannel = PqSdkTestOutputChannel.getInstance();
     const nugetHttpService = new NugetHttpService(testOutputChannel);
 
     afterEach(() => testOutputChannel.emit());
