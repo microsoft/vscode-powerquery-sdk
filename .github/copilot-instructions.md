@@ -224,7 +224,10 @@ describe("PQTest Regression Tests", () => {
 - `*.mez` - Compiled connector files
 - `*.testsettings.json` - Test configuration files
 - `*.query.pq` - Query files for testing
-- `*.proj`, `*.mproj` - Legacy MSBuild project files
+- `*.proj`, `*.mproj` - MSBuild project files
+- `package.json` - Extension dependencies (root) and webview dependencies (webviews/)
+- `webpack.config.js` - Extension bundling configuration
+- `webviews/pq-test-result-view/config/webpack.*.js` - Webview bundling configuration
 
 ### Naming Conventions
 
@@ -243,15 +246,46 @@ const SuggestedPqTestNugetVersion = "2.139.3";
 const MaximumPqTestNugetVersion = "2.146.x";
 ```
 
+## Project Structure and Build System
+
+### Dual Package Architecture
+
+This project uses a dual package.json structure:
+
+1. **Root package.json** (`/package.json`)
+    - Main extension dependencies and scripts
+    - TypeScript compilation and bundling via Webpack
+    - Test execution and VS Code extension packaging
+    - Manages the core extension functionality
+
+2. **Webview package.json** (`/webviews/pq-test-result-view/package.json`)
+    - React-based webview for displaying pqtest results
+    - Separate build system with Babel/Webpack
+    - FluentUI components for VS Code-consistent UI
+    - Builds to `/webviewDist/pq-test-result-view/`
+
+### Build Dependencies
+
+- Root extension depends on webview build completion
+- `postinstall` script automatically installs webview dependencies
+- `build` script in root calls webview build process
+- Webview has separate dev server for standalone development
+
 ## Common Commands and Tasks
 
 ### Development
 
 ```bash
-npm install          # Install dependencies
-npm run compile      # Compile TypeScript
+# Root level - Extension development
+npm install          # Install dependencies (includes webview)
+npm run compile      # Compile TypeScript extension code
 npm run watch        # Watch mode compilation
-npm run package      # Build VSIX package
+npm run package      # Build VSIX package (includes webview build)
+
+# Webview development (in webviews/pq-test-result-view/)
+npm start           # Start webview dev server on localhost:3001
+npm run build       # Build webview for production
+npm run clean       # Clean webview build artifacts
 ```
 
 ### Testing
@@ -268,3 +302,41 @@ npm run test:e2e:old       # UI Tests with vscode-extension-tester
 - "Watch_VSC_PQ_SDK" - Development build task
 - "Run Extension Tests" - E2E test execution
 - "Dev_PQTest_Result_WebView" - Webview development
+
+### Important Build Notes
+
+- Always run commands from root unless specifically working on webview UI
+- The webview is built into the extension bundle during packaging
+- For webview changes, test both standalone (npm start) and integrated modes
+- Extension activation loads the built webview from `/webviewDist/`
+
+## Troubleshooting Notes
+
+### Common Issues
+
+1. **pqtest.exe not found** - Check NuGet package download and extraction
+2. **JSON parsing errors** - pqtest.exe output might contain non-JSON content
+3. **Timing issues** - UI tests need proper delays for async operations
+4. **Credential management** - Tests may need to clear/reset credentials between runs
+5. **Webview build failures** - Ensure both root and webview dependencies are installed
+6. **React/TypeScript version conflicts** - Webview uses React 17, extension uses different TS/Node versions
+
+### Build System Issues
+
+- **Missing webview assets** - Run `npm run build` from root to build webview
+- **Development workflow** - Use `npm start` in webview directory for hot reload during UI development
+- **Extension packaging** - Webview must be built before creating VSIX package
+
+### Debug Configuration
+
+- VS Code launch configs for debugging extension
+- Debug adapter for M language debugging
+- Output channel: "Power Query SDK" for extension logs
+- Webview dev server runs on localhost:3001 for standalone testing
+
+## Security Considerations
+
+- Credential storage in `%LOCALAPPDATA%/Microsoft/pqtest`
+- Extension handles sensitive authentication data
+- Test environments should use mock/test credentials
+- Avoid storing real connection strings in test files
