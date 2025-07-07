@@ -54,18 +54,6 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: "./public/index.html",
         }),
-        new ESLintPlugin({
-            // Plugin options
-            extensions: ["js", "mjs", "jsx", "ts", "tsx"],
-            eslintPath: require.resolve("eslint"),
-            context: paths.appSrc,
-            // ESLint class options
-            cwd: paths.appPath,
-            resolvePluginsRelativeTo: __dirname,
-            baseConfig: {
-                extends: [require.resolve("eslint-config-react-app/base")],
-            },
-        }),
         new ForkTsCheckerWebpackPlugin(),
     ],
 };
