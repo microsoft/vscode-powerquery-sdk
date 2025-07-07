@@ -361,3 +361,4 @@ test-resources/
 *.vsix
 package.nls.*.json
 **/test-results.xml
+copilot-journal.md
