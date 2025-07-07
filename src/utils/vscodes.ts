@@ -257,7 +257,7 @@ export function manuallyGetLocalVscSetting(baseWorkspace: string): Record<string
 
         try {
             result = JSON.parse(content);
-        } catch (e) {
+        } catch {
             // noop
         }
     }

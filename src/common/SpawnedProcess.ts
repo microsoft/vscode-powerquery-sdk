@@ -68,7 +68,7 @@ export class SpawnedProcess {
                     stdio: [typeof additionalOption?.stdinStr === "string" ? "pipe" : "ignore", "pipe", "pipe"],
                 });
 
-                additionalOption?.onSpawned && additionalOption?.onSpawned(theCpStream);
+                additionalOption?.onSpawned?.(theCpStream);
 
                 if (typeof additionalOption?.stdinStr === "string") {
                     theCpStream.stdin?.write(additionalOption.stdinStr);
@@ -76,17 +76,17 @@ export class SpawnedProcess {
                 }
 
                 theCpStream.stdout?.on("data", (data: Buffer) => {
-                    additionalOption?.onStdOut && additionalOption?.onStdOut(data);
+                    additionalOption?.onStdOut?.(data);
                     this._stdout = this._stdout.concat(data.toString("utf8"));
                 });
 
                 theCpStream.stderr?.on("data", (data: Buffer) => {
-                    additionalOption?.onStdErr && additionalOption?.onStdErr(data);
+                    additionalOption?.onStdErr?.(data);
                     this._stderr = this._stderr.concat(data.toString("utf8"));
                 });
 
                 theCpStream.on("error", (error: Error) => {
-                    additionalOption?.onStdErr && additionalOption?.onStdErr(Buffer.from(error.toString(), "utf-8"));
+                    additionalOption?.onStdErr?.(Buffer.from(error.toString(), "utf-8"));
                     this._stderr = this._stderr.concat(error.toString());
                     rej(error);
                 });
@@ -94,7 +94,7 @@ export class SpawnedProcess {
                 theCpStream.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                     this._exitCode = code;
                     this._signal = signal;
-                    additionalOption?.onExit && additionalOption?.onExit(code, signal, this._stderr, this._stdout);
+                    additionalOption?.onExit?.(code, signal, this._stderr, this._stdout);
 
                     res({
                         stdout: this._stdout,

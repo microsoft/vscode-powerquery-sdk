@@ -272,7 +272,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     {
                         stdinStr: pendingTask.stdinStr,
                         onSpawned: (childProcess: ChildProcess): void => {
-                            this.doWritePid(`${childProcess.pid}` ?? "nan");
+                            this.doWritePid(`${childProcess.pid}`);
 
                             this.outputChannel.appendTraceLine(
                                 resolveI18nTemplate("PQSdk.taskQueue.info.taskBegan", {
@@ -330,7 +330,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                         // eslint-disable-next-line no-control-regex
                         stdOutStr = stdOutStr.replace(/[\u0000-\u0019]+/g, "");
                         resultJson = JSON.parse(stdOutStr);
-                    } catch (e) {
+                    } catch {
                         // noop
                     }
 

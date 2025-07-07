@@ -256,7 +256,7 @@ export class CancellationToken implements IVscCancellationToken {
                         ++wait;
                         (result as Promise<unknown>).then(onSettled, onSettled);
                     }
-                } catch (_) {
+                } catch {
                     // noop
                 }
             }

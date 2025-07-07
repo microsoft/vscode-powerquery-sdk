@@ -59,7 +59,7 @@ export class PqServiceHostServerNotReady extends Error {
 export class PqInternalError extends Error {
     constructor(
         message: string,
-        public readonly data: any,
+        public readonly data: unknown,
     ) {
         super(message);
     }
@@ -182,7 +182,7 @@ export class PqServiceHostClientLite
                             .replace(/[\u0000-\u0019]+/g, "");
 
                         responseResult.Payload = JSON.parse(theStr);
-                    } catch (e) {
+                    } catch {
                         // noop
                     }
                 }
