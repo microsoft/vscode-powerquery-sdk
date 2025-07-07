@@ -340,3 +340,81 @@ npm run test:e2e:old       # UI Tests with vscode-extension-tester
 - Extension handles sensitive authentication data
 - Test environments should use mock/test credentials
 - Avoid storing real connection strings in test files
+
+## Platform Requirements
+
+### Windows-Only Dependencies
+
+**Important**: The Microsoft.PowerQuery.SdkTools NuGet package is **Windows-only**. This affects all development and testing:
+
+- **Test Environment**: All test environments must be Windows-based
+- **CI/CD Pipelines**: Must use Windows runners/agents
+- **Local Development**: Developers must use Windows machines
+- **pqtest.exe**: Core testing executable only available on Windows
+
+### Development Implications
+
+- No cross-platform abstraction needed for core functionality
+- Can assume Windows file system behavior and path conventions
+- Process execution can use Windows-specific patterns
+- File paths can use Windows-style separators consistently
+
+## Testing Strategy and Framework Migration
+
+### Test Framework Hierarchy
+
+The project is migrating from `vscode-extension-tester` to `@vscode/test-electron` with a **unit-first testing philosophy**:
+
+**Test Priority Order:**
+
+1. **Unit Tests** (80% target): Pure business logic, validation, data transformations
+2. **Service Tests**: Single service with mocked dependencies
+3. **Integration Tests** (15% target): Multiple services working together
+4. **UI Integration Tests** (5% target): VS Code API interactions (minimal, focused)
+
+### External Dependencies Testing
+
+Tests requiring external connections must be tagged with `[External]` for conditional execution:
+
+```typescript
+describe("NuGet Package Service [External]", () => {
+    it("should download latest SDK tools", async () => {
+        // Test that requires internet access
+    });
+});
+```
+
+**Build Environment Support:**
+
+- Local development: `npm run test:unit-test` (includes external tests)
+- PR builds: `npm run test:unit-test` (includes external tests)
+- Release builds: `npm run test:unit-test:no-external` (excludes external tests)
+
+### Refactoring for Testability
+
+Current codebase has testability issues that should be addressed:
+
+- **Monolithic Classes**: `LifecycleCommands` (~1,500 lines) needs service extraction
+- **Hard-to-Test Dependencies**: Direct VS Code API calls embedded in business logic
+- **Limited Unit Coverage**: Only basic utility functions currently tested
+
+**Recommended Abstractions:**
+
+- `IFileSystem` - Abstract file operations for testing
+- `IUIService` - Abstract VS Code UI interactions
+- `IPQTestService` - Already exists, good example
+- Extract validation functions into pure, testable functions
+
+### Test Organization
+
+```
+tests/
+├── unit/                    # Pure unit tests (no external deps)
+│   ├── validation/         # Pure validation functions
+│   ├── utils/             # Utility functions
+│   └── services/          # Service classes with mocks
+├── integration/            # Service interaction tests
+│   └── commands/          # Command workflow tests
+└── vscode/                # VS Code API integration tests
+    └── CommandRegistration.test.ts
+```
