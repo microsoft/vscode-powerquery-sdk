@@ -250,7 +250,8 @@
             "explorer": [
                 {
                     "id": "powerquery.sdk.tools.LifeCycleTaskTreeView",
-                    "name": "%extension.pqtest.explorer.name%"
+                    "name": "%extension.pqtest.explorer.name%",
+                    "icon": "$(list-flat)"
                 }
             ]
         },
