@@ -131,4 +131,72 @@ export class CredentialValidator {
 
         return { isValid: true };
     }
+
+    /**
+     * Validate CreateAuthState object
+     */
+    public static validate(createAuthState: {
+        DataSourceKind?: string;
+        AuthenticationKind?: string;
+        PathToQueryFile?: string;
+        $$USERNAME$$?: string;
+        $$PASSWORD$$?: string;
+        $$KEY$$?: string;
+    }): ValidationResult {
+        // Check for required fields
+        if (
+            !createAuthState.DataSourceKind ||
+            !createAuthState.AuthenticationKind ||
+            !createAuthState.PathToQueryFile
+        ) {
+            return {
+                isValid: false,
+                error: "Missing required fields: DataSourceKind, AuthenticationKind, or PathToQueryFile",
+            };
+        }
+
+        // Validate username/password authentication
+        if (
+            createAuthState.AuthenticationKind.toLowerCase() === "usernamepassword" &&
+            (!createAuthState.$$PASSWORD$$ || !createAuthState.$$USERNAME$$)
+        ) {
+            return {
+                isValid: false,
+                error: `Missing username or password for ${createAuthState.AuthenticationKind} authentication`,
+            };
+        }
+
+        // Validate key authentication
+        if (createAuthState.AuthenticationKind.toLowerCase() === "key" && !createAuthState.$$KEY$$) {
+            return {
+                isValid: false,
+                error: `Missing key for ${createAuthState.AuthenticationKind} authentication`,
+            };
+        }
+
+        return { isValid: true };
+    }
+
+    /**
+     * Validate authentication kind
+     */
+    public static validateAuthenticationKind(authKind: string): ValidationResult {
+        const validAuthKinds: string[] = ["anonymous", "usernamepassword", "key", "oauth", "windows"];
+
+        if (!authKind) {
+            return {
+                isValid: false,
+                error: "Authentication kind is required",
+            };
+        }
+
+        if (!validAuthKinds.includes(authKind.toLowerCase())) {
+            return {
+                isValid: false,
+                error: `Invalid authentication kind: ${authKind}. Valid options: ${validAuthKinds.join(", ")}`,
+            };
+        }
+
+        return { isValid: true };
+    }
 }

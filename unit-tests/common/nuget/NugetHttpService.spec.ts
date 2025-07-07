@@ -34,6 +34,7 @@ describe(`${TestConstants.ExternalTestFlag} NugetHttpService unit tests`, () => 
         const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
             TestConstants.SdkPackageName,
         );
+
         expect(allVersions.length).gt(1);
 
         const _2_110_Versions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(

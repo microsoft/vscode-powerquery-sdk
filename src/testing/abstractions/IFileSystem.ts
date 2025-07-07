@@ -15,14 +15,29 @@ export interface IFileSystem {
     exists(path: string): Promise<boolean>;
 
     /**
+     * Check if a file or directory exists (synchronous)
+     */
+    existsSync(path: string): boolean;
+
+    /**
      * Read file content as string
      */
     readFile(path: string): Promise<string>;
 
     /**
+     * Read file content as string (synchronous)
+     */
+    readFileSync(path: string, options?: { encoding: string }): string;
+
+    /**
      * Write string content to file
      */
     writeFile(path: string, content: string): Promise<void>;
+
+    /**
+     * Write string content to file (synchronous)
+     */
+    writeFileSync(path: string, content: string, options?: { encoding: string }): void;
 
     /**
      * Write JSON object to file
@@ -33,6 +48,16 @@ export interface IFileSystem {
      * Create directory (recursive)
      */
     createDirectory(path: string): Promise<void>;
+
+    /**
+     * Create directory (recursive, synchronous)
+     */
+    mkdirSync(path: string, options?: { recursive?: boolean }): void;
+
+    /**
+     * Copy file (synchronous)
+     */
+    copyFileSync(src: string, dest: string): void;
 
     /**
      * Get file modification time

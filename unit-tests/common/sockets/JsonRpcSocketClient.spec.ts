@@ -5,8 +5,6 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import * as chai from "chai";
 import * as net from "net";
 
