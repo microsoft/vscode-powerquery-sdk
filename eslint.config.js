@@ -3,6 +3,7 @@ const typescript = require("@typescript-eslint/eslint-plugin");
 const typescriptParser = require("@typescript-eslint/parser");
 const prettierPlugin = require("eslint-plugin-prettier");
 const securityPlugin = require("eslint-plugin-security");
+const licenseHeaderPlugin = require("eslint-plugin-license-header");
 const prettierConfig = require("eslint-config-prettier");
 
 module.exports = [
@@ -47,6 +48,7 @@ module.exports = [
             "@typescript-eslint": typescript,
             security: securityPlugin,
             prettier: prettierPlugin,
+            "license-header": licenseHeaderPlugin,
         },
         rules: {
             ...typescript.configs.recommended.rules,
@@ -85,6 +87,9 @@ module.exports = [
             // Security rules
             "security/detect-non-literal-fs-filename": "off",
             "security/detect-object-injection": "off",
+
+            // License header rules
+            "license-header/header": ["error", "./resources/license-header.js"],
 
             // Core ESLint rules
             "array-callback-return": "error",
