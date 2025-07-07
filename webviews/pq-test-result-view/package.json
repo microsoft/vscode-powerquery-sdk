@@ -13,6 +13,7 @@
         "node": ">=20"
     },
     "dependencies": {
+        "@babel/runtime": "^7.27.6",
         "@fluentui/react": "^8.115.7",
         "classnames": "^2.5.1",
         "react": "17.0.2",
