@@ -15,7 +15,7 @@ import { LifecycleCommands } from "../../../src/commands/LifecycleCommands";
 // import { makeOneTmpDir } from "../../utils/osUtils";
 
 suite("New extension project Tests", () => {
-    suiteSetup(TestUtils.activateExtension);
+    suiteSetup(TestUtils.ensureRequiredExtensionsAreLoaded);
 
     // const newExtensionName: string = "FirstConn";
     // const oneTmpDir: string | undefined = makeOneTmpDir();

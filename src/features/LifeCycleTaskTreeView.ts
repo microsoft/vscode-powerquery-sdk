@@ -30,7 +30,7 @@ export class LifecycleTreeViewItem extends TreeItem {
     constructor(
         label: string,
         command?: Command,
-        iconPath?: string | Uri | { light: string | Uri; dark: string | Uri } | ThemeIcon,
+        iconPath?: string | Uri | { light: Uri; dark: Uri } | ThemeIcon,
         public readonly parent?: LifecycleTreeViewItem,
         collapsibleState: TreeItemCollapsibleState = TreeItemCollapsibleState.None,
         public readonly uri?: vscode.Uri,

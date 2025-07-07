@@ -69,6 +69,19 @@
             "label": "tasks: watch-tests",
             "dependsOn": ["Watch_VSC_PQ_SDK", "Dev_PQTest_Result_WebView", "npm: watch-tests"],
             "problemMatcher": []
+        },
+        {
+            "label": "Run Extension Tests",
+            "type": "npm",
+            "script": "test:e2e",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }

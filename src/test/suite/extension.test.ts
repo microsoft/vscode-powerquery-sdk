@@ -15,12 +15,11 @@ import { extensionLanguageServiceId } from "../common";
 const languageServiceId: string = extensionLanguageServiceId;
 
 suite("Extension Test Suite", () => {
-    suiteSetup(TestUtils.activateExtension);
+    suiteSetup(TestUtils.ensureRequiredExtensionsAreLoaded);
 
     test("Language service extension", async () => {
-        const languageServiceExtension =
-            vscode.extensions.getExtension(languageServiceId) ||
-            assert.fail(`Failed to get language service extension: ${languageServiceId}`);
+        const languageServiceExtension = vscode.extensions.getExtension(languageServiceId);
+        assert.ok(languageServiceExtension, `Extension not found: ${languageServiceId}`);
 
         if (!languageServiceExtension.isActive) {
             await languageServiceExtension.activate();

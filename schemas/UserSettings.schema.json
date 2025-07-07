@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "https://schemas.microsoft.com/powerquery/pqtest/usersettings.json",
+  "title": "PQTest UserSettings Configuration Schema",
+  "type": "object",
+  "description": "JSON schema for PQTest UserSettings configuration files. This schema defines the structure and validation rules for JSON configuration files that can be passed to PQTest.exe using the --settingsFile option.",
+  "additionalProperties": false,
+  "properties": {
+    "ApplicationProperties": {
+      "type": "object",
+      "description": "Individual application property settings accessed using Extension.CurrentApplication().\nThese are key-value pairs that can be retrieved in connector code.\nExample: {\"MyCustomProperty\": \"Property value\", \"AnotherProperty\": \"Value\"}",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "AuthenticationKind": {
+      "type": "string",
+      "description": "Specifies the authentication kind to use for data source connections.\nValid values: Anonymous, UsernamePassword, Key, Windows, OAuth2, Aad"
+    },
+    "CertificateSubjectName": {
+      "type": "string",
+      "description": "Subject name of the client certificate to use for authentication, if required by the data source.\nThis is an alternative to CertificateThumbprint for locating certificates using the X509FindType.FindBySubjectName method.\nOnly one of CertificateThumbprint or CertificateSubjectName should be specified."
+    },
+    "CertificateThumbprint": {
+      "type": "string",
+      "description": "Thumbprint of the client certificate to use for authentication, if required by the data source.\nThis is typically used for Azure Data Lake Storage Gen2 and other services that support\nclient certificate authentication."
+    },
+    "CredentialProperties": {
+      "type": "object",
+      "description": "Individual credential property settings accessed using Extension.CurrentCredential().\nThese are key-value pairs that provide additional credential configuration.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "CredentialsFilePath": {
+      "type": "string",
+      "description": "Path to a credential cache file where authentication credentials are stored.\nIf not specified, credentials are stored in the default location under %LOCALAPPDATA%/Microsoft/pqtest."
+    },
+    "DataSourceAnalysisFile": {
+      "type": "string",
+      "description": "Path to a file containing data source analysis information.\nUsed for advanced testing scenarios with data source metadata."
+    },
+    "DataSourceKind": {
+      "type": "string",
+      "description": "Specifies the data source kind for the connector being tested.\nThis should match the DataSource.Kind value defined in your connector."
+    },
+    "DataSourcePath": {
+      "type": "string",
+      "description": "Specifies the data source path or connection parameters.\nThe format depends on the specific connector being tested."
+    },
+    "DataSourceReferenceFile": {
+      "type": "string",
+      "description": "Path to a file containing reference data source information.\nUsed for comparison testing scenarios."
+    },
+    "DiagnosticsFolderPath": {
+      "type": "string",
+      "description": "Path to a folder where diagnostic information and trace files will be stored.\nIf not specified, diagnostics are stored in the default temp location."
+    },
+    "EnvironmentConfiguration": {
+      "type": "object",
+      "description": "Individual environment configuration settings accessed using Environment.Configuration().\nThese are key-value pairs that configure the mashup execution environment.\nExample: {\"Cloud\": \"global\", \"Region\": \"us-east-1\"}",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ExtensionPaths": {
+      "type": "array",
+      "description": "List of paths to connector extension files (.mez/.pqx) to load for testing.\nMultiple extensions can be specified. Each path should point to a valid connector file.",
+      "xml": {
+        "wrapped": true
+      },
+      "items": {
+        "type": "string",
+        "xml": {
+          "name": "string"
+        }
+      }
+    },
+    "FailOnFoldingFailure": {
+      "type": "boolean",
+      "description": "When true, replicates Direct Query behavior by failing when a query doesn't completely fold to the data source.\nThis helps ensure queries will perform well in production environments that require query folding."
+    },
+    "FailOnMissingOutputFile": {
+      "type": "boolean",
+      "description": "When true, compare operations will fail if the expected PQOut reference file doesn't exist,\ninstead of generating a new one. Useful for ensuring test completeness."
+    },
+    "HttpMockPath": {
+      "type": "string",
+      "description": "Path to HTTP mock configuration for testing connectors that make HTTP requests.\nAllows simulation of HTTP responses without requiring actual network connectivity."
+    },
+    "IntermediateTestResultsFolder": {
+      "type": "string",
+      "description": "Path to a folder where intermediate test results will be stored during execution.\nUsed for debugging and analysis of test execution steps."
+    },
+    "LogMashupEngineTraceLevel": {
+      "type": "string",
+      "description": "Enables logging of mashup engine traces with different verbosity levels.\nValid values: \"user\" (custom connector traces), \"engine\" (engine traces), \"all\" (both user and engine traces), or empty string (disabled).\nTrace files are stored under %localappdata%/Microsoft/PQTest/Logs."
+    },
+    "OutputFolderPath": {
+      "type": "string",
+      "description": "Path to the folder where test output files will be generated.\nIf not specified, output is generated in the current working directory."
+    },
+    "OwnerAlias": {
+      "type": "string",
+      "description": "Owner alias or identifier for test runs. Used for tracking and organizing test results."
+    },
+    "ParameterQueryFilePath": {
+      "type": "string",
+      "description": "Path to a parameter query file containing M expressions that provide test data parameters.\nThe file should contain M expressions (.m/.pq) that point to test data on the data source."
+    },
+    "PersistIntermediateTestResults": {
+      "type": "boolean",
+      "description": "When true, intermediate test results are saved to disk for later analysis.\nUseful for debugging test failures and understanding query execution steps."
+    },
+    "PrettyPrint": {
+      "type": "boolean",
+      "description": "When true, JSON output is formatted with indentation and line breaks for better readability.\nEquivalent to using the --prettyPrint/-p command line option."
+    },
+    "QueryFilePath": {
+      "type": "string",
+      "description": "Path to a query file containing section document or M expression (.m/.pq) to execute.\nThe file should contain either a single data source function call or a complete M query."
+    },
+    "SkipOutput": {
+      "type": "boolean",
+      "description": "When true, suppresses normal output generation. Useful for performance testing or when only side effects matter.\nDefault value is false."
+    },
+    "TestCredentials": {
+      "type": "array",
+      "description": "List of test credentials that can be applied non-interactively during query evaluation.\nThese credentials are matched against data sources by Kind and Path/Pattern and used when\nno credentials are found in the credential store. Enables automated testing without\nrequiring pre-configured credentials.",
+      "xml": {
+        "wrapped": true
+      },
+      "items": {
+        "xml": {
+          "name": "TestCredential"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/definitions/TestCredential"
+          }
+        ]
+      }
+    },
+    "TestFilters": {
+      "type": "array",
+      "description": "List of test filters to apply when running tests.\nFilters can use wildcards (*) and arbitrary directory depth (**/*).\nFilters that begin with \"!\" are treated as exclusions.",
+      "xml": {
+        "wrapped": true
+      },
+      "items": {
+        "type": "string",
+        "xml": {
+          "name": "string"
+        }
+      }
+    },
+    "TestNamePrefix": {
+      "type": "string",
+      "description": "Prefix to add to test names in generated reports.\nHelps organize and categorize tests in larger test suites."
+    },
+    "TrxReportPath": {
+      "type": "string",
+      "description": "Path where TRX (Visual Studio Test Results) format files will be generated.\nAlso generates separate JSON files for each test in the specified path."
+    },
+    "UserLoginHint": {
+      "type": "string",
+      "description": "User login hint to use for MSAL authentication flows.\nWhen specified, this value is used as the login hint for both silent and interactive authentication.\nIf not specified, the system will attempt to extract the UPN from the certificate when available.\nCLI option: --loginHint"
+    },
+    "UseSystemBrowser": {
+      "type": "boolean",
+      "description": "When true, uses the system's default browser for interactive OAuth flows instead of embedded browser controls.\nUseful when embedded browser authentication is not working properly."
+    },
+    "ValidateWithStrictDataSourcePath": {
+      "type": "boolean",
+      "description": "When true, enables strict validation of data source paths during connector validation.\nEnsures data source paths exactly match expected formats."
+    }
+  },
+  "definitions": {
+    "TestCredential": {
+      "type": "object",
+      "description": "Represents a test credential that can be applied non-interactively during query evaluation.\nTest credentials are specified in settings files and matched against data sources by Kind and Path/Pattern.",
+      "additionalProperties": false,
+      "properties": {
+        "Kind": {
+          "type": "string",
+          "description": "The data source kind that this credential applies to.\nMust match the DataSource.Kind value defined in the connector."
+        },
+        "Path": {
+          "type": "string",
+          "description": "Exact path match for the data source. Mutually exclusive with Pattern.\nUse this when you want to match a specific data source path exactly."
+        },
+        "Pattern": {
+          "type": "string",
+          "description": "Regular expression pattern to match data source paths. Mutually exclusive with Path.\nUse \"*\" to match all paths for the given Kind, or provide a regex pattern for more specific matching."
+        },
+        "Type": {
+          "description": "The type of credential to create for matching data sources.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/TestCredentialType"
+            }
+          ]
+        },
+        "Settings": {
+          "type": "object",
+          "description": "Type-specific settings for credential creation.\nContents depend on the credential Type. May be null for types that don't require additional settings.",
+          "additionalProperties": {}
+        }
+      }
+    },
+    "TestCredentialType": {
+      "type": "string",
+      "description": "Defines the types of test credentials that can be created non-interactively.",
+      "x-enumNames": [
+        "Anonymous",
+        "Windows",
+        "MsalCertificate",
+        "OAuthPlaceholder"
+      ],
+      "enum": [
+        "Anonymous",
+        "Windows",
+        "MsalCertificate",
+        "OAuthPlaceholder"
+      ]
+    }
+  }
+}

@@ -48,6 +48,7 @@ import { getMtimeOfAFile } from "../utils/files";
 import { IDisposable } from "../common/Disposable";
 import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { SchemaManagementService } from "../common/SchemaManagementService";
 
 const CommandPrefix: string = `powerquery.sdk.tools`;
 
@@ -78,6 +79,7 @@ export class LifecycleCommands implements IDisposable {
         private readonly pqSdkNugetPackageService: PqSdkNugetPackageService,
         private readonly pqTestService: IPQTestService,
         private readonly outputChannel: PqSdkOutputChannel,
+        private readonly schemaManagementService: SchemaManagementService,
     ) {
         globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangeExternalVersionTag, () => {
             // when externalVersionTag changed, we need to re-invoke manuallyUpdatePqTest,
@@ -532,6 +534,11 @@ export class LifecycleCommands implements IDisposable {
                 let pqTestExecutableFullPath: string | undefined =
                     await this.pqSdkNugetPackageService.updatePqSdkFromNuget(theNextVersion);
 
+                // Copy schema file after successful NuGet package update
+                if (pqTestExecutableFullPath) {
+                    this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(theNextVersion);
+                }
+
                 if (!pqTestExecutableFullPath && !skipQueryDialog) {
                     const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
                         openLabel: extensionI18n["PQSdk.lifecycle.warning.pqtest.required"],
@@ -634,7 +641,9 @@ export class LifecycleCommands implements IDisposable {
                 const pqTestExecutableFullPath: string | undefined =
                     await this.pqSdkNugetPackageService.updatePqSdkFromNuget(theNextVersion);
 
+                // Copy schema file after successful NuGet package update
                 if (pqTestExecutableFullPath) {
+                    this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(theNextVersion);
                     await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
                 }
             }

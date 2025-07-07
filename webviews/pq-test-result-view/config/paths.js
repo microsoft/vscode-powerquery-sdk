@@ -15,7 +15,7 @@ const fs = require("fs");
 const appDirectory = fs.realpathSync(process.cwd());
 const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
 
-const moduleFileExtensions = [".js", ".jsx", ".ts", ".tsx", ".css", ".scss"];
+const moduleFileExtensions = [".js", ".jsx", ".ts", ".tsx", ".css"];
 
 // Resolve file paths in the same order as webpack
 const resolveModule = (resolveFn, filePath) => {
