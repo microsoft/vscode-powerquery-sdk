@@ -5,28 +5,25 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-*{
-  box-sizing: border-box;
-  font-family: var(--vscode-editor-font-family);
-  font-size: var(--vscode-editor-font-size);
-  font-weight: var(--vscode-editor-font-weight);
-  color: var(--vscode-editor-foreground);
+* {
+    box-sizing: border-box;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    font-weight: var(--vscode-editor-font-weight);
+    color: var(--vscode-editor-foreground);
 }
 
-body{
-  width: calc( 100vw - 40px );
-  height: 100vh;
+body {
+    width: calc(100vw - 40px);
+    height: 100vh;
 }
 
-
-.entry-container{
-  overflow: auto;
-  min-width: calc( 100vw - 40px );
-  min-height: 100vh;
+.entry-container {
+    overflow: auto;
+    min-width: calc(100vw - 40px);
+    min-height: 100vh;
 }
 
-
- //fluent message bar
-.ms-MessageBar.ms-MessageBar--error{
-  background-color: var(--vscode-notificationsErrorIcon-foreground);
+.ms-MessageBar.ms-MessageBar--error {
+    background-color: var(--vscode-notificationsErrorIcon-foreground);
 }

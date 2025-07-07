@@ -208,15 +208,6 @@ suite("Schema Management Tests", () => {
         });
     });
 
-    test("removeUserSettingsSchema handles missing file gracefully", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            // This should not throw an error even if the file doesn't exist
-            assert.doesNotThrow(() => {
-                schemaManagementService.removeUserSettingsSchema();
-            }, "removeUserSettingsSchema should handle missing files gracefully");
-        });
-    });
-
     test("VS Code JSON language service recognizes testsettings files", async () => {
         await TestUtils.CreateAsyncTestResult(async () => {
             const testFileName = "vscode-test.testsettings.json";

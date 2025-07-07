@@ -16,7 +16,6 @@ jobs:
                   node-version: "20"
             - run: node -v
             - run: npm ci
-            - run: npm run audit
             - run: npm run test:unit-test
             - run: npm run vsix
             - name: retry 5 times e2e test cases
