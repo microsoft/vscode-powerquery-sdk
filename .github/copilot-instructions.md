@@ -257,10 +257,10 @@ npm run package      # Build VSIX package
 ### Testing
 
 ```bash
-npm test                    # Run all tests
-npm run test:unit-test      # Unit tests only
-npm run test:e2e           # Integration tests
-npm run test:e2e:old       # Legacy test runner (old framework)
+npm test                   # Run all tests
+npm run test:unit-test     # Unit tests only
+npm run test:e2e           # UI Tests with @vscode/test-electron
+npm run test:e2e:old       # UI Tests with vscode-extension-tester
 ```
 
 ### Extension Tasks
@@ -268,25 +268,3 @@ npm run test:e2e:old       # Legacy test runner (old framework)
 - "Watch_VSC_PQ_SDK" - Development build task
 - "Run Extension Tests" - E2E test execution
 - "Dev_PQTest_Result_WebView" - Webview development
-
-## Troubleshooting Notes
-
-### Common Issues
-
-1. **pqtest.exe not found** - Check NuGet package download and extraction
-2. **JSON parsing errors** - pqtest.exe output might contain non-JSON content
-3. **Timing issues** - UI tests need proper delays for async operations
-4. **Credential management** - Tests may need to clear/reset credentials between runs
-
-### Debug Configuration
-
-- VS Code launch configs for debugging extension
-- Debug adapter for M language debugging
-- Output channel: "Power Query SDK" for extension logs
-
-## Security Considerations
-
-- Credential storage in `%LOCALAPPDATA%/Microsoft/pqtest`
-- Extension handles sensitive authentication data
-- Test environments should use mock/test credentials
-- Avoid storing real connection strings in test files
