@@ -5,7 +5,6 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-/* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AnyFunction } from "./types";

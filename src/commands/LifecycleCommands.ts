@@ -1108,7 +1108,6 @@ export class LifecycleCommands implements IDisposable {
                         1e2,
                     );
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function collectInputs(): Promise<CreateAuthState> {
                         const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
                         await MultiStepInput.run((input: MultiStepInput) => populateDataSourceKinds(input, state));
@@ -1116,7 +1115,6 @@ export class LifecycleCommands implements IDisposable {
                         return state as CreateAuthState;
                     }
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function populateDataSourceKinds(
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
@@ -1172,7 +1170,6 @@ export class LifecycleCommands implements IDisposable {
                         return (input: MultiStepInput) => populateQueryFile(input, state);
                     }
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function populateQueryFile(
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
@@ -1197,7 +1194,6 @@ export class LifecycleCommands implements IDisposable {
                                 items,
                             });
 
-                            // eslint-disable-next-line require-atomic-updates
                             state.PathToQueryFile = picked.detail;
                         }
 
@@ -1252,7 +1248,6 @@ export class LifecycleCommands implements IDisposable {
                         return (input: MultiStepInput) => pickAuthenticationKind(input, state);
                     }
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function pickAuthenticationKind(
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
@@ -1292,12 +1287,10 @@ export class LifecycleCommands implements IDisposable {
                         }
                     }
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function populateKey(
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
                     ): Promise<InputStep | void> {
-                        // eslint-disable-next-line require-atomic-updates
                         state.$$KEY$$ = await input.showInputBox({
                             title,
                             step: 4,
@@ -1318,12 +1311,10 @@ export class LifecycleCommands implements IDisposable {
                         progress.report({ increment: 10 });
                     }
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function populateUsername(
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
                     ): Promise<InputStep | void> {
-                        // eslint-disable-next-line require-atomic-updates
                         state.$$USERNAME$$ = await input.showInputBox({
                             title,
                             step: 4,
@@ -1346,12 +1337,10 @@ export class LifecycleCommands implements IDisposable {
                         return (input: MultiStepInput) => populatePassword(input, state);
                     }
 
-                    // eslint-disable-next-line no-inner-declarations
                     async function populatePassword(
                         input: MultiStepInput,
                         state: Partial<CreateAuthState>,
                     ): Promise<InputStep | void> {
-                        // eslint-disable-next-line require-atomic-updates
                         state.$$PASSWORD$$ = await input.showInputBox({
                             title,
                             step: 5,
@@ -1375,9 +1364,8 @@ export class LifecycleCommands implements IDisposable {
                         void vscode.window.showWarningMessage(maybeErrorMessage);
                     } else {
                         try {
-                            const result: GenericResult = await this.pqTestService.SetCredentialFromCreateAuthState(
-                                createAuthState,
-                            );
+                            const result: GenericResult =
+                                await this.pqTestService.SetCredentialFromCreateAuthState(createAuthState);
 
                             this.outputChannel.appendInfoLine(
                                 resolveI18nTemplate("PQSdk.lifecycle.command.createAuthState.result", {

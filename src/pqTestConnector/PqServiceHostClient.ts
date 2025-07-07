@@ -32,7 +32,10 @@ export class PqServiceHostClient extends PqServiceHostClientLite implements IPQT
     );
     public readonly currentCredentials: ValueEventEmitter<Credential[]> = new ValueEventEmitter<Credential[]>([]);
 
-    constructor(private readonly globalEventBus: GlobalEventBus, outputChannel: PqSdkOutputChannel) {
+    constructor(
+        private readonly globalEventBus: GlobalEventBus,
+        outputChannel: PqSdkOutputChannel,
+    ) {
         super(outputChannel);
 
         // watch vsc ConfigDidChangePowerQuerySDK changes

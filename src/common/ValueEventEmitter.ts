@@ -7,11 +7,12 @@
 
 import { IDisposable } from "./Disposable";
 
-export type ExtractValueEventEmitterTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp extends Record<infer Key, infer Value>
-    ? Value extends ValueEventEmitter
-        ? Key
-        : ExtractValueEventEmitterTypes<Value>
-    : unknown;
+export type ExtractValueEventEmitterTypes<EvtObjOrEvtProp> =
+    EvtObjOrEvtProp extends Record<infer Key, infer Value>
+        ? Value extends ValueEventEmitter
+            ? Key
+            : ExtractValueEventEmitterTypes<Value>
+        : unknown;
 
 type ValueUpdateListener<T> = (value: T) => void;
 
@@ -25,7 +26,10 @@ export class ValueEventEmitter<T = any> implements IDisposable {
     private resolveInit: ((value: T) => void) | undefined = undefined;
     public readonly init: Promise<T>;
 
-    constructor(public value: T, private readonly options: Partial<Options> = {}) {
+    constructor(
+        public value: T,
+        private readonly options: Partial<Options> = {},
+    ) {
         if (this.options.initOnFirstEmit) {
             this.init = new Promise((resolve: (value: T) => void) => {
                 this.resolveInit = resolve;

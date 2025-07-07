@@ -57,8 +57,10 @@ export class PqServiceHostServerNotReady extends Error {
 }
 
 export class PqInternalError extends Error {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    constructor(message: string, public readonly data: any) {
+    constructor(
+        message: string,
+        public readonly data: any,
+    ) {
         super(message);
     }
 }

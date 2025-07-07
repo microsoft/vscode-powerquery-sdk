@@ -19,7 +19,7 @@ const PqTestResultViewPanelPrefix: string = `powerquery.sdk.tools`;
 const SimpleBrokerValues = Object.freeze({
     locale: new ValueEventEmitter<string>(ExtensionConfigurations.pqLocale),
     activeColorTheme: new ValueEventEmitter<vscode.ColorTheme>(vscode.window.activeColorTheme),
-    // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     latestPqTestResult: new ValueEventEmitter<any>(undefined),
 });
 
@@ -33,7 +33,7 @@ export class SimplePqTestResultViewBroker {
         });
 
         for (const oneProperty in this.values) {
-            // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.values[oneProperty as SimplePqTestResultViewBrokerValues].subscribe((nextValue: any) => {
                 PqTestResultViewPanel.currentPanel?.postOneMessage("OnOneValueUpdated", {
                     property: oneProperty,
@@ -44,13 +44,11 @@ export class SimplePqTestResultViewBroker {
     }
     public static emitAll(): void {
         for (const oneProperty in this.values) {
-            // eslint-disable-next-line security/detect-object-injection
             this.values[oneProperty as SimplePqTestResultViewBrokerValues].emit();
         }
     }
     public static deActivate(): void {
         for (const oneProperty in this.values) {
-            // eslint-disable-next-line security/detect-object-injection
             this.values[oneProperty as SimplePqTestResultViewBrokerValues].dispose();
         }
     }
@@ -145,7 +143,10 @@ export class PqTestResultViewPanel implements IDisposable {
 
     private _disposables: IDisposable[] = [];
 
-    constructor(private readonly _panel: vscode.WebviewPanel, private readonly _extensionUri: vscode.Uri) {
+    constructor(
+        private readonly _panel: vscode.WebviewPanel,
+        private readonly _extensionUri: vscode.Uri,
+    ) {
         this._update();
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 

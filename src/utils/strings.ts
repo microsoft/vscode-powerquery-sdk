@@ -22,7 +22,6 @@ export function prettifyJson(obj: any): string {
 const TemplateSubstitutedValueRegexp: RegExp = /{{([A-Za-z0-9.]*)}}/g;
 
 function doResolveOneTemplateSubstitutedValue(valueName: string, context: Record<string, string>): string {
-    // eslint-disable-next-line security/detect-object-injection
     return context[valueName] ?? "";
 }
 

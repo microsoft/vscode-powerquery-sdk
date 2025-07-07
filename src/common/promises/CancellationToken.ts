@@ -211,8 +211,8 @@ export class CancellationToken implements IVscCancellationToken {
             message instanceof Cancel
                 ? message
                 : typeof message === "string"
-                ? new Cancel(message)
-                : new Cancel("Unknown aborted reason");
+                  ? new Cancel(message)
+                  : new Cancel("Unknown aborted reason");
 
         // if we got _resolve handler of the cancellation, invoke it
         if (this._resolve) {

@@ -56,7 +56,6 @@ export module VscSideBars {
         let step = 0;
 
         while (step < stepCount) {
-            // eslint-disable-next-line no-await-in-loop
             const currentInputBox = await InputBox.create();
             const picks = await currentInputBox.getQuickPicks();
             let selectedPick = picks[0];
