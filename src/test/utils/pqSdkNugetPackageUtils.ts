@@ -73,7 +73,7 @@ export module PqSdkNugetPackages {
 
         while (i < MAX_AWAIT_TIME / AWAIT_INTERVAL) {
             i += 1;
-            // eslint-disable-next-line no-await-in-loop
+
             await delay(AWAIT_INTERVAL);
 
             if (fs.existsSync(expectedPqTestExePath)) {

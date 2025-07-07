@@ -16,7 +16,10 @@ import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { SpawnedProcess } from "../SpawnedProcess";
 
 export class NugetCommandService {
-    constructor(private readonly extensionPath: string, private readonly outputChannel?: PqSdkOutputChannel) {}
+    constructor(
+        private readonly extensionPath: string,
+        private readonly outputChannel?: PqSdkOutputChannel,
+    ) {}
 
     private async doListVersionsFromNugetCmd(
         nugetPath: string = "nuget",

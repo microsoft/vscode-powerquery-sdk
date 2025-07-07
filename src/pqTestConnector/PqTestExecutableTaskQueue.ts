@@ -513,7 +513,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         let theAuthKind: string = createAuthState.AuthenticationKind;
 
         if (theAuthKind.toLowerCase() === "key") {
-            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
             payloadStr = `{
                 "AuthenticationKind": "Key",
                 "AuthenticationProperties": {
@@ -522,9 +521,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-            /* eslint-enable*/
         } else if (theAuthKind.toLowerCase() === "usernamepassword") {
-            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
             payloadStr = `{
                 "AuthenticationKind": "UsernamePassword",
                 "AuthenticationProperties": {
@@ -534,7 +531,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-            /* eslint-enable*/
         } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
             additionalArgs.unshift("--interactive");
         } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {

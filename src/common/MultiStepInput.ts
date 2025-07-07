@@ -126,7 +126,7 @@ export class MultiStepInput {
                                 reject(InputFlowAction.BACK);
                             } else {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                resolve(<any>item);
+                                resolve(item as any);
                             }
                         }),
                         input.onDidChangeSelection((items: readonly T[]) => resolve(items[0])),
@@ -197,7 +197,7 @@ export class MultiStepInput {
                                 reject(InputFlowAction.BACK);
                             } else {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                resolve(<any>item);
+                                resolve(item as any);
                             }
                         }),
                         input.onDidAccept(async () => {
