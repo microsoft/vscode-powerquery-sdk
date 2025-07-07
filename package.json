@@ -412,13 +412,13 @@
         "sinon": "^14.0.2",
         "ts-loader": "^9.5.1",
         "ts-node": "^10.9.2",
-        "tsconfig-paths-webpack-plugin": "^3.5.2",
+        "tsconfig-paths-webpack-plugin": "^4.2.0",
         "typescript": "^4.9.5",
         "vinyl-fs": "^4.0.0",
         "vscode-extension-tester": "5.10.0",
         "vscode-nls-dev": "^4.0.4",
-        "webpack": "^5.90.3",
-        "webpack-cli": "^4.10.0"
+        "webpack": "^5.99.9",
+        "webpack-cli": "^6.0.1"
     },
     "lint-staged": {
         "!(src)/**/*.{ts}": [
