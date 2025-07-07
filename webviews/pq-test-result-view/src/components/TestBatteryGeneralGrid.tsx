@@ -8,9 +8,10 @@
 import React from "react";
 import { DetailsList, DetailsListLayoutMode, SelectionMode, ConstrainMode } from "@fluentui/react/lib/DetailsList";
 import { mergeStyles } from "@fluentui/react/lib/Styling";
+import { GridItem } from "../types";
 
 interface TestBatteryOutputGridProps {
-    items: any[];
+    items: GridItem[];
 }
 
 const testBatteryGeneralGrid = mergeStyles({
