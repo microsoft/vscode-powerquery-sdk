@@ -57,8 +57,10 @@ export class PqServiceHostServerNotReady extends Error {
 }
 
 export class PqInternalError extends Error {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    constructor(message: string, public readonly data: any) {
+    constructor(
+        message: string,
+        public readonly data: unknown,
+    ) {
         super(message);
     }
 }
@@ -180,7 +182,7 @@ export class PqServiceHostClientLite
                             .replace(/[\u0000-\u0019]+/g, "");
 
                         responseResult.Payload = JSON.parse(theStr);
-                    } catch (e) {
+                    } catch {
                         // noop
                     }
                 }

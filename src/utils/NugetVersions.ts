@@ -199,7 +199,11 @@ export class NugetVersions {
         }
     }
 
-    constructor(public readonly major: string, public readonly minor: string, public readonly patch: string) {}
+    constructor(
+        public readonly major: string,
+        public readonly minor: string,
+        public readonly patch: string,
+    ) {}
 
     compare(other: NugetVersions): number {
         return NugetVersions.compare(this, other);

@@ -8,9 +8,8 @@
 import { Disposable, IDisposable } from "../common/Disposable";
 import { EventEmitter } from "events";
 
-export type ExtractEventTypes<EvtObjOrEvtProp> = EvtObjOrEvtProp extends Record<string | number | symbol, infer Value>
-    ? ExtractEventTypes<Value>
-    : EvtObjOrEvtProp;
+export type ExtractEventTypes<EvtObjOrEvtProp> =
+    EvtObjOrEvtProp extends Record<string | number | symbol, infer Value> ? ExtractEventTypes<Value> : EvtObjOrEvtProp;
 
 export class DisposableEventEmitter<Event extends string | symbol> extends EventEmitter implements IDisposable {
     protected readonly internalDisposables: IDisposable[] = [];

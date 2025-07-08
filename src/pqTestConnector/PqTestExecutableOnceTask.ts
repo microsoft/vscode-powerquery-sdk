@@ -206,7 +206,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
                                 result,
                             );
                         }
-                    } catch (e) {
+                    } catch {
                         // noop
                     }
                 }

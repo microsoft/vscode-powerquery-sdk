@@ -43,7 +43,7 @@ module.exports = {
                     loader: "babel-loader",
                     options: {
                         presets: ["@babel/preset-env", "@babel/preset-react", "@babel/preset-typescript"],
-                        plugins: ["@babel/plugin-transform-runtime", "@babel/plugin-proposal-class-properties"],
+                        plugins: ["@babel/plugin-transform-runtime", "@babel/plugin-transform-class-properties"],
                     },
                 },
             },
@@ -53,18 +53,6 @@ module.exports = {
         new webpack.DefinePlugin(env.stringified),
         new HtmlWebpackPlugin({
             template: "./public/index.html",
-        }),
-        new ESLintPlugin({
-            // Plugin options
-            extensions: ["js", "mjs", "jsx", "ts", "tsx"],
-            eslintPath: require.resolve("eslint"),
-            context: paths.appSrc,
-            // ESLint class options
-            cwd: paths.appPath,
-            resolvePluginsRelativeTo: __dirname,
-            baseConfig: {
-                extends: [require.resolve("eslint-config-react-app/base")],
-            },
         }),
         new ForkTsCheckerWebpackPlugin(),
     ],

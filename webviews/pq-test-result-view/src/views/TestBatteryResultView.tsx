@@ -15,14 +15,10 @@ import { CloseableMessageBoxComp } from "../components/MessageBoxComp";
 import { TestBatteryGeneralGrid } from "../components/TestBatteryGeneralGrid";
 import { useI18n } from "../i18n";
 import { flattenJSON } from "../utils/jsons";
+import { TestRunExecution, GeneralDetailItem, JsonValue, GridItem } from "../types";
 
 interface TestBatteryResult {
-    testRunExecution: any;
-}
-
-interface GeneralDetailItem {
-    Item: string;
-    Value: any;
+    testRunExecution: TestRunExecution;
 }
 
 export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<TestBatteryResult>(props => {
@@ -55,13 +51,13 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         [testRunExecution],
     );
 
-    const summaryArr = useMemo(() => {
+    const summaryArr = useMemo<GeneralDetailItem[]>(() => {
         const result: GeneralDetailItem[] = [];
         ["ActivityId", "Method", "Name", "Status", "Type"].forEach(key => {
             if (testRunExecution[key]) {
                 result.push({
                     Item: key,
-                    Value: testRunExecution[key],
+                    Value: testRunExecution[key] as JsonValue,
                 });
             }
         });
@@ -78,9 +74,9 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         return result;
     }, [testRunExecution]);
 
-    const dataSourceArr = useMemo(() => {
+    const dataSourceArr = useMemo<GeneralDetailItem[]>(() => {
         const result: GeneralDetailItem[] = [];
-        if (hasDataSource) {
+        if (hasDataSource && Array.isArray(testRunExecution.DataSourceAnalysis)) {
             const theFlattenDataSource = flattenJSON(testRunExecution.DataSourceAnalysis[0]);
             Object.keys(theFlattenDataSource).forEach(key => {
                 result.push({
@@ -93,15 +89,17 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
         return result;
     }, [testRunExecution, hasDataSource]);
 
-    const mashupErrorArr = useMemo(() => {
+    const mashupErrorArr = useMemo<GeneralDetailItem[]>(() => {
         const result: GeneralDetailItem[] = [];
-        const theFlattenError = flattenJSON(testRunExecution.Error);
-        Object.keys(theFlattenError).forEach(key => {
-            result.push({
-                Item: key,
-                Value: theFlattenError[key],
+        if (testRunExecution.Error) {
+            const theFlattenError = flattenJSON(testRunExecution.Error);
+            Object.keys(theFlattenError).forEach(key => {
+                result.push({
+                    Item: key,
+                    Value: theFlattenError[key],
+                });
             });
-        });
+        }
 
         return result;
     }, [testRunExecution.Error]);
@@ -120,7 +118,7 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
             <Pivot aria-label="PQTest battery test result" defaultSelectedKey={hasOutput ? "Output" : "Summary"}>
                 {hasOutput ? (
                     <PivotItem key="output" headerText={OutputLabel}>
-                        <TestBatteryGeneralGrid items={testRunExecution.Output} />
+                        <TestBatteryGeneralGrid items={(testRunExecution.Output as GridItem[]) || []} />
                     </PivotItem>
                 ) : null}
                 <PivotItem key="summary" headerText={SummaryLabel}>
@@ -142,8 +140,8 @@ export const TestBatteryResultView: React.FC<TestBatteryResult> = React.memo<Tes
     );
 });
 
-function addFormattedDate(testRunExecution: any, dateKey: string, items: GeneralDetailItem[]): Date {
-    const theDate: Date = new Date(testRunExecution[dateKey]);
+function addFormattedDate(testRunExecution: TestRunExecution, dateKey: string, items: GeneralDetailItem[]): Date {
+    const theDate: Date = new Date(testRunExecution[dateKey] as string);
     items.push({
         Item: dateKey,
         Value: `${theDate.toLocaleDateString()} ${theDate.toLocaleTimeString()}`,

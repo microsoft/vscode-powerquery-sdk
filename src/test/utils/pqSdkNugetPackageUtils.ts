@@ -73,16 +73,16 @@ export module PqSdkNugetPackages {
 
         while (i < MAX_AWAIT_TIME / AWAIT_INTERVAL) {
             i += 1;
-            // eslint-disable-next-line no-await-in-loop
+
             await delay(AWAIT_INTERVAL);
 
             if (fs.existsSync(expectedPqTestExePath)) {
-                expect(true).true;
-
+                // File exists, test passes
                 return;
             }
         }
 
-        expect(false).true;
+        // File doesn't exist after waiting, fail the test
+        expect.fail(`Expected file ${expectedPqTestExePath} to exist after waiting ${MAX_AWAIT_TIME}ms`);
     }
 }

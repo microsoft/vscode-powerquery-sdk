@@ -10,11 +10,7 @@ import { useState, useMemo, useContext, useEffect, useCallback } from "react";
 
 import { buildTheme } from "../themes";
 import { handleLocaleChange } from "../i18n";
-
-interface VSCodeState {
-    locale?: any;
-    latestPqTestResult?: any;
-}
+import { VSCodeState, FluentTheme, TestRunExecution } from "../types";
 
 const vscode = acquireVsCodeApi<VSCodeState>();
 
@@ -22,8 +18,8 @@ let histState: VSCodeState = vscode.getState() ?? {};
 
 interface VSCodeContextProps {
     locale: string;
-    fluentTheme: any;
-    latestPqTestResult?: any;
+    fluentTheme: FluentTheme;
+    latestPqTestResult?: TestRunExecution;
 }
 
 const initVSCodeContextProps: VSCodeContextProps = {
@@ -36,7 +32,7 @@ const theVSCodeContextProps = React.createContext<VSCodeContextProps>(initVSCode
 
 interface VSCodeContextActions {
     readonly onReady: () => void;
-    readonly updateOneContextValue: (prop: string, value: any, alsoWriteToHist?: boolean) => void;
+    readonly updateOneContextValue: (prop: string, value: unknown, alsoWriteToHist?: boolean) => void;
 }
 
 const initVSCodeContextActions: VSCodeContextActions = {
@@ -62,7 +58,7 @@ export const VSCodeContextProvider: React.FC = React.memo(props => {
     const { children } = props;
     const [curCtx, updateContext] = useState<VSCodeContextProps>(initVSCodeContextProps);
 
-    const updateOneContextValue = useCallback((prop: string, value: any, alsoWriteToHist?: boolean) => {
+    const updateOneContextValue = useCallback((prop: string, value: unknown, alsoWriteToHist?: boolean) => {
         updateContext(prevState => ({ ...prevState, [prop]: value }));
         if (alsoWriteToHist) {
             histState = { ...histState, [prop]: value };

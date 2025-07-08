@@ -53,7 +53,7 @@ suite("Schema Management Tests", () => {
     test("JSON validation contribution is registered", async () => {
         await TestUtils.CreateAsyncTestResult(() => {
             // Dynamic import to avoid linting issues with require
-            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
             const packageJson = require("../../../package.json");
             const contributions = packageJson.contributes;
 

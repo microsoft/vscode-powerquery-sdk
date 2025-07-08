@@ -18,7 +18,7 @@ export function pidIsRunning(pid: number): boolean {
         process.kill(pid, 0);
 
         return true;
-    } catch (e) {
+    } catch {
         return false;
     }
 }

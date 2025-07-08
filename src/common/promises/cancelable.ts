@@ -5,7 +5,6 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-/* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { CancelAction, CancellationToken, CancellationTokenSource } from "./CancellationToken";
@@ -22,13 +21,11 @@ export const cancelable = <F extends AnyReturnedFunction<Promise<unknown>>>(
     : (arg0: CancellationToken, ...args: Parameters<F>) => ReturnType<F> =>
     setFunctionNameAndLength(
         function cancelableWrapper(this: any): ReturnType<F> {
-            // eslint-disable-next-line @typescript-eslint/no-this-alias,no-invalid-this
             const self: unknown = this as any;
             const args: unknown[] = [...arguments];
             const length: number = arguments.length;
 
             if (length !== 0 && CancellationToken.isCancellationToken(arguments[0])) {
-                // eslint-disable-next-line no-invalid-this
                 return target.apply(self, args) as ReturnType<F>;
             }
 
@@ -40,7 +37,6 @@ export const cancelable = <F extends AnyReturnedFunction<Promise<unknown>>>(
                 newArgs[i + 1] = arguments[i];
             }
 
-            // eslint-disable-next-line no-invalid-this
             const promise: InternalPromise = target.apply(this, newArgs) as unknown as InternalPromise;
             promise.cancel = cancellationTokenSource.cancel;
 

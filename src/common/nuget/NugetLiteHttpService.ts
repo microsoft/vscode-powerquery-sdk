@@ -118,9 +118,8 @@ export class NugetLiteHttpService {
             minimumNugetVersion?: NugetVersions;
         } = {},
     ): Promise<NugetVersions[]> {
-        const preReleasedVersionIncludeVersions: { versions: string[] } = await this.getPackageReleasedVersions(
-            packageName,
-        );
+        const preReleasedVersionIncludeVersions: { versions: string[] } =
+            await this.getPackageReleasedVersions(packageName);
 
         let sortedNugetVersions: NugetVersions[] = preReleasedVersionIncludeVersions.versions
             .map((releasedVersion: string) => NugetVersions.createFromReleasedVersionString(releasedVersion))

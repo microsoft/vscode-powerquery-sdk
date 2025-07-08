@@ -5,12 +5,17 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-export const flattenJSON = (obj: any = {}, res: any = {}, extraKey = "") => {
+import { JsonObject } from "../types";
+
+export const flattenJSON = (obj: JsonObject = {}, res: JsonObject = {}, extraKey = ""): JsonObject => {
     for (const key in obj) {
-        if (typeof obj[key] !== "object") {
-            res[extraKey + key] = obj[key];
+        const value = obj[key];
+        if (typeof value !== "object" || value === null) {
+            res[extraKey + key] = value;
+        } else if (Array.isArray(value)) {
+            res[extraKey + key] = value;
         } else {
-            flattenJSON(obj[key], res, `${extraKey}${key}.`);
+            flattenJSON(value as JsonObject, res, `${extraKey}${key}.`);
         }
     }
     return res;

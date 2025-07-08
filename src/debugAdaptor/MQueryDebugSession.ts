@@ -287,7 +287,8 @@ export class MQueryDebugSession extends LoggingDebugSession {
     }
 
     public appendErrorLine(value: string): void {
-        Boolean(!this.isTerminated) ||
+        if (!this.isTerminated) {
             this.appendLine(`[${extensionI18n["PQSdk.common.logLevel.Error"]}]\t${value}`, "stderr");
+        }
     }
 }

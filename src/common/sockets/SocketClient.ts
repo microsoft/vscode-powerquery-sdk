@@ -44,7 +44,10 @@ export class SocketClient extends EventEmitter {
     private _status: StatusType = "closed";
     private _socket: SocketExtended | undefined = undefined;
 
-    constructor(private readonly port: number, private readonly host: string) {
+    constructor(
+        private readonly port: number,
+        private readonly host: string,
+    ) {
         super();
     }
 

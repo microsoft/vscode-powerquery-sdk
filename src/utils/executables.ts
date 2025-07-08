@@ -24,7 +24,7 @@ export function findExecutable(exeName: string, extArr: string[] = [""]): string
                 if (fs.existsSync(thePath)) {
                     maybeFsStat = fs.statSync(path.join(oneDirectory, exeName + oneExt));
                 }
-            } catch (e) {
+            } catch {
                 // noop
             }
 

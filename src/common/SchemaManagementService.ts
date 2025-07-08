@@ -20,7 +20,10 @@ export class SchemaManagementService {
     private readonly schemasFolderPath: string;
     private readonly userSettingsSchemaFileName: string = "UserSettings.schema.json";
 
-    constructor(vscExtCtx: vscode.ExtensionContext, private readonly outputChannel?: PqSdkOutputChannel) {
+    constructor(
+        vscExtCtx: vscode.ExtensionContext,
+        private readonly outputChannel?: PqSdkOutputChannel,
+    ) {
         this.extensionPath = vscExtCtx.extensionPath;
         this.schemasFolderPath = path.resolve(this.extensionPath, "schemas");
     }

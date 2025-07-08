@@ -272,7 +272,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     {
                         stdinStr: pendingTask.stdinStr,
                         onSpawned: (childProcess: ChildProcess): void => {
-                            this.doWritePid(`${childProcess.pid}` ?? "nan");
+                            this.doWritePid(`${childProcess.pid}`);
 
                             this.outputChannel.appendTraceLine(
                                 resolveI18nTemplate("PQSdk.taskQueue.info.taskBegan", {
@@ -330,7 +330,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                         // eslint-disable-next-line no-control-regex
                         stdOutStr = stdOutStr.replace(/[\u0000-\u0019]+/g, "");
                         resultJson = JSON.parse(stdOutStr);
-                    } catch (e) {
+                    } catch {
                         // noop
                     }
 
@@ -513,7 +513,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         let theAuthKind: string = createAuthState.AuthenticationKind;
 
         if (theAuthKind.toLowerCase() === "key") {
-            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
             payloadStr = `{
                 "AuthenticationKind": "Key",
                 "AuthenticationProperties": {
@@ -522,9 +521,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-            /* eslint-enable*/
         } else if (theAuthKind.toLowerCase() === "usernamepassword") {
-            /* eslint-disable @typescript-eslint/no-non-null-assertion*/
             payloadStr = `{
                 "AuthenticationKind": "UsernamePassword",
                 "AuthenticationProperties": {
@@ -534,7 +531,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 "PrivacySetting": "None",
                 "Permissions": []
             }`;
-            /* eslint-enable*/
         } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
             additionalArgs.unshift("--interactive");
         } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {

@@ -37,7 +37,7 @@ export function handleLocaleChanged(nextLocale?: string): void {
 
         try {
             currentLocaleJson = JSON.parse(expectedLocaleContent);
-        } catch (e) {
+        } catch {
             // noop
         }
     } else {
