@@ -133,5 +133,148 @@ describe("ListCredentialsHandler", () => {
             // Assert
             expect(listCredentialsStub.calledOnce).to.equal(true);
         });
+
+        // Edge Cases and Advanced Scenarios
+        it("should handle credentials with null values", async () => {
+            // Arrange
+            const mockCredentials = [
+                { name: null, type: "Basic" },
+                { name: "ValidCredential", type: null },
+                null,
+                undefined,
+            ];
+
+            listCredentialsStub.resolves(mockCredentials);
+
+            // Act
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.credentials).to.deep.equal(mockCredentials);
+            expect(result.data!.formattedOutput).to.contain("null");
+        });
+
+        it("should handle very large credential lists", async () => {
+            // Arrange
+            const largeCredentialList = Array.from({ length: 1000 }, (_, i) => ({
+                name: `credential_${i}`,
+                type: "Basic",
+                created: new Date().toISOString(),
+            }));
+
+            listCredentialsStub.resolves(largeCredentialList);
+
+            // Act
+            const startTime = Date.now();
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+            const duration = Date.now() - startTime;
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.credentials).to.have.length(1000);
+            expect(duration).to.be.lessThan(100); // Should format large lists quickly
+        });
+
+        it("should handle credentials with special characters", async () => {
+            // Arrange
+            const mockCredentials = [
+                { name: "credential-with-unicode-🔐", type: "OAuth2" },
+                { name: "credential\nwith\nnewlines", type: "Basic" },
+                { name: 'credential"with"quotes', type: "Key" },
+                { name: "credential\\with\\backslashes", type: "Basic" },
+            ];
+
+            listCredentialsStub.resolves(mockCredentials);
+
+            // Act
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.formattedOutput).to.contain("🔐");
+            expect(result.data!.formattedOutput).to.contain("\\n");
+            expect(result.data!.formattedOutput).to.contain('\\"');
+        });
+
+        it("should handle circular reference objects gracefully", async () => {
+            // Arrange
+            const circularCredential: any = { name: "circular", type: "Basic" };
+            circularCredential.self = circularCredential;
+
+            listCredentialsStub.resolves([circularCredential]);
+
+            // Act & Assert - Should not throw but handle gracefully
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // JSON.stringify throws on circular references, so should be handled as error
+            expect(result.success).to.equal(false);
+            expect(result.error).to.contain("circular");
+        });
+
+        it("should handle timeout errors from service", async () => {
+            // Arrange
+            const timeoutError = new Error("Request timeout");
+            timeoutError.name = "TimeoutError";
+
+            listCredentialsStub.rejects(timeoutError);
+
+            // Act
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(false);
+            expect(result.error).to.equal("Request timeout");
+        });
+
+        it("should handle network errors from service", async () => {
+            // Arrange
+            const networkError = new Error("ECONNREFUSED: Connection refused");
+            networkError.name = "NetworkError";
+
+            listCredentialsStub.rejects(networkError);
+
+            // Act
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(false);
+            expect(result.error).to.equal("ECONNREFUSED: Connection refused");
+        });
+    });
+
+    describe("Edge Cases and Performance", () => {
+        it("should handle extremely deep nested credential objects", async () => {
+            // Arrange
+            let deepObject: any = { name: "deep-credential", type: "Basic" };
+
+            for (let i = 0; i < 100; i++) {
+                deepObject = { level: i, nested: deepObject };
+            }
+
+            listCredentialsStub.resolves([deepObject]);
+
+            // Act
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.formattedOutput).to.contain("deep-credential");
+        });
+
+        it("should handle credentials with very long strings", async () => {
+            // Arrange
+            const longString = "x".repeat(10000);
+            const mockCredentials = [{ name: longString, type: "Basic" }];
+
+            listCredentialsStub.resolves(mockCredentials);
+
+            // Act
+            const result: CommandResult<ListCredentialsResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.formattedOutput).to.have.length.greaterThan(10000);
+        });
     });
 });
