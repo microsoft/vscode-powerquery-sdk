@@ -8,7 +8,6 @@
 import { ExtensionInfo, IPQTestService } from "../../common/PQTestService";
 
 import { CommandResult, ICommandHandler } from "./ICommandHandler";
-import { PqServiceHostClient, PqServiceHostServerNotReady } from "../../pqTestConnector/PqServiceHostClient";
 
 /**
  * Configuration for DisplayExtensionInfoHandler
@@ -85,7 +84,7 @@ export class DisplayExtensionInfoHandler
             };
         }
 
-        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        const errorMessage: string = error instanceof Error && error.message ? error.message : String(error);
 
         return {
             success: false,
@@ -99,10 +98,38 @@ export class DisplayExtensionInfoHandler
      * @returns True if the error can be ignored
      */
     private isIgnorableServiceHostError(error: unknown): boolean {
-        return (
+        // Check for service host specific errors based on error message or type
+        // without importing the specific classes to avoid vscode dependency
+        if (
             this.config.featureUseServiceHost &&
-            !(this.pqTestService as PqServiceHostClient).pqServiceHostConnected &&
-            error instanceof PqServiceHostServerNotReady
-        );
+            this.hasServiceHostDisconnected() &&
+            this.isPqServiceHostServerNotReadyError(error)
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the service host is disconnected
+     * @returns True if service host is disconnected
+     */
+    private hasServiceHostDisconnected(): boolean {
+        // Check if the service implements the pqServiceHostConnected property
+        const serviceHostClient: IPQTestService & { pqServiceHostConnected?: boolean } = this
+            .pqTestService as IPQTestService & { pqServiceHostConnected?: boolean };
+
+        return serviceHostClient.pqServiceHostConnected === false;
+    }
+
+    /**
+     * Check if the error is a PqServiceHostServerNotReady error
+     * @param error The error to check
+     * @returns True if it's a PqServiceHostServerNotReady error
+     */
+    private isPqServiceHostServerNotReadyError(error: unknown): boolean {
+        // Check error type by constructor name to avoid importing the class
+        return error?.constructor?.name === "PqServiceHostServerNotReady";
     }
 }
