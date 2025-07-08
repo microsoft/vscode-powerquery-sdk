@@ -1,6 +1,6 @@
 # Power Query Connector SDK for Visual Studio Code
 
-> **_NOTE:_**  The Power Query SDK extension for Visual Studio Code is currently in Public Preview. You can learn more about this extension and the development of Power Query data connectors from the link [aka.ms/PowerQuerySDKDocs](https://aka.ms/PowerQuerySDKDocs).
+> **_NOTE:_** The Power Query SDK extension for Visual Studio Code is currently in Public Preview. You can learn more about this extension and the development of Power Query data connectors from the link [aka.ms/PowerQuerySDKDocs](https://aka.ms/PowerQuerySDKDocs).
 
 Provides functionality related to the development and testing of Custom Connectors for Power Query and Power BI.
 
@@ -8,25 +8,91 @@ Install the latest version of the [Power Query SDK through the Visual Studio Cod
 
 ![Animated demonstration GIF of the Power Query SDK for Visual Studio Code](media/VSCodeSDK.gif)
 
-> **_NOTE:_**  You can learn how to manually build and install this project from the article on [build and install](build.md).
+> **_NOTE:_** You can learn how to manually build and install this project from the article on [build and install](build.md).
 
 ## Features
 
 What you can do with this extension:
 
-* Create a new extension project using a custom connector template
-* Build connector file (.mez)
-* Set and manage credentials
-* Run test queries
-* Test your TestConnection function for refresh on the cloud
-* View query results
-* Leverage syntax highlighting and intellisense for writing M script
-* Manage your workspace settings and other project-level configurations
+- Create a new extension project using a custom connector template
+- Build connector file (.mez)
+- Set and manage credentials
+- Run test queries
+- Test your TestConnection function for refresh on the cloud
+- View query results
+- Leverage syntax highlighting and intellisense for writing M script
+- Manage your workspace settings and other project-level configurations
+
+## Developer Guide
+
+### Testing Architecture
+
+This extension uses a modern, comprehensive testing approach designed for reliability and maintainability:
+
+#### Test Types
+
+- **Unit Tests** (152 tests): Pure business logic testing with no external dependencies
+    - Property-based testing for validation logic
+    - Performance testing with automated thresholds
+    - Edge case and boundary condition testing
+    - Service logic testing with dependency injection
+
+- **Integration Tests** (13 tests): VS Code API integration testing
+    - Extension loading and command registration
+    - Schema management and validation
+    - File system operations in VS Code context
+
+#### Running Tests
+
+```bash
+# Run all tests (unit + integration)
+npm test
+
+# Run only unit tests (fast, no VS Code dependencies)
+npm run test:unit-test
+
+# Run only integration tests (requires VS Code)
+npm run test:e2e
+```
+
+#### Test Development Patterns
+
+The project follows these testing patterns:
+
+1. **Pure Business Logic**: Extract validation and data processing into testable functions
+2. **Service Abstraction**: Use dependency injection with interface abstractions
+3. **Property-Based Testing**: Generate random test data to verify business rules
+4. **Performance Baselines**: Automated performance testing with realistic thresholds
+
+#### Adding New Tests
+
+- Place unit tests in `unit-tests/` directory
+- Use property-based testing for validation logic
+- Include edge case and performance tests for critical paths
+- Follow existing patterns in `unit-tests/validation/` and `unit-tests/commands/handlers/`
+
+### Build and Development
+
+```bash
+# Install dependencies
+npm install
+
+# Development build (watch mode)
+npm run watch
+
+# Production build
+npm run compile
+
+# Lint code
+npm run lint
+
+# Package extension
+npm run package
+```
 
 ## Related projects
 
 [vscode-powerquery](https://github.com/microsoft/vscode-powerquery)
-
 
 ## Contributing
 
@@ -53,4 +119,3 @@ Any use of third-party trademarks or logos are subject to those third-party's po
 ## Support and issues
 
 Before creating a new issue or discussion, please make sure to the read our [support](SUPPORT.md) article for guidelines.
-
