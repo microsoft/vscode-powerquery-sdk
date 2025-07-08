@@ -1,0 +1,147 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
+import { SinonStub, stub } from "sinon";
+import { expect } from "chai";
+
+import {
+    DisplayExtensionInfoHandler,
+    DisplayExtensionInfoResult,
+} from "../../../src/commands/handlers/DisplayExtensionInfoHandler";
+import { ExtensionInfo, IPQTestService } from "../../../src/common/PQTestService";
+import { CommandResult } from "../../../src/commands/handlers/ICommandHandler";
+
+describe("DisplayExtensionInfoHandler", () => {
+    let mockPqTestService: Partial<IPQTestService>;
+    let displayExtensionInfoStub: SinonStub;
+    let handler: DisplayExtensionInfoHandler;
+
+    /**
+     * Create a mock ExtensionInfo object with minimal required properties
+     */
+    function createMockExtensionInfo(name: string | null): ExtensionInfo {
+        return {
+            Source: "test-source",
+            LibraryId: "test-library",
+            ErrorStatus: null,
+            Name: name,
+            Version: "1.0.0",
+            Metadata: { Version: "1.0.0" },
+            Members: [],
+            DataSources: [],
+        };
+    }
+
+    beforeEach(() => {
+        displayExtensionInfoStub = stub();
+
+        mockPqTestService = {
+            DisplayExtensionInfo: displayExtensionInfoStub,
+        };
+
+        handler = new DisplayExtensionInfoHandler(mockPqTestService as IPQTestService);
+    });
+
+    describe("execute", () => {
+        it("should return success result with extension info when service succeeds", async () => {
+            // Arrange
+            const mockExtensions: ExtensionInfo[] = [
+                createMockExtensionInfo("Extension1"),
+                createMockExtensionInfo("Extension2"),
+            ];
+
+            displayExtensionInfoStub.resolves(mockExtensions);
+
+            // Act
+            const result: CommandResult<DisplayExtensionInfoResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data).to.not.equal(undefined);
+            expect(result.data!.extensions).to.deep.equal(mockExtensions);
+            expect(result.data!.displayText).to.equal("Extension1,Extension2");
+            expect(result.error).to.equal(undefined);
+        });
+
+        it("should handle extensions with undefined names", async () => {
+            // Arrange
+            const mockExtensions: ExtensionInfo[] = [
+                createMockExtensionInfo("Extension1"),
+                createMockExtensionInfo(null),
+                createMockExtensionInfo("Extension3"),
+            ];
+
+            displayExtensionInfoStub.resolves(mockExtensions);
+
+            // Act
+            const result: CommandResult<DisplayExtensionInfoResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.displayText).to.equal("Extension1,Extension3");
+        });
+
+        it("should handle empty extension list", async () => {
+            // Arrange
+            const mockExtensions: ExtensionInfo[] = [];
+
+            displayExtensionInfoStub.resolves(mockExtensions);
+
+            // Act
+            const result: CommandResult<DisplayExtensionInfoResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.extensions).to.deep.equal([]);
+            expect(result.data!.displayText).to.equal("");
+        });
+
+        it("should handle extensions with empty names", async () => {
+            // Arrange
+            const mockExtensions: ExtensionInfo[] = [
+                createMockExtensionInfo(""),
+                createMockExtensionInfo("ValidExtension"),
+                createMockExtensionInfo(""),
+            ];
+
+            displayExtensionInfoStub.resolves(mockExtensions);
+
+            // Act
+            const result: CommandResult<DisplayExtensionInfoResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(true);
+            expect(result.data!.displayText).to.equal("ValidExtension");
+        });
+
+        it("should return error result when service throws Error", async () => {
+            // Arrange
+            const errorMessage = "Failed to display extension info";
+
+            displayExtensionInfoStub.rejects(new Error(errorMessage));
+
+            // Act
+            const result: CommandResult<DisplayExtensionInfoResult> = await handler.execute({});
+
+            // Assert
+            expect(result.success).to.equal(false);
+            expect(result.data).to.equal(undefined);
+            expect(result.error).to.equal(errorMessage);
+        });
+
+        it("should call DisplayExtensionInfo exactly once", async () => {
+            // Arrange
+            displayExtensionInfoStub.resolves([]);
+
+            // Act
+            await handler.execute({});
+
+            // Assert
+            expect(displayExtensionInfoStub.calledOnce).to.equal(true);
+        });
+    });
+});
