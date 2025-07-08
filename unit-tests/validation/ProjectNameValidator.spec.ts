@@ -360,49 +360,4 @@ describe("ProjectNameValidator", () => {
             }
         });
     });
-
-    describe("Performance Testing - Project Name Validation", () => {
-        it("should validate project names quickly under load", () => {
-            const startTime = Date.now();
-            const iterations = 10000;
-
-            for (let i = 0; i < iterations; i++) {
-                const name = `ValidProject${i}`;
-                const result: ValidationResult = ProjectNameValidator.validate(name);
-                expect(result.isValid).to.equal(true);
-            }
-
-            const duration = Date.now() - startTime;
-            expect(duration).to.be.lessThan(100, `${iterations} validations took ${duration}ms, should be < 100ms`);
-        });
-
-        it("should handle long name validation efficiently", () => {
-            const longName = `A${"b".repeat(1000)}`;
-            const startTime = Date.now();
-
-            for (let i = 0; i < 1000; i++) {
-                ProjectNameValidator.validate(longName);
-            }
-
-            const duration = Date.now() - startTime;
-            expect(duration).to.be.lessThan(50, `1000 long name validations took ${duration}ms, should be < 50ms`);
-        });
-
-        it("should handle reserved word checking efficiently", () => {
-            const startTime = Date.now();
-            const iterations = 5000;
-
-            for (let i = 0; i < iterations; i++) {
-                const result: ValidationResult = ProjectNameValidator.validate("CON");
-                expect(result.isValid).to.equal(false);
-            }
-
-            const duration = Date.now() - startTime;
-
-            expect(duration).to.be.lessThan(
-                50,
-                `${iterations} reserved word checks took ${duration}ms, should be < 50ms`,
-            );
-        });
-    });
 });

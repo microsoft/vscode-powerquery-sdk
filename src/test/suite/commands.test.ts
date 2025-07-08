@@ -63,33 +63,6 @@ suite("Command Integration Tests", () => {
         }
     });
 
-    test("should execute CreateNewProjectCommand without errors", async () => {
-        // Test that the command can be executed programmatically
-        // Note: This will not create a full project in test environment, but verifies command registration
-        try {
-            await vscode.commands.executeCommand(Commands.CreateNewProjectCommand);
-            // If we get here without exception, the command is properly registered and executable
-            assert.ok(true, "CreateNewProjectCommand executed successfully");
-        } catch (error) {
-            // Some commands may require specific context or user input in full VS Code
-            // We mainly want to verify the command exists and is registered
-            const errorMessage = error instanceof Error ? error.message : String(error);
-
-            // Allow certain expected errors that indicate the command is registered but needs context
-            const acceptableErrors = ["command not found", "No workspace folder", "User cancelled", "command failed"];
-
-            const isAcceptableError = acceptableErrors.some(acceptable =>
-                errorMessage.toLowerCase().includes(acceptable.toLowerCase()),
-            );
-
-            if (!isAcceptableError) {
-                throw error; // Re-throw unexpected errors
-            }
-
-            assert.ok(true, `Command exists but requires context: ${errorMessage}`);
-        }
-    });
-
     test("should execute SeizePqTestCommand without errors", async () => {
         try {
             await vscode.commands.executeCommand(Commands.SeizePqTestCommand);

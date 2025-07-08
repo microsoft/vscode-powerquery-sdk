@@ -15,7 +15,7 @@ export function run(testsRoot: string, cb: (error: unknown, failures?: number) =
     const mocha = new Mocha({
         ui: "tdd",
         color: true,
-        timeout: 30000, // Increased timeout for VS Code operations
+        timeout: 20000,
         reporter: "spec", // More detailed output
     });
 

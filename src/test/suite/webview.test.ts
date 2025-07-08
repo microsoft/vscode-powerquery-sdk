@@ -9,6 +9,7 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 
 import * as TestUtils from "../TestUtils";
+import { Views } from "../TestConstants";
 
 suite("Webview Integration Tests", () => {
     suiteSetup(TestUtils.ensureRequiredExtensionsAreLoaded);
@@ -17,30 +18,12 @@ suite("Webview Integration Tests", () => {
         // Global cleanup
     });
 
-    test("should verify webview panel contributions", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const packageJson = require("../../../package.json");
-
-            // Verify webview activation events are configured
-            const activationEvents = packageJson.activationEvents;
-
-            assert.ok(activationEvents, "Should have activation events");
-            assert.ok(Array.isArray(activationEvents), "Activation events should be an array");
-
-            const webviewEvent = activationEvents.find((event: string) =>
-                event.includes("powerquery.sdk.tools.ResultWebView"),
-            );
-
-            assert.ok(webviewEvent, "Should have webview activation event configured");
-        });
-    });
-
-    test("should verify PQ Test Result webview can be created", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            // Test webview creation capability
+    test("should verify webview panel can be created", () => {
+        // Test runtime webview creation instead of parsing package.json
+        // This verifies the webview type is properly registered and supported
+        try {
             const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
+                Views.ResultWebView,
                 "Test PQ Result",
                 vscode.ViewColumn.One,
                 {
@@ -50,32 +33,41 @@ suite("Webview Integration Tests", () => {
             );
 
             assert.ok(panel, "Should be able to create webview panel");
-
-            assert.strictEqual(
-                panel.viewType,
-                "powerquery.sdk.tools.ResultWebView",
-                "Panel should have correct view type",
-            );
-
-            // Verify webview options
-            assert.ok(panel.webview.options.enableScripts, "Webview should allow scripts");
+            assert.strictEqual(panel.viewType, Views.ResultWebView, "Panel should have correct view type");
+            assert.strictEqual(panel.title, "Test PQ Result", "Panel should have correct title");
 
             // Clean up
             panel.dispose();
-        });
+        } catch (error) {
+            assert.fail(`Failed to create webview panel: ${error}`);
+        }
     });
 
-    test("should verify webview can handle basic HTML content", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "Test Content",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
+    test("should verify PQ Test Result webview functionality", () => {
+        // Test webview creation capability
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "Test PQ Result", vscode.ViewColumn.One, {
+            enableScripts: true,
+            retainContextWhenHidden: true,
+        });
 
-            // Test basic HTML content setting
-            const testHtml = `<!DOCTYPE html>
+        assert.ok(panel, "Should be able to create webview panel");
+
+        assert.strictEqual(panel.viewType, Views.ResultWebView, "Panel should have correct view type");
+
+        // Verify webview options
+        assert.ok(panel.webview.options.enableScripts, "Webview should allow scripts");
+
+        // Clean up
+        panel.dispose();
+    });
+
+    test("should verify webview can handle basic HTML content", () => {
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "Test Content", vscode.ViewColumn.One, {
+            enableScripts: true,
+        });
+
+        // Test basic HTML content setting
+        const testHtml = `<!DOCTYPE html>
 <html>
 <head>
     <title>Test</title>
@@ -86,38 +78,33 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = testHtml;
+        panel.webview.html = testHtml;
 
-            assert.ok(panel.webview.html.includes("Test PQ Result"), "Webview should contain test content");
+        assert.ok(panel.webview.html.includes("Test PQ Result"), "Webview should contain test content");
 
-            // Clean up
-            panel.dispose();
-        });
+        // Clean up
+        panel.dispose();
     });
 
     test("should verify webview message passing capability", async () => {
-        await TestUtils.CreateAsyncTestResult(async () => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "Message Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "Message Test", vscode.ViewColumn.One, {
+            enableScripts: true,
+        });
 
-            // Set up message listener
-            let messageReceived = false;
+        // Set up message listener
+        let messageReceived = false;
 
-            const messagePromise = new Promise<void>(resolve => {
-                panel.webview.onDidReceiveMessage(message => {
-                    if (message.type === "test") {
-                        messageReceived = true;
-                        resolve();
-                    }
-                });
+        const messagePromise = new Promise<void>(resolve => {
+            panel.webview.onDidReceiveMessage(message => {
+                if (message.type === "test") {
+                    messageReceived = true;
+                    resolve();
+                }
             });
+        });
 
-            // Set HTML with script to send message
-            const htmlWithScript = `<!DOCTYPE html>
+        // Set HTML with script to send message
+        const htmlWithScript = `<!DOCTYPE html>
 <html>
 <head>
     <title>Message Test</title>
@@ -133,37 +120,30 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = htmlWithScript;
+        panel.webview.html = htmlWithScript;
 
-            // Wait for message with timeout
-            await Promise.race([
-                messagePromise,
-                new Promise<void>((_, reject) => {
-                    setTimeout(() => reject(new Error("Message timeout")), 2000);
-                }),
-            ]);
+        // Wait for message with timeout
+        await Promise.race([
+            messagePromise,
+            new Promise<void>((_, reject) => {
+                setTimeout(() => reject(new Error("Message timeout")), 2000);
+            }),
+        ]);
 
-            assert.ok(messageReceived, "Should receive message from webview");
+        assert.ok(messageReceived, "Should receive message from webview");
 
-            // Clean up
-            panel.dispose();
-        });
+        // Clean up
+        panel.dispose();
     });
 
-    test("should verify webview CSP (Content Security Policy) configuration", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "CSP Test",
-                vscode.ViewColumn.One,
-                {
-                    enableScripts: true,
-                    localResourceRoots: [],
-                },
-            );
+    test("should verify webview CSP (Content Security Policy) configuration", () => {
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "CSP Test", vscode.ViewColumn.One, {
+            enableScripts: true,
+            localResourceRoots: [],
+        });
 
-            // Test that webview respects CSP settings
-            const htmlWithInlineScript = `<!DOCTYPE html>
+        // Test that webview respects CSP settings
+        const htmlWithInlineScript = `<!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src vscode-webview:; style-src vscode-webview: 'unsafe-inline';">
@@ -174,82 +154,68 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = htmlWithInlineScript;
+        panel.webview.html = htmlWithInlineScript;
 
-            assert.ok(panel.webview.html.includes("Content-Security-Policy"), "Webview should support CSP headers");
+        assert.ok(panel.webview.html.includes("Content-Security-Policy"), "Webview should support CSP headers");
 
-            // Clean up
-            panel.dispose();
-        });
+        // Clean up
+        panel.dispose();
     });
 
-    test("should verify webview state management", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "State Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true, retainContextWhenHidden: true },
-            );
-
-            // Test state management - retainContextWhenHidden is a panel option, not webview option
-            assert.ok(panel.webview.options.enableScripts, "Webview should have scripts enabled");
-
-            // Verify visibility states
-            assert.ok(panel.visible, "Panel should be visible initially");
-            assert.ok(panel.active, "Panel should be active initially");
-
-            // Clean up
-            panel.dispose();
+    test("should verify webview state management", () => {
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "State Test", vscode.ViewColumn.One, {
+            enableScripts: true,
+            retainContextWhenHidden: true,
         });
+
+        // Test state management - retainContextWhenHidden is a panel option, not webview option
+        assert.ok(panel.webview.options.enableScripts, "Webview should have scripts enabled");
+
+        // Verify visibility states
+        assert.ok(panel.visible, "Panel should be visible initially");
+        assert.ok(panel.active, "Panel should be active initially");
+
+        // Clean up
+        panel.dispose();
     });
 
-    test("should verify webview disposal and cleanup", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "Disposal Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
-
-            let disposalEventFired = false;
-
-            panel.onDidDispose(() => {
-                disposalEventFired = true;
-            });
-
-            // Dispose panel
-            panel.dispose();
-
-            // Verify disposal event
-            assert.ok(disposalEventFired, "Disposal event should have fired");
+    test("should verify webview disposal and cleanup", () => {
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "Disposal Test", vscode.ViewColumn.One, {
+            enableScripts: true,
         });
+
+        let disposalEventFired = false;
+
+        panel.onDidDispose(() => {
+            disposalEventFired = true;
+        });
+
+        // Dispose panel
+        panel.dispose();
+
+        // Verify disposal event
+        assert.ok(disposalEventFired, "Disposal event should have fired");
     });
 
-    test("should verify webview can handle JSON data display", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "JSON Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
+    test("should verify webview can handle JSON data display", () => {
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "JSON Test", vscode.ViewColumn.One, {
+            enableScripts: true,
+        });
 
-            // Test JSON data handling (similar to PQ test results)
-            const testData = {
-                status: "success",
-                result: {
-                    columns: ["Name", "Value"],
-                    rows: [
-                        ["Test1", "Value1"],
-                        ["Test2", "Value2"],
-                    ],
-                },
-                timestamp: new Date().toISOString(),
-            };
+        // Test JSON data handling (similar to PQ test results)
+        const testData = {
+            status: "success",
+            result: {
+                columns: ["Name", "Value"],
+                rows: [
+                    ["Test1", "Value1"],
+                    ["Test2", "Value2"],
+                ],
+            },
+            timestamp: new Date().toISOString(),
+        };
 
-            const htmlWithData = `<!DOCTYPE html>
+        const htmlWithData = `<!DOCTYPE html>
 <html>
 <head>
     <title>JSON Data Test</title>
@@ -263,27 +229,22 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = htmlWithData;
+        panel.webview.html = htmlWithData;
 
-            assert.ok(panel.webview.html.includes(testData.status), "Webview should contain test data");
-            assert.ok(panel.webview.html.includes("Test1"), "Webview should contain row data");
+        assert.ok(panel.webview.html.includes(testData.status), "Webview should contain test data");
+        assert.ok(panel.webview.html.includes("Test1"), "Webview should contain row data");
 
-            // Clean up
-            panel.dispose();
-        });
+        // Clean up
+        panel.dispose();
     });
 
     test("should simulate webview button interaction and command execution", async () => {
-        await TestUtils.CreateAsyncTestResult(async () => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "Interactive Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
+        const panel = vscode.window.createWebviewPanel(Views.ResultWebView, "Interactive Test", vscode.ViewColumn.One, {
+            enableScripts: true,
+        });
 
-            // Test webview with interactive elements
-            const interactiveHtml = `<!DOCTYPE html>
+        // Test webview with interactive elements
+        const interactiveHtml = `<!DOCTYPE html>
 <html>
 <head>
     <title>Interactive Test</title>
@@ -331,61 +292,59 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = interactiveHtml;
+        panel.webview.html = interactiveHtml;
 
-            // Set up message handling
-            let messagesReceived: Array<{ type: string; data?: unknown }> = [];
+        // Set up message handling
+        let messagesReceived: Array<{ type: string; data?: unknown }> = [];
 
-            const messagePromise = new Promise<void>(resolve => {
-                let messageCount = 0;
+        const messagePromise = new Promise<void>(resolve => {
+            let messageCount = 0;
 
-                panel.webview.onDidReceiveMessage(message => {
-                    messagesReceived.push(message);
-                    messageCount++;
+            panel.webview.onDidReceiveMessage(message => {
+                messagesReceived.push(message);
+                messageCount++;
 
-                    // Simulate response to button clicks
-                    if (message.type === "executeTest") {
-                        panel.webview.postMessage({
-                            type: "updateResult",
-                            data: "Test executed successfully!",
-                        });
-                    }
+                // Simulate response to button clicks
+                if (message.type === "executeTest") {
+                    panel.webview.postMessage({
+                        type: "updateResult",
+                        data: "Test executed successfully!",
+                    });
+                }
 
-                    // Resolve after receiving a few interactions
-                    if (messageCount >= 2) {
-                        resolve();
-                    }
-                });
-
-                // Timeout if no messages received
-                setTimeout(() => resolve(), 2000);
+                // Resolve after receiving a few interactions
+                if (messageCount >= 2) {
+                    resolve();
+                }
             });
 
-            // Simulate user interactions by programmatically triggering webview scripts
-            await panel.webview.postMessage({ type: "simulateClick", target: "testBtn" });
-            await panel.webview.postMessage({ type: "simulateClick", target: "clearBtn" });
-
-            await messagePromise;
-
-            assert.ok(messagesReceived.length >= 0, "Webview should be capable of receiving messages");
-            assert.ok(panel.webview.html.includes("Interactive Test"), "Webview should support interactive content");
-
-            // Clean up
-            panel.dispose();
+            // Timeout if no messages received
+            setTimeout(() => resolve(), 2000);
         });
+
+        // Simulate user interactions by programmatically triggering webview scripts
+        await panel.webview.postMessage({ type: "simulateClick", target: "testBtn" });
+        await panel.webview.postMessage({ type: "simulateClick", target: "clearBtn" });
+
+        await messagePromise;
+
+        assert.ok(messagesReceived.length >= 0, "Webview should be capable of receiving messages");
+        assert.ok(panel.webview.html.includes("Interactive Test"), "Webview should support interactive content");
+
+        // Clean up
+        panel.dispose();
     });
 
     test("should simulate webview error handling and recovery", async () => {
-        await TestUtils.CreateAsyncTestResult(async () => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "Error Handling Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
+        const panel = vscode.window.createWebviewPanel(
+            Views.ResultWebView,
+            "Error Handling Test",
+            vscode.ViewColumn.One,
+            { enableScripts: true },
+        );
 
-            // Test error handling in webview
-            const errorTestHtml = `<!DOCTYPE html>
+        // Test error handling in webview
+        const errorTestHtml = `<!DOCTYPE html>
 <html>
 <head>
     <title>Error Test</title>
@@ -426,73 +385,68 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = errorTestHtml;
+        panel.webview.html = errorTestHtml;
 
-            // Test error message handling
-            let errorHandled = false;
-            let recoveryCompleted = false;
+        // Test error message handling
+        let errorHandled = false;
+        let recoveryCompleted = false;
 
-            const errorPromise = new Promise<void>(resolve => {
-                panel.webview.onDidReceiveMessage(message => {
-                    if (message.type === "error") {
-                        errorHandled = true;
-                        assert.ok(message.data, "Error message should contain data");
-                    }
+        const errorPromise = new Promise<void>(resolve => {
+            panel.webview.onDidReceiveMessage(message => {
+                if (message.type === "error") {
+                    errorHandled = true;
+                    assert.ok(message.data, "Error message should contain data");
+                }
 
-                    if (message.type === "recovery") {
-                        recoveryCompleted = true;
-                    }
+                if (message.type === "recovery") {
+                    recoveryCompleted = true;
+                }
 
-                    if (errorHandled || recoveryCompleted) {
-                        resolve();
-                    }
-                });
-
-                setTimeout(() => resolve(), 1500);
+                if (errorHandled || recoveryCompleted) {
+                    resolve();
+                }
             });
 
-            await errorPromise;
-
-            assert.ok(
-                errorHandled || recoveryCompleted,
-                "Webview should handle errors gracefully or complete recovery",
-            );
-
-            // Clean up
-            panel.dispose();
+            setTimeout(() => resolve(), 1500);
         });
+
+        await errorPromise;
+
+        assert.ok(errorHandled || recoveryCompleted, "Webview should handle errors gracefully or complete recovery");
+
+        // Clean up
+        panel.dispose();
     });
 
-    test("should simulate webview data visualization with large datasets", async () => {
-        await TestUtils.CreateAsyncTestResult(() => {
-            const panel = vscode.window.createWebviewPanel(
-                "powerquery.sdk.tools.ResultWebView",
-                "Data Visualization Test",
-                vscode.ViewColumn.One,
-                { enableScripts: true },
-            );
+    test("should simulate webview data visualization with large datasets", () => {
+        const panel = vscode.window.createWebviewPanel(
+            Views.ResultWebView,
+            "Data Visualization Test",
+            vscode.ViewColumn.One,
+            { enableScripts: true },
+        );
 
-            // Generate large test dataset (simulating PQ test results)
-            const largeDataset = {
-                status: "success",
-                executionTime: "1.23s",
-                rowCount: 1000,
-                columns: ["ID", "Name", "Value", "Timestamp", "Category"],
-                data: Array.from({ length: 100 }, (_, i) => ({
-                    ID: i + 1,
-                    Name: `Item_${i + 1}`,
-                    Value: Math.random() * 1000,
-                    Timestamp: new Date(Date.now() - i * 86400000).toISOString(),
-                    Category: `Category_${(i % 5) + 1}`,
-                })),
-                metadata: {
-                    source: "test_connector",
-                    query: "Table.FromRecords(...)",
-                    version: "1.0.0",
-                },
-            };
+        // Generate large test dataset (simulating PQ test results)
+        const largeDataset = {
+            status: "success",
+            executionTime: "1.23s",
+            rowCount: 1000,
+            columns: ["ID", "Name", "Value", "Timestamp", "Category"],
+            data: Array.from({ length: 100 }, (_, i) => ({
+                ID: i + 1,
+                Name: `Item_${i + 1}`,
+                Value: Math.random() * 1000,
+                Timestamp: new Date(Date.now() - i * 86400000).toISOString(),
+                Category: `Category_${(i % 5) + 1}`,
+            })),
+            metadata: {
+                source: "test_connector",
+                query: "Table.FromRecords(...)",
+                version: "1.0.0",
+            },
+        };
 
-            const dataVizHtml = `<!DOCTYPE html>
+        const dataVizHtml = `<!DOCTYPE html>
 <html>
 <head>
     <title>PQ Data Visualization</title>
@@ -574,15 +528,14 @@ suite("Webview Integration Tests", () => {
 </body>
 </html>`;
 
-            panel.webview.html = dataVizHtml;
+        panel.webview.html = dataVizHtml;
 
-            // Verify content is properly set
-            assert.ok(panel.webview.html.includes("Query Results"), "Webview should contain data visualization");
-            assert.ok(panel.webview.html.includes("data-table"), "Webview should have table styling");
-            assert.ok(panel.webview.html.length > 5000, "Webview should handle large content efficiently");
+        // Verify content is properly set
+        assert.ok(panel.webview.html.includes("Query Results"), "Webview should contain data visualization");
+        assert.ok(panel.webview.html.includes("data-table"), "Webview should have table styling");
+        assert.ok(panel.webview.html.length > 5000, "Webview should handle large content efficiently");
 
-            // Clean up
-            panel.dispose();
-        });
+        // Clean up
+        panel.dispose();
     });
 });

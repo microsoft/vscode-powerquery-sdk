@@ -23,7 +23,7 @@ export default defineConfig({
         NODE_ENV: "test",
     },
     mocha: {
-        timeout: 60000, // Increase timeout to allow for extension installation
-        retries: 1, // Retry failed tests once in case of timing issues
+        timeout: 20000,
+        retries: 1,
     },
 });
