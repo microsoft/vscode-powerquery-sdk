@@ -2,7 +2,7 @@ import { defineConfig } from "@vscode/test-cli";
 
 export default defineConfig({
     files: "out/src/test/suite/**/*.test.js",
-    workspaceFolder: "./src/test/testFixture",
+    workspaceFolder: "./out/test/testFixture",
     extensionDevelopmentPath: "./",
     installExtensions: ["PowerQuery.vscode-powerquery"],
     useInstallation: {
