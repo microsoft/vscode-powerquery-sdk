@@ -35,12 +35,17 @@ import {
     substitutedWorkspaceFolderBasenameIfNeeded,
     updateCurrentLocalPqModeIfNeeded,
 } from "../utils/vscodes";
+
+import { DeleteCredentialHandler, DeleteCredentialResult } from "./handlers/DeleteCredentialHandler";
+import { DisplayExtensionInfoHandler, DisplayExtensionInfoResult } from "./handlers/DisplayExtensionInfoHandler";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { InputStep, MultiStepInput } from "../common/MultiStepInput";
-import { PqServiceHostClient, PqServiceHostServerNotReady } from "../pqTestConnector/PqServiceHostClient";
+import { ListCredentialsHandler, ListCredentialsResult } from "./handlers/ListCredentialsHandler";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
-
+import { RefreshCredentialHandler, RefreshCredentialResult } from "./handlers/RefreshCredentialHandler";
+import { TestConnectionHandler, TestConnectionResult } from "./handlers/TestConnectionHandler";
+import { CommandResult } from "./handlers/ICommandHandler";
 import { debounce } from "../utils/debounce";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
@@ -48,6 +53,7 @@ import { getMtimeOfAFile } from "../utils/files";
 import { IDisposable } from "../common/Disposable";
 import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
 import { SchemaManagementService } from "../common/SchemaManagementService";
 
 const CommandPrefix: string = `powerquery.sdk.tools`;
@@ -73,6 +79,13 @@ export class LifecycleCommands implements IDisposable {
     private checkAndTryToUpdatePqTestDeferred$: Promise<string | undefined> | undefined;
     private currentPqTestVersion: string = ExtensionConstants.SuggestedPqTestNugetVersion;
 
+    // Command handlers for testable business logic
+    private readonly displayExtensionInfoHandler: DisplayExtensionInfoHandler;
+    private readonly deleteCredentialHandler: DeleteCredentialHandler;
+    private readonly listCredentialsHandler: ListCredentialsHandler;
+    private readonly refreshCredentialHandler: RefreshCredentialHandler;
+    private readonly testConnectionHandler: TestConnectionHandler;
+
     constructor(
         private readonly vscExtCtx: ExtensionContext,
         readonly globalEventBus: GlobalEventBus,
@@ -81,6 +94,16 @@ export class LifecycleCommands implements IDisposable {
         private readonly outputChannel: PqSdkOutputChannel,
         private readonly schemaManagementService: SchemaManagementService,
     ) {
+        // Initialize command handlers
+        this.displayExtensionInfoHandler = new DisplayExtensionInfoHandler(pqTestService, {
+            featureUseServiceHost: ExtensionConfigurations.featureUseServiceHost,
+        });
+
+        this.deleteCredentialHandler = new DeleteCredentialHandler(pqTestService);
+        this.listCredentialsHandler = new ListCredentialsHandler(pqTestService);
+        this.refreshCredentialHandler = new RefreshCredentialHandler(pqTestService);
+        this.testConnectionHandler = new TestConnectionHandler(pqTestService);
+
         globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangeExternalVersionTag, () => {
             // when externalVersionTag changed, we need to re-invoke manuallyUpdatePqTest,
             // and it will
@@ -768,21 +791,18 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
 
-                try {
-                    const result: GenericResult = await this.pqTestService.DeleteCredential();
+                const result: CommandResult<DeleteCredentialResult> = await this.deleteCredentialHandler.execute({});
 
+                if (result.success && result.data) {
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.delete.credentials.result", {
-                            result: prettifyJson(result),
+                            result: result.data.formattedOutput,
                         }),
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
-
+                } else {
                     void vscode.window.showErrorMessage(
                         resolveI18nTemplate("PQSdk.lifecycle.command.delete.credentials.errorMessage", {
-                            errorMessage,
+                            errorMessage: result.error || "Unknown error",
                         }),
                     );
                 }
@@ -803,39 +823,21 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
 
-                try {
-                    const result: ExtensionInfo[] = await this.pqTestService.DisplayExtensionInfo();
+                const result: CommandResult<DisplayExtensionInfoResult> =
+                    await this.displayExtensionInfoHandler.execute({});
 
+                if (result.success && result.data) {
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.result", {
-                            result: result
-                                .map((info: ExtensionInfo) => info.Name ?? "")
-                                .filter(Boolean)
-                                .join(","),
+                            result: result.data.displayText,
                         }),
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any | string) {
-                    // in service host mode:
-                    // we could ignore PqServiceHostServerNotReady for displayInfo while serviceHost not connected
-                    // which would be triggerred by fs.watcher that I cannot control
-                    // and service host would also ensure that there would be one display info triggerred
-                    // everytime a new connection established.
-                    if (
-                        !(
-                            ExtensionConfigurations.featureUseServiceHost &&
-                            !(this.pqTestService as PqServiceHostClient).pqServiceHostConnected &&
-                            error instanceof PqServiceHostServerNotReady
-                        )
-                    ) {
-                        const errorMessage: string = error instanceof Error ? error.message : error;
-
-                        void vscode.window.showErrorMessage(
-                            resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
-                                errorMessage,
-                            }),
-                        );
-                    }
+                } else {
+                    void vscode.window.showErrorMessage(
+                        resolveI18nTemplate("PQSdk.lifecycle.command.display.extension.info.errorMessage", {
+                            errorMessage: result.error || "Unknown error",
+                        }),
+                    );
                 }
 
                 progress.report({ increment: 100 });
@@ -854,21 +856,18 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
 
-                try {
-                    const result: unknown[] = await this.pqTestService.ListCredentials();
+                const result: CommandResult<ListCredentialsResult> = await this.listCredentialsHandler.execute({});
 
+                if (result.success && result.data) {
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.result", {
-                            result: prettifyJson(result),
+                            result: result.data.formattedOutput,
                         }),
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
-
+                } else {
                     void vscode.window.showErrorMessage(
                         resolveI18nTemplate("PQSdk.lifecycle.command.list.credentials.errorMessage", {
-                            errorMessage,
+                            errorMessage: result.error || "Unknown error",
                         }),
                     );
                 }
@@ -1417,21 +1416,18 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
 
-                try {
-                    const result: GenericResult = await this.pqTestService.RefreshCredential();
+                const result: CommandResult<RefreshCredentialResult> = await this.refreshCredentialHandler.execute({});
 
+                if (result.success && result.data) {
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.result", {
-                            result: prettifyJson(result),
+                            result: result.data.formattedOutput,
                         }),
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
-
+                } else {
                     void vscode.window.showErrorMessage(
                         resolveI18nTemplate("PQSdk.lifecycle.command.refresh.credentials.errorMessage", {
-                            errorMessage,
+                            errorMessage: result.error || "Unknown error",
                         }),
                     );
                 }
@@ -1500,21 +1496,18 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
                 this.outputChannel.show();
 
-                try {
-                    const result: GenericResult = await this.pqTestService.TestConnection();
+                const result: CommandResult<TestConnectionResult> = await this.testConnectionHandler.execute({});
 
+                if (result.success && result.data) {
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.result", {
-                            result: prettifyJson(result),
+                            result: result.data.formattedOutput,
                         }),
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any | string) {
-                    const errorMessage: string = error instanceof Error ? error.message : error;
-
+                } else {
                     void vscode.window.showErrorMessage(
                         resolveI18nTemplate("PQSdk.lifecycle.command.test.connection.errorMessage", {
-                            errorMessage,
+                            errorMessage: result.error || "Unknown error",
                         }),
                     );
                 }

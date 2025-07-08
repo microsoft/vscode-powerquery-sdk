@@ -229,7 +229,7 @@ module.exports = [
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
-                project: "./tsconfig.json",
+                project: "./unit-tests/tsconfig.json",
             },
             globals: {
                 require: "readonly",
@@ -240,11 +240,24 @@ module.exports = [
                 global: "readonly",
                 __dirname: "readonly",
                 __filename: "readonly",
+                describe: "readonly",
+                it: "readonly",
+                before: "readonly",
+                after: "readonly",
+                beforeEach: "readonly",
+                afterEach: "readonly",
+                suite: "readonly",
+                suiteSetup: "readonly",
+                suiteTeardown: "readonly",
+                test: "readonly",
+                AbortController: "readonly",
             },
         },
         rules: {
             "@typescript-eslint/ban-ts-comment": "off",
             "@typescript-eslint/typedef": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-expressions": "off",
             "prefer-const": "off",
         },
     },

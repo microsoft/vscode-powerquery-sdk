@@ -86,7 +86,6 @@ describe("Promises::CancellationTokenModule", () => {
             try {
                 token.throwIfRequested();
                 expect(false).true;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (reason: any) {
                 expect(reason).instanceof(Cancel);
                 expect(reason.message).eq("testing throwIfRequested");

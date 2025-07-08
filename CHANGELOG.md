@@ -4,6 +4,6 @@ All notable changes to the "vscode-powerquery-sdk" extension will be documented 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## v0.6.2
 
-- Initial release
+<TODO>

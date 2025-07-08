@@ -2,7 +2,7 @@
     "name": "vscode-powerquery-sdk",
     "displayName": "Power Query SDK",
     "description": "Power Query Connector SDK",
-    "version": "0.6.2",
+    "version": "0.6.3",
     "author": "Microsoft Corporation",
     "license": "MIT",
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
@@ -360,8 +360,9 @@
         "clean": "ts-node scripts/clean.ts",
         "code-install": "ts-node scripts/install.ts",
         "compile": "webpack --mode development",
-        "compile-tests": "rimraf out && tsc -p . --outDir out",
+        "compile-tests": "rimraf out && tsc -p . --outDir out && npm run copy:test-fixtures",
         "copy:i18n": "ts-node scripts/addI18n.ts",
+        "copy:test-fixtures": "node -e \"const fs=require('fs'); const path=require('path'); const src=path.join('src','test','testFixture'); const dest=path.join('out','test','testFixture'); if(fs.existsSync(src)){fs.mkdirSync(path.dirname(dest), {recursive:true}); fs.cpSync(src, dest, {recursive:true}); console.log('Copied test fixtures to out directory');}\"",
         "install:pq-test-result-view": "cd webviews/pq-test-result-view && (npm ci --legacy-peer-deps || npm install --legacy-peer-deps)",
         "lint": "eslint src --config eslint.config.js",
         "package": "npm run clean && npm run build && webpack --mode production && npm run copy:i18n",
@@ -369,7 +370,6 @@
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "test": "npm run test:unit-test && npm run test:e2e",
         "test:e2e": "npm run compile-tests && vscode-test",
-        "test:e2e:old": "npm run compile-tests && ts-node scripts/test-e2e.ts",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
         "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
         "test-ui": "vscode-test",
@@ -391,6 +391,7 @@
         "@types/node": "^20.14.8",
         "@types/sinon": "^10.0.20",
         "@types/vscode": "^1.95.0",
+        "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "@typescript-eslint/parser": "^8.36.0",
         "@vscode/debugadapter": "^1.65.0",
@@ -417,10 +418,10 @@
         "tsconfig-paths-webpack-plugin": "^4.2.0",
         "typescript": "^4.9.5",
         "vinyl-fs": "^4.0.2",
-        "vscode-extension-tester": "^8.16.2",
         "vscode-nls-dev": "^4.0.4",
         "webpack": "^5.99.9",
-        "webpack-cli": "^6.0.1"
+        "webpack-cli": "^6.0.1",
+        "ws": "^8.18.3"
     },
     "lint-staged": {
         "!(src)/**/*.{ts}": [

@@ -7,22 +7,59 @@
 
 import type { PqSdkOutputChannelLight } from "../../features/PqSdkOutputChannel";
 
+/**
+ * Test output channel for unit testing purposes
+ * Works in both Node.js and VS Code environments
+ */
 export class PqSdkTestOutputChannel implements PqSdkOutputChannelLight {
-    private readonly _lines: string[] = [];
+    private static instance: PqSdkTestOutputChannel;
+    private messages: string[] = [];
 
-    public appendInfoLine(value: string): void {
-        this._lines.push(`\t\t[test][info] ${value}`);
+    private constructor() {
+        // No-op constructor for unit test compatibility
     }
 
-    public appendErrorLine(value: string): void {
-        this._lines.push(`\t\t[test][error] ${value}`);
+    public static getInstance(): PqSdkTestOutputChannel {
+        if (!PqSdkTestOutputChannel.instance) {
+            PqSdkTestOutputChannel.instance = new PqSdkTestOutputChannel();
+        }
+
+        return PqSdkTestOutputChannel.instance;
+    }
+
+    public appendInfoLine(message: string): void {
+        this.messages.push(`[INFO] ${message}`);
+        console.log(`[INFO] ${message}`);
+    }
+
+    public appendErrorLine(message: string): void {
+        this.messages.push(`[ERROR] ${message}`);
+        console.error(`[ERROR] ${message}`);
+    }
+
+    public appendLine(message: string): void {
+        this.messages.push(message);
+        console.log(message);
+    }
+
+    public clear(): void {
+        this.messages = [];
+    }
+
+    public show(): void {
+        // No-op for unit tests
+    }
+
+    public dispose(): void {
+        this.clear();
     }
 
     public emit(): void {
-        for (const line of this._lines) {
-            console.log(line);
-        }
+        // Legacy method for test compatibility
+        this.show();
+    }
 
-        this._lines.length = 0;
+    public getMessages(): string[] {
+        return [...this.messages];
     }
 }

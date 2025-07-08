@@ -10,20 +10,7 @@ import * as vscode from "vscode";
 
 import { extensionId, extensionPublisher } from "./common";
 
-const defaultTestPromiseTimeout: number = 5000;
-
 const sdkExtensionId: string = `${extensionPublisher}.${extensionId}`;
-
-export function CreateAsyncTestResult(fn: () => void): Promise<void> {
-    return new Promise((resolve, reject) => {
-        fn();
-        resolve();
-
-        setTimeout(() => {
-            reject(new Error(`TestResult timeout exceeded: ${defaultTestPromiseTimeout}ms`));
-        }, defaultTestPromiseTimeout);
-    });
-}
 
 export async function activateExtension(): Promise<void> {
     const extension: vscode.Extension<unknown> =
@@ -34,7 +21,7 @@ export async function activateExtension(): Promise<void> {
     }
 }
 
-export async function waitForExtensionToBeAvailable(extensionId: string, timeoutMs: number = 30000): Promise<boolean> {
+export async function waitForExtensionToBeAvailable(extensionId: string, timeoutMs: number = 10000): Promise<boolean> {
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeoutMs) {
@@ -66,7 +53,7 @@ export async function waitForExtensionToBeAvailable(extensionId: string, timeout
 export async function ensureRequiredExtensionsAreLoaded(): Promise<void> {
     // Wait for the PowerQuery language service extension
     const languageServiceExtensionId = "powerquery.vscode-powerquery";
-    const isLanguageServiceAvailable = await waitForExtensionToBeAvailable(languageServiceExtensionId, 30000);
+    const isLanguageServiceAvailable = await waitForExtensionToBeAvailable(languageServiceExtensionId);
 
     if (!isLanguageServiceAvailable) {
         console.warn(

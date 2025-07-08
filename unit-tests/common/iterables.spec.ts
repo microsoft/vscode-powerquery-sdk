@@ -18,7 +18,7 @@ const testIterable: (iterable: NumberGenerator, values: number[]) => void = (
 ) => {
     let iterator: NumberIterator = iterable();
 
-    if (!iterable == null) {
+    if (iterable == null) {
         throw new TypeError("is not iterable");
     }
 

@@ -20,7 +20,7 @@ import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 const expect = chai.expect;
 
 describe(`${TestConstants.ExternalTestFlag} NugetHttpService unit tests`, () => {
-    const testOutputChannel = new PqSdkTestOutputChannel();
+    const testOutputChannel = PqSdkTestOutputChannel.getInstance();
     const nugetHttpService = new NugetHttpService(testOutputChannel);
 
     afterEach(() => testOutputChannel.emit());
@@ -34,6 +34,7 @@ describe(`${TestConstants.ExternalTestFlag} NugetHttpService unit tests`, () => 
         const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
             TestConstants.SdkPackageName,
         );
+
         expect(allVersions.length).gt(1);
 
         const _2_110_Versions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
