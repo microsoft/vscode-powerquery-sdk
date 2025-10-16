@@ -21,6 +21,7 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "Использование указанного пользователем значения версии",
   "extension.pqtest.config.features.autoDetection.description": "Если задано значение \"false\", пакет SDK не будет пытаться автоматически обнаруживать рабочие области соединителя и запрашивать создание файла параметров.",
   "extension.pqtest.config.features.useServiceHost": "Попробуйте новую функцию с использованием узла службы многократно используемой подсистемы, а не командных строк",
+  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "Локальный путь к папке установки PQTest.",
   "extension.pqtest.config.pqtest.version.description": "Версия локального компонента SDK Tools для PQ.",
   "extension.pqtest.config.pqtest.extension.description": "Укажите исходные модули расширения соединителя (.mez/.pqm).<br>Значение этого параметра можно указать несколько раз.",

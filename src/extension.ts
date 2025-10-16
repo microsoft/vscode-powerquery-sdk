@@ -26,6 +26,7 @@ import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTas
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
 import { SchemaManagementService } from "./common/SchemaManagementService";
 import { stringifyJson } from "./utils/strings";
+import { registerTestController, registerCommands } from "./testing/pqtest-adapter/TestController";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const vscPowerQuery: PQLSExt.PowerQueryApi = vscode.extensions.getExtension(
@@ -98,6 +99,13 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const lifeCycleTaskTreeView: IDisposable = vscode.window.createTreeView(LifeCycleTaskTreeView.TreeViewName, {
         treeDataProvider: lifeCycleTaskTreeViewDataProvider,
     });
+
+    // Register test adapter if enabled
+    let testController: vscode.TestController | undefined;
+    if (ExtensionConfigurations.featureEnableTestAdapter) {
+        testController = registerTestController(vscExtCtx, pqSdkOutputChannel);
+        registerCommands(vscExtCtx, testController, pqSdkOutputChannel);
+    }
 
     vscExtCtx.subscriptions.push(
         ...[

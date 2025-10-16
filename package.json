@@ -29,7 +29,8 @@
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
         "onWebviewPanel:powerquery.sdk.tools.ResultWebView",
-        "onLanguage:powerquery"
+        "onLanguage:powerquery",
+        "workspaceContains:**/*.testsettings.json"
     ],
     "extensionDependencies": [
         "PowerQuery.vscode-powerquery"
@@ -143,6 +144,13 @@
                     "default": false,
                     "order": 10,
                     "description": "%extension.pqtest.config.features.useServiceHost%"
+                },
+                "powerquery.sdk.features.enableTestAdapter": {
+                    "scope": "machine-overridable",
+                    "type": "boolean",
+                    "default": true,
+                    "order": 11,
+                    "description": "%extension.pqtest.config.features.enableTestAdapter.description%"
                 },
                 "powerquery.sdk.defaultExtension": {
                     "scope": "window",

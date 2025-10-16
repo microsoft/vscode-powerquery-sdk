@@ -21,6 +21,7 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "ユーザー指定のバージョン値を使用する",
   "extension.pqtest.config.features.autoDetection.description": "false に設定すると、SDK はコネクタ ワークスペースを自動的に検出せず、設定ファイルを作成するように求めます。",
   "extension.pqtest.config.features.useServiceHost": "コマンド ライン以外の再利用可能なエンジン サービス ホストを使用して、新機能を試す",
+  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "PQTest インストール フォルダーへのローカル パス。",
   "extension.pqtest.config.pqtest.version.description": "ローカル PQ SDK ツールのバージョン。",
   "extension.pqtest.config.pqtest.extension.description": "コネクタ拡張ソース モジュール (.mez/.pqm) を指定します。<br>このオプションは複数指定できます。",

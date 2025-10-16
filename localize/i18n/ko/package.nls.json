@@ -21,6 +21,7 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "사용자가 제공한 버전 값 사용",
   "extension.pqtest.config.features.autoDetection.description": "false로 설정하면 SDK에서 커넥터 작업 영역을 자동으로 검색하고 설정 파일을 만들라는 메시지를 표시하지 않습니다.",
   "extension.pqtest.config.features.useServiceHost": "명령줄 외 재사용 가능한 엔진 서비스 호스트를 사용하여 새 기능을 사용해 보세요.",
+  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "PQTest 설치 폴더의 로컬 경로입니다.",
   "extension.pqtest.config.pqtest.version.description": "로컬 PQ SDK 도구 버전입니다.",
   "extension.pqtest.config.pqtest.extension.description": "커넥터 확장 원본 모듈(.mez/.pqm)을 지정합니다.<br>이 옵션은 두 번 이상 지정할 수 있습니다.",

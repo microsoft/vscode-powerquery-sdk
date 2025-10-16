@@ -21,6 +21,7 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "Použít hodnotu verze zadanou uživatelem",
   "extension.pqtest.config.features.autoDetection.description": "Pokud je tato hodnota nastavená na false, sada SDK se nepokusí automaticky rozpoznat pracovní prostory konektoru a vyzve k vytvoření souboru nastavení.",
   "extension.pqtest.config.features.useServiceHost": "Vyzkoušejte novou funkci pomocí hostitele služby modulu, který se dá použít opakovaně, kromě příkazového řádku.",
+  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "Místní cesta k instalační složce PQTest.",
   "extension.pqtest.config.pqtest.version.description": "Verze místních nástrojů PQ SDK.",
   "extension.pqtest.config.pqtest.extension.description": "Zadejte zdrojové moduly rozšíření konektoru (.mez/.pqm).<br>Tato možnost se dá zadat víc než jednou.",

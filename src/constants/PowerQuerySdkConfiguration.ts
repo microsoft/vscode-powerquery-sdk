@@ -9,6 +9,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
+import { resolveSubstitutedValues } from "../utils/variableSubstitution";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -268,6 +269,34 @@ export const ExtensionConfigurations = {
         );
 
         return Boolean(result);
+    },
+    get featureEnableTestAdapter(): boolean {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const result: boolean | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featureEnableTestAdapter,
+        );
+
+        // Default to true if not set
+        return result !== undefined ? Boolean(result) : true;
+    },
+    get testSettingsFiles(): string | string[] | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: string | string[] | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testSettingsFiles,
+        );
+
+        // Handle arrays by resolving each element
+        if (Array.isArray(value)) {
+            return value.map((item) => resolveSubstitutedValues(item) ?? item);
+        }
+
+        return resolveSubstitutedValues(value);
     },
 };
 
