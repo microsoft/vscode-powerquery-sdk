@@ -115,6 +115,7 @@ const TestAdapter = {
     TestSettingsFileEnding: ".testsettings.json" as const,
     TestFilePattern: "**/*.query.pq" as const,
     TestFileEnding: ".query.pq" as const,
+    OutputFileEnding: ".pqout" as const,
     // Command IDs (registered in package.json)
     OpenOutputFileCommand: "pqsdk.test.openOutputFile" as const,
     RefreshAllTestsCommand: "pqsdk.test.refreshTests" as const,
