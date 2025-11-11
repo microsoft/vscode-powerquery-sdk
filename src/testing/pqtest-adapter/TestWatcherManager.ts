@@ -9,7 +9,8 @@ import * as path from "path";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { getPathType } from "../../utils/files";
-import { resolveTestItem } from "./TestResolver";
+// TODO: Re-enable when TestResolver is migrated
+// import { resolveTestItem } from "./TestResolver";
 import { getTestSettingsFileUris } from "./utils/testSettingsUtils";
 import { createTestItem } from "./utils/testUtils";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
@@ -208,7 +209,8 @@ export class TestWatcherManager implements vscode.Disposable {
 
                 // Clear children and re-resolve
                 testItem.children.replace([]);
-                await resolveTestItem(testItem, this.controller, this.outputChannel);
+                // TODO: Re-enable when TestResolver is migrated
+                // await resolveTestItem(testItem, this.controller, this.outputChannel);
             } else {
                 this.outputChannel.appendDebugLine(resolveI18nTemplate("PQSdk.testAdapter.skippingUnexpandedItem", { filePath: uri.fsPath }));
             }
