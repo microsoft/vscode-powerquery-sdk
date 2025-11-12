@@ -113,8 +113,8 @@
                 "icon": "$(refresh)"
             },
             {
-                "command": "powerquery.sdk.test.refreshSettingsItem",
-                "title": "%extension.pqtest.test.refreshSettingsItem.title%",
+                "command": "powerquery.sdk.test.refreshSettingsItemTests",
+                "title": "%extension.pqtest.test.refreshSettingsItemTests.title%",
                 "category": "Power query",
                 "icon": "$(refresh)"
             }
@@ -323,7 +323,7 @@
                     "when": "testId =~ /^test:/"
                 },
                 {
-                    "command": "powerquery.sdk.test.refreshSettingsItem",
+                    "command": "powerquery.sdk.test.refreshSettingsItemTests",
                     "when": "testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
                     "group": "inline"
                 }
