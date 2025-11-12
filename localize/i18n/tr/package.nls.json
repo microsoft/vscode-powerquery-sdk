@@ -26,7 +26,7 @@
   "extension.pqtest.config.pqtest.version.description": "Yerel PQ SDK araçları sürümü.",
   "extension.pqtest.config.pqtest.extension.description": "Bağlayıcı uzantısı kaynak modüllerini (.mez/.pqm) belirtin.<br>Bu seçenek birden çok kez belirtilebilir.",
   "extension.pqtest.config.pqtest.queryFile.description": "Bölüm belgesi veya M ifadesi (.m/.pq) içeren sorgu dosyası.",
-  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file, a directory containing pqtest settings files, or an array of paths to pqtest settings files.",
+  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
   "extension.pqtest.taskDefinitions.properties.operation.description": "Çalıştırılacak işlem",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "İşlem için ek komut satırı bağımsız değişkenleri",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Bağlayıcı dosyasının yolu (--extension)",

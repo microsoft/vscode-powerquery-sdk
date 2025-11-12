@@ -26,7 +26,7 @@
   "extension.pqtest.config.pqtest.version.description": "Wersja lokalnych narzędzi SDK PQ.",
   "extension.pqtest.config.pqtest.extension.description": "Określ moduły źródłowe rozszerzenia łącznika (.mez/.pqm).<br>Tę opcję można określić więcej niż raz.",
   "extension.pqtest.config.pqtest.queryFile.description": "Plik zapytania zawierający dokument sekcji lub wyrażenie M (.m/.pq).",
-  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file, a directory containing pqtest settings files, or an array of paths to pqtest settings files.",
+  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
   "extension.pqtest.taskDefinitions.properties.operation.description": "Operacja do uruchomienia",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Dodatkowe argumenty wiersza polecenia dla operacji",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Ścieżka do pliku łącznika (--extension)",

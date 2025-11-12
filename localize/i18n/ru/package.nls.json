@@ -26,7 +26,7 @@
   "extension.pqtest.config.pqtest.version.description": "Версия локального компонента SDK Tools для PQ.",
   "extension.pqtest.config.pqtest.extension.description": "Укажите исходные модули расширения соединителя (.mez/.pqm).<br>Значение этого параметра можно указать несколько раз.",
   "extension.pqtest.config.pqtest.queryFile.description": "Файл запроса, содержащий документ раздела или выражение M (.m/.pq).",
-  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file, a directory containing pqtest settings files, or an array of paths to pqtest settings files.",
+  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
   "extension.pqtest.taskDefinitions.properties.operation.description": "Операция для выполнения",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Дополнительные аргументы командной строки для операции",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Путь к файлу соединителя (--extension)",

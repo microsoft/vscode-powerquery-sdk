@@ -117,9 +117,9 @@ const TestAdapter = {
     TestFileEnding: ".query.pq" as const,
     OutputFileEnding: ".pqout" as const,
     // Command IDs (registered in package.json)
-    OpenOutputFileCommand: "pqsdk.test.openOutputFile" as const,
-    RefreshAllTestsCommand: "pqsdk.test.refreshTests" as const,
-    RefreshSettingsItemCommand: "pqsdk.test.refreshSettingsItem" as const,
+    OpenOutputFileCommand: "powerquery.sdk.test.openOutputFile" as const,
+    RefreshAllTestsCommand: "powerquery.sdk.test.refreshTests" as const,
+    RefreshSettingsItemTestsCommand: "powerquery.sdk.test.refreshSettingsItemTests" as const,
     RevealTestInExplorerCommand: "vscode.revealTestInExplorer" as const,
 };
 

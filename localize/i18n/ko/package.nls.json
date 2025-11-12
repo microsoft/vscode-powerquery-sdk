@@ -26,7 +26,7 @@
   "extension.pqtest.config.pqtest.version.description": "로컬 PQ SDK 도구 버전입니다.",
   "extension.pqtest.config.pqtest.extension.description": "커넥터 확장 원본 모듈(.mez/.pqm)을 지정합니다.<br>이 옵션은 두 번 이상 지정할 수 있습니다.",
   "extension.pqtest.config.pqtest.queryFile.description": "섹션 문서 또는 M 식(.m/.pq)을 포함하는 쿼리 파일입니다.",
-  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file, a directory containing pqtest settings files, or an array of paths to pqtest settings files.",
+  "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
   "extension.pqtest.taskDefinitions.properties.operation.description": "실행할 작업",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "작업에 대한 추가 명령줄 인수",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "커넥터 파일 경로(--extension)",
