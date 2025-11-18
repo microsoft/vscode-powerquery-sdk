@@ -10,8 +10,7 @@ import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { fileExists } from "../../utils/files";
 import { getOutputFilePathForTestItem } from "./utils/pathUtils";
-// TODO:Re-enable when implementing test discovery
-// import { resolveTestItem } from "./TestResolver";
+import { resolveTestItem } from "./TestResolver";
 import { TestWatcherManager } from "./TestWatcherManager";
 import { createTestItem } from "./utils/testUtils";
 
@@ -27,7 +26,7 @@ export function registerCommands(
 ): void {
     context.subscriptions.push(vscode.commands.registerCommand(ExtensionConstants.TestAdapter.OpenOutputFileCommand, showExpectedOutputFile));
     context.subscriptions.push(vscode.commands.registerCommand(ExtensionConstants.TestAdapter.RefreshAllTestsCommand, () => refreshAllTests(controller, outputChannel)));
-    context.subscriptions.push(vscode.commands.registerCommand(ExtensionConstants.TestAdapter.RefreshSettingsItemCommand, (testItem) => refreshSettingsItem(testItem, controller, outputChannel)));
+    context.subscriptions.push(vscode.commands.registerCommand(ExtensionConstants.TestAdapter.RefreshSettingsItemTestsCommand, (testItem) => refreshSettingsItem(testItem, controller, outputChannel)));
 }
 
 /**
@@ -59,12 +58,7 @@ export function registerTestController(
     controller.resolveHandler = async item => {
         if (item) {
             // User expanded a test settings file, so discover its children
-            // TODO: Implement resolveTestItem in next tasks- stubbed for now
-            const message = resolveI18nTemplate(
-                "PQSdk.testAdapter.testItemExpansionRequested",
-                { label: item.label }
-            );
-            outputChannel.appendDebugLine(message);
+            await resolveTestItem(item, controller, outputChannel);
         }
         // When item is null, do nothing - TestWatcherManager handles initial discovery
     };
@@ -87,7 +81,6 @@ async function runHandler(
     // Test execution is not implemented yet
     // Only file system discovery and test item creation is active
     outputChannel.appendInfoLine("Test execution will be implemented in a future task. Currently only test discovery is active.");
-    vscode.window.showInformationMessage("Test execution will be implemented in a future task. Currently only test discovery is active.");
 
     run.end();
 }
@@ -250,9 +243,8 @@ async function refreshSettingsItem(
         testItem.children.replace([]);
         testItem.error = undefined;
 
-        // TODO: Implement test discovery via PQTest --listOnly
-        // This will call resolveTestItem to discover individual tests within the settings file
-        // await resolveTestItem(testItem, controller, outputChannel);
+        // Trigger test discovery via resolveTestItem
+        await resolveTestItem(testItem, controller, outputChannel);
 
         // Auto-expand the item in the UI (unless skipped for batch operations)
         if (!skipReveal) {
@@ -293,7 +285,9 @@ async function showExpectedOutputFile(testItem?: vscode.TestItem): Promise<void>
         const outputFileUri: vscode.Uri = vscode.Uri.file(filePath);
         await vscode.window.showTextDocument(outputFileUri, { preview: true, preserveFocus: true });
     } else {
-        await vscode.window.showInformationMessage(`Output file not found: ${filePath}`);
+        await vscode.window.showInformationMessage(
+            resolveI18nTemplate("PQSdk.testAdapter.outputFileNotFound", { filePath })
+        );
     }
 }
 

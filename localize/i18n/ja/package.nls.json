@@ -26,6 +26,7 @@
   "extension.pqtest.config.pqtest.version.description": "ローカル PQ SDK ツールのバージョン。",
   "extension.pqtest.config.pqtest.extension.description": "コネクタ拡張ソース モジュール (.mez/.pqm) を指定します。<br>このオプションは複数指定できます。",
   "extension.pqtest.config.pqtest.queryFile.description": "セクション ドキュメントまたは M 式 (.m/.pq) を含むクエリ ファイル。",
+  "extension.pqtest.config.test.pqtest.description": "Direct path to PQTest executable",
   "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
   "extension.pqtest.taskDefinitions.properties.operation.description": "実行する操作",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "操作のための追加のコマンドライン引数",

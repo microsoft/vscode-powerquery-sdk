@@ -51,7 +51,11 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
                     result.push(vscode.Uri.file(settingsFiles));
                 } else {
                     void vscode.window.showErrorMessage(
-                        `The file '${settingsFiles}' in '${baseConfigPath}.${settingsFilesConfigKey}' does not have the correct extension '${testSettingsFileEnding}'.`,
+                        resolveI18nTemplate("PQSdk.testAdapter.error.incorrectFileExtension", {
+                            settingsFile: settingsFiles,
+                            configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
+                            expectedExtension: testSettingsFileEnding,
+                        }),
                     );
                 }
             }
@@ -75,14 +79,21 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
 
                 if (fileStat.type === vscode.FileType.Directory) {
                     void vscode.window.showErrorMessage(
-                        `The path '${settingsFile}' in '${baseConfigPath}.${settingsFilesConfigKey}' is a directory. This setting only supports file paths when configured as an array.`,
+                        resolveI18nTemplate("PQSdk.testAdapter.error.directoryNotSupportedInArray", {
+                            settingsFile,
+                            configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
+                        }),
                     );
                 } else {
                     if (settingsFile.endsWith(testSettingsFileEnding)) {
                         result.push(vscode.Uri.file(settingsFile));
                     } else {
                         void vscode.window.showErrorMessage(
-                            `The file '${settingsFile}' in '${baseConfigPath}.${settingsFilesConfigKey}' does not have the correct extension '${testSettingsFileEnding}'.`,
+                            resolveI18nTemplate("PQSdk.testAdapter.error.incorrectFileExtension", {
+                                settingsFile,
+                                configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
+                                expectedExtension: testSettingsFileEnding,
+                            }),
                         );
                     }
                 }
@@ -160,7 +171,9 @@ export async function getTestPathFromSettings(
         const workspaceFolder = workspace.workspaceFolders?.[0];
         if (!workspaceFolder) {
             throw new Error(
-                `Cannot resolve relative QueryFilePath '${queryFilePathFromSettings}' because no workspace folder is open.`,
+                resolveI18nTemplate("PQSdk.testAdapter.error.cannotResolveRelativePath", {
+                    queryFilePath: queryFilePathFromSettings,
+                }),
             );
         }
         resolvedQueryFilePath = path.resolve(workspaceFolder.uri.fsPath, queryFilePathFromSettings);
@@ -176,15 +189,26 @@ export async function getTestPathFromSettings(
                 return resolvedQueryFilePath;
             } else {
                 throw new Error(
-                    `The QueryFilePath '${queryFilePathFromSettings}' in '${settingsFilePath}' points to a file, but it must be either a directory or a .query.pq file.`,
+                    resolveI18nTemplate("PQSdk.testAdapter.error.queryFilePathMustBeDirectoryOrPqFile", {
+                        queryFilePath: queryFilePathFromSettings,
+                        settingsFilePath,
+                    }),
                 );
             }
         case "not-found":
             throw new Error(
-                `The QueryFilePath '${queryFilePathFromSettings}' in '${settingsFilePath}' does not exist at the resolved path '${resolvedQueryFilePath}'.`,
+                resolveI18nTemplate("PQSdk.testAdapter.error.queryFilePathDoesNotExist", {
+                    queryFilePath: queryFilePathFromSettings,
+                    settingsFilePath,
+                    resolvedPath: resolvedQueryFilePath,
+                }),
             );
         default:
             // This case should not be reachable
-            throw new Error(`An unexpected error occurred while checking the path: ${resolvedQueryFilePath}`);
+            throw new Error(
+                resolveI18nTemplate("PQSdk.testAdapter.error.unexpectedErrorCheckingPath", {
+                    resolvedPath: resolvedQueryFilePath,
+                }),
+            );
     }
 }

@@ -44,6 +44,7 @@ const ConfigNames = {
             featureUseServiceHost: "features.useServiceHost" as const,
             featureEnableTestAdapter: "features.enableTestAdapter" as const,
             testSettingsFiles: "test.settingsFiles" as const,
+            pqTestExecutablePath: "test.pqtest" as const,
         },
     },
 };

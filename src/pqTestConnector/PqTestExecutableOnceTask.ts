@@ -76,12 +76,42 @@ export class PqTestExecutableOnceTask implements IDisposable {
     }
 
     private get pqTestFullPath(): string {
-        // PQTestLocation getter
+        // First check if direct PQTest executable path is configured
+        const directExecutablePath: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
+
+        if (directExecutablePath) {
+            // Validate direct path
+            if (
+                !directExecutablePath.toLowerCase().endsWith(PqTestExecutableOnceTask.ExecutableName.toLowerCase())
+            ) {
+                this.handleErrorStr(
+                    resolveI18nTemplate("PQSdk.taskQueue.error.invalidPqtestExecutablePath", {
+                        directExecutablePath,
+                        executableName: PqTestExecutableOnceTask.ExecutableName,
+                    }),
+                );
+                throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
+            }
+
+            if (!fs.existsSync(directExecutablePath)) {
+                this.handleErrorStr(
+                    resolveI18nTemplate("PQSdk.taskQueue.error.pqtestExecutableNotFoundAtDirectPath", {
+                        directExecutablePath,
+                    }),
+                );
+                throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
+            }
+
+            // Direct path is valid, use it
+            return directExecutablePath;
+        }
+
+        // Fall back to existing directory-based logic
         const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
         if (!nextPQTestLocation) {
             this.handleErrorStr(extensionI18n["PQSdk.taskQueue.error.pqtestLocationNotSet"]);
-            throw new Error("Failed to find PqTest executable");
+            throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
         } else if (!fs.existsSync(nextPQTestLocation)) {
             this.handleErrorStr(
                 resolveI18nTemplate("PQSdk.taskQueue.error.pqtestLocationDoesntExist", {
@@ -89,7 +119,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }),
             );
 
-            throw new Error("Failed to find PqTest executable");
+            throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
         }
 
         const pqtestExe: string = path.resolve(nextPQTestLocation, PqTestExecutableOnceTask.ExecutableName);
@@ -101,7 +131,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }),
             );
 
-            throw new Error("Failed to find PqTest executable");
+            throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
         }
 
         return pqtestExe;
@@ -113,6 +143,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
         // even though not all operations would be run within this OnceTask, it makes no harm we support them all
         switch (task.operation) {
             case "info":
+                result = {
+                    ...result,
+                    pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                };
+
+                break;
+            case "run-compare":
                 result = {
                     ...result,
                     pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
@@ -141,7 +178,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
         return result;
     }
 
-    public async run(program: string, task: PQTestTask): Promise<void> {
+    public async run(program: string, task: PQTestTask): Promise<any> {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;
@@ -208,8 +245,25 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         }
                     } catch {
                         // noop
+                    } 
+                }
+
+                // run-compare: Parse and return result for caller 
+                if (task.operation === "run-compare") {
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const result: any = JSON.parse(spawnProcess.stdOut);
+                        return result;
+                    } catch (e) {
+                        this.handleErrorStr(
+                            resolveI18nTemplate("PQSdk.taskQueue.error.failedToParseJsonOutput", {
+                                error: `${e}`,
+                            }),
+                        );
+                        return undefined;
                     }
                 }
+
             } else {
                 this.handleErrorStr(
                     resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskExitAbnormally", {

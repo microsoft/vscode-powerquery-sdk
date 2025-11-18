@@ -223,6 +223,12 @@
                     "description": "%extension.pqtest.config.externals.nugetFeed.description%",
                     "default": ""
                 },
+                "powerquery.sdk.test.pqtest": {
+                    "scope": "machine-overridable",
+                    "type": "string",
+                    "order": 68,
+                    "description": "%extension.pqtest.config.test.pqtest.description%"
+                },
                 "powerquery.sdk.tools.location": {
                     "scope": "machine-overridable",
                     "type": "string",

@@ -298,6 +298,17 @@ export const ExtensionConfigurations = {
 
         return resolveSubstitutedValues(value);
     },
+    get pqTestExecutablePath(): string | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: string | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExecutablePath,
+        );
+
+        return resolveSubstitutedValues(value);
+    },
 };
 
 const NugetDownloadVscUrl: vscode.Uri = vscode.Uri.parse(ExtensionConstants.NugetDownloadUrl);

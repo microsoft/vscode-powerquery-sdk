@@ -26,6 +26,7 @@
   "extension.pqtest.config.pqtest.version.description": "Versione locale di PQ SDK tools.",
   "extension.pqtest.config.pqtest.extension.description": "Specificare i moduli di origine dell'estensione del connettore (.mez/.pqm).<br>Questa opzione può essere specificata più di una volta.",
   "extension.pqtest.config.pqtest.queryFile.description": "File di query contenente il documento di sezione o l'espressione M (.m/.pq).",
+  "extension.pqtest.config.test.pqtest.description": "Direct path to PQTest executable",
   "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
   "extension.pqtest.taskDefinitions.properties.operation.description": "Operazione da eseguire",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Argomenti aggiuntivi della riga di comando per l'operazione",
