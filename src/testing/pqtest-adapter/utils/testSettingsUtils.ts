@@ -168,15 +168,9 @@ export async function getTestPathFromSettings(
     if (path.isAbsolute(queryFilePathFromSettings)) {
         resolvedQueryFilePath = queryFilePathFromSettings;
     } else {
-        const workspaceFolder = workspace.workspaceFolders?.[0];
-        if (!workspaceFolder) {
-            throw new Error(
-                resolveI18nTemplate("PQSdk.testAdapter.error.cannotResolveRelativePath", {
-                    queryFilePath: queryFilePathFromSettings,
-                }),
-            );
-        }
-        resolvedQueryFilePath = path.resolve(workspaceFolder.uri.fsPath, queryFilePathFromSettings);
+        // Resolve relative paths relative to the settings file directory
+        const settingsFileDir = path.dirname(settingsFilePath);
+        resolvedQueryFilePath = path.resolve(settingsFileDir, queryFilePathFromSettings);
     }
 
     const pathType = await getPathType(resolvedQueryFilePath, fs);
