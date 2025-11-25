@@ -76,7 +76,7 @@ export class TestRunExecutor {
             })
         );
 
-        const workingDirectory = path.dirname(this.pqTestPath);
+        const workingDirectory = path.dirname(this.settingsFile.fsPath);
         this.outputChannel.appendLine(
             resolveI18nTemplate("PQSdk.testAdapter.executor.workingDirectory", {
                 workingDirectory,
