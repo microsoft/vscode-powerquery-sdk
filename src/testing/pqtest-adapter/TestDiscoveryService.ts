@@ -5,6 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as path from "path";
 import * as vscode from "vscode";
 
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
@@ -105,6 +106,7 @@ export class TestDiscoveryService {
             pathToQueryFile: testPath,
             settingsFile: settingsFileUri.fsPath,
             additionalArgs: ["--listOnly"],
+            workingDirectory: path.dirname(settingsFileUri.fsPath),
         };
 
         // Execute the task using PqTestExecutableOnceTask

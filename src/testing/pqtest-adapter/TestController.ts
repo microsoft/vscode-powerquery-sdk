@@ -6,6 +6,7 @@
 import * as vscode from "vscode";
 
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { fileExists } from "../../utils/files";
@@ -13,6 +14,7 @@ import { getOutputFilePathForTestItem } from "./utils/pathUtils";
 import { resolveTestItem } from "./TestResolver";
 import { TestWatcherManager } from "./TestWatcherManager";
 import { createTestItem } from "./utils/testUtils";
+import { TestRunCoordinator } from "./runners/helpers/TestRunCoordinator";
 
 // UI delay constants for test expansion operations
 const DELAY_FOR_UI_REVEAL_MS = 250;
@@ -68,7 +70,6 @@ export function registerTestController(
 
 /**
  * Handles test run requests from VS Code Test Explorer
- * STUB: Test execution not yet implemented. Only settings file discovery is active.
  */
 async function runHandler(
     request: vscode.TestRunRequest,
@@ -76,30 +77,82 @@ async function runHandler(
     controller: vscode.TestController,
     outputChannel: PqSdkOutputChannel
 ): Promise<void> {
-    const run: vscode.TestRun = controller.createTestRun(request);
+    const runName: string = getTestRunFolderName();
+    const testRun: vscode.TestRun = controller.createTestRun(request, runName);
 
-    // Test execution is not implemented yet
-    // Only file system discovery and test item creation is active
-    outputChannel.appendInfoLine("Test execution will be implemented in a future task. Currently only test discovery is active.");
+    try {
+        //  Get PQTest.exe path
+        const pqTestPath = ExtensionConfigurations.pqTestExecutablePath ?? ExtensionConfigurations.PQTestLocation;
+        
+        if (!pqTestPath) {
+            const errorMessage = "PQTest.exe path not configured. Please set powerquery.sdk.test.pqtest or powerquery.sdk.pqTestLocation configuration.";
+            outputChannel.appendErrorLine(errorMessage);
+            vscode.window.showErrorMessage(errorMessage);
+            return;
+        }
 
-    run.end();
+        // Verify the file exists
+        if (!await fileExists(pqTestPath)) {
+            const errorMessage = `PQTest.exe not found at: ${pqTestPath}`;
+            outputChannel.appendErrorLine(errorMessage);
+            vscode.window.showErrorMessage(errorMessage);
+            return;
+        }
+
+        // Get default extension 
+        const defaultExtension = ExtensionConfigurations.DefaultExtensionLocation;
+        
+        if (!defaultExtension) {
+            const errorMessage = "Default extension not configured. Please set powerquery.sdk.defaultExtension configuration.";
+            outputChannel.appendErrorLine(errorMessage);
+            vscode.window.showErrorMessage(errorMessage);
+            return;
+        }
+
+        // Validate default extension file exists
+        if (!await fileExists(defaultExtension)) {
+            const errorMessage = `Default extension file not found: ${defaultExtension}`;
+            outputChannel.appendErrorLine(errorMessage);
+            vscode.window.showErrorMessage(errorMessage);
+            return;
+        }
+
+        // Create and run coordinator
+        const coordinator = new TestRunCoordinator(
+            request,
+            testRun,
+            pqTestPath,
+            defaultExtension,
+            controller,
+            outputChannel,
+            token
+        );
+
+        await coordinator.run();
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        outputChannel.appendErrorLine(`Error in runHandler: ${errorMessage}`);
+        vscode.window.showErrorMessage(`Error running tests: ${errorMessage}`);
+    } finally {
+        testRun.end();
+    }
 }
 
 /**
  * Generates a timestamp-based folder name for test runs
- * TODO: Re-enable when needed for test run functionality
  */
-// function getTestRunFolderName(): string {
-//     const now = new Date();
-//     const year = now.getFullYear();
-//     const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-//     const day = String(now.getDate()).padStart(2, "0");
-//     const hours = String(now.getHours()).padStart(2, "0");
-//     const minutes = String(now.getMinutes()).padStart(2, "0");
-//     const seconds = String(now.getSeconds()).padStart(2, "0");
+function getTestRunFolderName(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
 
-//     return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}`;
-// }
+    return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}`;
+}
 
 /**
  * Recreates a parent test item and its single child to work around VS Code Test Explorer UI issues.
@@ -221,7 +274,7 @@ async function expandTestSettingsItem(
 /**
  * Refreshes a single test settings item by triggering discovery and optionally expanding it in the UI
  */
-async function refreshSettingsItem(
+export async function refreshSettingsItem(
     testItem: vscode.TestItem,
     controller: vscode.TestController,
     outputChannel: PqSdkOutputChannel,
@@ -296,7 +349,7 @@ async function showExpectedOutputFile(testItem?: vscode.TestItem): Promise<void>
  * Uses a two-phase approach: concurrent discovery followed by sequential UI expansion.
  * Sequential expansion avoids VS Code UI race conditions and ensures all items are reliably revealed.
  */
-async function refreshAllTests(
+export async function refreshAllTests(
     controller: vscode.TestController,
     outputChannel: PqSdkOutputChannel
 ): Promise<void> {

@@ -195,10 +195,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }),
             );
 
+            // Determine working directory: use task.workingDirectory if provided, otherwise fall back to pqtest.exe directory
+            const workingDir = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
+
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,
                 processArgs,
-                { cwd: path.dirname(pqTestExeFullPath) },
+                { cwd: workingDir },
                 {
                     stdinStr: task.stdinStr,
                     onSpawned: (childProcess: ChildProcess): void => {
