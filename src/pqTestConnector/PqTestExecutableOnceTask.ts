@@ -5,14 +5,13 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
 import { ChildProcess } from "child_process";
 
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { resolveI18nTemplate } from "../i18n/extension";
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { buildPqTestArgs } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
@@ -21,6 +20,7 @@ import { IDisposable } from "../common/Disposable";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { PQTestTask } from "../common/PowerQueryTask";
 import { resolveSubstitutedValues } from "../utils/vscodes";
+import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -76,65 +76,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
     }
 
     private get pqTestFullPath(): string {
-        // First check if direct PQTest executable path is configured
-        const directExecutablePath: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
-
-        if (directExecutablePath) {
-            // Validate direct path
-            if (
-                !directExecutablePath.toLowerCase().endsWith(PqTestExecutableOnceTask.ExecutableName.toLowerCase())
-            ) {
-                this.handleErrorStr(
-                    resolveI18nTemplate("PQSdk.taskQueue.error.invalidPqtestExecutablePath", {
-                        directExecutablePath,
-                        executableName: PqTestExecutableOnceTask.ExecutableName,
-                    }),
-                );
-                throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
-            }
-
-            if (!fs.existsSync(directExecutablePath)) {
-                this.handleErrorStr(
-                    resolveI18nTemplate("PQSdk.taskQueue.error.pqtestExecutableNotFoundAtDirectPath", {
-                        directExecutablePath,
-                    }),
-                );
-                throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
-            }
-
-            // Direct path is valid, use it
-            return directExecutablePath;
+        try {
+            return resolvePqTestExecutablePath();
+        } catch (error) {
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
+            this.handleErrorStr(errorMessage);
+            throw error;
         }
-
-        // Fall back to existing directory-based logic
-        const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-
-        if (!nextPQTestLocation) {
-            this.handleErrorStr(extensionI18n["PQSdk.taskQueue.error.pqtestLocationNotSet"]);
-            throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
-        } else if (!fs.existsSync(nextPQTestLocation)) {
-            this.handleErrorStr(
-                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestLocationDoesntExist", {
-                    nextPQTestLocation,
-                }),
-            );
-
-            throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
-        }
-
-        const pqtestExe: string = path.resolve(nextPQTestLocation, PqTestExecutableOnceTask.ExecutableName);
-
-        if (!fs.existsSync(pqtestExe)) {
-            this.handleErrorStr(
-                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestExecutableDoesntExist", {
-                    pqtestExe,
-                }),
-            );
-
-            throw new Error(extensionI18n["PQSdk.taskQueue.error.failedToFindPqtestExecutable"]);
-        }
-
-        return pqtestExe;
     }
 
     private populateTestTaskPayload(program: string, task: PQTestTask): PQTestTask {

@@ -15,6 +15,7 @@ import { resolveTestItem } from "./TestResolver";
 import { TestWatcherManager } from "./TestWatcherManager";
 import { createTestItem } from "./utils/testUtils";
 import { TestRunCoordinator } from "./runners/helpers/TestRunCoordinator";
+import { resolvePqTestExecutablePath } from "../../utils/pqTestPath";
 
 // UI delay constants for test expansion operations
 const DELAY_FOR_UI_REVEAL_MS = 250;
@@ -81,21 +82,14 @@ async function runHandler(
     const testRun: vscode.TestRun = controller.createTestRun(request, runName);
 
     try {
-        //  Get PQTest.exe path
-        const pqTestPath = ExtensionConfigurations.pqTestExecutablePath ?? ExtensionConfigurations.PQTestLocation;
-        
-        if (!pqTestPath) {
-            const errorMessage = "PQTest.exe path not configured. Please set powerquery.sdk.test.pqtest or powerquery.sdk.pqTestLocation configuration.";
-            outputChannel.appendErrorLine(errorMessage);
-            vscode.window.showErrorMessage(errorMessage);
-            return;
-        }
-
-        // Verify the file exists
-        if (!await fileExists(pqTestPath)) {
-            const errorMessage = `PQTest.exe not found at: ${pqTestPath}`;
-            outputChannel.appendErrorLine(errorMessage);
-            vscode.window.showErrorMessage(errorMessage);
+        // Get PQTest.exe path
+        let pqTestPath: string;
+        try {
+            pqTestPath = resolvePqTestExecutablePath();
+        } catch (error) {
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
+            outputChannel.appendErrorLine(`Failed to resolve PQTest.exe path: ${errorMessage}`);
+            vscode.window.showErrorMessage(`Failed to resolve PQTest.exe path: ${errorMessage}`);
             return;
         }
 
