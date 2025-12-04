@@ -21,7 +21,6 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "使用使用者提供的版本值",
   "extension.pqtest.config.features.autoDetection.description": "設為 false 時，SDK 不會嘗試自動偵測連接器工作區，並提示您建立設定檔案。",
   "extension.pqtest.config.features.useServiceHost": "使用命令列以外可重複使用的引擎服務主機來嘗試新功能",
-  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "PQTest 安裝資料夾的本機路徑。",
   "extension.pqtest.config.pqtest.version.description": "本機 PQ SDK 工具版本。",
   "extension.pqtest.config.pqtest.extension.description": "指定連接器延伸來源模組 (.mez/.pqm)。<br>此選項可以指定一次以上。",

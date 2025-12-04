@@ -21,7 +21,6 @@
     "extension.pqtest.config.externals.versionTag.customized.description": "Use a user provided version value",
     "extension.pqtest.config.features.autoDetection.description": "When set to false, the SDK does not try to automatically detect connector workspaces and prompt to create a settings file.",
     "extension.pqtest.config.features.useServiceHost": "Try the new feature using a reusable engine service host other than the command lines",
-    "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
     "extension.pqtest.config.pqtest.location.description": "Local path to PQTest installation folder.",
     "extension.pqtest.config.pqtest.version.description": "The local PQ SDK tools version.",
     "extension.pqtest.config.pqtest.extension.description": "Specify connector extension source modules (.mez/.pqm).<br>This option can be specified more than once.",

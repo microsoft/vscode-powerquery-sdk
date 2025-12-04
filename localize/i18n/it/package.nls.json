@@ -21,7 +21,6 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "Usare un valore di versione fornito dall'utente",
   "extension.pqtest.config.features.autoDetection.description": "Se impostato su false, l'SDK non tenta di rilevare automaticamente le aree di lavoro del connettore e chiede di creare un file di impostazioni.",
   "extension.pqtest.config.features.useServiceHost": "Provare la nuova funzionalità usando un host servizio motore riutilizzabile diverso dalle righe di comando",
-  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "Percorso locale della cartella di installazione di PQTest.",
   "extension.pqtest.config.pqtest.version.description": "Versione locale di PQ SDK tools.",
   "extension.pqtest.config.pqtest.extension.description": "Specificare i moduli di origine dell'estensione del connettore (.mez/.pqm).<br>Questa opzione può essere specificata più di una volta.",

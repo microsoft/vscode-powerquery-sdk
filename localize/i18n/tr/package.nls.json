@@ -21,7 +21,6 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "Kullanıcı tarafından sağlanan bir sürüm değeri kullanın",
   "extension.pqtest.config.features.autoDetection.description": "False olarak ayarlandığında SDK, bağlayıcı çalışma alanlarını otomatik olarak algılamayı ve ayar dosyası oluşturma istemini denemez.",
   "extension.pqtest.config.features.useServiceHost": "Komut satırları dışında yeniden kullanılabilir bir altyapı hizmeti ana bilgisayarı kullanarak yeni özelliği deneyin",
-  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "PQTest yükleme klasörünün yerel yolu.",
   "extension.pqtest.config.pqtest.version.description": "Yerel PQ SDK araçları sürümü.",
   "extension.pqtest.config.pqtest.extension.description": "Bağlayıcı uzantısı kaynak modüllerini (.mez/.pqm) belirtin.<br>Bu seçenek birden çok kez belirtilebilir.",

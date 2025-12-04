@@ -42,7 +42,6 @@ const ConfigNames = {
             defaultExtensionLocation: "defaultExtension" as const,
             defaultQueryFileLocation: "defaultQueryFile" as const,
             featureUseServiceHost: "features.useServiceHost" as const,
-            featureEnableTestAdapter: "features.enableTestAdapter" as const,
             testSettingsFiles: "test.settingsFiles" as const,
         },
     },
