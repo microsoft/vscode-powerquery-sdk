@@ -13,13 +13,13 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { SpawnedProcessStreaming } from "../../../../common/SpawnedProcessStreaming";
-import { PqSdkOutputChannel } from "../../../../features/PqSdkOutputChannel";
-import { extensionI18n, resolveI18nTemplate } from "../../../../i18n/extension";
-import { getNormalizedPath } from "../../utils/pathUtils";
-import { PqTestCommandBuilder } from "./PqTestCommandBuilder";
-import { PqTestResultParser, PqTestResultEventType } from "./PqTestResultParser";
-import { TestResultUpdater } from "./TestResultUpdater";
+import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
+import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
+import { getNormalizedPath } from "./utils/pathUtils";
+import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
+import { PqTestResultParser, PqTestResultEventType } from "./helpers/PqTestResultParser";
+import { TestResultUpdater } from "./helpers/TestResultUpdater";
 
 /**
  * State machine for test execution

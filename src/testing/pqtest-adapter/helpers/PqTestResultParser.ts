@@ -8,9 +8,9 @@
 import * as readline from "readline";
 import * as vscode from "vscode";
 
-import { PqSdkOutputChannel } from "../../../../features/PqSdkOutputChannel";
-import { extensionI18n, resolveI18nTemplate } from "../../../../i18n/extension";
-import { getNormalizedPath } from "../../utils/pathUtils";
+import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
+import { getNormalizedPath } from "../utils/pathUtils";
 
 /**
  * Test execution status from PQTest.exe output.

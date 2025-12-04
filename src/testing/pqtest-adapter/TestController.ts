@@ -14,7 +14,7 @@ import { getOutputFilePathForTestItem } from "./utils/pathUtils";
 import { resolveTestItem } from "./TestResolver";
 import { TestWatcherManager } from "./TestWatcherManager";
 import { createTestItem } from "./utils/testUtils";
-import { TestRunCoordinator } from "./runners/helpers/TestRunCoordinator";
+import { TestRunCoordinator } from "./TestRunCoordinator";
 import { resolvePqTestExecutablePath } from "../../utils/pqTestPath";
 
 // UI delay constants for test expansion operations
