@@ -102,11 +102,11 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
 
     // Register test adapter if enabled
     let testController: vscode.TestController | undefined;
-    if (ExtensionConfigurations.featureEnableTestAdapter) {
+    if (ExtensionConfigurations.isTestAdapterEnabled) {
         testController = registerTestController(vscExtCtx, pqSdkOutputChannel);
         registerCommands(vscExtCtx, testController, pqSdkOutputChannel);
     } else {
-        pqSdkOutputChannel?.appendDebugLine("Power Query test adapter is not enabled (featureEnableTestAdapter=false)");
+        pqSdkOutputChannel?.appendDebugLine("Power Query test adapter is not enabled (PQTest_MS_Internal_Testing environment variable is not set to 'true')");
     }
 
     vscExtCtx.subscriptions.push(

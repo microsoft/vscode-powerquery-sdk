@@ -275,17 +275,8 @@ export const ExtensionConfigurations = {
 
         return Boolean(result);
     },
-    get featureEnableTestAdapter(): boolean {
-        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
-        );
-
-        const result: boolean | undefined = config.get(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featureEnableTestAdapter,
-        );
-
-        // Default to true if not set
-        return result !== undefined ? Boolean(result) : true;
+    get isTestAdapterEnabled(): boolean {
+        return process.env.PQTest_MS_Internal_Testing === "true";
     },
     get testSettingsFiles(): string | string[] | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(

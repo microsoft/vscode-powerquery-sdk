@@ -21,7 +21,6 @@
   "extension.pqtest.config.externals.versionTag.customized.description": "Użyj wartości wersji podanej przez użytkownika",
   "extension.pqtest.config.features.autoDetection.description": "W przypadku ustawienia wartości false zestaw SDK nie próbuje automatycznie wykrywać obszarów roboczych łącznika i monitować o utworzenie pliku ustawień.",
   "extension.pqtest.config.features.useServiceHost": "Wypróbuj nową funkcję przy użyciu hosta usługi aparatu wielokrotnego użytku innego niż wiersze polecenia",
-  "extension.pqtest.config.features.enableTestAdapter.description": "Enable the integrated test adapter for Power Query tests",
   "extension.pqtest.config.pqtest.location.description": "Ścieżka lokalna do folderu instalacji narzędzia PQTest.",
   "extension.pqtest.config.pqtest.version.description": "Wersja lokalnych narzędzi SDK PQ.",
   "extension.pqtest.config.pqtest.extension.description": "Określ moduły źródłowe rozszerzenia łącznika (.mez/.pqm).<br>Tę opcję można określić więcej niż raz.",
