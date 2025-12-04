@@ -28,6 +28,7 @@
     "extension.pqtest.config.pqtest.queryFile.description": "Query file containing section document or M expression (.m/.pq).",
     "extension.pqtest.config.test.pqtest.description": "Direct path to PQTest executable",
     "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
+    "extension.pqtest.config.test.extensionPaths.description": "Path(s) to connector extension files for test discovery and execution. Can be a single path or an array of paths",
     "extension.pqtest.taskDefinitions.properties.operation.description": "The operation to run",
     "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Additional commandline arguments for the operation",
     "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Path to the connector file (--extension)",

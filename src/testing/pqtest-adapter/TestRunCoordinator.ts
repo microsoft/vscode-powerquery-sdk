@@ -43,7 +43,6 @@ export class TestRunCoordinator {
         private readonly request: vscode.TestRunRequest,
         private readonly testRun: vscode.TestRun,
         private readonly pqTestPath: string,
-        private readonly defaultExtension: string,
         private readonly testController: vscode.TestController,
         private readonly outputChannel: PqSdkOutputChannel,
         private readonly cancellationToken: vscode.CancellationToken
@@ -209,7 +208,6 @@ export class TestRunCoordinator {
         // Create the TestRunExecutor
         const executor = new TestRunExecutor(
             this.pqTestPath,
-            this.defaultExtension,
             settingsItem.uri,
             this.testRun,
             this.outputChannel,
@@ -259,7 +257,6 @@ export class TestRunCoordinator {
         // Create the TestRunExecutor
         const executor = new TestRunExecutor(
             this.pqTestPath,
-            this.defaultExtension,
             settingsItem.uri,
             this.testRun,
             this.outputChannel,

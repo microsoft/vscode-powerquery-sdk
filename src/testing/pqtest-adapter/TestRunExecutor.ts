@@ -17,6 +17,7 @@ import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { getNormalizedPath } from "./utils/pathUtils";
+import { determineExtensionsForTests } from "./utils/testSettingsUtils";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultParser, PqTestResultEventType } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
@@ -37,7 +38,6 @@ export class TestRunExecutor {
 
     constructor(
         private readonly pqTestPath: string,
-        private readonly defaultExtension: string,
         private readonly settingsFile: vscode.Uri,
         private readonly testRun: vscode.TestRun,
         private readonly outputChannel: PqSdkOutputChannel,
@@ -84,7 +84,10 @@ export class TestRunExecutor {
         );
 
         try {
-            // Step 1: Build the lookup map for test items
+            // Step 1: Determine which extension(s) to use based on precedence rules
+            const extensions = await determineExtensionsForTests(this.settingsFile.fsPath, this.outputChannel);
+
+            // Step 2: Build the lookup map for test items
             const runItemsMap = new Map<string, vscode.TestItem>();
             this.testItems.forEach((item) => {
                 if (item.uri) {
@@ -93,15 +96,15 @@ export class TestRunExecutor {
                 }
             });
 
-            // Step 2: Build the command using PqTestCommandBuilder
+            // Step 3: Build the command using PqTestCommandBuilder
             const commandBuilder = new PqTestCommandBuilder(
                 "run-compare",
                 this.settingsFile,
-                this.defaultExtension
+                extensions
             );
             const args = commandBuilder.buildArgs(additionalArgs || []);
 
-            // Step 3: Execute the process using SpawnedProcessStreaming
+            // Step 4: Execute the process using SpawnedProcessStreaming
             this.outputChannel.appendLine(
                 resolveI18nTemplate("PQSdk.testAdapter.executor.executingCommand", {
                     exePath: this.pqTestPath,

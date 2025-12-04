@@ -6,7 +6,6 @@
 import * as vscode from "vscode";
 
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
-import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { fileExists } from "../../utils/files";
@@ -93,30 +92,11 @@ async function runHandler(
             return;
         }
 
-        // Get default extension 
-        const defaultExtension = ExtensionConfigurations.DefaultExtensionLocation;
-        
-        if (!defaultExtension) {
-            const errorMessage = "Default extension not configured. Please set powerquery.sdk.defaultExtension configuration.";
-            outputChannel.appendErrorLine(errorMessage);
-            vscode.window.showErrorMessage(errorMessage);
-            return;
-        }
-
-        // Validate default extension file exists
-        if (!await fileExists(defaultExtension)) {
-            const errorMessage = `Default extension file not found: ${defaultExtension}`;
-            outputChannel.appendErrorLine(errorMessage);
-            vscode.window.showErrorMessage(errorMessage);
-            return;
-        }
-
         // Create and run coordinator
         const coordinator = new TestRunCoordinator(
             request,
             testRun,
             pqTestPath,
-            defaultExtension,
             controller,
             outputChannel,
             token

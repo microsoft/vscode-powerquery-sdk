@@ -28,6 +28,7 @@
   "extension.pqtest.config.pqtest.queryFile.description": "包含區段文件或 M 運算式的查詢檔案 (.m/.pq)。",
   "extension.pqtest.config.test.pqtest.description": "Direct path to PQTest executable",
   "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
+  "extension.pqtest.config.test.extensionPaths.description": "Path(s) to connector extension files for test discovery and execution. Can be a single path or an array of paths",
   "extension.pqtest.taskDefinitions.properties.operation.description": "要執行的作業",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "作業的其他命令列引數",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "連接器檔案的路徑 (--extension)",

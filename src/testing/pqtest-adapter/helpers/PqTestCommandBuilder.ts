@@ -14,7 +14,7 @@ export class PqTestCommandBuilder {
     constructor(
         private operation: string,
         private settingsFile?: vscode.Uri,
-        private defaultExtension?: string
+        private extensions?: string | string[] | undefined
     ) {}
 
     /**
@@ -28,10 +28,20 @@ export class PqTestCommandBuilder {
     buildArgs(additionalArgs: string[] = []): string[] {
         const args: string[] = [this.operation];
 
-        // Add extension argument if provided
-        if (this.defaultExtension) {
-            args.push("--extension", this.defaultExtension);
+        // Add extension arguments based on type
+        if (this.extensions !== undefined) {
+            if (typeof this.extensions === 'string') {
+                // Single extension
+                args.push("--extension", this.extensions);
+            } else if (Array.isArray(this.extensions)) {
+                // Multiple extensions - repeat flag for each
+                this.extensions.forEach(ext => {
+                    args.push("--extension", ext);
+                });
+            }
         }
+        // If undefined: Don't add --extension flags at all
+        // pqtest.exe should use ExtensionPaths from settings file
 
         // Add settings file argument if provided
         if (this.settingsFile) {

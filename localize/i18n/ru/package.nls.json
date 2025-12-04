@@ -28,6 +28,7 @@
   "extension.pqtest.config.pqtest.queryFile.description": "Файл запроса, содержащий документ раздела или выражение M (.m/.pq).",
   "extension.pqtest.config.test.pqtest.description": "Direct path to PQTest executable",
   "extension.pqtest.config.test.settingsFiles.description": "Path to a pqtest settings file (extension: .testsettings.json), a directory containing pqtest settings files, or an array of paths to pqtest settings files",
+  "extension.pqtest.config.test.extensionPaths.description": "Path(s) to connector extension files for test discovery and execution. Can be a single path or an array of paths",
   "extension.pqtest.taskDefinitions.properties.operation.description": "Операция для выполнения",
   "extension.pqtest.taskDefinitions.properties.additionalArgs.description": "Дополнительные аргументы командной строки для операции",
   "extension.pqtest.taskDefinitions.properties.pathToConnector.description": "Путь к файлу соединителя (--extension)",

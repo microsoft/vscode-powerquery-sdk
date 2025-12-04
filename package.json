@@ -187,6 +187,18 @@
                     "order": 40,
                     "description": "%extension.pqtest.config.test.settingsFiles.description%"
                 },
+                "powerquery.sdk.test.extensionPaths": {
+                    "scope": "window",
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "order": 41,
+                    "description": "%extension.pqtest.config.test.extensionPaths.description%"
+                },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
                     "type": "string",

@@ -5,17 +5,14 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as path from "path";
 import * as vscode from "vscode";
 
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
-import { PqTestExecutableOnceTask } from "../../pqTestConnector/PqTestExecutableOnceTask";
-import { PQTestTask } from "../../common/PowerQueryTask";
-import { getTestPathFromSettings } from "./utils/testSettingsUtils";
+import { getTestPathFromSettings, determineExtensionsForTests } from "./utils/testSettingsUtils";
 import { getPathType } from "../../utils/files";
-import { resolveSubstitutedValues } from "../../utils/vscodes";
+import { PqTestDiscoveryRunner } from "./helpers/PqTestDiscoveryRunner";
 
 /**
  * Service for discovering tests using PQTest.exe run-compare --listOnly command.
@@ -40,17 +37,10 @@ export class TestDiscoveryService {
             throw new Error(extensionI18n["PQSdk.testDiscoveryService.testDiscoveryCancelled"]);
         }
 
-        // Get the default extension (connector) path
-        const defaultExtension = resolveSubstitutedValues(
-            ExtensionConfigurations.DefaultExtensionLocation
-        );
-        if (!defaultExtension) {
-            const error = extensionI18n["PQSdk.testDiscoveryService.defaultExtensionNotConfigured"];
-            this.outputChannel?.appendLine(error);
-            throw new Error(error);
-        }
+        // Determine which extension(s) to use based on precedence rules
+        const extensions = await determineExtensionsForTests(settingsFileUri.fsPath, this.outputChannel);
 
-        // Read the test path from settings file
+        // Get the test path from settings file
         let testPath: string;
         try {
             testPath = await getTestPathFromSettings(settingsFileUri.fsPath);
@@ -88,48 +78,33 @@ export class TestDiscoveryService {
                 testPath,
             })
         );
-        this.outputChannel?.appendLine(
-            resolveI18nTemplate("PQSdk.testDiscoveryService.usingExtension", {
-                defaultExtension,
-            })
-        );
+
         this.outputChannel?.appendLine(
             resolveI18nTemplate("PQSdk.testDiscoveryService.usingSettingsFile", {
                 settingsFilePath: settingsFileUri.fsPath,
             })
         );
 
-        // Create the PQTest task for run-compare with --listOnly
-        const task: PQTestTask = {
-            operation: "run-compare",
-            pathToConnector: defaultExtension,
-            pathToQueryFile: testPath,
-            settingsFile: settingsFileUri.fsPath,
-            additionalArgs: ["--listOnly"],
-            workingDirectory: path.dirname(settingsFileUri.fsPath),
-        };
+        // Get PQTest executable path
+        const pqTestPath = ExtensionConfigurations.pqTestExecutablePath;
+        if (!pqTestPath) {
+            const error = extensionI18n["PQSdk.testDiscoveryService.defaultExtensionNotConfigured"];
+            this.outputChannel?.appendLine(error);
+            throw new Error(error);
+        }
 
-        // Execute the task using PqTestExecutableOnceTask
-        const taskExecutor = new PqTestExecutableOnceTask();
+        // Execute discovery using PqTestDiscoveryRunner
+        const discoveryRunner = new PqTestDiscoveryRunner(
+            pqTestPath,
+            settingsFileUri,
+            extensions,
+            this.outputChannel
+        );
 
         try {
-            // Subscribe to output events for logging
-            taskExecutor.eventBus.on("PqTestExecutable.onOutput", (type, message) => {
-                if (type === "stdOutput") {
-                    this.outputChannel?.appendLine(
-                        resolveI18nTemplate("PQSdk.testDiscoveryService.pqtestOutput", { message })
-                    );
-                } else if (type === "stdError") {
-                    this.outputChannel?.appendLine(
-                        resolveI18nTemplate("PQSdk.testDiscoveryService.pqtestError", { message })
-                    );
-                }
-            });
-
             this.outputChannel?.appendLine(extensionI18n["PQSdk.testDiscoveryService.executingPqTestWithListOnly"]);
 
-            // Run the task and get the parsed JSON result
-            const result = await taskExecutor.run(testPath, task);
+            const result = await discoveryRunner.runDiscovery();
 
             if (!result) {
                 throw new Error(extensionI18n["PQSdk.testDiscoveryService.pqtestReturnedNoResults"]);
@@ -143,9 +118,6 @@ export class TestDiscoveryService {
             });
             this.outputChannel?.appendLine(error);
             throw new Error(error);
-        } finally {
-            // Clean up the task executor
-            taskExecutor.dispose();
         }
     }
 }

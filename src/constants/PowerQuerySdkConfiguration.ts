@@ -298,6 +298,22 @@ export const ExtensionConfigurations = {
 
         return resolveSubstitutedValues(value);
     },
+    get TestExtensionPaths(): string | string[] | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: string | string[] | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testExtensionPaths,
+        );
+
+        // Handle arrays by resolving each element
+        if (Array.isArray(value)) {
+            return value.map((item) => resolveSubstitutedValues(item) ?? item);
+        }
+
+        return resolveSubstitutedValues(value);
+    },
     get pqTestExecutablePath(): string | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
