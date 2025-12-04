@@ -92,7 +92,7 @@ function doResolveRegularSubstitutedValue(valueName: string): string {
                 break;
             case "lineNumber":
                 retVal = vscode.window.activeTextEditor
-                    ? String(vscode.window.activeTextEditor.selection.start.line) + 1
+                    ? String(vscode.window.activeTextEditor.selection.start.line + 1)
                     : undefined;
 
                 break;
@@ -203,6 +203,20 @@ export function resolveSubstitutedValues(str: string | undefined): string | unde
     }
 
     return str;
+}
+
+/**
+ * Resolves an array of strings, applying variable substitution to each element.
+ * 
+ * @param values Array of strings potentially containing variables
+ * @returns Array with all variables resolved in each element, or undefined if input was undefined
+ */
+export function resolveSubstitutedValuesInArray(values: string[] | undefined): string[] | undefined {
+    if (!values) {
+        return values;
+    }
+
+    return values.map((value) => resolveSubstitutedValues(value) ?? value);
 }
 
 export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {

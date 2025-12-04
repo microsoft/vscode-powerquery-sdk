@@ -9,7 +9,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
-import { resolveSubstitutedValues } from "../utils/variableSubstitution";
+import { resolveSubstitutedValues, resolveSubstitutedValuesInArray } from "../utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -293,7 +293,7 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            return value.map((item) => resolveSubstitutedValues(item) ?? item);
+            return resolveSubstitutedValuesInArray(value);
         }
 
         return resolveSubstitutedValues(value);
@@ -309,7 +309,7 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            return value.map((item) => resolveSubstitutedValues(item) ?? item);
+            return resolveSubstitutedValuesInArray(value);
         }
 
         return resolveSubstitutedValues(value);
