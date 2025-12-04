@@ -8,15 +8,13 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { TestDiscoveryService } from "./TestDiscoveryService";
 import { getTestPathFromSettings } from "./utils/testSettingsUtils";
-import { getPathType, fileExists } from "../../utils/files";
+import { getPathType } from "../../utils/files";
 import { getNormalizedPath, splitPathPreservingCase } from "./utils/pathUtils";
 import { createTestItem, createCompositeId } from "./utils/testUtils";
-import { resolveSubstitutedValues } from "../../utils/vscodes";
 
 /**
  * Sorts tests to ensure proper hierarchy creation order.
@@ -107,21 +105,6 @@ export async function resolveTestItem(
     }
 
     const isFile = pathType === "file";
-
-    // Validate default extension configuration
-    const defaultExtension = resolveSubstitutedValues(
-        ExtensionConfigurations.DefaultExtensionLocation
-    );
-    if (!defaultExtension) {
-        void vscode.window.showErrorMessage(extensionI18n["PQSdk.testResolver.defaultExtensionNotConfigured"]);
-        return;
-    }
-
-    // Validate that the default extension file exists
-    if (!(await fileExists(defaultExtension))) {
-        void vscode.window.showErrorMessage(extensionI18n["PQSdk.testResolver.defaultExtensionFileNotFound"]);
-        return;
-    }
 
     try {
         if (isFile) {

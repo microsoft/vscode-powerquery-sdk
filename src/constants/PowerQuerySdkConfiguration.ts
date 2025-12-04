@@ -9,7 +9,12 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
-import { resolveSubstitutedValues, resolveSubstitutedValuesInArray } from "../utils/vscodes";
+import { 
+    resolveSubstitutedValues, 
+    resolveSubstitutedValuesInArray,
+    resolvePathRelativeToWorkspace,
+    resolvePathsRelativeToWorkspace
+} from "../utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -293,10 +298,12 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            return resolveSubstitutedValuesInArray(value);
+            const substituted = resolveSubstitutedValuesInArray(value);
+            return resolvePathsRelativeToWorkspace(substituted);
         }
 
-        return resolveSubstitutedValues(value);
+        const substituted = resolveSubstitutedValues(value);
+        return resolvePathRelativeToWorkspace(substituted);
     },
     get TestExtensionPaths(): string | string[] | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
@@ -309,10 +316,12 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            return resolveSubstitutedValuesInArray(value);
+            const substituted = resolveSubstitutedValuesInArray(value);
+            return resolvePathsRelativeToWorkspace(substituted);
         }
 
-        return resolveSubstitutedValues(value);
+        const substituted = resolveSubstitutedValues(value);
+        return resolvePathRelativeToWorkspace(substituted);
     },
     get pqTestExecutablePath(): string | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(

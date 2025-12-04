@@ -219,6 +219,49 @@ export function resolveSubstitutedValuesInArray(values: string[] | undefined): s
     return values.map((value) => resolveSubstitutedValues(value) ?? value);
 }
 
+/**
+ * Resolves a path relative to the workspace root folder if it's a relative path.
+ * Absolute paths are returned unchanged.
+ * 
+ * @param pathStr Path that may be absolute or relative
+ * @returns Absolute path resolved relative to workspace root, or original path if already absolute or no workspace
+ */
+export function resolvePathRelativeToWorkspace(pathStr: string | undefined): string | undefined {
+    if (!pathStr) {
+        return pathStr;
+    }
+
+    // Already absolute? Return as-is
+    if (path.isAbsolute(pathStr)) {
+        return pathStr;
+    }
+
+    // Get first workspace folder
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        // No workspace open - return path as-is
+        // Caller will handle invalid paths appropriately
+        return pathStr;
+    }
+
+    // Resolve relative to workspace root
+    return path.resolve(workspaceFolder.uri.fsPath, pathStr);
+}
+
+/**
+ * Resolves an array of paths relative to workspace root.
+ * 
+ * @param paths Array of paths that may be absolute or relative
+ * @returns Array with all paths resolved relative to workspace root
+ */
+export function resolvePathsRelativeToWorkspace(paths: string[] | undefined): string[] | undefined {
+    if (!paths) {
+        return paths;
+    }
+
+    return paths.map((pathStr) => resolvePathRelativeToWorkspace(pathStr) ?? pathStr);
+}
+
 export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return vscode.workspace.workspaceFolders?.[0];
 }
