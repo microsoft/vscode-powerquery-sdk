@@ -29,7 +29,8 @@
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
         "onWebviewPanel:powerquery.sdk.tools.ResultWebView",
-        "onLanguage:powerquery"
+        "onLanguage:powerquery",
+        "workspaceContains:**/*.testsettings.json"
     ],
     "extensionDependencies": [
         "PowerQuery.vscode-powerquery"
@@ -98,6 +99,24 @@
                 "title": "%extension.pqtest.TestConnectionCommand.title%",
                 "category": "Power query",
                 "icon": "$(test-view-icon)"
+            },
+            {
+                "command": "powerquery.sdk.test.openOutputFile",
+                "title": "%extension.pqtest.test.openOutputFile.title%",
+                "category": "Power query",
+                "icon": "$(output)"
+            },
+            {
+                "command": "powerquery.sdk.test.refreshTests",
+                "title": "%extension.pqtest.test.refreshTests.title%",
+                "category": "Power query",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "powerquery.sdk.test.refreshSettingsItemTests",
+                "title": "%extension.pqtest.test.refreshSettingsItemTests.title%",
+                "category": "Power query",
+                "icon": "$(refresh)"
             }
         ],
         "configuration": {
@@ -151,6 +170,15 @@
                     "order": 30,
                     "deprecationMessage": "Deprecated: Please use powerquery.sdk.defaultQueryFile instead.",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"
+                },
+                "powerquery.sdk.test.settingsFiles": {
+                    "scope": "window",
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "order": 40,
+                    "description": "%extension.pqtest.config.test.settingsFiles.description%"
                 },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
@@ -273,6 +301,31 @@
                     "command": "powerquery.sdk.tools.RunTestBatteryCommand",
                     "when": "editorLangId == powerquery",
                     "group": "1_powerquery@1"
+                }
+            ],
+            "testing/item/gutter": [
+                {
+                    "command": "powerquery.sdk.test.openOutputFile",
+                    "when": "controllerId == 'powerqueryTestController'"
+                }
+            ],
+            "testing/item/context": [
+                {
+                    "command": "powerquery.sdk.test.openOutputFile",
+                    "group": "inline",
+                    "when": "testId =~ /^test:/"
+                },
+                {
+                    "command": "powerquery.sdk.test.refreshSettingsItemTests",
+                    "when": "testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
+                    "group": "inline"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "powerquery.sdk.test.refreshTests",
+                    "when": "view == 'workbench.view.testing'",
+                    "group": "navigation"
                 }
             ]
         },

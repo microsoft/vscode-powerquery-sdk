@@ -42,6 +42,7 @@ const ConfigNames = {
             defaultExtensionLocation: "defaultExtension" as const,
             defaultQueryFileLocation: "defaultQueryFile" as const,
             featureUseServiceHost: "features.useServiceHost" as const,
+            testSettingsFiles: "test.settingsFiles" as const,
         },
     },
 };
@@ -105,6 +106,23 @@ const NugetExecutableName: string = os.type() === "Windows_NT" ? "Nuget.exe" : "
 const MSBuildExecutableName: string = "MSBuild.exe" as const;
 
 // eslint-disable-next-line @typescript-eslint/typedef
+const TestAdapter = {
+    TestControllerId: "powerqueryTestController" as const,
+    TestControllerName: "Power Query Tests" as const,
+    TestRunProfileName: "Run" as const,
+    TestSettingsFilePattern: "**/*.testsettings.json" as const,
+    TestSettingsFileEnding: ".testsettings.json" as const,
+    TestFilePattern: "**/*.query.pq" as const,
+    TestFileEnding: ".query.pq" as const,
+    OutputFileEnding: ".pqout" as const,
+    // Command IDs (registered in package.json)
+    OpenOutputFileCommand: "powerquery.sdk.test.openOutputFile" as const,
+    RefreshAllTestsCommand: "powerquery.sdk.test.refreshTests" as const,
+    RefreshSettingsItemTestsCommand: "powerquery.sdk.test.refreshSettingsItemTests" as const,
+    RevealTestInExplorerCommand: "vscode.revealTestInExplorer" as const,
+};
+
+// eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConstants = Object.freeze({
     ExtensionId,
     ConfigPathToConnector,
@@ -128,4 +146,5 @@ export const ExtensionConstants = Object.freeze({
     MSBuildDownloadUrl,
     NugetExecutableName,
     MSBuildExecutableName,
+    TestAdapter,
 });
