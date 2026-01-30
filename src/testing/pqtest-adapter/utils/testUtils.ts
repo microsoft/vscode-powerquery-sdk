@@ -1,14 +1,30 @@
 /**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
+/**
  * Test utilities for the Power Query SDK Test extension.
  * Centralized functions for creating and manipulating VS Code TestItems.
+ * 
+ * Pure composite ID functions are implemented in ../core/compositeId.ts and re-exported here.
+ * This file contains VS Code-specific wrappers that use vscode.TestItem and other VS Code types.
  */
 
 import * as vscode from "vscode";
 import { getNormalizedUriString } from "./pathUtils";
 
+// Re-export pure function from core module
+export { parseCompositeId } from "../core/compositeId";
+
+// Import for internal use
+import { createCompositeId as createCompositeIdCore } from "../core/compositeId";
+
 /**
  * Creates a VS Code TestItem with the given parameters and optional configuration.
- * 
+ *
  * @param controller - The VS Code TestController
  * @param id - The unique identifier for the test item
  * @param label - The display label for the test item
@@ -25,9 +41,9 @@ export function createTestItem(
     uri?: vscode.Uri,
     canResolveChildren?: boolean,
     sortText?: string,
-    parentItem?: vscode.TestItem
+    parentItem?: vscode.TestItem,
 ): vscode.TestItem {
-    const testItem = controller.createTestItem(id, label, uri);
+    const testItem: vscode.TestItem = controller.createTestItem(id, label, uri);
 
     // Set optional properties if provided
     if (canResolveChildren !== undefined) {
@@ -49,7 +65,7 @@ export function createTestItem(
 /**
  * Helper function to get all leaf test items under a parent item.
  * Recursively traverses the test item tree to find all nodes without children.
- * 
+ *
  * @param item - The parent test item to start traversing from
  * @returns Array of leaf test items (items with no children)
  */
@@ -61,7 +77,7 @@ export function getLeafNodes(item: vscode.TestItem): vscode.TestItem[] {
         leaves.push(item);
     } else {
         // Recursively get leaves from children
-        item.children.forEach(child => {
+        item.children.forEach((child: vscode.TestItem) => {
             leaves.push(...getLeafNodes(child));
         });
     }
@@ -76,26 +92,15 @@ export function getLeafNodes(item: vscode.TestItem): vscode.TestItem[] {
  * @param originalTestId - The original test item ID
  * @param settingsFileUri - The settings file URI
  * @returns The composite ID string
+ * @throws Error if settingsFileUri is null or undefined
  */
 export function createCompositeId(originalTestId: string, settingsFileUri: vscode.Uri): string {
-    const normalizedSettingsUri = getNormalizedUriString(settingsFileUri);
-    return `${originalTestId}|${normalizedSettingsUri}`;
-}
-
-/**
- * Parses a composite ID to extract the original test ID and normalized settings file URI.
- * The composite ID format is: "originalTestId|settingsFileUri"
- * 
- * @param compositeId - The composite ID string to parse
- * @returns Object with originalTestId and normalized settingsFileUri, or null if parsing fails
- */
-export function parseCompositeId(compositeId: string): { originalTestId: string; settingsFileUri: string } | null {
-    const parts = compositeId.split('|');
-    if (parts.length === 2) {
-        return {
-            originalTestId: parts[0],
-            settingsFileUri: parts[1] // This should already be normalized when created with createCompositeId
-        };
+    if (!settingsFileUri) {
+        throw new Error("settingsFileUri is required for createCompositeId");
     }
-    return null;
+
+    const normalizedSettingsUri: string = getNormalizedUriString(settingsFileUri);
+
+    // Delegate to core function
+    return createCompositeIdCore(originalTestId, normalizedSettingsUri);
 }

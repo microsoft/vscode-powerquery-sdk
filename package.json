@@ -2,7 +2,7 @@
     "name": "vscode-powerquery-sdk",
     "displayName": "Power Query SDK",
     "description": "Power Query Connector SDK",
-    "version": "0.6.3",
+    "version": "0.7.0",
     "author": "Microsoft Corporation",
     "license": "MIT",
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
@@ -117,6 +117,12 @@
                 "title": "%extension.pqtest.test.refreshSettingsItemTests.title%",
                 "category": "Power query",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "powerquery.sdk.test.clearTests",
+                "title": "%extension.pqtest.test.clearTests.title%",
+                "category": "Power query",
+                "icon": "$(collapse-all)"
             }
         ],
         "configuration": {
@@ -180,6 +186,33 @@
                     "order": 40,
                     "description": "%extension.pqtest.config.test.settingsFiles.description%"
                 },
+                "powerquery.sdk.test.extensionPaths": {
+                    "scope": "window",
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "order": 41,
+                    "description": "%extension.pqtest.config.test.extensionPaths.description%"
+                },
+                "powerquery.sdk.test.defaultIntermediateResultsFolder": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": "../TestResults",
+                    "order": 42,
+                    "description": "%extension.pqtest.config.test.defaultIntermediateResultsFolder.description%"
+                },
+                "powerquery.sdk.test.cleanupIntermediateResultsAfterHours": {
+                    "scope": "window",
+                    "type": "number",
+                    "default": 24,
+                    "minimum": 0,
+                    "order": 43,
+                    "description": "%extension.pqtest.config.test.cleanupIntermediateResultsAfterHours.description%"
+                },
                 "powerquery.sdk.externals.msbuildPath": {
                     "scope": "machine-overridable",
                     "type": "string",
@@ -215,6 +248,12 @@
                     "order": 50,
                     "description": "%extension.pqtest.config.externals.nugetFeed.description%",
                     "default": ""
+                },
+                "powerquery.sdk.test.pqtest": {
+                    "scope": "machine-overridable",
+                    "type": "string",
+                    "order": 68,
+                    "description": "%extension.pqtest.config.test.pqtest.description%"
                 },
                 "powerquery.sdk.tools.location": {
                     "scope": "machine-overridable",
@@ -316,14 +355,29 @@
                     "when": "testId =~ /^test:/"
                 },
                 {
+                    "command": "powerquery.sdk.test.openOutputFile",
+                    "group": "navigation@1",
+                    "when": "testId =~ /^test:/"
+                },
+                {
                     "command": "powerquery.sdk.test.refreshSettingsItemTests",
                     "when": "testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
                     "group": "inline"
+                },
+                {
+                    "command": "powerquery.sdk.test.refreshSettingsItemTests",
+                    "when": "testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
+                    "group": "navigation@1"
                 }
             ],
             "view/title": [
                 {
                     "command": "powerquery.sdk.test.refreshTests",
+                    "when": "view == 'workbench.view.testing'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "powerquery.sdk.test.clearTests",
                     "when": "view == 'workbench.view.testing'",
                     "group": "navigation"
                 }

@@ -1,37 +1,42 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
+
 import * as path from "path";
+
 import * as vscode from "vscode";
 
 import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
-import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { getTestPathFromSettings } from "./testSettingsUtils";
+
+// Re-export pure path functions from core module
+export {
+    getNormalizedPath,
+    splitPath,
+    joinPath,
+    getParentPath,
+    changeFileExtension,
+} from "../core/pathOperations";
+
+// Import for internal use in this file
+import {
+    getNormalizedPath,
+    splitPathPreservingCaseParts,
+    changeFileExtension,
+} from "../core/pathOperations";
 
 /**
  * Path utilities for handling file and folder paths in the Power Query SDK Test extension.
  * Provides consistent path manipulation across different operating systems.
+ * 
+ * Pure path functions are implemented in ../core/pathOperations.ts and re-exported here.
+ * This file contains VS Code-specific wrappers that use vscode.Uri and other VS Code types.
  */
-
-/**
- * Normalizes a path for comparison purposes. It replaces backslashes with forward slashes,
- * and on Windows, it converts the path to lowercase to handle case-insensitivity.
- *
- * @param filePath The path to normalize.
- * @returns The normalized path.
- */
-export function getNormalizedPath(filePath: string): string {
-    if (!filePath) {
-        return "";
-    }
-
-    let normalizedPath = path.normalize(filePath).replace(/\\/g, "/");
-
-    // For Windows, convert to lower case for case-insensitive comparison
-    if (process.platform === "win32") {
-        normalizedPath = normalizedPath.toLowerCase();
-    }
-
-    return normalizedPath;
-}
 
 /**
  * Gets a normalized string representation of a VS Code URI for consistent use as identifiers,
@@ -47,50 +52,32 @@ export function getNormalizedUriString(uri: vscode.Uri): string {
 /**
  * Splits a path into normalized parts (for IDs) and original parts (for labels).
  * This allows us to preserve original case for display while using normalized paths for operations.
- * 
+ *
  * @param filePath - The file path to split
  * @param outputChannel - Optional output channel for logging warnings
  * @returns Object with normalizedParts (for IDs) and originalParts (for labels)
  */
 export function splitPathPreservingCase(
-    filePath: string, 
-    outputChannel?: PqSdkOutputChannel
-): { normalizedParts: string[], originalParts: string[] } {
-    if (!filePath) {
-        return { normalizedParts: [], originalParts: [] };
-    }
-
-    // Get normalized parts for IDs and operations
-    const normalizedParts = splitPath(filePath);
-
-    // Get original parts for display labels, handling both / and \ separators
-    const originalParts = filePath.split(/[/\\]/).filter(part =>
-        part.length > 0 && part !== '.' && part !== '..'
-    );
+    filePath: string,
+    outputChannel?: PqSdkOutputChannel,
+): { normalizedParts: string[]; originalParts: string[] } {
+    // Delegate to core function for the pure logic
+    const result = splitPathPreservingCaseParts(filePath);
 
     // Safety check: if structure doesn't match, fall back to normalized for both
-    if (originalParts.length !== normalizedParts.length) {
-        const message = resolveI18nTemplate(
-            "PQSdk.testAdapter.pathStructureMismatch",
-            {
-                filePath,
-                originalCount: originalParts.length.toString(),
-                normalizedCount: normalizedParts.length.toString()
-            }
-        );
+    if (result.originalParts.length !== result.normalizedParts.length) {
+        const message: string = resolveI18nTemplate("PQSdk.testAdapter.pathStructureMismatch", {
+            filePath,
+            originalCount: result.originalParts.length.toString(),
+            normalizedCount: result.normalizedParts.length.toString(),
+        });
+
         outputChannel?.appendDebugLine(message);
-        return { normalizedParts, originalParts: normalizedParts };
+
+        return { normalizedParts: result.normalizedParts, originalParts: result.normalizedParts };
     }
 
-    return { normalizedParts, originalParts };
-}
-
-/**
- * Changes the file extension of a file path
- */
-export function changeFileExtension(file: string, extension: string): string {
-    const basename: string = path.basename(file, path.extname(file));
-    return path.join(path.dirname(file), basename + extension);
+    return result;
 }
 
 /**
@@ -112,80 +99,31 @@ export function getOutputFilePathForUri(uri: vscode.Uri): string {
 }
 
 /**
- * Splits a normalized path into its component parts, filtering out empty parts
- * @param filePath The path to split
- * @returns Array of path components
- */
-export function splitPath(filePath: string): string[] {
-    if (!filePath) {
-        return [];
-    }
-    const normalized = getNormalizedPath(filePath);
-    return normalized.split('/').filter(part => part.length > 0);
-}
-
-/**
- * Joins path parts with forward slashes, handling empty parts gracefully
- * @param parts The path parts to join
- * @returns The joined path
- */
-export function joinPath(...parts: string[]): string {
-    return parts.filter(part => part && part.length > 0).join('/');
-}
-
-/**
- * Extracts the parent directory from a path
- * @param filePath The file path
- * @returns The parent directory path, or empty string for root-level files
- */
-export function getParentPath(filePath: string): string {
-    if (!filePath) {
-        return '';
-    }
-    let normalized = getNormalizedPath(filePath);
-
-    // If the path ends with a slash and isn't just the root "/", remove it
-    if (normalized.endsWith('/') && normalized.length > 1) {
-        normalized = normalized.substring(0, normalized.length - 1);
-    }
-
-    const lastSlashIndex = normalized.lastIndexOf('/');
-    if (lastSlashIndex === -1) {
-        return ''; // No parent directory (root level)
-    }
-    return normalized.substring(0, lastSlashIndex);
-}
-
-/**
  * Calculates the relative path from the QueryFilePath base directory to a test item.
  * The QueryFilePath is defined in the settings file and serves as the base directory.
- * 
+ *
  * @param testItemUri - URI of the test item (.query.pq file)
  * @param settingsFileUri - URI of the settings file (.testsettings.json)
  * @returns Relative path from QueryFilePath base directory to test file, normalized for command line use
  */
-export async function getRelativeTestPath(
-    testItemUri: vscode.Uri,
-    settingsFileUri: vscode.Uri
-): Promise<string> {
+export async function getRelativeTestPath(testItemUri: vscode.Uri, settingsFileUri: vscode.Uri): Promise<string> {
     try {
         // Get the QueryFilePath (base directory) from settings
-        const queryFilePath = await getTestPathFromSettings(settingsFileUri.fsPath);
+        const queryFilePath: string = await getTestPathFromSettings(settingsFileUri.fsPath);
 
         // Calculate relative path from QueryFilePath to the test file
-        const relativePath = path.relative(queryFilePath, testItemUri.fsPath);
+        const relativePath: string = path.relative(queryFilePath, testItemUri.fsPath);
 
         // Normalize the path to use forward slashes for consistent use across platforms
         return getNormalizedPath(relativePath);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const message = resolveI18nTemplate(
-            "PQSdk.testAdapter.error.calculatingRelativePath",
-            {
-                testFilePath: testItemUri.fsPath,
-                errorMessage
-            }
-        );
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
+
+        const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.calculatingRelativePath", {
+            testFilePath: testItemUri.fsPath,
+            errorMessage,
+        });
+
         throw new Error(message);
     }
 }

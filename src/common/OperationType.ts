@@ -18,5 +18,6 @@ export type PQTestOperationType =
     | "set-credential"
     | "refresh-credential"
     | "run-test"
+    | "run-compare"
     | "test-connection"
     | string;

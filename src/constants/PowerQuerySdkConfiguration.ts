@@ -9,7 +9,12 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
-import { resolveSubstitutedValues } from "../utils/variableSubstitution";
+import { 
+    resolveSubstitutedValues, 
+    resolveSubstitutedValuesInArray,
+    resolvePathRelativeToWorkspace,
+    resolvePathsRelativeToWorkspace
+} from "../utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -270,9 +275,6 @@ export const ExtensionConfigurations = {
 
         return Boolean(result);
     },
-    get isTestAdapterEnabled(): boolean {
-        return process.env.PQTest_MS_Internal_Testing === "true";
-    },
     get testSettingsFiles(): string | string[] | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
@@ -284,10 +286,65 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            return value.map((item) => resolveSubstitutedValues(item) ?? item);
+            const substituted = resolveSubstitutedValuesInArray(value);
+            return resolvePathsRelativeToWorkspace(substituted);
         }
 
+        const substituted = resolveSubstitutedValues(value);
+        return resolvePathRelativeToWorkspace(substituted);
+    },
+    get TestExtensionPaths(): string | string[] | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: string | string[] | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testExtensionPaths,
+        );
+
+        // Handle arrays by resolving each element
+        if (Array.isArray(value)) {
+            const substituted = resolveSubstitutedValuesInArray(value);
+            return resolvePathsRelativeToWorkspace(substituted);
+        }
+
+        const substituted = resolveSubstitutedValues(value);
+        return resolvePathRelativeToWorkspace(substituted);
+    },
+    get DefaultIntermediateResultsFolder(): string | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: string | undefined = config.get<string>(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.defaultIntermediateResultsFolder,
+        );
+
+        // Don't resolve paths - we pass the value as-is to PQTest.exe
+        // PQTest should resolve relative paths relative to the settings file
+        return value;
+    },
+    get pqTestExecutablePath(): string | undefined {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: string | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExecutablePath,
+        );
+
         return resolveSubstitutedValues(value);
+    },
+    get CleanupIntermediateResultsAfterHours(): number {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        const value: number | undefined = config.get(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.cleanupIntermediateResultsAfterHours,
+        );
+
+        return value ?? ExtensionConstants.TestAdapter.CleanupIntermediateResultsAfterHours;
     },
 };
 

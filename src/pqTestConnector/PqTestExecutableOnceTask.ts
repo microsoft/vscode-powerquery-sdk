@@ -5,14 +5,13 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
 import { ChildProcess } from "child_process";
 
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { resolveI18nTemplate } from "../i18n/extension";
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { buildPqTestArgs } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
@@ -21,6 +20,7 @@ import { IDisposable } from "../common/Disposable";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { PQTestTask } from "../common/PowerQueryTask";
 import { resolveSubstitutedValues } from "../utils/vscodes";
+import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -76,35 +76,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
     }
 
     private get pqTestFullPath(): string {
-        // PQTestLocation getter
-        const nextPQTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-
-        if (!nextPQTestLocation) {
-            this.handleErrorStr(extensionI18n["PQSdk.taskQueue.error.pqtestLocationNotSet"]);
-            throw new Error("Failed to find PqTest executable");
-        } else if (!fs.existsSync(nextPQTestLocation)) {
-            this.handleErrorStr(
-                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestLocationDoesntExist", {
-                    nextPQTestLocation,
-                }),
-            );
-
-            throw new Error("Failed to find PqTest executable");
+        try {
+            return resolvePqTestExecutablePath();
+        } catch (error) {
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
+            this.handleErrorStr(errorMessage);
+            throw error;
         }
-
-        const pqtestExe: string = path.resolve(nextPQTestLocation, PqTestExecutableOnceTask.ExecutableName);
-
-        if (!fs.existsSync(pqtestExe)) {
-            this.handleErrorStr(
-                resolveI18nTemplate("PQSdk.taskQueue.error.pqtestExecutableDoesntExist", {
-                    pqtestExe,
-                }),
-            );
-
-            throw new Error("Failed to find PqTest executable");
-        }
-
-        return pqtestExe;
     }
 
     private populateTestTaskPayload(program: string, task: PQTestTask): PQTestTask {
@@ -113,6 +91,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
         // even though not all operations would be run within this OnceTask, it makes no harm we support them all
         switch (task.operation) {
             case "info":
+                result = {
+                    ...result,
+                    pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                };
+
+                break;
+            case "run-compare":
                 result = {
                     ...result,
                     pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
@@ -141,7 +126,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
         return result;
     }
 
-    public async run(program: string, task: PQTestTask): Promise<void> {
+    public async run(program: string, task: PQTestTask): Promise<any> {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;
@@ -158,10 +143,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }),
             );
 
+            // Determine working directory: use task.workingDirectory if provided, otherwise fall back to pqtest.exe directory
+            const workingDir = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
+
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,
                 processArgs,
-                { cwd: path.dirname(pqTestExeFullPath) },
+                { cwd: workingDir },
                 {
                     stdinStr: task.stdinStr,
                     onSpawned: (childProcess: ChildProcess): void => {
@@ -208,8 +196,25 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         }
                     } catch {
                         // noop
+                    } 
+                }
+
+                // run-compare: Parse and return result for caller 
+                if (task.operation === "run-compare") {
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const result: any = JSON.parse(spawnProcess.stdOut);
+                        return result;
+                    } catch (e) {
+                        this.handleErrorStr(
+                            resolveI18nTemplate("PQSdk.taskQueue.error.failedToParseJsonOutput", {
+                                error: `${e}`,
+                            }),
+                        );
+                        return undefined;
                     }
                 }
+
             } else {
                 this.handleErrorStr(
                     resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskExitAbnormally", {

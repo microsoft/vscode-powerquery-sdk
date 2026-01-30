@@ -100,14 +100,9 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         treeDataProvider: lifeCycleTaskTreeViewDataProvider,
     });
 
-    // Register test adapter if enabled
-    let testController: vscode.TestController | undefined;
-    if (ExtensionConfigurations.isTestAdapterEnabled) {
-        testController = registerTestController(vscExtCtx, pqSdkOutputChannel);
-        registerCommands(vscExtCtx, testController, pqSdkOutputChannel);
-    } else {
-        pqSdkOutputChannel?.appendDebugLine("Power Query test adapter is not enabled (PQTest_MS_Internal_Testing environment variable is not set to 'true')");
-    }
+    // Register test adapter
+    const testController = registerTestController(vscExtCtx, pqSdkOutputChannel);
+    registerCommands(vscExtCtx, testController, pqSdkOutputChannel);
 
     vscExtCtx.subscriptions.push(
         ...[
