@@ -183,6 +183,9 @@
                         "string",
                         "array"
                     ],
+                    "items": {
+                        "type": "string"
+                    },
                     "order": 40,
                     "description": "%extension.pqtest.config.test.settingsFiles.description%"
                 },
