@@ -54,7 +54,7 @@ To enable the Test Explorer to find and run your tests, you need to configure sp
      * A string path to a directory (all valid `.testsettings.json` files inside will be used)
      * A string path to a single test settings file
      * An array of string paths to individual test settings files/directory containing them
-   * `powerquery.sdk.test.ExtensionPaths`: Path(s) to your connector file(s) (`.mez` files). Accepts:
+   * `powerquery.sdk.test.extensionPaths`: Path(s) to your connector file(s) (`.mez` files). Accepts:
      * A string path to a single connector file
      * An array of string paths to multiple connector files
      * Supports VS Code variable substitution (e.g., `${workspaceFolder}`)
