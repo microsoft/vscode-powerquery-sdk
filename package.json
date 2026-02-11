@@ -379,7 +379,7 @@
         "watch-tests": "rimraf out && tsc -p . -w --outDir out"
     },
     "dependencies": {
-        "axios": "^1.12.0",
+        "axios": "^1.13.5",
         "node-stream-zip": "^1.15.0",
         "vscode-jsonrpc": "^8.2.0"
     },
