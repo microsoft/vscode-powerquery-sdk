@@ -3,7 +3,6 @@ const typescript = require("@typescript-eslint/eslint-plugin");
 const typescriptParser = require("@typescript-eslint/parser");
 const reactPlugin = require("eslint-plugin-react");
 const reactHooksPlugin = require("eslint-plugin-react-hooks");
-const jsxA11yPlugin = require("eslint-plugin-jsx-a11y");
 const importPlugin = require("eslint-plugin-import");
 const licenseHeaderPlugin = require("eslint-plugin-license-header");
 
@@ -49,7 +48,6 @@ module.exports = [
             "@typescript-eslint": typescript,
             react: reactPlugin,
             "react-hooks": reactHooksPlugin,
-            "jsx-a11y": jsxA11yPlugin,
             import: importPlugin,
             "license-header": licenseHeaderPlugin,
         },
@@ -57,7 +55,6 @@ module.exports = [
             ...typescript.configs.recommended.rules,
             ...reactPlugin.configs.recommended.rules,
             ...reactHooksPlugin.configs.recommended.rules,
-            ...jsxA11yPlugin.configs.recommended.rules,
             ...importPlugin.configs.recommended.rules,
 
             // Custom rules
