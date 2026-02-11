@@ -383,6 +383,10 @@
         "node-stream-zip": "^1.15.0",
         "vscode-jsonrpc": "^8.2.0"
     },
+    "overrides": {
+        "//": "Force safe diff version to avoid CVE in 6.0.0-8.0.2 (GHSA-73rr-hh4g-fpgx)",
+        "diff": "8.0.3"
+    },
     "devDependencies": {
         "@eslint/js": "^9.16.0",
         "@types/chai": "^4.3.12",
@@ -396,7 +400,7 @@
         "@typescript-eslint/parser": "^8.36.0",
         "@vscode/debugadapter": "^1.65.0",
         "@vscode/debugadapter-testsupport": "^1.65.0",
-        "@vscode/test-cli": "^0.0.12",
+        "@vscode/test-cli": "0.0.11",
         "@vscode/test-electron": "^2.5.2",
         "chai": "^4.5.0",
         "eslint": "^9.16.0",
