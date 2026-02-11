@@ -419,7 +419,7 @@
         "typescript": "^4.9.5",
         "vinyl-fs": "^4.0.2",
         "vscode-nls-dev": "^4.0.4",
-        "webpack": "^5.99.9",
+        "webpack": "^5.105.1",
         "webpack-cli": "^6.0.1",
         "ws": "^8.18.3"
     },
