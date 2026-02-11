@@ -384,7 +384,6 @@
         "vscode-jsonrpc": "^8.2.0"
     },
     "overrides": {
-        "//": "Force safe diff version to avoid CVE in 6.0.0-8.0.2 (GHSA-73rr-hh4g-fpgx)",
         "diff": "8.0.3"
     },
     "devDependencies": {
