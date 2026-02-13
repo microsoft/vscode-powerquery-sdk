@@ -40,10 +40,17 @@ module.exports = function (env, argv) {
             rules: [
                 {
                     test: /\.ts$/,
-                    exclude: [/node_modules/, path.resolve(__dirname, "src/test/")],
+                    exclude: [
+                        /node_modules/,
+                        /src[\\\/]test[\\\/]/,
+                        /unit-tests/
+                    ],
                     use: [
                         {
                             loader: "ts-loader",
+                            options: {
+                                configFile: path.resolve(__dirname, "tsconfig.json"),
+                            },
                         },
                     ],
                 },

@@ -212,6 +212,11 @@ export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {
         args.push(...pqTestTask.additionalArgs);
     }
 
+    if (pqTestTask.settingsFile) {
+        args.unshift(pqTestTask.settingsFile);
+        args.unshift("--settingsFile");
+    }
+
     if (pqTestTask.pathToQueryFile) {
         args.unshift(pqTestTask.pathToQueryFile);
         args.unshift("--queryFile");
@@ -224,8 +229,8 @@ export function buildPqTestArgs(pqTestTask: PQTestTask): string[] {
 
     args.unshift(pqTestTask.operation);
 
-    if (pqTestTask.operation === "compile") {
-        // remove --prettyPrint for compile task
+    if (pqTestTask.operation === "compile" || pqTestTask.operation === "run-compare") {
+        // remove --prettyPrint for compile and run-compare tasks
         args = args.filter((arg: string) => arg !== "--prettyPrint");
     }
 
