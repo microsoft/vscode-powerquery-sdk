@@ -8,8 +8,8 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 
-import * as TestUtils from "../TestUtils";
 import { Commands, Extensions, Views } from "../TestConstants";
+import * as TestUtils from "../TestUtils";
 
 suite("Tree View Integration Tests", () => {
     suiteSetup(TestUtils.ensureRequiredExtensionsAreLoaded);

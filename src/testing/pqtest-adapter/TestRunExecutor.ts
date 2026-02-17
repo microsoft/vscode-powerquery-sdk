@@ -16,11 +16,11 @@ import * as vscode from "vscode";
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { getNormalizedPath } from "./utils/pathUtils";
-import { buildIntermediateResultsArgs, determineExtensionsForTests } from "./utils/testSettingsUtils";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
+import { getNormalizedPath } from "./utils/pathUtils";
+import { buildIntermediateResultsArgs, determineExtensionsForTests } from "./utils/testSettingsUtils";
 
 /**
  * State machine for test execution

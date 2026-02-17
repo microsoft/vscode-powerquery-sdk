@@ -7,16 +7,16 @@
 
 import * as vscode from "vscode";
 
+import { IDisposable } from "../common/Disposable";
 import { Credential, ExtensionInfo, IPQTestService } from "../common/PQTestService";
+import { ValueEventEmitter } from "../common/ValueEventEmitter";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import {
     PqServiceHostClientLite,
     PqServiceHostRequestParamBase,
     PqServiceHostResponseResult,
 } from "./PqServiceHostClientLite";
-import { IDisposable } from "../common/Disposable";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { ValueEventEmitter } from "../common/ValueEventEmitter";
 
 export * from "./PqServiceHostClientLite";
 

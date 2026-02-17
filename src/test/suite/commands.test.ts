@@ -8,8 +8,8 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 
-import * as TestUtils from "../TestUtils";
 import { Commands } from "../TestConstants";
+import * as TestUtils from "../TestUtils";
 
 suite("Command Integration Tests", () => {
     suiteSetup(TestUtils.ensureRequiredExtensionsAreLoaded);

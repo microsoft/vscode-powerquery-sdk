@@ -5,15 +5,14 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as path from "path";
 import * as StreamZip from "node-stream-zip";
-
 import { StreamZipAsync } from "node-stream-zip";
+import * as path from "path";
 
-import { makeOneTmpDir } from "../../utils/osUtils";
-import { NugetLiteHttpService } from "./NugetLiteHttpService";
 import type { PqSdkOutputChannelLight } from "../../features/PqSdkOutputChannel";
 import { removeDirectoryRecursively } from "../../utils/files";
+import { makeOneTmpDir } from "../../utils/osUtils";
+import { NugetLiteHttpService } from "./NugetLiteHttpService";
 
 export class NugetHttpService extends NugetLiteHttpService {
     protected override errorHandler: (error: Error) => void = (error: Error) => {

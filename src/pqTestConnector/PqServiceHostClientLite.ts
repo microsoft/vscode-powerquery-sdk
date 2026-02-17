@@ -5,26 +5,25 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import { ChildProcess } from "child_process";
+import { EventEmitter } from "events";
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-
-import { ChildProcess } from "child_process";
-import { EventEmitter } from "events";
 import { TextEditor } from "vscode";
 
-import { CLOSED, ERROR, OPEN } from "../common/sockets/SocketClient";
+import { IDisposable } from "../common/Disposable";
 import { CreateAuthState, Credential, ExtensionInfo, GenericResult, IPQTestService } from "../common/PQTestService";
+import { AnyFunction } from "../common/promises/types";
 import { defaultBackOff, JsonRpcSocketClient } from "../common/sockets/JsonRpcSocketClient";
+import { CLOSED, ERROR, OPEN } from "../common/sockets/SocketClient";
+import { SpawnedProcess } from "../common/SpawnedProcess";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
+import { convertStringToInteger } from "../utils/numbers";
 import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
 import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
-import { AnyFunction } from "../common/promises/types";
-import { convertStringToInteger } from "../utils/numbers";
 import { executeBuildTaskAndAwaitIfNeeded } from "./PqTestTaskUtils";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { IDisposable } from "../common/Disposable";
-import { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
-import { SpawnedProcess } from "../common/SpawnedProcess";
 
 export interface PqServiceHostRequestParamBase {
     SessionId: string;

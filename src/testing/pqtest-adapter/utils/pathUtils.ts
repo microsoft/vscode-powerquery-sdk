@@ -6,7 +6,6 @@
  */
 
 import * as path from "path";
-
 import * as vscode from "vscode";
 
 import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
@@ -15,7 +14,7 @@ import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { getTestPathFromSettings } from "./testSettingsUtils";
 
 // Re-export pure path functions from core module
-export { getNormalizedPath, splitPath, joinPath, getParentPath, changeFileExtension } from "../core/pathOperations";
+export { changeFileExtension, getNormalizedPath, getParentPath, joinPath, splitPath } from "../core/pathOperations";
 
 // Import for internal use in this file
 import { changeFileExtension, getNormalizedPath, splitPathPreservingCaseParts } from "../core/pathOperations";

@@ -5,19 +5,18 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as Net from "net";
-import * as vscode from "vscode";
-import { join } from "path";
-import { platform } from "process";
 import { randomBytes } from "crypto";
+import * as Net from "net";
 import { Socket } from "net";
 import { tmpdir } from "os";
-
+import { join } from "path";
+import { platform } from "process";
+import * as vscode from "vscode";
 import { CancellationToken, DebugConfiguration, ProviderResult, TextEditor, WorkspaceFolder } from "vscode";
 
+import { IDisposable } from "../common/Disposable";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { extensionI18n } from "../i18n/extension";
-import { IDisposable } from "../common/Disposable";
 import { MQueryDebugSession } from "./MQueryDebugSession";
 
 class MQueryConfigurationProvider implements vscode.DebugConfigurationProvider {

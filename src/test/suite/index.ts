@@ -5,10 +5,9 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as path from "path";
-
 import { glob } from "glob";
 import Mocha from "mocha";
+import * as path from "path";
 
 export function run(testsRoot: string, cb: (error: unknown, failures?: number) => void): void {
     // Create the mocha test

@@ -5,8 +5,9 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { Disposable, IDisposable } from "../common/Disposable";
 import { EventEmitter } from "events";
+
+import { Disposable, IDisposable } from "../common/Disposable";
 
 export type ExtractEventTypes<EvtObjOrEvtProp> =
     EvtObjOrEvtProp extends Record<string | number | symbol, infer Value> ? ExtractEventTypes<Value> : EvtObjOrEvtProp;

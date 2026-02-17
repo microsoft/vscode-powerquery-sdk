@@ -8,10 +8,10 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 
-import { TestResult, TestStatus } from "./PqTestResultParser";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
-import { fileExists } from "../utils/vscodeFs";
 import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
+import { fileExists } from "../utils/vscodeFs";
+import { TestResult, TestStatus } from "./PqTestResultParser";
 
 /**
  * Context type for file comparison operations.

@@ -10,20 +10,20 @@
  * Handles automatic synchronization of test items when settings files change or configuration updates.
  */
 
-import * as vscode from "vscode";
 import * as path from "path";
+import * as vscode from "vscode";
 
-import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
-import { getPathType } from "./utils/vscodeFs";
+import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
+import { refreshSettingsItem } from "./TestController";
+import { getNormalizedPath, getNormalizedUriString } from "./utils/pathUtils";
 // TODO: Re-enable when TestResolver is migrated
 // import { resolveTestItem } from "./TestResolver";
 import { getTestSettingsFileUris } from "./utils/testSettingsUtils";
 import { createTestItem } from "./utils/testUtils";
-import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
-import { getNormalizedPath, getNormalizedUriString } from "./utils/pathUtils";
-import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { refreshSettingsItem } from "./TestController";
+import { getPathType } from "./utils/vscodeFs";
 
 export class TestWatcherManager implements vscode.Disposable {
     private fileWatchers = new Map<string, vscode.FileSystemWatcher>();

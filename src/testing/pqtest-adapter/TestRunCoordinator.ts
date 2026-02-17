@@ -11,13 +11,13 @@
 
 import * as vscode from "vscode";
 
-import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { getLeafNodes, parseCompositeId } from "./utils/testUtils";
-import { getNormalizedUriString, getRelativeTestPath } from "./utils/pathUtils";
-import { TestRunExecutor } from "./TestRunExecutor";
 import { refreshAllTests, refreshSettingsItem } from "./TestController";
+import { TestRunExecutor } from "./TestRunExecutor";
+import { getNormalizedUriString, getRelativeTestPath } from "./utils/pathUtils";
+import { getLeafNodes, parseCompositeId } from "./utils/testUtils";
 
 // Delay to allow test state and UI to stabilize after test discovery
 // This value is experimental and determined through testing with various connectors.

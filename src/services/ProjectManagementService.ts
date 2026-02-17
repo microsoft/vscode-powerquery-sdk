@@ -7,12 +7,16 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
+import { ExtensionContext, Uri, WorkspaceFolder } from "vscode";
 
+import { IPQTestService } from "../common/PQTestService";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import type { IFileSystem } from "../testing/abstractions/IFileSystem";
 import type { IUIService } from "../testing/abstractions/IUIService";
-
-import { ExtensionContext, Uri, WorkspaceFolder } from "vscode";
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { resolveTemplateSubstitutedValues } from "../utils/strings";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
     getFirstWorkspaceFolder,
@@ -20,11 +24,6 @@ import {
     substitutedWorkspaceFolderBasenameIfNeeded,
     updateCurrentLocalPqModeIfNeeded,
 } from "../utils/vscodes";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
-import { IPQTestService } from "../common/PQTestService";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { resolveTemplateSubstitutedValues } from "../utils/strings";
 
 const validateProjectNameRegExp: RegExp = /[A-Za-z]+/;
 const templateFileBaseName: string = "PQConn";

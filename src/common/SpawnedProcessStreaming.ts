@@ -7,9 +7,9 @@
 
 import * as cp from "child_process";
 import { ChildProcess } from "child_process";
+import * as stream from "stream";
 import * as vscode from "vscode";
 
-import * as stream from "stream";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 

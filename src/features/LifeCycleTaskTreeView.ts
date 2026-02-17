@@ -16,13 +16,13 @@ import {
     TreeItemCollapsibleState,
     Uri,
 } from "vscode";
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 
-import { debounce } from "../utils/debounce";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { extensionI18n } from "../i18n/extension";
-import { getAnyPqFileBeneathTheFirstWorkspace } from "../utils/vscodes";
 import { LifecycleCommands } from "../commands/LifecycleCommands";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { extensionI18n } from "../i18n/extension";
+import { debounce } from "../utils/debounce";
+import { getAnyPqFileBeneathTheFirstWorkspace } from "../utils/vscodes";
 
 const TreeViewPrefix: string = `powerquery.sdk.tools`;
 

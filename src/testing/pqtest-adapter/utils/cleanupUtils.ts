@@ -8,9 +8,8 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 
-import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
 import { ExtensionConfigurations } from "../../../constants/PowerQuerySdkConfiguration";
-
+import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { getTestSettingsFileUris } from "./testSettingsUtils";

@@ -7,13 +7,12 @@
 
 import * as vscode from "vscode";
 
-import * as PQLSExt from "./common/vscode-powerquery.api.d";
-
 import { LifecycleCommands } from "./commands/LifecycleCommands";
 import { IDisposable } from "./common/Disposable";
-import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "./common/PQTestService";
 import { PqSdkNugetPackageService } from "./common/PqSdkNugetPackageService";
+import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "./common/PQTestService";
 import { SchemaManagementService } from "./common/SchemaManagementService";
+import * as PQLSExt from "./common/vscode-powerquery.api.d";
 import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "./constants/PowerQuerySdkExtension";
 import { activateMQueryDebug } from "./debugAdaptor/activateMQueryDebug";

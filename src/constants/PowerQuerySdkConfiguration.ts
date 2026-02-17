@@ -8,13 +8,13 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
 import {
     resolvePathRelativeToWorkspace,
     resolvePathsRelativeToWorkspace,
     resolveSubstitutedValues,
     resolveSubstitutedValuesInArray,
 } from "../utils/vscodes";
+import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {

@@ -7,13 +7,12 @@
 
 import type { CancellationToken as IVscCancellationToken } from "vscode";
 
-import { AnyFunction, BasicEvent } from "./types";
-import { defer, DeferredResult } from "./defer";
-
-import { $$toStringTag } from "./symbols";
 import { BaseError } from "../errors";
+import { defer, DeferredResult } from "./defer";
 import { isPromise } from "./isPromise";
 import { noop } from "./noop";
+import { $$toStringTag } from "./symbols";
+import { AnyFunction, BasicEvent } from "./types";
 
 export type CancelAction = (message: string | Cancel) => void;
 

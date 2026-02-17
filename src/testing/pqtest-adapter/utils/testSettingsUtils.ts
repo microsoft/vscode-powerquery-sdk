@@ -7,13 +7,13 @@
 
 import * as path from "path";
 import { TextDecoder } from "util";
-
 import * as vscode from "vscode";
 
 import { ExtensionConfigurations } from "../../../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
 import { extensionI18n, ExtensionI18nKeys, resolveI18nTemplate } from "../../../i18n/extension";
+import { resolvePathRelativeToWorkspace, resolveSubstitutedValues } from "../../../utils/vscodes";
 import {
     QueryFilePathErrorCode,
     QueryFilePathValidationResult,
@@ -26,7 +26,6 @@ import {
     getPathType,
     WorkspaceOperations,
 } from "./vscodeFs";
-import { resolvePathRelativeToWorkspace, resolveSubstitutedValues } from "../../../utils/vscodes";
 
 /**
  * Retrieves and resolves settings file URIs from configuration.

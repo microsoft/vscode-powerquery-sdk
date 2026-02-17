@@ -5,16 +5,16 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as vscode from "vscode";
 import * as path from "path";
+import * as vscode from "vscode";
 
-import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { TestDiscoveryService } from "./TestDiscoveryService";
-import { getTestPathFromSettings } from "./utils/testSettingsUtils";
-import { getPathType } from "./utils/vscodeFs";
 import { getNormalizedPath, splitPathPreservingCase } from "./utils/pathUtils";
+import { getTestPathFromSettings } from "./utils/testSettingsUtils";
 import { createCompositeId, createTestItem } from "./utils/testUtils";
+import { getPathType } from "./utils/vscodeFs";
 
 /**
  * Sorts tests to ensure proper hierarchy creation order.

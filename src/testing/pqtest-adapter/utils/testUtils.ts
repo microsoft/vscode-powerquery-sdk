@@ -14,6 +14,7 @@
  */
 
 import * as vscode from "vscode";
+
 import { getNormalizedUriString } from "./pathUtils";
 
 // Re-export pure function from core module

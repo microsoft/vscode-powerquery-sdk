@@ -12,8 +12,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 
 export const PQTEST_EXECUTABLE_NAME: string = "PQTest.exe";
 

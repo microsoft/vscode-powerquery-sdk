@@ -6,7 +6,6 @@
  */
 
 import { GenericResult, IPQTestService } from "../../common/PQTestService";
-
 import { CommandResult, ICommandHandler } from "./ICommandHandler";
 
 /**

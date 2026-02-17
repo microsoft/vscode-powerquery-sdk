@@ -7,16 +7,15 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { createConnection, Socket } from "net";
 import { EventEmitter } from "events";
+import { createConnection, Socket } from "net";
 
-import { NumberGenerator, NumberIterator } from "../iterables/NumberIterator";
-import { promisifyTry } from "../promises/promisifyTry";
-
-import { BaseError } from "../errors";
 import { delay } from "../../utils/pids";
+import { BaseError } from "../errors";
+import { NumberGenerator, NumberIterator } from "../iterables/NumberIterator";
 import { fromEvent } from "../promises/fromEvent";
 import { fromEvents } from "../promises/fromEvents";
+import { promisifyTry } from "../promises/promisifyTry";
 
 export class SocketConnectionError extends BaseError {}
 export class SocketAbortedConnection extends SocketConnectionError {

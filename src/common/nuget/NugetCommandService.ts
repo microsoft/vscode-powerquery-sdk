@@ -9,10 +9,10 @@ import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
 
-import { assertNotNull } from "../../utils/assertUtils";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
-import { NugetVersions } from "../../utils/NugetVersions";
 import type { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { assertNotNull } from "../../utils/assertUtils";
+import { NugetVersions } from "../../utils/NugetVersions";
 import { SpawnedProcess } from "../SpawnedProcess";
 
 export class NugetCommandService {

@@ -5,19 +5,18 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { createWriteStream, WriteStream } from "fs";
+import * as StreamZip from "node-stream-zip";
+import { StreamZipAsync } from "node-stream-zip";
 import * as path from "path";
 import * as stream from "stream";
-import * as StreamZip from "node-stream-zip";
-
-import { createWriteStream, WriteStream } from "fs";
 import { promisify } from "util";
-import { StreamZipAsync } from "node-stream-zip";
 
-import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { assertNotNull } from "../../utils/assertUtils";
-import { makeOneTmpDir } from "../../utils/osUtils";
-import { NugetVersions } from "../../utils/NugetVersions";
 import { tryRemoveDirectoryRecursively } from "../../utils/files";
+import { NugetVersions } from "../../utils/NugetVersions";
+import { makeOneTmpDir } from "../../utils/osUtils";
 
 const streamFinished$deferred: (
     stream: NodeJS.ReadStream | NodeJS.WritableStream | NodeJS.ReadWriteStream,

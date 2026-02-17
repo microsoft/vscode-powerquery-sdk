@@ -14,13 +14,13 @@ import {
     SocketMessageReader,
     SocketMessageWriter,
 } from "vscode-jsonrpc/node";
+
+import { BaseError } from "../errors";
 import { fibonacciNumbers } from "../iterables/FibonacciNumbers";
 import { NumberGenerator } from "../iterables/NumberIterator";
-
-import { CLOSED, OPEN, SocketClient, SocketConnectionError } from "./SocketClient";
-import { AnyFunction } from "../promises/types";
-import { BaseError } from "../errors";
 import { noop } from "../promises/noop";
+import { AnyFunction } from "../promises/types";
+import { CLOSED, OPEN, SocketClient, SocketConnectionError } from "./SocketClient";
 
 const JSON_RPC_VERSION: string = "2.0";
 

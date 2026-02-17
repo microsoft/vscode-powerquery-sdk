@@ -5,10 +5,9 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import { ChildProcess } from "child_process";
 import * as path from "path";
 import * as vscode from "vscode";
-
-import { ChildProcess } from "child_process";
 
 import { IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";

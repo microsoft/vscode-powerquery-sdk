@@ -8,7 +8,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-
 import {
     ExtensionContext,
     InputBoxOptions,
@@ -19,6 +18,9 @@ import {
     WorkspaceFolder,
 } from "vscode";
 
+import { IDisposable } from "../common/Disposable";
+import { InputStep, MultiStepInput } from "../common/MultiStepInput";
+import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
 import {
     AuthenticationKind,
     CreateAuthState,
@@ -26,7 +28,17 @@ import {
     GenericResult,
     IPQTestService,
 } from "../common/PQTestService";
+import { SchemaManagementService } from "../common/SchemaManagementService";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
+import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
+import { debounce } from "../utils/debounce";
+import { getMtimeOfAFile } from "../utils/files";
+import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
     getCurrentWorkspaceSettingPath,
@@ -35,26 +47,12 @@ import {
     substitutedWorkspaceFolderBasenameIfNeeded,
     updateCurrentLocalPqModeIfNeeded,
 } from "../utils/vscodes";
-
 import { DeleteCredentialHandler, DeleteCredentialResult } from "./handlers/DeleteCredentialHandler";
 import { DisplayExtensionInfoHandler, DisplayExtensionInfoResult } from "./handlers/DisplayExtensionInfoHandler";
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-import { InputStep, MultiStepInput } from "../common/MultiStepInput";
+import { CommandResult } from "./handlers/ICommandHandler";
 import { ListCredentialsHandler, ListCredentialsResult } from "./handlers/ListCredentialsHandler";
-import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
-import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import { RefreshCredentialHandler, RefreshCredentialResult } from "./handlers/RefreshCredentialHandler";
 import { TestConnectionHandler, TestConnectionResult } from "./handlers/TestConnectionHandler";
-import { CommandResult } from "./handlers/ICommandHandler";
-import { debounce } from "../utils/debounce";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
-import { getMtimeOfAFile } from "../utils/files";
-import { IDisposable } from "../common/Disposable";
-import { PqSdkNugetPackageService } from "../common/PqSdkNugetPackageService";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
-import { SchemaManagementService } from "../common/SchemaManagementService";
 
 const CommandPrefix: string = `powerquery.sdk.tools`;
 
