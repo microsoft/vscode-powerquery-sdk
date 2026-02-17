@@ -51,7 +51,7 @@ export function splitPathPreservingCase(
     outputChannel?: PqSdkOutputChannel,
 ): { normalizedParts: string[]; originalParts: string[] } {
     // Delegate to core function for the pure logic
-    const result = splitPathPreservingCaseParts(filePath);
+    const result: { normalizedParts: string[]; originalParts: string[] } = splitPathPreservingCaseParts(filePath);
 
     // Safety check: if structure doesn't match, fall back to normalized for both
     if (result.originalParts.length !== result.normalizedParts.length) {

@@ -35,7 +35,10 @@ export class TestDiscoveryService {
         }
 
         // Determine which extension(s) to use based on precedence rules
-        const extensions: string[] = await determineExtensionsForTests(settingsFileUri.fsPath, this.outputChannel);
+        const extensions: string | string[] | undefined = await determineExtensionsForTests(
+            settingsFileUri.fsPath,
+            this.outputChannel,
+        );
 
         // Get the test path from settings file
         let testPath: string;
@@ -59,7 +62,7 @@ export class TestDiscoveryService {
             pathType = await getPathType(testPath);
 
             if (pathType === "not-found") {
-                const error = resolveI18nTemplate("PQSdk.testDiscoveryService.testPathDoesNotExist", {
+                const error: string = resolveI18nTemplate("PQSdk.testDiscoveryService.testPathDoesNotExist", {
                     testPath,
                 });
 

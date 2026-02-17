@@ -77,7 +77,7 @@ export class TestRunExecutor {
             }),
         );
 
-        const workingDirectory = path.dirname(this.settingsFile.fsPath);
+        const workingDirectory: string = path.dirname(this.settingsFile.fsPath);
 
         this.outputChannel.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.executor.workingDirectory", {
@@ -87,30 +87,37 @@ export class TestRunExecutor {
 
         try {
             // Step 1: Determine which extension(s) to use based on precedence rules
-            const extensions = await determineExtensionsForTests(this.settingsFile.fsPath, this.outputChannel);
+            const extensions: string | string[] | undefined = await determineExtensionsForTests(
+                this.settingsFile.fsPath,
+                this.outputChannel,
+            );
 
             // Step 2: Build intermediate results arguments
-            const intermediateResultsArgs = await buildIntermediateResultsArgs(
+            const intermediateResultsArgs: string[] = await buildIntermediateResultsArgs(
                 this.settingsFile.fsPath,
                 this.outputChannel,
             );
 
             // Step 3: Build the lookup map for test items
-            const runItemsMap = new Map<string, vscode.TestItem>();
+            const runItemsMap: Map<string, vscode.TestItem> = new Map<string, vscode.TestItem>();
 
-            this.testItems.forEach(item => {
+            this.testItems.forEach((item: vscode.TestItem) => {
                 if (item.uri) {
-                    const normalizedPath = getNormalizedPath(item.uri.fsPath);
+                    const normalizedPath: string = getNormalizedPath(item.uri.fsPath);
                     runItemsMap.set(normalizedPath, item);
                 }
             });
 
             // Step 4: Build the command using PqTestCommandBuilder
-            const commandBuilder = new PqTestCommandBuilder("run-compare", this.settingsFile, extensions);
+            const commandBuilder: PqTestCommandBuilder = new PqTestCommandBuilder(
+                "run-compare",
+                this.settingsFile,
+                extensions,
+            );
 
-            const allAdditionalArgs = [...intermediateResultsArgs, ...(additionalArgs || [])];
+            const allAdditionalArgs: string[] = [...intermediateResultsArgs, ...(additionalArgs || [])];
 
-            const args = commandBuilder.buildArgs(allAdditionalArgs);
+            const args: string[] = commandBuilder.buildArgs(allAdditionalArgs);
 
             // Step 5: Execute the process using SpawnedProcessStreaming
             this.outputChannel.appendInfoLine(
@@ -120,17 +127,17 @@ export class TestRunExecutor {
                 }),
             );
 
-            const processRunner = new SpawnedProcessStreaming(this.pqTestPath, args, {
+            const processRunner: SpawnedProcessStreaming = new SpawnedProcessStreaming(this.pqTestPath, args, {
                 cwd: workingDirectory,
                 outputChannel: this.outputChannel,
                 cancellationToken: this.cancellationToken,
             });
 
-            const resultsStream = await processRunner.run();
+            const resultsStream: NodeJS.ReadableStream = await processRunner.run();
 
             // Step 6: Create the result parser and updater
-            const resultParser = new PqTestResultParser(this.outputChannel);
-            const resultUpdater = new TestResultUpdater(this.testRun, this.outputChannel);
+            const resultParser: PqTestResultParser = new PqTestResultParser(this.outputChannel);
+            const resultUpdater: TestResultUpdater = new TestResultUpdater(this.testRun, this.outputChannel);
 
             // Step 7: Implement the state machine
             // Consume the event stream from the parser
@@ -149,12 +156,12 @@ export class TestRunExecutor {
 
                 // Handle structured events
                 if (event.type === PqTestResultEventType.RunStart) {
-                    const testFiles = event.tests;
-                    let unexpectedTestCount = 0;
+                    const testFiles: string[] = event.tests;
+                    let unexpectedTestCount: number = 0;
 
                     testFiles.forEach((filePath: string) => {
-                        const normalizedPath = getNormalizedPath(filePath);
-                        const test = runItemsMap.get(normalizedPath);
+                        const normalizedPath: string = getNormalizedPath(filePath);
+                        const test: vscode.TestItem | undefined = runItemsMap.get(normalizedPath);
 
                         if (test) {
                             resultUpdater.enqueueTest(test);
@@ -174,7 +181,7 @@ export class TestRunExecutor {
 
                     // Show warning to user if there were unexpected tests
                     if (unexpectedTestCount > 0) {
-                        const message = resolveI18nTemplate("PQSdk.testAdapter.executor.unexpectedTestCount", {
+                        const message: string = resolveI18nTemplate("PQSdk.testAdapter.executor.unexpectedTestCount", {
                             count: unexpectedTestCount.toString(),
                         });
 
@@ -236,10 +243,10 @@ export class TestRunExecutor {
                 );
 
                 // Mark all test items as errored
-                const errorMsg = error.message;
+                const errorMsg: string = error.message;
 
-                this.testItems.forEach(item => {
-                    const errorMessage = new vscode.TestMessage(errorMsg);
+                this.testItems.forEach((item: vscode.TestItem) => {
+                    const errorMessage: vscode.TestMessage = new vscode.TestMessage(errorMsg);
                     this.testRun.errored(item, errorMessage);
                 });
             } else {
@@ -248,8 +255,8 @@ export class TestRunExecutor {
                 );
 
                 // Mark all test items as errored with generic message
-                this.testItems.forEach(item => {
-                    const errorMessage = new vscode.TestMessage(
+                this.testItems.forEach((item: vscode.TestItem) => {
+                    const errorMessage: vscode.TestMessage = new vscode.TestMessage(
                         extensionI18n["PQSdk.testAdapter.executor.unknownErrorOccurred"],
                     );
 

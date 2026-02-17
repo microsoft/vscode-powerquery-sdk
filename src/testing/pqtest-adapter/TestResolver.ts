@@ -194,7 +194,7 @@ export async function resolveTestItem(
 
                     const normalizedPath: string = getNormalizedPath(relativePath);
 
-                    let parentItem = item; // Start with the settings file item
+                    let parentItem: vscode.TestItem = item; // Start with the settings file item
 
                     // If there are folders in the path (more than just the filename)
                     if (normalizedParts.length > 1) {

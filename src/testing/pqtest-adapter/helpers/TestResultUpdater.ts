@@ -64,12 +64,12 @@ export class TestResultUpdater {
             );
         }
 
-        const durationMs = result.durationMs;
+        const durationMs: number | undefined = result.durationMs;
 
         if (result.status === TestStatus.Passed) {
             this.testRun.passed(testItem, durationMs);
         } else if (result.status === TestStatus.Failed) {
-            const failedMessage = new vscode.TestMessage(
+            const failedMessage: vscode.TestMessage = new vscode.TestMessage(
                 result.reason || extensionI18n["PQSdk.testAdapter.updater.testFailed"],
             );
 
@@ -82,9 +82,10 @@ export class TestResultUpdater {
 
             this.testRun.failed(testItem, failedMessage, durationMs);
         } else if (result.status === TestStatus.Error) {
-            const errorMessage = result.error?.message || extensionI18n["PQSdk.testAdapter.updater.unknownError"];
+            const errorMessage: string =
+                result.error?.message || extensionI18n["PQSdk.testAdapter.updater.unknownError"];
 
-            const testMessage = new vscode.TestMessage(errorMessage);
+            const testMessage: vscode.TestMessage = new vscode.TestMessage(errorMessage);
 
             // Optionally include error details in the message
             if (result.error?.details) {
@@ -123,7 +124,7 @@ export class TestResultUpdater {
             return;
         }
 
-        const channels = Object.keys(result.actualDiagnosticsFilePaths);
+        const channels: string[] = Object.keys(result.actualDiagnosticsFilePaths);
 
         if (channels.length === 0) {
             failedMessage.message += extensionI18n["PQSdk.testAdapter.updater.noDiagnosticChannelsFound"];
@@ -131,11 +132,11 @@ export class TestResultUpdater {
             return;
         }
 
-        const firstChannel = channels[0];
+        const firstChannel: string = channels[0];
 
         // Log a message if multiple channels exist
         if (channels.length > 1) {
-            const channelList = channels.join(", ");
+            const channelList: string = channels.join(", ");
 
             this.outputChannel.appendLine(
                 resolveI18nTemplate("PQSdk.testAdapter.updater.multipleDiagnosticChannelsFoundLog", {
@@ -151,10 +152,10 @@ export class TestResultUpdater {
         }
 
         // Get the first channel from actual diagnostics as only one channel should exist at a time.
-        const actualDiagPath = result.actualDiagnosticsFilePaths[firstChannel];
+        const actualDiagPath: string = result.actualDiagnosticsFilePaths[firstChannel];
 
         // Check if the same channel exists in expected
-        const expectedDiagPath = result.expectedDiagnosticsFilePaths[firstChannel];
+        const expectedDiagPath: string | undefined = result.expectedDiagnosticsFilePaths[firstChannel];
 
         if (!expectedDiagPath) {
             failedMessage.message += resolveI18nTemplate("PQSdk.testAdapter.updater.expectedDiagnosticsFileNotFound", {
@@ -193,13 +194,13 @@ export class TestResultUpdater {
     ): Promise<void> {
         try {
             // Check if both files exist before attempting to read them
-            const expectedFileExists = await fileExists(expectedFilePath);
-            const actualFileExists = await fileExists(actualFilePath);
+            const expectedFileExists: boolean = await fileExists(expectedFilePath);
+            const actualFileExists: boolean = await fileExists(actualFilePath);
 
             if (expectedFileExists && actualFileExists) {
                 // Read both files
-                const expectedRaw = await fs.promises.readFile(expectedFilePath, "utf8");
-                const actualRaw = await fs.promises.readFile(actualFilePath, "utf8");
+                const expectedRaw: string = await fs.promises.readFile(expectedFilePath, "utf8");
+                const actualRaw: string = await fs.promises.readFile(actualFilePath, "utf8");
 
                 // Format both for consistent diff comparison
                 failedMessage.expectedOutput = this.formatOutputForDiff(expectedRaw, expectedFilePath);
@@ -215,7 +216,7 @@ export class TestResultUpdater {
                 }
             } else {
                 // Determine which files are missing for a detailed error message
-                const missingFiles = [!expectedFileExists ? "expected" : "", !actualFileExists ? "actual" : ""]
+                const missingFiles: string = [!expectedFileExists ? "expected" : "", !actualFileExists ? "actual" : ""]
                     .filter(Boolean)
                     .join(" and ");
 
@@ -246,7 +247,7 @@ export class TestResultUpdater {
             }
         } catch (error) {
             // Handle file reading errors
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
 
             // Log appropriate message based on context
             if (context === ComparisonContext.TestResult) {
@@ -282,15 +283,15 @@ export class TestResultUpdater {
         try {
             // Try to parse and format as JSON
             try {
-                const trimmed = content.trim();
+                const trimmed: string = content.trim();
 
                 if (trimmed.length > 0) {
-                    const parsed = JSON.parse(trimmed);
+                    const parsed: unknown = JSON.parse(trimmed);
 
                     // Successfully parsed as JSON - return with consistent formatting
                     return JSON.stringify(parsed, null, 2);
                 }
-            } catch (jsonError) {
+            } catch (_jsonError) {
                 // Not valid JSON or empty, continue to normalization strategy
                 this.outputChannel.appendDebugLine(
                     resolveI18nTemplate("PQSdk.testAdapter.updater.jsonParseFailedFallingBackToNormalization", {
@@ -306,12 +307,13 @@ export class TestResultUpdater {
             return content
                 .replace(/\r\n/g, "\n") // Normalize CRLF to LF
                 .split("\n")
-                .map(line => line.trimEnd()) // Remove trailing whitespace per line
+                .map((line: string) => line.trimEnd()) // Remove trailing whitespace per line
                 .join("\n")
                 .trim(); // Remove leading/trailing newlines
         } catch (formattingError) {
             // If any unexpected error occurs during formatting, return original content
-            const errorMessage = formattingError instanceof Error ? formattingError.message : String(formattingError);
+            const errorMessage: string =
+                formattingError instanceof Error ? formattingError.message : String(formattingError);
 
             this.outputChannel.appendLine(
                 resolveI18nTemplate("PQSdk.testAdapter.updater.formattingFailedUsingOriginal", {

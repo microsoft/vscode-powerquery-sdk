@@ -347,12 +347,15 @@ export async function determineExtensionsForTests(
     if (testExtensionPaths !== undefined) {
         // Handle string case
         if (typeof testExtensionPaths === "string") {
-            const trimmed = testExtensionPaths.trim();
+            const trimmed: string = testExtensionPaths.trim();
 
             if (trimmed.length > 0) {
-                const message = resolveI18nTemplate("PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig", {
-                    extensionCount: "1",
-                });
+                const message: string = resolveI18nTemplate(
+                    "PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig",
+                    {
+                        extensionCount: "1",
+                    },
+                );
 
                 outputChannel?.appendInfoLine(message);
 
@@ -365,23 +368,26 @@ export async function determineExtensionsForTests(
         // Handle array case
         else if (Array.isArray(testExtensionPaths)) {
             // Filter out empty/whitespace-only strings
-            const validPaths = testExtensionPaths
-                .filter(p => typeof p === "string" && p.trim().length > 0)
-                .map(p => p.trim());
+            const validPaths: string[] = testExtensionPaths
+                .filter((p: unknown) => typeof p === "string" && p.trim().length > 0)
+                .map((p: unknown) => (p as string).trim());
 
             if (validPaths.length > 0) {
                 // Log if we filtered any items
                 if (validPaths.length < testExtensionPaths.length) {
-                    const filtered = testExtensionPaths.length - validPaths.length;
+                    const filtered: number = testExtensionPaths.length - validPaths.length;
 
                     outputChannel?.appendInfoLine(
                         `Filtered out ${filtered} empty extension path(s) from test.extensionPaths configuration`,
                     );
                 }
 
-                const message = resolveI18nTemplate("PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig", {
-                    extensionCount: validPaths.length.toString(),
-                });
+                const message: string = resolveI18nTemplate(
+                    "PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig",
+                    {
+                        extensionCount: validPaths.length.toString(),
+                    },
+                );
 
                 outputChannel?.appendInfoLine(message);
 
@@ -402,10 +408,10 @@ export async function determineExtensionsForTests(
 
     if (defaultExtension) {
         // Substitute variables and resolve path relative to workspace folder
-        const resolved = resolvePathRelativeToWorkspace(resolveSubstitutedValues(defaultExtension));
+        const resolved: string | undefined = resolvePathRelativeToWorkspace(resolveSubstitutedValues(defaultExtension));
 
         if (resolved) {
-            const message = resolveI18nTemplate("PQSdk.testAdapter.extensions.fallingBackToDefaultExtension", {
+            const message: string = resolveI18nTemplate("PQSdk.testAdapter.extensions.fallingBackToDefaultExtension", {
                 extensionPath: resolved,
             });
 
@@ -445,7 +451,11 @@ export async function buildIntermediateResultsArgs(
     args.push("--persistIntermediateTestResults");
 
     // Read testsettings.json
-    const config = await readIntermediateResultsConfig(settingsFilePath, outputChannel, fs);
+    const config: { intermediateTestResultsFolder?: string } = await readIntermediateResultsConfig(
+        settingsFilePath,
+        outputChannel,
+        fs,
+    );
 
     // Determine folder path with precedence
     let folderPath: string;
@@ -462,7 +472,7 @@ export async function buildIntermediateResultsArgs(
         );
     } else {
         // Priority 2: Check VS Code config
-        const configValue = ExtensionConfigurations.DefaultIntermediateResultsFolder;
+        const configValue: string | undefined = ExtensionConfigurations.DefaultIntermediateResultsFolder;
 
         if (configValue && configValue.trim().length > 0) {
             folderPath = configValue.trim();
@@ -505,17 +515,20 @@ async function readIntermediateResultsConfig(
     intermediateTestResultsFolder?: string;
 }> {
     try {
-        const data = await fs.readFile(vscode.Uri.file(settingsFilePath));
-        const textData = new TextDecoder().decode(data);
-        const json = JSON.parse(textData);
+        const data: Uint8Array = await fs.readFile(vscode.Uri.file(settingsFilePath));
+        const textData: string = new TextDecoder().decode(data);
+        const json: unknown = JSON.parse(textData);
+        const jsonObj = json as { IntermediateTestResultsFolder?: unknown };
 
         return {
             intermediateTestResultsFolder:
-                typeof json.IntermediateTestResultsFolder === "string" ? json.IntermediateTestResultsFolder : undefined,
+                typeof jsonObj.IntermediateTestResultsFolder === "string"
+                    ? jsonObj.IntermediateTestResultsFolder
+                    : undefined,
         };
     } catch (error) {
         // Log debug message about fallback
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
 
         outputChannel?.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.intermediateResults.failedToReadSettings", {
