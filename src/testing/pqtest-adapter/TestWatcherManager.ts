@@ -147,7 +147,7 @@ export class TestWatcherManager implements vscode.Disposable {
                     if (pathType === "directory") {
                         directoriesToWatch.push(settingsFiles);
                     }
-                } catch (_error) {
+                } catch {
                     // Path doesn't exist or is inaccessible, show a warning and skip it
                     const errorMessage: string = resolveI18nTemplate(
                         "PQSdk.testAdapter.error.invalidSettingsPathNotWatched",
@@ -168,7 +168,7 @@ export class TestWatcherManager implements vscode.Disposable {
                         if (pathType === "directory") {
                             directoriesToWatch.push(settingsFile);
                         }
-                    } catch (_error) {
+                    } catch {
                         // Path doesn't exist or is inaccessible, show a warning and skip it
                         const errorMessage: string = resolveI18nTemplate(
                             "PQSdk.testAdapter.error.invalidSettingsPathNotWatched",
@@ -310,7 +310,7 @@ export class TestWatcherManager implements vscode.Disposable {
     /**
      * Handles file creation events in watched directories
      */
-    private async onFileCreatedInDirectory(uri: vscode.Uri): Promise<void> {
+    private onFileCreatedInDirectory(uri: vscode.Uri): void {
         this.outputChannel.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.fileCreatedInDirectory", { filePath: uri.fsPath }),
         );

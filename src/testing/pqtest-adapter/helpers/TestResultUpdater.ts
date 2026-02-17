@@ -291,7 +291,7 @@ export class TestResultUpdater {
                     // Successfully parsed as JSON - return with consistent formatting
                     return JSON.stringify(parsed, null, 2);
                 }
-            } catch (_jsonError) {
+            } catch {
                 // Not valid JSON or empty, continue to normalization strategy
                 this.outputChannel.appendDebugLine(
                     resolveI18nTemplate("PQSdk.testAdapter.updater.jsonParseFailedFallingBackToNormalization", {

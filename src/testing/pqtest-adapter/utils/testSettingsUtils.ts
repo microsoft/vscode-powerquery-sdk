@@ -151,7 +151,7 @@ export async function getTestPathFromSettings(
 
     try {
         data = await fs.readFile(vscode.Uri.file(settingsFilePath));
-    } catch (_err) {
+    } catch {
         const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.failedToReadSettingsFile", {
             settingsFilePath,
         });
@@ -284,7 +284,7 @@ export async function getExtensionPathsFromSettings(
         }
 
         return undefined;
-    } catch (_error) {
+    } catch {
         // File not readable, invalid JSON, or other error - return undefined
         // Caller will fall back to configuration
         return undefined;
@@ -518,7 +518,10 @@ async function readIntermediateResultsConfig(
         const data: Uint8Array = await fs.readFile(vscode.Uri.file(settingsFilePath));
         const textData: string = new TextDecoder().decode(data);
         const json: unknown = JSON.parse(textData);
-        const jsonObj = json as { IntermediateTestResultsFolder?: unknown };
+
+        const jsonObj: { IntermediateTestResultsFolder?: unknown } = json as {
+            IntermediateTestResultsFolder?: unknown;
+        };
 
         return {
             intermediateTestResultsFolder:
