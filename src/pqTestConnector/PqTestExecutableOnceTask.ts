@@ -10,17 +10,17 @@ import * as vscode from "vscode";
 
 import { ChildProcess } from "child_process";
 
-import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
-import { resolveI18nTemplate } from "../i18n/extension";
-import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
-import { buildPqTestArgs } from "../common/PQTestService";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { formatArguments } from "./PqTestTaskUtils";
 import { IDisposable } from "../common/Disposable";
-import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
+import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
 import { PQTestTask } from "../common/PowerQueryTask";
-import { resolveSubstitutedValues } from "../utils/vscodes";
+import { buildPqTestArgs } from "../common/PQTestService";
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { resolveI18nTemplate } from "../i18n/extension";
+import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { resolveSubstitutedValues } from "../utils/vscodes";
+import { formatArguments } from "./PqTestTaskUtils";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -143,8 +143,9 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }),
             );
 
-            // Determine working directory: use task.workingDirectory if provided, otherwise fall back to pqtest.exe directory
-            const workingDir = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
+            // Determine working directory: use task.workingDirectory if provided,
+            // otherwise fall back to pqtest.exe directory
+            const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
 
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,

@@ -12,10 +12,10 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 
-export const PQTEST_EXECUTABLE_NAME = "PQTest.exe";
+export const PQTEST_EXECUTABLE_NAME: string = "PQTest.exe";
 
 /**
  * Resolves the full path to PQTest.exe executable.

@@ -9,24 +9,24 @@ import * as vscode from "vscode";
 
 import * as PQLSExt from "./common/vscode-powerquery.api.d";
 
+import { LifecycleCommands } from "./commands/LifecycleCommands";
+import { IDisposable } from "./common/Disposable";
 import { convertExtensionInfoToLibraryJson, ExtensionInfo, IPQTestService } from "./common/PQTestService";
-import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
-import { activateMQueryDebug } from "./debugAdaptor/activateMQueryDebug";
+import { PqSdkNugetPackageService } from "./common/PqSdkNugetPackageService";
+import { SchemaManagementService } from "./common/SchemaManagementService";
 import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "./constants/PowerQuerySdkExtension";
-import { GlobalEventBus } from "./GlobalEventBus";
-import { IDisposable } from "./common/Disposable";
-import { LifecycleCommands } from "./commands/LifecycleCommands";
+import { activateMQueryDebug } from "./debugAdaptor/activateMQueryDebug";
 import { LifeCycleTaskTreeView } from "./features/LifeCycleTaskTreeView";
 import { PowerQueryTaskProvider } from "./features/PowerQueryTaskProvider";
-import { PqSdkNugetPackageService } from "./common/PqSdkNugetPackageService";
 import { PqSdkOutputChannel } from "./features/PqSdkOutputChannel";
+import { GlobalEventBus } from "./GlobalEventBus";
+import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
 import { PqServiceHostClient } from "./pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
-import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
-import { SchemaManagementService } from "./common/SchemaManagementService";
-import { stringifyJson } from "./utils/strings";
 import { registerCommands, registerTestController } from "./testing/pqtest-adapter/TestController";
+import { stringifyJson } from "./utils/strings";
+import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const vscPowerQuery: PQLSExt.PowerQueryApi = vscode.extensions.getExtension(
@@ -101,7 +101,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     });
 
     // Register test adapter
-    const testController = registerTestController(vscExtCtx, pqSdkOutputChannel);
+    const testController: vscode.TestController = registerTestController(vscExtCtx, pqSdkOutputChannel);
     registerCommands(vscExtCtx, testController, pqSdkOutputChannel);
 
     vscExtCtx.subscriptions.push(

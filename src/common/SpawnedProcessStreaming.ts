@@ -7,9 +7,9 @@
 
 import * as cp from "child_process";
 import { ChildProcess } from "child_process";
-import * as stream from "stream";
 import * as vscode from "vscode";
 
+import * as stream from "stream";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 
@@ -53,9 +53,9 @@ export class SpawnedProcessStreaming {
      * @throws Error if process fails to start or exits with error before stdout
      */
     async run(): Promise<NodeJS.ReadableStream> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve: (value: NodeJS.ReadableStream) => void, reject: (reason?: Error) => void) => {
             // Log command execution
-            const commandLine = `${this.exePath} ${this.args.join(" ")}`;
+            const commandLine: string = `${this.exePath} ${this.args.join(" ")}`;
 
             this.options?.outputChannel?.appendDebugLine(
                 resolveI18nTemplate("PQSdk.testAdapter.executingCommand", { commandLine }),
@@ -74,17 +74,17 @@ export class SpawnedProcessStreaming {
                 cwd: this.options?.cwd,
             });
 
-            let stderrData = "";
-            let stdoutResolved = false;
+            let stderrData: string = "";
+            let stdoutResolved: boolean = false;
 
             // Create a PassThrough stream to ensure no data is lost
             // This pattern is critical for concurrent process execution where the first
             // stdout chunk might arrive before the readline interface is set up
-            const passThroughStream = new stream.PassThrough();
+            const passThroughStream: stream.PassThrough = new stream.PassThrough();
 
             // Collect and log stderr in real-time
             childProcess.stderr?.on("data", (data: Buffer) => {
-                const message = data.toString();
+                const message: string = data.toString();
                 stderrData += message;
 
                 this.options?.outputChannel?.appendLine(
@@ -95,14 +95,14 @@ export class SpawnedProcessStreaming {
             // Handle cancellation
             this.options?.cancellationToken?.onCancellationRequested(() => {
                 childProcess.kill();
-                const errorMsg = extensionI18n["PQSdk.testAdapter.processCancelled"];
+                const errorMsg: string = extensionI18n["PQSdk.testAdapter.processCancelled"];
                 this.options?.outputChannel?.appendLine(errorMsg);
                 reject(new Error(errorMsg));
             });
 
             // Handle spawn errors (e.g., executable not found)
             childProcess.on("error", (err: Error) => {
-                const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.failedToStartProcess", {
+                const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.failedToStartProcess", {
                     error: err.message,
                 });
 
@@ -111,10 +111,10 @@ export class SpawnedProcessStreaming {
             });
 
             // Handle process exit
-            childProcess.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+            childProcess.on("exit", (code: number | null, _signal: NodeJS.Signals | null) => {
                 // Only reject if stdout hasn't started yet and process failed
                 if (!stdoutResolved && code !== 0) {
-                    const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.processExitedWithCode", {
+                    const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.processExitedWithCode", {
                         code: code?.toString() || "unknown",
                         stderr: stderrData,
                     });

@@ -23,10 +23,10 @@ import { createCompositeId, createTestItem } from "./utils/testUtils";
  */
 function sortTestsForHierarchy(tests: any[]): any[] {
     return tests.sort((a: any, b: any) => {
-        const aPath = a.RelativePath || a.Test;
-        const bPath = b.RelativePath || b.Test;
-        const aIsNested = aPath.includes("/") || aPath.includes("\\");
-        const bIsNested = bPath.includes("/") || bPath.includes("\\");
+        const aPath: string = a.RelativePath || a.Test;
+        const bPath: string = b.RelativePath || b.Test;
+        const aIsNested: boolean = aPath.includes("/") || aPath.includes("\\");
+        const bIsNested: boolean = bPath.includes("/") || bPath.includes("\\");
 
         // If one is nested and the other isn't, nested comes first
         if (aIsNested !== bIsNested) {
@@ -61,7 +61,7 @@ export async function resolveTestItem(
     item.error = undefined;
 
     // We're loading the children of a settings file TestItem
-    const settingsFileUri = item.uri;
+    const settingsFileUri: vscode.Uri | undefined = item.uri;
 
     if (!settingsFileUri) {
         item.error = extensionI18n["PQSdk.testResolver.uriNotSet"];
@@ -69,7 +69,7 @@ export async function resolveTestItem(
         return;
     }
 
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(settingsFileUri);
+    const workspaceFolder: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(settingsFileUri);
 
     if (!workspaceFolder) {
         item.error = resolveI18nTemplate("PQSdk.testResolver.settingsFileNotInWorkspace", {
@@ -114,19 +114,19 @@ export async function resolveTestItem(
         return;
     }
 
-    const isFile = pathType === "file";
+    const isFile: boolean = pathType === "file";
 
     try {
         if (isFile) {
             // Handle single test file case
-            const normalizedTestPath = getNormalizedPath(testPath);
-            const testFileUri = vscode.Uri.file(normalizedTestPath);
-            const testFileName = path.basename(testPath); // Keep pre-normalised file name for the label
-            const normalizedTestFileName = path.basename(normalizedTestPath); // Use normalized for the ID
+            const normalizedTestPath: string = getNormalizedPath(testPath);
+            const testFileUri: vscode.Uri = vscode.Uri.file(normalizedTestPath);
+            const testFileName: string = path.basename(testPath); // Keep pre-normalised file name for the label
+            const normalizedTestFileName: string = path.basename(normalizedTestPath); // Use normalized for the ID
 
             // Create composite ID for test files: testId|settingsFilePath
-            const testId = `test:${normalizedTestFileName}`;
-            const compositeId = createCompositeId(testId, settingsFileUri);
+            const testId: string = `test:${normalizedTestFileName}`;
+            const compositeId: string = createCompositeId(testId, settingsFileUri);
 
             createTestItem(
                 controller,
@@ -145,8 +145,8 @@ export async function resolveTestItem(
             );
         } else {
             // Handle test directory case - use TestDiscoveryService
-            const discoveryService = new TestDiscoveryService(outputChannel);
-            const pqTestResult = await discoveryService.discoverTests(settingsFileUri, token);
+            const discoveryService: TestDiscoveryService = new TestDiscoveryService(outputChannel);
+            const pqTestResult: any = await discoveryService.discoverTests(settingsFileUri, token);
 
             // Log the full result for debugging
             outputChannel.appendDebugLine(
@@ -156,7 +156,7 @@ export async function resolveTestItem(
             );
 
             // Extract the Tests array from the result
-            const tests = pqTestResult.Tests || [];
+            const tests: any[] = pqTestResult.Tests || [];
 
             outputChannel.appendDebugLine(
                 resolveI18nTemplate("PQSdk.testResolver.foundTestFiles", {
@@ -169,10 +169,10 @@ export async function resolveTestItem(
             }
 
             // Map to track created folder items to prevent duplicates
-            const folderMap = new Map<string, vscode.TestItem>();
+            const folderMap: Map<string, vscode.TestItem> = new Map<string, vscode.TestItem>();
 
             // Sort tests: folders first, then files, alphabetically within each group
-            const sortedTests = sortTestsForHierarchy(tests);
+            const sortedTests: any[] = sortTestsForHierarchy(tests);
 
             // Create TestItems for each discovered test
             for (const test of sortedTests) {
@@ -182,39 +182,45 @@ export async function resolveTestItem(
 
                 try {
                     // Get the relative path and split it preserving original case for labels
-                    const relativePath = test.RelativePath || test.Test;
+                    const relativePath: string = test.RelativePath || test.Test;
 
-                    const { normalizedParts, originalParts } = splitPathPreservingCase(relativePath, outputChannel);
+                    const {
+                        normalizedParts,
+                        originalParts,
+                    }: {
+                        normalizedParts: string[];
+                        originalParts: string[];
+                    } = splitPathPreservingCase(relativePath, outputChannel);
 
-                    const normalizedPath = getNormalizedPath(relativePath);
+                    const normalizedPath: string = getNormalizedPath(relativePath);
 
                     let parentItem = item; // Start with the settings file item
 
                     // If there are folders in the path (more than just the filename)
                     if (normalizedParts.length > 1) {
                         // Build folder hierarchy (all parts except the last one)
-                        for (let i = 0; i < normalizedParts.length - 1; i++) {
+                        for (let i: number = 0; i < normalizedParts.length - 1; i++) {
                             // Build the full folder path up to this level (using normalized parts for ID)
-                            const folderPathParts = normalizedParts.slice(0, i + 1);
-                            const folderPath = folderPathParts.join("/");
+                            const folderPathParts: string[] = normalizedParts.slice(0, i + 1);
+                            const folderPath: string = folderPathParts.join("/");
 
                             if (!folderMap.has(folderPath)) {
                                 try {
                                     // Create folder test item - use original case for label
-                                    const folderName = originalParts[i]; // Preserve original case for display
-                                    const folderId = `folder:${folderPath}`;
+                                    const folderName: string = originalParts[i]; // Preserve original case for display
+                                    const folderId: string = `folder:${folderPath}`;
 
                                     // Create composite ID for folders: folderId|settingsFilePath
-                                    const compositeFolderId = createCompositeId(folderId, settingsFileUri);
+                                    const compositeFolderId: string = createCompositeId(folderId, settingsFileUri);
 
                                     // Calculate the absolute path for the folder
-                                    const folderAbsolutePath = path.join(testPath, folderPath);
+                                    const folderAbsolutePath: string = path.join(testPath, folderPath);
 
-                                    const normalizedFolderAbsolutePath = getNormalizedPath(folderAbsolutePath);
+                                    const normalizedFolderAbsolutePath: string = getNormalizedPath(folderAbsolutePath);
 
-                                    const folderUri = vscode.Uri.file(normalizedFolderAbsolutePath);
+                                    const folderUri: vscode.Uri = vscode.Uri.file(normalizedFolderAbsolutePath);
 
-                                    const folderItem = createTestItem(
+                                    const folderItem: vscode.TestItem = createTestItem(
                                         controller,
                                         compositeFolderId,
                                         folderName,
@@ -260,13 +266,15 @@ export async function resolveTestItem(
                     }
 
                     // Create the test file item under its parent (folder or root)
-                    const testId = `test:${normalizedPath}`;
-                    const label = test.Test; // Just the filename
+                    const testId: string = `test:${normalizedPath}`;
+                    const label: string = test.Test; // Just the filename
 
-                    const uri = test.AbsolutePath ? vscode.Uri.file(getNormalizedPath(test.AbsolutePath)) : undefined;
+                    const uri: vscode.Uri | undefined = test.AbsolutePath
+                        ? vscode.Uri.file(getNormalizedPath(test.AbsolutePath))
+                        : undefined;
 
                     // Create composite ID for test files: originalTestId|settingsFilePath
-                    const compositeTestId = uri ? createCompositeId(testId, settingsFileUri) : testId;
+                    const compositeTestId: string = uri ? createCompositeId(testId, settingsFileUri) : testId;
 
                     outputChannel.appendDebugLine(
                         resolveI18nTemplate("PQSdk.testResolver.creatingTestItem", {

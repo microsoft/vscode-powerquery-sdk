@@ -216,7 +216,7 @@ export function resolveSubstitutedValuesInArray(values: string[] | undefined): s
         return values;
     }
 
-    return values.map(value => resolveSubstitutedValues(value) ?? value);
+    return values.map((value: string) => resolveSubstitutedValues(value) ?? value);
 }
 
 /**
@@ -237,7 +237,7 @@ export function resolvePathRelativeToWorkspace(pathStr: string | undefined): str
     }
 
     // Get first workspace folder
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const workspaceFolder: vscode.WorkspaceFolder | undefined = vscode.workspace.workspaceFolders?.[0];
 
     if (!workspaceFolder) {
         // No workspace open - return path as-is
@@ -260,7 +260,7 @@ export function resolvePathsRelativeToWorkspace(paths: string[] | undefined): st
         return paths;
     }
 
-    return paths.map(pathStr => resolvePathRelativeToWorkspace(pathStr) ?? pathStr);
+    return paths.map((pathStr: string) => resolvePathRelativeToWorkspace(pathStr) ?? pathStr);
 }
 
 export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {

@@ -35,7 +35,7 @@ export class PqTestCommandBuilder {
                 args.push("--extension", this.extensions);
             } else if (Array.isArray(this.extensions)) {
                 // Multiple extensions - repeat flag for each
-                this.extensions.forEach(ext => {
+                this.extensions.forEach((ext: string) => {
                     args.push("--extension", ext);
                 });
             }

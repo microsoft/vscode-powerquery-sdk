@@ -286,12 +286,12 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            const substituted = resolveSubstitutedValuesInArray(value);
+            const substituted: string[] | undefined = resolveSubstitutedValuesInArray(value);
 
             return resolvePathsRelativeToWorkspace(substituted);
         }
 
-        const substituted = resolveSubstitutedValues(value);
+        const substituted: string | undefined = resolveSubstitutedValues(value);
 
         return resolvePathRelativeToWorkspace(substituted);
     },
@@ -306,12 +306,12 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            const substituted = resolveSubstitutedValuesInArray(value);
+            const substituted: string[] | undefined = resolveSubstitutedValuesInArray(value);
 
             return resolvePathsRelativeToWorkspace(substituted);
         }
 
-        const substituted = resolveSubstitutedValues(value);
+        const substituted: string | undefined = resolveSubstitutedValues(value);
 
         return resolvePathRelativeToWorkspace(substituted);
     },
