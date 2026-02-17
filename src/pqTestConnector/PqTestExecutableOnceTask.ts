@@ -196,14 +196,15 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         }
                     } catch {
                         // noop
-                    } 
+                    }
                 }
 
-                // run-compare: Parse and return result for caller 
+                // run-compare: Parse and return result for caller
                 if (task.operation === "run-compare") {
                     try {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const result: any = JSON.parse(spawnProcess.stdOut);
+
                         return result;
                     } catch (e) {
                         this.handleErrorStr(
@@ -211,10 +212,10 @@ export class PqTestExecutableOnceTask implements IDisposable {
                                 error: `${e}`,
                             }),
                         );
+
                         return undefined;
                     }
                 }
-
             } else {
                 this.handleErrorStr(
                     resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskExitAbnormally", {

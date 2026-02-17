@@ -15,25 +15,15 @@ import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { getTestPathFromSettings } from "./testSettingsUtils";
 
 // Re-export pure path functions from core module
-export {
-    getNormalizedPath,
-    splitPath,
-    joinPath,
-    getParentPath,
-    changeFileExtension,
-} from "../core/pathOperations";
+export { getNormalizedPath, splitPath, joinPath, getParentPath, changeFileExtension } from "../core/pathOperations";
 
 // Import for internal use in this file
-import {
-    getNormalizedPath,
-    splitPathPreservingCaseParts,
-    changeFileExtension,
-} from "../core/pathOperations";
+import { changeFileExtension, getNormalizedPath, splitPathPreservingCaseParts } from "../core/pathOperations";
 
 /**
  * Path utilities for handling file and folder paths in the Power Query SDK Test extension.
  * Provides consistent path manipulation across different operating systems.
- * 
+ *
  * Pure path functions are implemented in ../core/pathOperations.ts and re-exported here.
  * This file contains VS Code-specific wrappers that use vscode.Uri and other VS Code types.
  */

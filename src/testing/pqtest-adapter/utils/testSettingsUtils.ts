@@ -231,14 +231,11 @@ export async function getTestPathFromSettings(
             }
 
         case "not-found": {
-            const notFoundMessage: string = resolveI18nTemplate(
-                "PQSdk.testAdapter.error.queryFilePathDoesNotExist",
-                {
-                    queryFilePath: queryFilePathFromSettings,
-                    settingsFilePath,
-                    resolvedPath: resolvedQueryFilePath,
-                },
-            );
+            const notFoundMessage: string = resolveI18nTemplate("PQSdk.testAdapter.error.queryFilePathDoesNotExist", {
+                queryFilePath: queryFilePathFromSettings,
+                settingsFilePath,
+                resolvedPath: resolvedQueryFilePath,
+            });
 
             outputChannel?.appendErrorLine(notFoundMessage);
             void vscode.window.showErrorMessage(notFoundMessage);

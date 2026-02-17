@@ -26,7 +26,7 @@ import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTas
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
 import { SchemaManagementService } from "./common/SchemaManagementService";
 import { stringifyJson } from "./utils/strings";
-import { registerTestController, registerCommands } from "./testing/pqtest-adapter/TestController";
+import { registerCommands, registerTestController } from "./testing/pqtest-adapter/TestController";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
     const vscPowerQuery: PQLSExt.PowerQueryApi = vscode.extensions.getExtension(

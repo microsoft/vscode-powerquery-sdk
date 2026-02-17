@@ -207,7 +207,7 @@ export function resolveSubstitutedValues(str: string | undefined): string | unde
 
 /**
  * Resolves an array of strings, applying variable substitution to each element.
- * 
+ *
  * @param values Array of strings potentially containing variables
  * @returns Array with all variables resolved in each element, or undefined if input was undefined
  */
@@ -216,13 +216,13 @@ export function resolveSubstitutedValuesInArray(values: string[] | undefined): s
         return values;
     }
 
-    return values.map((value) => resolveSubstitutedValues(value) ?? value);
+    return values.map(value => resolveSubstitutedValues(value) ?? value);
 }
 
 /**
  * Resolves a path relative to the workspace root folder if it's a relative path.
  * Absolute paths are returned unchanged.
- * 
+ *
  * @param pathStr Path that may be absolute or relative
  * @returns Absolute path resolved relative to workspace root, or original path if already absolute or no workspace
  */
@@ -238,6 +238,7 @@ export function resolvePathRelativeToWorkspace(pathStr: string | undefined): str
 
     // Get first workspace folder
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+
     if (!workspaceFolder) {
         // No workspace open - return path as-is
         // Caller will handle invalid paths appropriately
@@ -250,7 +251,7 @@ export function resolvePathRelativeToWorkspace(pathStr: string | undefined): str
 
 /**
  * Resolves an array of paths relative to workspace root.
- * 
+ *
  * @param paths Array of paths that may be absolute or relative
  * @returns Array with all paths resolved relative to workspace root
  */
@@ -259,7 +260,7 @@ export function resolvePathsRelativeToWorkspace(paths: string[] | undefined): st
         return paths;
     }
 
-    return paths.map((pathStr) => resolvePathRelativeToWorkspace(pathStr) ?? pathStr);
+    return paths.map(pathStr => resolvePathRelativeToWorkspace(pathStr) ?? pathStr);
 }
 
 export function getFirstWorkspaceFolder(): vscode.WorkspaceFolder | undefined {

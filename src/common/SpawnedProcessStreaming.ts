@@ -27,7 +27,7 @@ export interface StreamingProcessOptions {
 
 /**
  * Spawns a process and provides streaming access to its stdout.
- * 
+ *
  * Unlike SpawnedProcess (which buffers all output), this class provides
  * real-time access to the output stream for line-by-line processing.
  */
@@ -35,20 +35,20 @@ export class SpawnedProcessStreaming {
     constructor(
         private readonly exePath: string,
         private readonly args: string[],
-        private readonly options?: StreamingProcessOptions
+        private readonly options?: StreamingProcessOptions,
     ) {}
 
     /**
      * Spawns the process and returns a promise that resolves with the stdout stream.
-     * 
+     *
      * The promise rejects if:
      * - Process fails to spawn (e.g., executable not found)
      * - Process exits with non-zero code before producing stdout
      * - Process is cancelled via cancellation token
-     * 
+     *
      * Once stdout starts flowing, the promise resolves with the stream.
      * The caller is responsible for handling the stream and any subsequent errors.
-     * 
+     *
      * @returns Promise<NodeJS.ReadableStream> - stdout stream for line-by-line parsing
      * @throws Error if process fails to start or exits with error before stdout
      */
@@ -56,15 +56,16 @@ export class SpawnedProcessStreaming {
         return new Promise((resolve, reject) => {
             // Log command execution
             const commandLine = `${this.exePath} ${this.args.join(" ")}`;
+
             this.options?.outputChannel?.appendDebugLine(
-                resolveI18nTemplate("PQSdk.testAdapter.executingCommand", { commandLine })
+                resolveI18nTemplate("PQSdk.testAdapter.executingCommand", { commandLine }),
             );
 
             if (this.options?.cwd) {
                 this.options.outputChannel?.appendDebugLine(
-                    resolveI18nTemplate("PQSdk.testAdapter.workingDirectory", { 
-                        directory: this.options.cwd 
-                    })
+                    resolveI18nTemplate("PQSdk.testAdapter.workingDirectory", {
+                        directory: this.options.cwd,
+                    }),
                 );
             }
 
@@ -85,8 +86,9 @@ export class SpawnedProcessStreaming {
             childProcess.stderr?.on("data", (data: Buffer) => {
                 const message = data.toString();
                 stderrData += message;
+
                 this.options?.outputChannel?.appendLine(
-                    resolveI18nTemplate("PQSdk.testAdapter.stderrOutput", { message })
+                    resolveI18nTemplate("PQSdk.testAdapter.stderrOutput", { message }),
                 );
             });
 
@@ -103,6 +105,7 @@ export class SpawnedProcessStreaming {
                 const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.failedToStartProcess", {
                     error: err.message,
                 });
+
                 this.options?.outputChannel?.appendErrorLine(errorMsg);
                 reject(new Error(errorMsg));
             });
@@ -115,6 +118,7 @@ export class SpawnedProcessStreaming {
                         code: code?.toString() || "unknown",
                         stderr: stderrData,
                     });
+
                     this.options?.outputChannel?.appendErrorLine(errorMsg);
                     reject(new Error(errorMsg.trim()));
                 }

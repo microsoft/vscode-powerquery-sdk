@@ -100,7 +100,7 @@ export function registerTestController(
     // Initial discovery is handled by TestWatcherManager
     controller.resolveHandler = async item => {
         if (item) {
-            // Skip if no workspace folders are open 
+            // Skip if no workspace folders are open
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
                 return;
             }
