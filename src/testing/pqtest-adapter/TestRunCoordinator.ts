@@ -191,6 +191,7 @@ export class TestRunCoordinator {
                         }),
                     );
 
+                    // eslint-disable-next-line no-await-in-loop -- Sequential test discovery required
                     await refreshSettingsItem(group.settingsItem, this.testController, this.outputChannel);
                 }
 
@@ -418,9 +419,11 @@ export class TestRunCoordinator {
             }
 
             try {
+                // eslint-disable-next-line no-await-in-loop -- Sequential file I/O required for each test item
                 const stats: vscode.FileStat = await vscode.workspace.fs.stat(childItem.uri);
                 const isDirectory: boolean = stats.type === vscode.FileType.Directory;
 
+                // eslint-disable-next-line no-await-in-loop -- Sequential path resolution required for each test item
                 let relativePath: string = await getRelativeTestPath(childItem.uri, settingsItem.uri!);
 
                 if (isDirectory) {

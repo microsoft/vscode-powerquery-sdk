@@ -86,6 +86,7 @@ export async function cleanupOldIntermediateResults(outputChannel?: PqSdkOutputC
 
     for (const folderPath of foldersToClean) {
         try {
+            // eslint-disable-next-line no-await-in-loop -- Sequential cleanup operations required for each folder
             await cleanupFolder(folderPath, now, thresholdMs, outputChannel);
         } catch (error) {
             // Folder might not exist, which is fine
@@ -118,13 +119,16 @@ async function cleanupFolder(
         const entryPath: string = path.join(folderPath, entry.name);
 
         try {
+            // eslint-disable-next-line no-await-in-loop -- Sequential file I/O operations required for cleanup
             const stats: Stats = await fs.stat(entryPath);
             const age: number = now - stats.mtimeMs;
 
             if (age > thresholdMs) {
                 if (entry.isDirectory()) {
+                    // eslint-disable-next-line no-await-in-loop -- Sequential deletion required for each entry
                     await fs.rm(entryPath, { recursive: true, force: true });
                 } else {
+                    // eslint-disable-next-line no-await-in-loop -- Sequential deletion required for each entry
                     await fs.unlink(entryPath);
                 }
 

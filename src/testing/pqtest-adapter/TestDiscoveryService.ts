@@ -29,7 +29,7 @@ export class TestDiscoveryService {
      * @returns Parsed JSON result from PQTest.exe containing discovered tests
      * @throws Error if discovery fails
      */
-    async discoverTests(settingsFileUri: vscode.Uri, token?: vscode.CancellationToken): Promise<any> {
+    async discoverTests(settingsFileUri: vscode.Uri, token?: vscode.CancellationToken): Promise<unknown> {
         if (token?.isCancellationRequested) {
             throw new Error(extensionI18n["PQSdk.testDiscoveryService.testDiscoveryCancelled"]);
         }
@@ -45,10 +45,10 @@ export class TestDiscoveryService {
 
         try {
             testPath = await getTestPathFromSettings(settingsFileUri.fsPath);
-        } catch (err: any) {
+        } catch (err: unknown) {
             const error: string = resolveI18nTemplate("PQSdk.testDiscoveryService.failedToReadTestDirectory", {
                 settingsFilePath: settingsFileUri.fsPath,
-                errorMessage: err.message,
+                errorMessage: err instanceof Error ? err.message : String(err),
             });
 
             this.outputChannel?.appendLine(error);
@@ -69,9 +69,9 @@ export class TestDiscoveryService {
                 this.outputChannel?.appendLine(error);
                 throw new Error(error);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             const error: string = resolveI18nTemplate("PQSdk.testDiscoveryService.failedToCheckTestPathType", {
-                errorMessage: err.message,
+                errorMessage: err instanceof Error ? err.message : String(err),
             });
 
             this.outputChannel?.appendLine(error);
@@ -107,7 +107,7 @@ export class TestDiscoveryService {
                 extensionI18n["PQSdk.testDiscoveryService.executingPqTestWithListOnly"],
             );
 
-            const result: any = await discoveryRunner.runDiscovery();
+            const result: unknown = await discoveryRunner.runDiscovery();
 
             if (!result) {
                 throw new Error(extensionI18n["PQSdk.testDiscoveryService.pqtestReturnedNoResults"]);
@@ -116,9 +116,9 @@ export class TestDiscoveryService {
             this.outputChannel?.appendInfoLine(extensionI18n["PQSdk.testDiscoveryService.successfullyDiscoveredTests"]);
 
             return result;
-        } catch (err: any) {
+        } catch (err: unknown) {
             const error: string = resolveI18nTemplate("PQSdk.testDiscoveryService.failedToDiscoverTests", {
-                errorMessage: err.message,
+                errorMessage: err instanceof Error ? err.message : String(err),
             });
 
             this.outputChannel?.appendLine(error);

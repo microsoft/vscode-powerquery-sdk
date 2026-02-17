@@ -80,6 +80,7 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
     } else if (Array.isArray(settingsFiles)) {
         for (const settingsFile of settingsFiles) {
             try {
+                // eslint-disable-next-line no-await-in-loop -- Sequential file validation required
                 const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFile));
 
                 if (fileStat.type === vscode.FileType.Directory) {
@@ -89,6 +90,7 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
                         testSettingsFilePattern,
                     );
 
+                    // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
                     const files: vscode.Uri[] = await vscode.workspace.findFiles(pattern);
                     result.push(...files);
                 } else if (settingsFile.endsWith(testSettingsFileEnding)) {
@@ -161,7 +163,7 @@ export async function getTestPathFromSettings(
         throw new Error(message);
     }
 
-    let json: any;
+    let json: unknown;
 
     try {
         const textData: string = new TextDecoder().decode(data);
@@ -181,7 +183,9 @@ export async function getTestPathFromSettings(
     }
 
     // Validate QueryFilePath field using pure validation function
-    const validationResult: QueryFilePathValidationResult = validateQueryFilePathField(json.QueryFilePath);
+    const validationResult: QueryFilePathValidationResult = validateQueryFilePathField(
+        (json as { QueryFilePath?: unknown }).QueryFilePath,
+    );
 
     if (!validationResult.isValid) {
         const i18nKey: ExtensionI18nKeys = queryFilePathErrorCodeToI18nKey[validationResult.errorCode!];
@@ -195,7 +199,7 @@ export async function getTestPathFromSettings(
         throw new Error(message);
     }
 
-    const queryFilePathFromSettings: string = json.QueryFilePath;
+    const queryFilePathFromSettings: string = (json as { QueryFilePath: string }).QueryFilePath;
     let resolvedQueryFilePath: string;
 
     if (path.isAbsolute(queryFilePathFromSettings)) {
@@ -271,15 +275,19 @@ export async function getExtensionPathsFromSettings(
     try {
         const data: Uint8Array = await fs.readFile(vscode.Uri.file(settingsFilePath));
         const textData: string = new TextDecoder().decode(data);
-        const json: any = JSON.parse(textData);
+        const json: unknown = JSON.parse(textData);
 
         // Check if ExtensionPaths exists and is a non-empty array
-        if (Array.isArray(json.ExtensionPaths) && json.ExtensionPaths.length > 0) {
+        const jsonObj: { ExtensionPaths?: unknown } = json as { ExtensionPaths?: unknown };
+
+        if (Array.isArray(jsonObj.ExtensionPaths) && jsonObj.ExtensionPaths.length > 0) {
             // Validate all elements are strings
-            const allStrings: boolean = json.ExtensionPaths.every((item: any): boolean => typeof item === "string");
+            const allStrings: boolean = jsonObj.ExtensionPaths.every(
+                (item: unknown): boolean => typeof item === "string",
+            );
 
             if (allStrings) {
-                return json.ExtensionPaths;
+                return jsonObj.ExtensionPaths as string[];
             }
         }
 

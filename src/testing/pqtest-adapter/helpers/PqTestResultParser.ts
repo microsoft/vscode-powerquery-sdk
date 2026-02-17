@@ -43,7 +43,7 @@ export interface TestResult {
     expectedDiagnosticsFilePaths?: DiagnosticsChannelPaths;
     error?: {
         message: string;
-        details?: any;
+        details?: unknown;
     };
 }
 
@@ -223,7 +223,7 @@ interface TestEndEvent {
     timestamp: string;
     error?: {
         message: string;
-        details?: any;
+        details?: unknown;
     };
     reason?: string;
     actualTestResultFilePath?: string;

@@ -21,10 +21,18 @@ import { getPathType } from "./utils/vscodeFs";
  * Nested tests (in subfolders) come first, then root-level tests.
  * Within each group, tests are sorted alphabetically.
  */
-function sortTestsForHierarchy(tests: any[]): any[] {
-    return tests.sort((a: any, b: any) => {
-        const aPath: string = a.RelativePath || a.Test;
-        const bPath: string = b.RelativePath || b.Test;
+function sortTestsForHierarchy(tests: unknown[]): unknown[] {
+    return tests.sort((a: unknown, b: unknown) => {
+        const aPath: string =
+            (a as { RelativePath?: string; Test?: string }).RelativePath ||
+            (a as { RelativePath?: string; Test?: string }).Test ||
+            "";
+
+        const bPath: string =
+            (b as { RelativePath?: string; Test?: string }).RelativePath ||
+            (b as { RelativePath?: string; Test?: string }).Test ||
+            "";
+
         const aIsNested: boolean = aPath.includes("/") || aPath.includes("\\");
         const bIsNested: boolean = bPath.includes("/") || bPath.includes("\\");
 
@@ -84,10 +92,11 @@ export async function resolveTestItem(
 
     try {
         testPath = await getTestPathFromSettings(settingsFileUri.fsPath);
-    } catch (err: any) {
+    } catch (err: unknown) {
+        // eslint-disable-next-line require-atomic-updates -- Error assignment is intentional
         item.error = resolveI18nTemplate("PQSdk.testResolver.failedToReadTestDirectory", {
             settingsFilePath: settingsFileUri.fsPath,
-            errorMessage: err.message,
+            errorMessage: err instanceof Error ? err.message : String(err),
         });
 
         return;
@@ -100,15 +109,17 @@ export async function resolveTestItem(
         pathType = await getPathType(testPath);
 
         if (pathType === "not-found") {
+            // eslint-disable-next-line require-atomic-updates -- Error assignment is intentional
             item.error = resolveI18nTemplate("PQSdk.testResolver.testPathDoesNotExist", {
                 testPath,
             });
 
             return;
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
+        // eslint-disable-next-line require-atomic-updates -- Error assignment is intentional
         item.error = resolveI18nTemplate("PQSdk.testResolver.failedToCheckTestPathType", {
-            errorMessage: err.message,
+            errorMessage: err instanceof Error ? err.message : String(err),
         });
 
         return;
@@ -146,7 +157,7 @@ export async function resolveTestItem(
         } else {
             // Handle test directory case - use TestDiscoveryService
             const discoveryService: TestDiscoveryService = new TestDiscoveryService(outputChannel);
-            const pqTestResult: any = await discoveryService.discoverTests(settingsFileUri, token);
+            const pqTestResult: unknown = await discoveryService.discoverTests(settingsFileUri, token);
 
             // Log the full result for debugging
             outputChannel.appendDebugLine(
@@ -156,7 +167,7 @@ export async function resolveTestItem(
             );
 
             // Extract the Tests array from the result
-            const tests: any[] = pqTestResult.Tests || [];
+            const tests: unknown[] = (pqTestResult as { Tests?: unknown[] }).Tests || [];
 
             outputChannel.appendDebugLine(
                 resolveI18nTemplate("PQSdk.testResolver.foundTestFiles", {
@@ -165,6 +176,7 @@ export async function resolveTestItem(
             );
 
             if (tests.length === 0) {
+                // eslint-disable-next-line require-atomic-updates -- Error assignment is intentional
                 item.error = extensionI18n["PQSdk.testResolver.noTestsFound"];
             }
 
@@ -172,7 +184,7 @@ export async function resolveTestItem(
             const folderMap: Map<string, vscode.TestItem> = new Map<string, vscode.TestItem>();
 
             // Sort tests: folders first, then files, alphabetically within each group
-            const sortedTests: any[] = sortTestsForHierarchy(tests);
+            const sortedTests: unknown[] = sortTestsForHierarchy(tests);
 
             // Create TestItems for each discovered test
             for (const test of sortedTests) {
@@ -182,7 +194,10 @@ export async function resolveTestItem(
 
                 try {
                     // Get the relative path and split it preserving original case for labels
-                    const relativePath: string = test.RelativePath || test.Test;
+                    const relativePath: string =
+                        (test as { RelativePath?: string; Test?: string }).RelativePath ||
+                        (test as { RelativePath?: string; Test?: string }).Test ||
+                        "";
 
                     const {
                         normalizedParts,
@@ -267,10 +282,10 @@ export async function resolveTestItem(
 
                     // Create the test file item under its parent (folder or root)
                     const testId: string = `test:${normalizedPath}`;
-                    const label: string = test.Test; // Just the filename
+                    const label: string = (test as { Test: string }).Test; // Just the filename
 
-                    const uri: vscode.Uri | undefined = test.AbsolutePath
-                        ? vscode.Uri.file(getNormalizedPath(test.AbsolutePath))
+                    const uri: vscode.Uri | undefined = (test as { AbsolutePath?: string }).AbsolutePath
+                        ? vscode.Uri.file(getNormalizedPath((test as { AbsolutePath: string }).AbsolutePath))
                         : undefined;
 
                     // Create composite ID for test files: originalTestId|settingsFilePath
@@ -296,7 +311,7 @@ export async function resolveTestItem(
                 } catch (error) {
                     outputChannel.appendErrorLine(
                         resolveI18nTemplate("PQSdk.testResolver.failedToCreateTestItem", {
-                            testName: test.Test,
+                            testName: (test as { Test: string }).Test,
                             errorMessage: error instanceof Error ? error.message : String(error),
                         }),
                     );
@@ -309,18 +324,20 @@ export async function resolveTestItem(
                 }),
             );
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
+        // eslint-disable-next-line require-atomic-updates -- Error assignment is intentional
         item.error = resolveI18nTemplate("PQSdk.testResolver.failedToDiscoverTests", {
-            errorMessage: err.message,
+            errorMessage: err instanceof Error ? err.message : String(err),
         });
 
         outputChannel.appendErrorLine(
             resolveI18nTemplate("PQSdk.testResolver.testDiscoveryFailed", {
-                errorMessage: err.message,
+                errorMessage: err instanceof Error ? err.message : String(err),
             }),
         );
     } finally {
         // No more children to resolve - mark this item as fully resolved
+        // eslint-disable-next-line require-atomic-updates -- Intentional flag update after async operations complete
         item.canResolveChildren = false;
     }
 }

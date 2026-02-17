@@ -8,7 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { SpawnedProcess } from "../../../common/SpawnedProcess";
+import { type ProcessExit, SpawnedProcess } from "../../../common/SpawnedProcess";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
 import { resolveI18nTemplate } from "../../../i18n/extension";
 import { PqTestCommandBuilder } from "./PqTestCommandBuilder";
@@ -31,7 +31,7 @@ export class PqTestDiscoveryRunner {
      * @returns Parsed JSON output from pqtest.exe --listOnly
      * @throws Error if discovery fails or output cannot be parsed
      */
-    async runDiscovery(): Promise<any> {
+    async runDiscovery(): Promise<unknown> {
         const workingDir: string = path.dirname(this.settingsFileUri.fsPath);
 
         // Build command arguments using PqTestCommandBuilder
@@ -55,7 +55,7 @@ export class PqTestDiscoveryRunner {
         // Execute using non-streaming SpawnedProcess
         const spawnProcess: SpawnedProcess = new SpawnedProcess(this.pqTestPath, args, { cwd: workingDir });
 
-        const processExit: any = await spawnProcess.deferred$;
+        const processExit: ProcessExit = await spawnProcess.deferred$;
 
         // Check exit code
         if (processExit.exitCode !== 0) {
@@ -70,7 +70,7 @@ export class PqTestDiscoveryRunner {
 
         // Parse JSON output
         try {
-            const result: any = JSON.parse(spawnProcess.stdOut);
+            const result: unknown = JSON.parse(spawnProcess.stdOut || "");
 
             return result;
         } catch (error) {

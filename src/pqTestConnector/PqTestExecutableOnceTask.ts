@@ -125,7 +125,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
         return result;
     }
 
-    public async run(program: string, task: PQTestTask): Promise<any> {
+    public async run(program: string, task: PQTestTask): Promise<unknown> {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;
@@ -216,6 +216,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         return undefined;
                     }
                 }
+
+                return undefined; // Default return for successful operations
             } else {
                 this.handleErrorStr(
                     resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskExitAbnormally", {
@@ -225,10 +227,14 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         stdErr: `${processExit.stderr ?? processExit.stdout}`,
                     }),
                 );
+
+                return undefined; // Default return for failed operations
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             this.handleErrorStr(typeof err === "string" ? err : err.toString());
+
+            return undefined; // Default return for errors
         } finally {
             this.handleTaskExited();
         }

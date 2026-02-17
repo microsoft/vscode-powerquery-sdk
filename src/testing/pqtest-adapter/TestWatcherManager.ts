@@ -163,6 +163,7 @@ export class TestWatcherManager implements vscode.Disposable {
                 // Check each array element for directories
                 for (const settingsFile of settingsFiles) {
                     try {
+                        // eslint-disable-next-line no-await-in-loop -- Sequential path validation required
                         const pathType: "file" | "directory" | "not-found" = await getPathType(settingsFile);
 
                         if (pathType === "directory") {

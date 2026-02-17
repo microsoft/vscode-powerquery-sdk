@@ -331,12 +331,14 @@ async function expandTestSettingsItem(
                 // Child is a folder - get its first child and reveal it to expand the folder
                 const grandChild: vscode.TestItem = Array.from(child.children)[0][1];
 
+                // eslint-disable-next-line no-await-in-loop -- Sequential UI operations required
                 await vscode.commands.executeCommand(
                     ExtensionConstants.TestAdapter.RevealTestInExplorerCommand,
                     grandChild,
                 );
 
                 // Small delay to allow UI to process the reveal command
+                // eslint-disable-next-line no-await-in-loop -- Sequential UI operations required
                 await new Promise<void>((resolve: () => void) => setTimeout(resolve, DELAY_FOR_UI_REVEAL_MS));
             }
         }
@@ -357,6 +359,7 @@ async function expandTestSettingsItem(
  * Wrapper for refreshSettingsItem that provides progress UI and cancellation support.
  * This is the entry point from the command registration.
  */
+// eslint-disable-next-line require-await -- Returns Promise from withProgress, not async/await
 async function refreshSettingsItemWithProgress(
     testItem: vscode.TestItem,
     controller: vscode.TestController,
@@ -510,6 +513,7 @@ export async function refreshAllTests(
             ) => await refreshAllTestsInternal(controller, outputChannel, progress, cancellationToken),
         );
     } finally {
+        // eslint-disable-next-line require-atomic-updates -- Intentional flag reset after async operation
         isRefreshInProgress = false;
     }
 }
@@ -586,6 +590,7 @@ async function refreshAllTestsInternal(
             }
 
             // Use delay for single-child items to give UI time to register recreated items
+            // eslint-disable-next-line no-await-in-loop -- Sequential processing of test items required
             await expandTestSettingsItem(item, controller, DELAY_BEFORE_SINGLE_CHILD_REVEAL_MS, cancellationToken);
 
             completed++;

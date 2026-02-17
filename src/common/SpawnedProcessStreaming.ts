@@ -52,6 +52,7 @@ export class SpawnedProcessStreaming {
      * @returns Promise<NodeJS.ReadableStream> - stdout stream for line-by-line parsing
      * @throws Error if process fails to start or exits with error before stdout
      */
+    // eslint-disable-next-line require-await -- Returns Promise via constructor, not async/await
     async run(): Promise<NodeJS.ReadableStream> {
         return new Promise((resolve: (value: NodeJS.ReadableStream) => void, reject: (reason?: Error) => void) => {
             // Log command execution
