@@ -5,22 +5,21 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import { ChildProcess } from "child_process";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { ChildProcess } from "child_process";
-
-import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
-import { resolveI18nTemplate } from "../i18n/extension";
-import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
-import { buildPqTestArgs } from "../common/PQTestService";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { formatArguments } from "./PqTestTaskUtils";
 import { IDisposable } from "../common/Disposable";
-import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
+import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
 import { PQTestTask } from "../common/PowerQueryTask";
-import { resolveSubstitutedValues } from "../utils/vscodes";
+import { buildPqTestArgs } from "../common/PQTestService";
+import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { resolveI18nTemplate } from "../i18n/extension";
+import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { resolveSubstitutedValues } from "../utils/vscodes";
+import { formatArguments } from "./PqTestTaskUtils";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -126,7 +125,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
         return result;
     }
 
-    public async run(program: string, task: PQTestTask): Promise<any> {
+    public async run(program: string, task: PQTestTask): Promise<unknown> {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;
@@ -143,8 +142,9 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 }),
             );
 
-            // Determine working directory: use task.workingDirectory if provided, otherwise fall back to pqtest.exe directory
-            const workingDir = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
+            // Determine working directory: use task.workingDirectory if provided,
+            // otherwise fall back to pqtest.exe directory
+            const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
 
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,
@@ -196,14 +196,15 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         }
                     } catch {
                         // noop
-                    } 
+                    }
                 }
 
-                // run-compare: Parse and return result for caller 
+                // run-compare: Parse and return result for caller
                 if (task.operation === "run-compare") {
                     try {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const result: any = JSON.parse(spawnProcess.stdOut);
+
                         return result;
                     } catch (e) {
                         this.handleErrorStr(
@@ -211,10 +212,12 @@ export class PqTestExecutableOnceTask implements IDisposable {
                                 error: `${e}`,
                             }),
                         );
+
                         return undefined;
                     }
                 }
 
+                return undefined; // Default return for successful operations
             } else {
                 this.handleErrorStr(
                     resolveI18nTemplate("PQSdk.taskQueue.info.debugTaskExitAbnormally", {
@@ -224,10 +227,14 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         stdErr: `${processExit.stderr ?? processExit.stdout}`,
                     }),
                 );
+
+                return undefined; // Default return for failed operations
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             this.handleErrorStr(typeof err === "string" ? err : err.toString());
+
+            return undefined; // Default return for errors
         } finally {
             this.handleTaskExited();
         }

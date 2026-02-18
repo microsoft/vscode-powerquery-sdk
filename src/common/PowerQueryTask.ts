@@ -6,6 +6,7 @@
  */
 
 import * as vscode from "vscode";
+
 import { OperationType } from "./OperationType";
 
 // Properties that need to be persisted as part of the task definition should be

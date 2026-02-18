@@ -5,19 +5,20 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import type { Dirent, Stats } from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
+import * as vscode from "vscode";
 
-import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
 import { ExtensionConfigurations } from "../../../constants/PowerQuerySdkConfiguration";
-
+import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { getTestSettingsFileUris } from "./testSettingsUtils";
 
 // In-memory throttle state
 let lastCleanupTimestamp: number = 0;
-const THROTTLE_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+const THROTTLE_INTERVAL_MS: number = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 
 // Cached output channel reference for cleanup
 let cachedOutputChannel: PqSdkOutputChannel | undefined;
@@ -37,7 +38,7 @@ export function initializeCleanupTimer(outputChannel: PqSdkOutputChannel): void 
  * If enough time has passed, trigger cleanup
  */
 export function maybeCleanupIntermediateResults(): void {
-    const now = Date.now();
+    const now: number = Date.now();
 
     if (now - lastCleanupTimestamp >= THROTTLE_INTERVAL_MS) {
         lastCleanupTimestamp = now;
@@ -52,7 +53,7 @@ export function maybeCleanupIntermediateResults(): void {
  * Resolves the default folder relative to each testsettings.json file location.
  */
 export async function cleanupOldIntermediateResults(outputChannel?: PqSdkOutputChannel): Promise<void> {
-    const cleanupAfterHours = ExtensionConfigurations.CleanupIntermediateResultsAfterHours;
+    const cleanupAfterHours: number = ExtensionConfigurations.CleanupIntermediateResultsAfterHours;
 
     // If cleanup is disabled (0 or negative), skip
     if (cleanupAfterHours <= 0) {
@@ -62,29 +63,30 @@ export async function cleanupOldIntermediateResults(outputChannel?: PqSdkOutputC
     }
 
     // Get the default folder path (relative to testsettings file)
-    const defaultFolder = ExtensionConstants.TestAdapter.DefaultIntermediateResultsFolder;
+    const defaultFolder: string = ExtensionConstants.TestAdapter.DefaultIntermediateResultsFolder;
 
     // Find all testsettings.json files using the existing utility
-    const testSettingsFiles = await getTestSettingsFileUris(outputChannel);
+    const testSettingsFiles: vscode.Uri[] = await getTestSettingsFileUris(outputChannel);
 
     if (testSettingsFiles.length === 0) {
         return;
     }
 
     // Resolve the default folder relative to each testsettings file and deduplicate
-    const foldersToClean = new Set<string>();
+    const foldersToClean: Set<string> = new Set<string>();
 
     for (const settingsFile of testSettingsFiles) {
-        const settingsDir = path.dirname(settingsFile.fsPath);
-        const absolutePath = path.resolve(settingsDir, defaultFolder);
+        const settingsDir: string = path.dirname(settingsFile.fsPath);
+        const absolutePath: string = path.resolve(settingsDir, defaultFolder);
         foldersToClean.add(absolutePath);
     }
 
-    const thresholdMs = cleanupAfterHours * 60 * 60 * 1000;
-    const now = Date.now();
+    const thresholdMs: number = cleanupAfterHours * 60 * 60 * 1000;
+    const now: number = Date.now();
 
     for (const folderPath of foldersToClean) {
         try {
+            // eslint-disable-next-line no-await-in-loop -- Sequential cleanup operations required for each folder
             await cleanupFolder(folderPath, now, thresholdMs, outputChannel);
         } catch (error) {
             // Folder might not exist, which is fine
@@ -110,20 +112,23 @@ async function cleanupFolder(
     thresholdMs: number,
     outputChannel?: PqSdkOutputChannel,
 ): Promise<void> {
-    const entries = await fs.readdir(folderPath, { withFileTypes: true });
-    let deletedCount = 0;
+    const entries: Dirent[] = await fs.readdir(folderPath, { withFileTypes: true });
+    let deletedCount: number = 0;
 
     for (const entry of entries) {
-        const entryPath = path.join(folderPath, entry.name);
+        const entryPath: string = path.join(folderPath, entry.name);
 
         try {
-            const stats = await fs.stat(entryPath);
-            const age = now - stats.mtimeMs;
+            // eslint-disable-next-line no-await-in-loop -- Sequential file I/O operations required for cleanup
+            const stats: Stats = await fs.stat(entryPath);
+            const age: number = now - stats.mtimeMs;
 
             if (age > thresholdMs) {
                 if (entry.isDirectory()) {
+                    // eslint-disable-next-line no-await-in-loop -- Sequential deletion required for each entry
                     await fs.rm(entryPath, { recursive: true, force: true });
                 } else {
+                    // eslint-disable-next-line no-await-in-loop -- Sequential deletion required for each entry
                     await fs.unlink(entryPath);
                 }
 

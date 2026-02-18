@@ -8,8 +8,8 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 
-import * as TestUtils from "../TestUtils";
 import { extensionLanguageServiceId } from "../common";
+import * as TestUtils from "../TestUtils";
 
 const languageServiceId: string = extensionLanguageServiceId;
 

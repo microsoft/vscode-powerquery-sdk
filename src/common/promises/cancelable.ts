@@ -8,8 +8,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { CancelAction, CancellationToken, CancellationTokenSource } from "./CancellationToken";
-import { AnyReturnedFunction } from "./types";
 import { setFunctionNameAndLength } from "./setFunctionNameAndLength";
+import { AnyReturnedFunction } from "./types";
 
 export type InternalPromise<T = unknown> = Promise<T> & { cancel: CancelAction };
 

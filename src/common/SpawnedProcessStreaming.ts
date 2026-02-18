@@ -27,7 +27,7 @@ export interface StreamingProcessOptions {
 
 /**
  * Spawns a process and provides streaming access to its stdout.
- * 
+ *
  * Unlike SpawnedProcess (which buffers all output), this class provides
  * real-time access to the output stream for line-by-line processing.
  */
@@ -35,36 +35,38 @@ export class SpawnedProcessStreaming {
     constructor(
         private readonly exePath: string,
         private readonly args: string[],
-        private readonly options?: StreamingProcessOptions
+        private readonly options?: StreamingProcessOptions,
     ) {}
 
     /**
      * Spawns the process and returns a promise that resolves with the stdout stream.
-     * 
+     *
      * The promise rejects if:
      * - Process fails to spawn (e.g., executable not found)
      * - Process exits with non-zero code before producing stdout
      * - Process is cancelled via cancellation token
-     * 
+     *
      * Once stdout starts flowing, the promise resolves with the stream.
      * The caller is responsible for handling the stream and any subsequent errors.
-     * 
+     *
      * @returns Promise<NodeJS.ReadableStream> - stdout stream for line-by-line parsing
      * @throws Error if process fails to start or exits with error before stdout
      */
+    // eslint-disable-next-line require-await -- Returns Promise via constructor, not async/await
     async run(): Promise<NodeJS.ReadableStream> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve: (value: NodeJS.ReadableStream) => void, reject: (reason?: Error) => void) => {
             // Log command execution
-            const commandLine = `${this.exePath} ${this.args.join(" ")}`;
+            const commandLine: string = `${this.exePath} ${this.args.join(" ")}`;
+
             this.options?.outputChannel?.appendDebugLine(
-                resolveI18nTemplate("PQSdk.testAdapter.executingCommand", { commandLine })
+                resolveI18nTemplate("PQSdk.testAdapter.executingCommand", { commandLine }),
             );
 
             if (this.options?.cwd) {
                 this.options.outputChannel?.appendDebugLine(
-                    resolveI18nTemplate("PQSdk.testAdapter.workingDirectory", { 
-                        directory: this.options.cwd 
-                    })
+                    resolveI18nTemplate("PQSdk.testAdapter.workingDirectory", {
+                        directory: this.options.cwd,
+                    }),
                 );
             }
 
@@ -73,48 +75,51 @@ export class SpawnedProcessStreaming {
                 cwd: this.options?.cwd,
             });
 
-            let stderrData = "";
-            let stdoutResolved = false;
+            let stderrData: string = "";
+            let stdoutResolved: boolean = false;
 
             // Create a PassThrough stream to ensure no data is lost
             // This pattern is critical for concurrent process execution where the first
             // stdout chunk might arrive before the readline interface is set up
-            const passThroughStream = new stream.PassThrough();
+            const passThroughStream: stream.PassThrough = new stream.PassThrough();
 
             // Collect and log stderr in real-time
             childProcess.stderr?.on("data", (data: Buffer) => {
-                const message = data.toString();
+                const message: string = data.toString();
                 stderrData += message;
+
                 this.options?.outputChannel?.appendLine(
-                    resolveI18nTemplate("PQSdk.testAdapter.stderrOutput", { message })
+                    resolveI18nTemplate("PQSdk.testAdapter.stderrOutput", { message }),
                 );
             });
 
             // Handle cancellation
             this.options?.cancellationToken?.onCancellationRequested(() => {
                 childProcess.kill();
-                const errorMsg = extensionI18n["PQSdk.testAdapter.processCancelled"];
+                const errorMsg: string = extensionI18n["PQSdk.testAdapter.processCancelled"];
                 this.options?.outputChannel?.appendLine(errorMsg);
                 reject(new Error(errorMsg));
             });
 
             // Handle spawn errors (e.g., executable not found)
             childProcess.on("error", (err: Error) => {
-                const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.failedToStartProcess", {
+                const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.failedToStartProcess", {
                     error: err.message,
                 });
+
                 this.options?.outputChannel?.appendErrorLine(errorMsg);
                 reject(new Error(errorMsg));
             });
 
             // Handle process exit
-            childProcess.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+            childProcess.on("exit", (code: number | null, _signal: NodeJS.Signals | null) => {
                 // Only reject if stdout hasn't started yet and process failed
                 if (!stdoutResolved && code !== 0) {
-                    const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.processExitedWithCode", {
+                    const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.processExitedWithCode", {
                         code: code?.toString() || "unknown",
                         stderr: stderrData,
                     });
+
                     this.options?.outputChannel?.appendErrorLine(errorMsg);
                     reject(new Error(errorMsg.trim()));
                 }

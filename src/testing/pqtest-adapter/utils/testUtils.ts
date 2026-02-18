@@ -8,12 +8,13 @@
 /**
  * Test utilities for the Power Query SDK Test extension.
  * Centralized functions for creating and manipulating VS Code TestItems.
- * 
+ *
  * Pure composite ID functions are implemented in ../core/compositeId.ts and re-exported here.
  * This file contains VS Code-specific wrappers that use vscode.TestItem and other VS Code types.
  */
 
 import * as vscode from "vscode";
+
 import { getNormalizedUriString } from "./pathUtils";
 
 // Re-export pure function from core module

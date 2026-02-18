@@ -5,10 +5,9 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as PQLSExt from "./vscode-powerquery.api.d";
-
 import { PQTestTask } from "./PowerQueryTask";
 import type { ValueEventEmitter } from "./ValueEventEmitter";
+import * as PQLSExt from "./vscode-powerquery.api.d";
 
 export interface GenericResult {
     readonly Status: "Success" | "Failure";

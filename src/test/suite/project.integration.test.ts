@@ -10,8 +10,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import * as TestUtils from "../TestUtils";
 import { Commands, Extensions } from "../TestConstants";
+import * as TestUtils from "../TestUtils";
 
 suite("Project Creation Integration Tests", () => {
     let testWorkspaceFolder: string;

@@ -8,13 +8,13 @@
 import * as os from "os";
 import * as vscode from "vscode";
 
-import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
 import { fromEvents } from "../common/promises/fromEvents";
-import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
-import { resolveSubstitutedValues } from "../utils/vscodes";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
 import { stringifyJson } from "../utils/strings";
+import { resolveSubstitutedValues } from "../utils/vscodes";
 
 export class PqSdkTaskTerminal implements vscode.Pseudoterminal {
     public static LineFeed: string = os.platform() === "win32" ? "\r\n" : "\n";

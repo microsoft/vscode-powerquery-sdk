@@ -8,13 +8,13 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
-import { 
-    resolveSubstitutedValues, 
-    resolveSubstitutedValuesInArray,
+import {
     resolvePathRelativeToWorkspace,
-    resolvePathsRelativeToWorkspace
+    resolvePathsRelativeToWorkspace,
+    resolveSubstitutedValues,
+    resolveSubstitutedValuesInArray,
 } from "../utils/vscodes";
+import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -286,11 +286,13 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            const substituted = resolveSubstitutedValuesInArray(value);
+            const substituted: string[] | undefined = resolveSubstitutedValuesInArray(value);
+
             return resolvePathsRelativeToWorkspace(substituted);
         }
 
-        const substituted = resolveSubstitutedValues(value);
+        const substituted: string | undefined = resolveSubstitutedValues(value);
+
         return resolvePathRelativeToWorkspace(substituted);
     },
     get TestExtensionPaths(): string | string[] | undefined {
@@ -304,11 +306,13 @@ export const ExtensionConfigurations = {
 
         // Handle arrays by resolving each element
         if (Array.isArray(value)) {
-            const substituted = resolveSubstitutedValuesInArray(value);
+            const substituted: string[] | undefined = resolveSubstitutedValuesInArray(value);
+
             return resolvePathsRelativeToWorkspace(substituted);
         }
 
-        const substituted = resolveSubstitutedValues(value);
+        const substituted: string | undefined = resolveSubstitutedValues(value);
+
         return resolvePathRelativeToWorkspace(substituted);
     },
     get DefaultIntermediateResultsFolder(): string | undefined {

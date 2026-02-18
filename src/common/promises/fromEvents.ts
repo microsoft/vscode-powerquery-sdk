@@ -6,11 +6,10 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AnyFunction } from "./types";
 import { cancelable } from "./cancelable";
 import { CancellationToken } from "./CancellationToken";
-
 import { AnyEventListener, ExpectedEmitter, FromEventOption, makeEventAdder } from "./fromEvent";
+import { AnyFunction } from "./types";
 
 export const fromEvents: (
     emitter: ExpectedEmitter,

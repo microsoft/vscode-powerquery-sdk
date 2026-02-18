@@ -8,7 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { SpawnedProcess } from "../../../common/SpawnedProcess";
+import { type ProcessExit, SpawnedProcess } from "../../../common/SpawnedProcess";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
 import { resolveI18nTemplate } from "../../../i18n/extension";
 import { PqTestCommandBuilder } from "./PqTestCommandBuilder";
@@ -31,29 +31,35 @@ export class PqTestDiscoveryRunner {
      * @returns Parsed JSON output from pqtest.exe --listOnly
      * @throws Error if discovery fails or output cannot be parsed
      */
-    async runDiscovery(): Promise<any> {
-        const workingDir = path.dirname(this.settingsFileUri.fsPath);
+    async runDiscovery(): Promise<unknown> {
+        const workingDir: string = path.dirname(this.settingsFileUri.fsPath);
 
         // Build command arguments using PqTestCommandBuilder
-        const commandBuilder = new PqTestCommandBuilder("run-compare", this.settingsFileUri, this.extensions);
+        const commandBuilder: PqTestCommandBuilder = new PqTestCommandBuilder(
+            "run-compare",
+            this.settingsFileUri,
+            this.extensions,
+        );
 
-        const args = commandBuilder.buildArgs(["--listOnly"]);
+        const args: string[] = commandBuilder.buildArgs(["--listOnly"]);
 
         // Log command execution
-        const commandLine = `${this.pqTestPath} ${args.join(" ")}`;
+        const commandLine: string = `${this.pqTestPath} ${args.join(" ")}`;
 
-        const message = resolveI18nTemplate("PQSdk.testDiscoveryRunner.executingDiscovery", { command: commandLine });
+        const message: string = resolveI18nTemplate("PQSdk.testDiscoveryRunner.executingDiscovery", {
+            command: commandLine,
+        });
 
         this.outputChannel?.appendInfoLine(message);
 
         // Execute using non-streaming SpawnedProcess
-        const spawnProcess = new SpawnedProcess(this.pqTestPath, args, { cwd: workingDir });
+        const spawnProcess: SpawnedProcess = new SpawnedProcess(this.pqTestPath, args, { cwd: workingDir });
 
-        const processExit = await spawnProcess.deferred$;
+        const processExit: ProcessExit = await spawnProcess.deferred$;
 
         // Check exit code
         if (processExit.exitCode !== 0) {
-            const errorMessage = resolveI18nTemplate("PQSdk.testDiscoveryRunner.discoveryFailed", {
+            const errorMessage: string = resolveI18nTemplate("PQSdk.testDiscoveryRunner.discoveryFailed", {
                 exitCode: processExit.exitCode?.toString() || "unknown",
             });
 
@@ -64,13 +70,13 @@ export class PqTestDiscoveryRunner {
 
         // Parse JSON output
         try {
-            const result = JSON.parse(spawnProcess.stdOut);
+            const result: unknown = JSON.parse(spawnProcess.stdOut || "");
 
             return result;
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
 
-            const message = resolveI18nTemplate("PQSdk.testDiscoveryRunner.failedToParseDiscoveryOutput", {
+            const message: string = resolveI18nTemplate("PQSdk.testDiscoveryRunner.failedToParseDiscoveryOutput", {
                 errorMessage,
             });
 

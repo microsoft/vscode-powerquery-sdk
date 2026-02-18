@@ -11,24 +11,24 @@
 
 import * as vscode from "vscode";
 
-import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { getLeafNodes, parseCompositeId } from "./utils/testUtils";
-import { getNormalizedUriString, getRelativeTestPath } from "./utils/pathUtils";
-import { TestRunExecutor } from "./TestRunExecutor";
 import { refreshAllTests, refreshSettingsItem } from "./TestController";
+import { TestRunExecutor } from "./TestRunExecutor";
+import { getNormalizedUriString, getRelativeTestPath } from "./utils/pathUtils";
+import { getLeafNodes, parseCompositeId } from "./utils/testUtils";
 
 // Delay to allow test state and UI to stabilize after test discovery
 // This value is experimental and determined through testing with various connectors.
 // TODO: Monitor and adjust this timing based on user feedback and additional connector testing.
-const DELAY_AFTER_DISCOVERY_MS = 100;
+const DELAY_AFTER_DISCOVERY_MS: number = 100;
 
 // Threshold for batch discovery optimization
 // When more than 80% of items are unexpanded, batch refresh is more efficient than individual discovery
 // This value is experimental and determined through performance testing
 // TODO: Monitor and adjust based on user feedback and performance metrics
-const BATCH_DISCOVERY_THRESHOLD = 0.8;
+const BATCH_DISCOVERY_THRESHOLD: number = 0.8;
 
 /**
  * Represents a group of tests that share the same settings file.
@@ -74,10 +74,10 @@ export class TestRunCoordinator {
         this.outputChannel.appendDebugLine(extensionI18n["PQSdk.testAdapter.coordinator.runningAllTests"]);
 
         // Count unexpanded/undiscovered test settings items to determine if we should use batch optimization
-        let unexpandedCount = 0;
-        let totalCount = 0;
+        let unexpandedCount: number = 0;
+        let totalCount: number = 0;
 
-        this.testController.items.forEach(settingsItem => {
+        this.testController.items.forEach((settingsItem: vscode.TestItem) => {
             totalCount++;
 
             if (settingsItem.children.size === 0) {
@@ -85,7 +85,7 @@ export class TestRunCoordinator {
             }
         });
 
-        const unexpandedRatio = totalCount > 0 ? unexpandedCount / totalCount : 0;
+        const unexpandedRatio: number = totalCount > 0 ? unexpandedCount / totalCount : 0;
 
         // If most items are unexpanded, use optimized batch refresh
         if (unexpandedRatio > BATCH_DISCOVERY_THRESHOLD) {
@@ -99,12 +99,12 @@ export class TestRunCoordinator {
             await refreshAllTests(this.testController, this.outputChannel);
 
             // Small delay to allow UI and test state to stabilize after batch discovery
-            await new Promise(resolve => setTimeout(resolve, DELAY_AFTER_DISCOVERY_MS));
+            await new Promise<void>((resolve: () => void) => setTimeout(resolve, DELAY_AFTER_DISCOVERY_MS));
 
             // Now run all tests (already discovered)
             const promises: Promise<void>[] = [];
 
-            this.testController.items.forEach(settingsItem => {
+            this.testController.items.forEach((settingsItem: vscode.TestItem) => {
                 if (this.cancellationToken.isCancellationRequested) return;
 
                 promises.push(this.runTestSet(settingsItem));
@@ -115,7 +115,7 @@ export class TestRunCoordinator {
             // Use individual discovery for unexpanded items
             const promises: Promise<void>[] = [];
 
-            this.testController.items.forEach(settingsItem => {
+            this.testController.items.forEach((settingsItem: vscode.TestItem) => {
                 if (this.cancellationToken.isCancellationRequested) return;
 
                 promises.push(this.runTestSetWithAutoDiscovery(settingsItem));
@@ -141,7 +141,7 @@ export class TestRunCoordinator {
             await refreshSettingsItem(settingsItem, this.testController, this.outputChannel);
 
             // Small delay to allow UI and test state to stabilize after discovery
-            await new Promise(resolve => setTimeout(resolve, DELAY_AFTER_DISCOVERY_MS));
+            await new Promise<void>((resolve: () => void) => setTimeout(resolve, DELAY_AFTER_DISCOVERY_MS));
         }
 
         // Now run the tests
@@ -157,7 +157,7 @@ export class TestRunCoordinator {
         if (!this.request.include) return;
 
         // Step 1: Filter out redundant child items when parent settings file is also selected
-        const filteredItems = this.filterRedundantTestItems(this.request.include);
+        const filteredItems: vscode.TestItem[] = this.filterRedundantTestItems(this.request.include);
 
         this.outputChannel.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.coordinator.filteredTestItems", {
@@ -167,7 +167,7 @@ export class TestRunCoordinator {
         );
 
         // Step 2: Group remaining items by their settings file
-        const testGroups = this.groupTestsBySettingsFile(filteredItems);
+        const testGroups: TestGroup[] = this.groupTestsBySettingsFile(filteredItems);
 
         this.outputChannel.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.coordinator.groupedTestItems", {
@@ -191,6 +191,7 @@ export class TestRunCoordinator {
                         }),
                     );
 
+                    // eslint-disable-next-line no-await-in-loop -- Sequential test discovery required
                     await refreshSettingsItem(group.settingsItem, this.testController, this.outputChannel);
                 }
 
@@ -212,7 +213,7 @@ export class TestRunCoordinator {
         if (!settingsItem.uri) return;
 
         // Create the TestRunExecutor
-        const executor = new TestRunExecutor(
+        const executor: TestRunExecutor = new TestRunExecutor(
             this.pqTestPath,
             settingsItem.uri,
             this.testRun,
@@ -221,9 +222,9 @@ export class TestRunCoordinator {
         );
 
         // Get all leaf test items under this settings file and add them to the executor
-        const leafItems = getLeafNodes(settingsItem);
+        const leafItems: vscode.TestItem[] = getLeafNodes(settingsItem);
 
-        leafItems.forEach(leafItem => {
+        leafItems.forEach((leafItem: vscode.TestItem) => {
             executor.addTestItem(leafItem);
         });
 
@@ -237,12 +238,12 @@ export class TestRunCoordinator {
      * @param group - The test group containing settings item and child items to run
      */
     private async runTestGroupWithFilters(group: TestGroup): Promise<void> {
-        const settingsItem = group.settingsItem;
+        const settingsItem: vscode.TestItem = group.settingsItem;
 
         if (!settingsItem.uri) return;
 
         // Generate test filter arguments
-        const testFilterArgs = await this.generateTestFilters(group.childItems, settingsItem);
+        const testFilterArgs: string[] = await this.generateTestFilters(group.childItems, settingsItem);
 
         if (testFilterArgs.length === 0) {
             this.outputChannel.appendInfoLine(
@@ -255,7 +256,7 @@ export class TestRunCoordinator {
         }
 
         // Create the TestRunExecutor
-        const executor = new TestRunExecutor(
+        const executor: TestRunExecutor = new TestRunExecutor(
             this.pqTestPath,
             settingsItem.uri,
             this.testRun,
@@ -264,10 +265,10 @@ export class TestRunCoordinator {
         );
 
         // Add only the leaf test items from the child items to the executor
-        group.childItems.forEach(childItem => {
-            const leafItems = getLeafNodes(childItem);
+        group.childItems.forEach((childItem: vscode.TestItem) => {
+            const leafItems: vscode.TestItem[] = getLeafNodes(childItem);
 
-            leafItems.forEach(leafItem => {
+            leafItems.forEach((leafItem: vscode.TestItem) => {
                 executor.addTestItem(leafItem);
             });
         });
@@ -284,21 +285,18 @@ export class TestRunCoordinator {
      * @returns Filtered array of test items with redundant children removed
      */
     private filterRedundantTestItems(selectedItems: readonly vscode.TestItem[]): vscode.TestItem[] {
-        const settingsFiles = new Set<string>();
-        const childItems = new Map<string, vscode.TestItem[]>();
+        const settingsFiles: Set<string> = new Set<string>();
+        const childItems: Map<string, vscode.TestItem[]> = new Map<string, vscode.TestItem[]>();
 
         // First pass: identify all selected settings files and categorize child items
         for (const item of selectedItems) {
-            const compositeInfo = parseCompositeId(item.id);
+            const compositeInfo: ReturnType<typeof parseCompositeId> = parseCompositeId(item.id);
 
             if (!compositeInfo) {
-                // This is a settings file (top-level)
-                if (item.uri && item.uri.fsPath.endsWith(ExtensionConstants.TestAdapter.TestSettingsFileEnding)) {
-                    settingsFiles.add(getNormalizedUriString(item.uri));
-                }
+                // This is a settings file (top-level) - skip, handled separately
             } else {
                 // This is a child item (file/folder under settings)
-                const settingsUri = compositeInfo.settingsFileUri; // Already normalized from parseCompositeId
+                const settingsUri: string = compositeInfo.settingsFileUri; // Already normalized from parseCompositeId
 
                 if (!childItems.has(settingsUri)) {
                     childItems.set(settingsUri, []);
@@ -312,14 +310,14 @@ export class TestRunCoordinator {
         const filteredItems: vscode.TestItem[] = [];
 
         for (const item of selectedItems) {
-            const compositeInfo = parseCompositeId(item.id);
+            const compositeInfo: ReturnType<typeof parseCompositeId> = parseCompositeId(item.id);
 
             if (!compositeInfo) {
                 // Always include settings files
                 filteredItems.push(item);
             } else {
                 // Only include child items if their parent settings file is NOT selected
-                const settingsUri = compositeInfo.settingsFileUri;
+                const settingsUri: string = compositeInfo.settingsFileUri;
 
                 if (!settingsFiles.has(settingsUri)) {
                     filteredItems.push(item);
@@ -337,15 +335,15 @@ export class TestRunCoordinator {
      * @returns Array of test groups, each containing a settings item and its associated child items
      */
     private groupTestsBySettingsFile(filteredItems: vscode.TestItem[]): TestGroup[] {
-        const groups = new Map<string, TestGroup>();
+        const groups: Map<string, TestGroup> = new Map<string, TestGroup>();
 
         for (const item of filteredItems) {
-            const compositeInfo = parseCompositeId(item.id);
+            const compositeInfo: ReturnType<typeof parseCompositeId> = parseCompositeId(item.id);
 
             if (!compositeInfo) {
                 // This is a settings file - validate it's a .testsettings.json file
                 if (item.uri && item.uri.fsPath.endsWith(ExtensionConstants.TestAdapter.TestSettingsFileEnding)) {
-                    const settingsUri = getNormalizedUriString(item.uri);
+                    const settingsUri: string = getNormalizedUriString(item.uri);
 
                     if (!groups.has(settingsUri)) {
                         groups.set(settingsUri, {
@@ -355,7 +353,7 @@ export class TestRunCoordinator {
                     }
                 } else {
                     // Show error for invalid items
-                    const itemPath = item.uri?.fsPath || "unknown";
+                    const itemPath: string = item.uri?.fsPath || "unknown";
 
                     vscode.window.showErrorMessage(
                         resolveI18nTemplate("PQSdk.testAdapter.coordinator.invalidTestItemSelected", {
@@ -372,13 +370,13 @@ export class TestRunCoordinator {
                 }
             } else {
                 // This is a child item - find or create its settings group
-                const settingsUri = compositeInfo.settingsFileUri; // Already normalized
+                const settingsUri: string = compositeInfo.settingsFileUri; // Already normalized
 
                 if (!groups.has(settingsUri)) {
                     // Find the settings item
                     let settingsItem: vscode.TestItem | undefined;
 
-                    this.testController.items.forEach(topLevelItem => {
+                    this.testController.items.forEach((topLevelItem: vscode.TestItem) => {
                         if (topLevelItem.uri && getNormalizedUriString(topLevelItem.uri) === settingsUri) {
                             settingsItem = topLevelItem;
                         }
@@ -421,10 +419,12 @@ export class TestRunCoordinator {
             }
 
             try {
-                const stats = await vscode.workspace.fs.stat(childItem.uri);
-                const isDirectory = stats.type === vscode.FileType.Directory;
+                // eslint-disable-next-line no-await-in-loop -- Sequential file I/O required for each test item
+                const stats: vscode.FileStat = await vscode.workspace.fs.stat(childItem.uri);
+                const isDirectory: boolean = stats.type === vscode.FileType.Directory;
 
-                let relativePath = await getRelativeTestPath(childItem.uri, settingsItem.uri!);
+                // eslint-disable-next-line no-await-in-loop -- Sequential path resolution required for each test item
+                let relativePath: string = await getRelativeTestPath(childItem.uri, settingsItem.uri!);
 
                 if (isDirectory) {
                     relativePath = `${relativePath.replace(/\\/g, "/")}/**/*.query.pq`;
@@ -432,7 +432,7 @@ export class TestRunCoordinator {
 
                 filterArgs.push("--testFilter", relativePath);
             } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorMessage: string = error instanceof Error ? error.message : String(error);
 
                 this.outputChannel.appendLine(
                     resolveI18nTemplate("PQSdk.testAdapter.coordinator.errorCalculatingRelativePath", {

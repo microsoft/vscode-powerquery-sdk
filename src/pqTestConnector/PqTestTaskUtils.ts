@@ -9,11 +9,11 @@ import fs from "fs";
 import path from "path";
 import vscode from "vscode";
 
-import { getAnyMProjFilesBeneathTheFirstWorkspace, getFirstWorkspaceFolder } from "../utils/vscodes";
-import { getMtimeOfAFile, globFiles } from "../utils/files";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { findExecutable } from "../utils/executables";
 import { PowerQueryTaskProvider } from "../features/PowerQueryTaskProvider";
+import { findExecutable } from "../utils/executables";
+import { getMtimeOfAFile, globFiles } from "../utils/files";
+import { getAnyMProjFilesBeneathTheFirstWorkspace, getFirstWorkspaceFolder } from "../utils/vscodes";
 
 export async function executeBuildTaskAndAwaitIfNeeded(
     pqTestLocation: string,

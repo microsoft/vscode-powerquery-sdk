@@ -5,14 +5,16 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import { ChildProcess } from "child_process";
 import * as fs from "fs";
+import { FSWatcher, WatchEventType } from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-
 import { ExtensionContext, TextEditor } from "vscode";
-import { FSWatcher, WatchEventType } from "fs";
-import { ChildProcess } from "child_process";
 
+import { Disposable, IDisposable } from "../common/Disposable";
+import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
+import { PQTestTask } from "../common/PowerQueryTask";
 import {
     buildPqTestArgs,
     CreateAuthState,
@@ -21,20 +23,16 @@ import {
     GenericResult,
     IPQTestService,
 } from "../common/PQTestService";
-import { Disposable, IDisposable } from "../common/Disposable";
-import { DisposableEventEmitter, ExtractEventTypes } from "../common/DisposableEventEmitter";
-import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
-import { convertStringToInteger } from "../utils/numbers";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { pidIsRunning } from "../utils/pids";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { PQTestTask } from "../common/PowerQueryTask";
-import { resolveSubstitutedValues } from "../utils/vscodes";
 import { ValueEventEmitter } from "../common/ValueEventEmitter";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { convertStringToInteger } from "../utils/numbers";
+import { pidIsRunning } from "../utils/pids";
+import { resolveSubstitutedValues } from "../utils/vscodes";
+import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableTaskQueueEvents = {

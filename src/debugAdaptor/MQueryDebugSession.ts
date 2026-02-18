@@ -5,30 +5,30 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as path from "path";
 import {
     InitializedEvent,
-    logger,
     Logger,
+    logger,
     LoggingDebugSession,
     OutputEvent,
     Source,
     TerminatedEvent,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
+import * as path from "path";
 
-import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
-import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { DeferredValue } from "../common/DeferredValue";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
+import { fromEvents } from "../common/promises/fromEvents";
+import { WaitNotify } from "../common/WaitNotify";
+import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { DISCONNECTED, PqServiceHostClientLite, READY } from "../pqTestConnector/PqServiceHostClientLite";
 import {
     PqTestExecutableOnceTask,
     PqTestExecutableOnceTaskQueueEvents,
 } from "../pqTestConnector/PqTestExecutableOnceTask";
-import { DeferredValue } from "../common/DeferredValue";
-import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
-import { fromEvents } from "../common/promises/fromEvents";
 import { stringifyJson } from "../utils/strings";
-import { WaitNotify } from "../common/WaitNotify";
 
 /**
  * This interface describes the mock-debug specific launch attributes

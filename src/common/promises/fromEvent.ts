@@ -7,12 +7,13 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AnyFunction } from "./types";
+import WebSocket from "ws";
+
 import { cancelable } from "./cancelable";
 import { CancellationToken } from "./CancellationToken";
 import { noop } from "./noop";
 import { once } from "./once";
-import WebSocket from "ws";
+import { AnyFunction } from "./types";
 
 export type AnyEventListener = (type: string, callback: AnyFunction) => void;
 

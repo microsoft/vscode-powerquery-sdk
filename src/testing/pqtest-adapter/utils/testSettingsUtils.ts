@@ -7,13 +7,13 @@
 
 import * as path from "path";
 import { TextDecoder } from "util";
-
 import * as vscode from "vscode";
 
 import { ExtensionConfigurations } from "../../../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../../features/PqSdkOutputChannel";
 import { extensionI18n, ExtensionI18nKeys, resolveI18nTemplate } from "../../../i18n/extension";
+import { resolvePathRelativeToWorkspace, resolveSubstitutedValues } from "../../../utils/vscodes";
 import {
     QueryFilePathErrorCode,
     QueryFilePathValidationResult,
@@ -26,7 +26,6 @@ import {
     getPathType,
     WorkspaceOperations,
 } from "./vscodeFs";
-import { resolvePathRelativeToWorkspace, resolveSubstitutedValues } from "../../../utils/vscodes";
 
 /**
  * Retrieves and resolves settings file URIs from configuration.
@@ -81,6 +80,7 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
     } else if (Array.isArray(settingsFiles)) {
         for (const settingsFile of settingsFiles) {
             try {
+                // eslint-disable-next-line no-await-in-loop -- Sequential file validation required
                 const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFile));
 
                 if (fileStat.type === vscode.FileType.Directory) {
@@ -90,6 +90,7 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
                         testSettingsFilePattern,
                     );
 
+                    // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
                     const files: vscode.Uri[] = await vscode.workspace.findFiles(pattern);
                     result.push(...files);
                 } else if (settingsFile.endsWith(testSettingsFileEnding)) {
@@ -152,7 +153,7 @@ export async function getTestPathFromSettings(
 
     try {
         data = await fs.readFile(vscode.Uri.file(settingsFilePath));
-    } catch (_err) {
+    } catch {
         const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.failedToReadSettingsFile", {
             settingsFilePath,
         });
@@ -162,7 +163,7 @@ export async function getTestPathFromSettings(
         throw new Error(message);
     }
 
-    let json: any;
+    let json: unknown;
 
     try {
         const textData: string = new TextDecoder().decode(data);
@@ -182,7 +183,9 @@ export async function getTestPathFromSettings(
     }
 
     // Validate QueryFilePath field using pure validation function
-    const validationResult: QueryFilePathValidationResult = validateQueryFilePathField(json.QueryFilePath);
+    const validationResult: QueryFilePathValidationResult = validateQueryFilePathField(
+        (json as { QueryFilePath?: unknown }).QueryFilePath,
+    );
 
     if (!validationResult.isValid) {
         const i18nKey: ExtensionI18nKeys = queryFilePathErrorCodeToI18nKey[validationResult.errorCode!];
@@ -196,7 +199,7 @@ export async function getTestPathFromSettings(
         throw new Error(message);
     }
 
-    const queryFilePathFromSettings: string = json.QueryFilePath;
+    const queryFilePathFromSettings: string = (json as { QueryFilePath: string }).QueryFilePath;
     let resolvedQueryFilePath: string;
 
     if (path.isAbsolute(queryFilePathFromSettings)) {
@@ -231,14 +234,11 @@ export async function getTestPathFromSettings(
             }
 
         case "not-found": {
-            const notFoundMessage: string = resolveI18nTemplate(
-                "PQSdk.testAdapter.error.queryFilePathDoesNotExist",
-                {
-                    queryFilePath: queryFilePathFromSettings,
-                    settingsFilePath,
-                    resolvedPath: resolvedQueryFilePath,
-                },
-            );
+            const notFoundMessage: string = resolveI18nTemplate("PQSdk.testAdapter.error.queryFilePathDoesNotExist", {
+                queryFilePath: queryFilePathFromSettings,
+                settingsFilePath,
+                resolvedPath: resolvedQueryFilePath,
+            });
 
             outputChannel?.appendErrorLine(notFoundMessage);
             void vscode.window.showErrorMessage(notFoundMessage);
@@ -275,20 +275,24 @@ export async function getExtensionPathsFromSettings(
     try {
         const data: Uint8Array = await fs.readFile(vscode.Uri.file(settingsFilePath));
         const textData: string = new TextDecoder().decode(data);
-        const json: any = JSON.parse(textData);
+        const json: unknown = JSON.parse(textData);
 
         // Check if ExtensionPaths exists and is a non-empty array
-        if (Array.isArray(json.ExtensionPaths) && json.ExtensionPaths.length > 0) {
+        const jsonObj: { ExtensionPaths?: unknown } = json as { ExtensionPaths?: unknown };
+
+        if (Array.isArray(jsonObj.ExtensionPaths) && jsonObj.ExtensionPaths.length > 0) {
             // Validate all elements are strings
-            const allStrings: boolean = json.ExtensionPaths.every((item: any): boolean => typeof item === "string");
+            const allStrings: boolean = jsonObj.ExtensionPaths.every(
+                (item: unknown): boolean => typeof item === "string",
+            );
 
             if (allStrings) {
-                return json.ExtensionPaths;
+                return jsonObj.ExtensionPaths as string[];
             }
         }
 
         return undefined;
-    } catch (_error) {
+    } catch {
         // File not readable, invalid JSON, or other error - return undefined
         // Caller will fall back to configuration
         return undefined;
@@ -351,12 +355,15 @@ export async function determineExtensionsForTests(
     if (testExtensionPaths !== undefined) {
         // Handle string case
         if (typeof testExtensionPaths === "string") {
-            const trimmed = testExtensionPaths.trim();
+            const trimmed: string = testExtensionPaths.trim();
 
             if (trimmed.length > 0) {
-                const message = resolveI18nTemplate("PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig", {
-                    extensionCount: "1",
-                });
+                const message: string = resolveI18nTemplate(
+                    "PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig",
+                    {
+                        extensionCount: "1",
+                    },
+                );
 
                 outputChannel?.appendInfoLine(message);
 
@@ -369,23 +376,26 @@ export async function determineExtensionsForTests(
         // Handle array case
         else if (Array.isArray(testExtensionPaths)) {
             // Filter out empty/whitespace-only strings
-            const validPaths = testExtensionPaths
-                .filter(p => typeof p === "string" && p.trim().length > 0)
-                .map(p => p.trim());
+            const validPaths: string[] = testExtensionPaths
+                .filter((p: unknown) => typeof p === "string" && p.trim().length > 0)
+                .map((p: unknown) => (p as string).trim());
 
             if (validPaths.length > 0) {
                 // Log if we filtered any items
                 if (validPaths.length < testExtensionPaths.length) {
-                    const filtered = testExtensionPaths.length - validPaths.length;
+                    const filtered: number = testExtensionPaths.length - validPaths.length;
 
                     outputChannel?.appendInfoLine(
                         `Filtered out ${filtered} empty extension path(s) from test.extensionPaths configuration`,
                     );
                 }
 
-                const message = resolveI18nTemplate("PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig", {
-                    extensionCount: validPaths.length.toString(),
-                });
+                const message: string = resolveI18nTemplate(
+                    "PQSdk.testAdapter.extensions.usingTestExtensionPathsConfig",
+                    {
+                        extensionCount: validPaths.length.toString(),
+                    },
+                );
 
                 outputChannel?.appendInfoLine(message);
 
@@ -406,10 +416,10 @@ export async function determineExtensionsForTests(
 
     if (defaultExtension) {
         // Substitute variables and resolve path relative to workspace folder
-        const resolved = resolvePathRelativeToWorkspace(resolveSubstitutedValues(defaultExtension));
+        const resolved: string | undefined = resolvePathRelativeToWorkspace(resolveSubstitutedValues(defaultExtension));
 
         if (resolved) {
-            const message = resolveI18nTemplate("PQSdk.testAdapter.extensions.fallingBackToDefaultExtension", {
+            const message: string = resolveI18nTemplate("PQSdk.testAdapter.extensions.fallingBackToDefaultExtension", {
                 extensionPath: resolved,
             });
 
@@ -449,7 +459,11 @@ export async function buildIntermediateResultsArgs(
     args.push("--persistIntermediateTestResults");
 
     // Read testsettings.json
-    const config = await readIntermediateResultsConfig(settingsFilePath, outputChannel, fs);
+    const config: { intermediateTestResultsFolder?: string } = await readIntermediateResultsConfig(
+        settingsFilePath,
+        outputChannel,
+        fs,
+    );
 
     // Determine folder path with precedence
     let folderPath: string;
@@ -466,7 +480,7 @@ export async function buildIntermediateResultsArgs(
         );
     } else {
         // Priority 2: Check VS Code config
-        const configValue = ExtensionConfigurations.DefaultIntermediateResultsFolder;
+        const configValue: string | undefined = ExtensionConfigurations.DefaultIntermediateResultsFolder;
 
         if (configValue && configValue.trim().length > 0) {
             folderPath = configValue.trim();
@@ -509,17 +523,23 @@ async function readIntermediateResultsConfig(
     intermediateTestResultsFolder?: string;
 }> {
     try {
-        const data = await fs.readFile(vscode.Uri.file(settingsFilePath));
-        const textData = new TextDecoder().decode(data);
-        const json = JSON.parse(textData);
+        const data: Uint8Array = await fs.readFile(vscode.Uri.file(settingsFilePath));
+        const textData: string = new TextDecoder().decode(data);
+        const json: unknown = JSON.parse(textData);
+
+        const jsonObj: { IntermediateTestResultsFolder?: unknown } = json as {
+            IntermediateTestResultsFolder?: unknown;
+        };
 
         return {
             intermediateTestResultsFolder:
-                typeof json.IntermediateTestResultsFolder === "string" ? json.IntermediateTestResultsFolder : undefined,
+                typeof jsonObj.IntermediateTestResultsFolder === "string"
+                    ? jsonObj.IntermediateTestResultsFolder
+                    : undefined,
         };
     } catch (error) {
         // Log debug message about fallback
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
 
         outputChannel?.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.intermediateResults.failedToReadSettings", {

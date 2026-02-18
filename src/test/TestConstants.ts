@@ -5,8 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { LifecycleCommands } from "../commands/LifecycleCommands";
+import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 
 // Re-export command constants from LifecycleCommands for test use
 export const Commands = {

@@ -6,7 +6,6 @@
  */
 
 import * as path from "path";
-
 import * as vscode from "vscode";
 
 import { ExtensionConstants } from "../../../constants/PowerQuerySdkExtension";
@@ -15,25 +14,15 @@ import { extensionI18n, resolveI18nTemplate } from "../../../i18n/extension";
 import { getTestPathFromSettings } from "./testSettingsUtils";
 
 // Re-export pure path functions from core module
-export {
-    getNormalizedPath,
-    splitPath,
-    joinPath,
-    getParentPath,
-    changeFileExtension,
-} from "../core/pathOperations";
+export { changeFileExtension, getNormalizedPath, getParentPath, joinPath, splitPath } from "../core/pathOperations";
 
 // Import for internal use in this file
-import {
-    getNormalizedPath,
-    splitPathPreservingCaseParts,
-    changeFileExtension,
-} from "../core/pathOperations";
+import { changeFileExtension, getNormalizedPath, splitPathPreservingCaseParts } from "../core/pathOperations";
 
 /**
  * Path utilities for handling file and folder paths in the Power Query SDK Test extension.
  * Provides consistent path manipulation across different operating systems.
- * 
+ *
  * Pure path functions are implemented in ../core/pathOperations.ts and re-exported here.
  * This file contains VS Code-specific wrappers that use vscode.Uri and other VS Code types.
  */
@@ -62,7 +51,7 @@ export function splitPathPreservingCase(
     outputChannel?: PqSdkOutputChannel,
 ): { normalizedParts: string[]; originalParts: string[] } {
     // Delegate to core function for the pure logic
-    const result = splitPathPreservingCaseParts(filePath);
+    const result: { normalizedParts: string[]; originalParts: string[] } = splitPathPreservingCaseParts(filePath);
 
     // Safety check: if structure doesn't match, fall back to normalized for both
     if (result.originalParts.length !== result.normalizedParts.length) {

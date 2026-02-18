@@ -10,10 +10,9 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import * as TestUtils from "../TestUtils";
-import { Extensions } from "../TestConstants";
-
 import { SchemaManagementService } from "../../common/SchemaManagementService";
+import { Extensions } from "../TestConstants";
+import * as TestUtils from "../TestUtils";
 
 suite("Schema Management Tests", () => {
     let schemaManagementService: SchemaManagementService;

@@ -43,7 +43,7 @@ export interface TestResult {
     expectedDiagnosticsFilePaths?: DiagnosticsChannelPaths;
     error?: {
         message: string;
-        details?: any;
+        details?: unknown;
     };
 }
 
@@ -88,7 +88,7 @@ export class PqTestResultParser {
     ): AsyncGenerator<PqTestResultEvent> {
         this.outputChannel.appendLine(extensionI18n["PQSdk.testAdapter.parser.startingToParse"]);
 
-        const lineReader = readline.createInterface({
+        const lineReader: readline.Interface = readline.createInterface({
             input: resultsStream,
             crlfDelay: Infinity,
         });
@@ -111,10 +111,10 @@ export class PqTestResultParser {
             }
 
             // Parse line format: "action:jsonData"
-            const colonIndex = line.indexOf(":");
+            const colonIndex: number = line.indexOf(":");
 
             if (colonIndex === -1) {
-                const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.parser.unexpectedLineFormat", {
+                const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.parser.unexpectedLineFormat", {
                     line,
                 });
 
@@ -122,13 +122,13 @@ export class PqTestResultParser {
                 throw new Error(errorMsg);
             }
 
-            const action = line.substring(0, colonIndex);
-            const detailString = line.substring(colonIndex + 1);
+            const action: string = line.substring(0, colonIndex);
+            const detailString: string = line.substring(colonIndex + 1);
 
             try {
                 // Parse based on action type
                 if (action === PqTestResultEventType.RunStart) {
-                    const event = JSON.parse(detailString) as RunStartEvent;
+                    const event: RunStartEvent = JSON.parse(detailString) as RunStartEvent;
 
                     yield {
                         type: PqTestResultEventType.RunStart,
@@ -136,7 +136,7 @@ export class PqTestResultParser {
                         originalLine: line,
                     };
                 } else if (action === PqTestResultEventType.TestStart) {
-                    const event = JSON.parse(detailString) as TestStartEvent;
+                    const event: TestStartEvent = JSON.parse(detailString) as TestStartEvent;
 
                     yield {
                         type: PqTestResultEventType.TestStart,
@@ -144,7 +144,7 @@ export class PqTestResultParser {
                         originalLine: line,
                     };
                 } else if (action === PqTestResultEventType.TestEnd) {
-                    const event = JSON.parse(detailString) as TestEndEvent;
+                    const event: TestEndEvent = JSON.parse(detailString) as TestEndEvent;
 
                     const testResult: TestResult = {
                         filePath: getNormalizedPath(event.filePath),
@@ -164,7 +164,7 @@ export class PqTestResultParser {
                         originalLine: line,
                     };
                 } else if (action === PqTestResultEventType.RunEnd) {
-                    const event = JSON.parse(detailString) as RunEndEvent;
+                    const event: RunEndEvent = JSON.parse(detailString) as RunEndEvent;
 
                     this.outputChannel.appendLine(
                         resolveI18nTemplate("PQSdk.testAdapter.parser.runCompleted", {
@@ -182,7 +182,7 @@ export class PqTestResultParser {
 
                     return; // End of stream
                 } else {
-                    const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.parser.unexpectedAction", {
+                    const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.parser.unexpectedAction", {
                         action,
                     });
 
@@ -190,7 +190,7 @@ export class PqTestResultParser {
                     throw new Error(errorMsg);
                 }
             } catch (e) {
-                const errorMsg = resolveI18nTemplate("PQSdk.testAdapter.parser.errorParsingEvent", {
+                const errorMsg: string = resolveI18nTemplate("PQSdk.testAdapter.parser.errorParsingEvent", {
                     action,
                     detailString,
                     error: e instanceof Error ? e.message : String(e),
@@ -223,7 +223,7 @@ interface TestEndEvent {
     timestamp: string;
     error?: {
         message: string;
-        details?: any;
+        details?: unknown;
     };
     reason?: string;
     actualTestResultFilePath?: string;

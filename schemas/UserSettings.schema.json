@@ -84,6 +84,10 @@
       "type": "boolean",
       "description": "When true, compare operations will fail if the expected PQOut reference file doesn't exist,\ninstead of generating a new one. Useful for ensuring test completeness."
     },
+    "FailOnMockMiss": {
+      "type": "boolean",
+      "description": "When true, tests will fail if any HTTP request doesn't match a defined mock.\nThis helps catch unexpected HTTP calls that may indicate performance regressions\n(e.g., broken query folding resulting in additional HTTP requests).\nCan also be enabled per mock file using the \"strictMode\" setting."
+    },
     "HttpMockPath": {
       "type": "string",
       "description": "Path to HTTP mock configuration for testing connectors that make HTTP requests.\nAllows simulation of HTTP responses without requiring actual network connectivity."
@@ -95,6 +99,13 @@
     "LogMashupEngineTraceLevel": {
       "type": "string",
       "description": "Enables logging of mashup engine traces with different verbosity levels.\nValid values: \"user\" (custom connector traces), \"engine\" (engine traces), \"all\" (both user and engine traces), or empty string (disabled).\nTrace files are stored under %localappdata%/Microsoft/PQTest/Logs."
+    },
+    "MashupVariables": {
+      "type": "object",
+      "description": "Mashup variable support accessed using Variable.ValueOrDefault().\nThese are key-value pairs that will be converted into a string represting a m style record.\nExample: {\"currentWorkspaceId\": \"test\"}",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "OutputFolderPath": {
       "type": "string",

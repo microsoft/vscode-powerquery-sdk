@@ -9,15 +9,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
-
-import { debounce } from "../utils/debounce";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
+import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
+import { debounce } from "../utils/debounce";
+import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
-import { NugetVersions } from "../utils/NugetVersions";
-import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 
 export class PqSdkNugetPackageService {
     private readonly nugetHttpService: NugetHttpService;

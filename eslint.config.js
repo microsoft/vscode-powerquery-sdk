@@ -4,6 +4,7 @@ const typescriptParser = require("@typescript-eslint/parser");
 const prettierPlugin = require("eslint-plugin-prettier");
 const securityPlugin = require("eslint-plugin-security");
 const licenseHeaderPlugin = require("eslint-plugin-license-header");
+const simpleImportSort = require("eslint-plugin-simple-import-sort");
 const prettierConfig = require("eslint-config-prettier");
 
 module.exports = [
@@ -49,6 +50,7 @@ module.exports = [
             security: securityPlugin,
             prettier: prettierPlugin,
             "license-header": licenseHeaderPlugin,
+            "simple-import-sort": simpleImportSort,
         },
         rules: {
             ...typescript.configs.recommended.rules,
@@ -191,7 +193,9 @@ module.exports = [
             "require-atomic-updates": "error",
             "require-await": "warn",
             "spaced-comment": ["warn", "always"],
-            "sort-imports": ["error", { allowSeparatedGroups: true, ignoreCase: true }],
+            "sort-imports": "off",
+            "simple-import-sort/imports": "error",
+            "simple-import-sort/exports": "error",
             "valid-typeof": "error",
         },
     },

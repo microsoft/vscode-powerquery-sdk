@@ -51,6 +51,7 @@ export async function fileExists(
 ): Promise<boolean> {
     try {
         await fs.stat(vscode.Uri.file(filePath));
+
         return true;
     } catch {
         return false;
@@ -81,6 +82,7 @@ export async function getPathType(
         if (e instanceof vscode.FileSystemError && (e.code === "FileNotFound" || e.code === "ENOENT")) {
             return "not-found";
         }
+
         // Re-throw other errors (permissions, network issues, etc.)
         throw e;
     }

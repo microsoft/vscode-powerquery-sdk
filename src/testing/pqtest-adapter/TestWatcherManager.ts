@@ -10,24 +10,24 @@
  * Handles automatic synchronization of test items when settings files change or configuration updates.
  */
 
-import * as vscode from "vscode";
 import * as path from "path";
+import * as vscode from "vscode";
 
-import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
-import { getPathType } from "./utils/vscodeFs";
+import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
+import { refreshSettingsItem } from "./TestController";
+import { getNormalizedPath, getNormalizedUriString } from "./utils/pathUtils";
 // TODO: Re-enable when TestResolver is migrated
 // import { resolveTestItem } from "./TestResolver";
 import { getTestSettingsFileUris } from "./utils/testSettingsUtils";
 import { createTestItem } from "./utils/testUtils";
-import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
-import { getNormalizedPath, getNormalizedUriString } from "./utils/pathUtils";
-import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { refreshSettingsItem } from "./TestController";
+import { getPathType } from "./utils/vscodeFs";
 
 export class TestWatcherManager implements vscode.Disposable {
-    private fileWatchers = new Map<string, vscode.FileSystemWatcher>();
-    private directoryWatchers = new Map<string, vscode.FileSystemWatcher>();
+    private fileWatchers: Map<string, vscode.FileSystemWatcher> = new Map<string, vscode.FileSystemWatcher>();
+    private directoryWatchers: Map<string, vscode.FileSystemWatcher> = new Map<string, vscode.FileSystemWatcher>();
     private disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -71,13 +71,13 @@ export class TestWatcherManager implements vscode.Disposable {
 
         try {
             // Get settings file URIs and use for both discovery and watcher setup
-            const settingsFileUris = await getTestSettingsFileUris(this.outputChannel);
+            const settingsFileUris: vscode.Uri[] = await getTestSettingsFileUris(this.outputChannel);
             this.discoverAndRefreshTestItems(settingsFileUris);
 
             // Setup new watchers for the discovered files
             await this.setupFileWatchers(settingsFileUris);
         } catch (error) {
-            const errorMessage = resolveI18nTemplate("PQSdk.testAdapter.errorSettingUpWatchers", {
+            const errorMessage: string = resolveI18nTemplate("PQSdk.testAdapter.errorSettingUpWatchers", {
                 error: String(error),
             });
 
@@ -103,7 +103,7 @@ export class TestWatcherManager implements vscode.Disposable {
      * Sets up a configuration watcher to detect changes to powerquery.sdk.test.settingsFiles
      */
     private setupConfigurationWatcher(): void {
-        const configWatcher = vscode.workspace.onDidChangeConfiguration(
+        const configWatcher: vscode.Disposable = vscode.workspace.onDidChangeConfiguration(
             this.handleConfigurationChange,
             this,
             this.disposables,
@@ -117,7 +117,7 @@ export class TestWatcherManager implements vscode.Disposable {
      */
     private async handleConfigurationChange(event: vscode.ConfigurationChangeEvent): Promise<void> {
         // Check if our specific configuration was affected
-        const configKey = `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testSettingsFiles}`;
+        const configKey: string = `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testSettingsFiles}`;
 
         if (event.affectsConfiguration(configKey)) {
             this.outputChannel.appendInfoLine(extensionI18n["PQSdk.testAdapter.testSettingsConfigurationChanged"]);
@@ -142,16 +142,19 @@ export class TestWatcherManager implements vscode.Disposable {
             // Check for directories in both string and array configurations
             if (typeof settingsFiles === "string") {
                 try {
-                    const pathType = await getPathType(settingsFiles);
+                    const pathType: "file" | "directory" | "not-found" = await getPathType(settingsFiles);
 
                     if (pathType === "directory") {
                         directoriesToWatch.push(settingsFiles);
                     }
-                } catch (error) {
+                } catch {
                     // Path doesn't exist or is inaccessible, show a warning and skip it
-                    const errorMessage = resolveI18nTemplate("PQSdk.testAdapter.error.invalidSettingsPathNotWatched", {
-                        settingsPath: settingsFiles,
-                    });
+                    const errorMessage: string = resolveI18nTemplate(
+                        "PQSdk.testAdapter.error.invalidSettingsPathNotWatched",
+                        {
+                            settingsPath: settingsFiles,
+                        },
+                    );
 
                     this.outputChannel.appendDebugLine(errorMessage);
                     vscode.window.showWarningMessage(errorMessage);
@@ -160,14 +163,15 @@ export class TestWatcherManager implements vscode.Disposable {
                 // Check each array element for directories
                 for (const settingsFile of settingsFiles) {
                     try {
-                        const pathType = await getPathType(settingsFile);
+                        // eslint-disable-next-line no-await-in-loop -- Sequential path validation required
+                        const pathType: "file" | "directory" | "not-found" = await getPathType(settingsFile);
 
                         if (pathType === "directory") {
                             directoriesToWatch.push(settingsFile);
                         }
-                    } catch (error) {
+                    } catch {
                         // Path doesn't exist or is inaccessible, show a warning and skip it
-                        const errorMessage = resolveI18nTemplate(
+                        const errorMessage: string = resolveI18nTemplate(
                             "PQSdk.testAdapter.error.invalidSettingsPathNotWatched",
                             { settingsPath: settingsFile },
                         );
@@ -205,12 +209,14 @@ export class TestWatcherManager implements vscode.Disposable {
      * Creates a file watcher for a specific settings file
      */
     private createFileWatcher(uri: vscode.Uri): void {
-        const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri) || vscode.workspace.workspaceFolders![0];
-        const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
+        const workspaceFolder: vscode.WorkspaceFolder =
+            vscode.workspace.getWorkspaceFolder(uri) || vscode.workspace.workspaceFolders![0];
 
-        const pattern = new vscode.RelativePattern(workspaceFolder, relativePath);
+        const relativePath: string = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
 
-        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+        const pattern: vscode.RelativePattern = new vscode.RelativePattern(workspaceFolder, relativePath);
+
+        const watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 
         watcher.onDidChange(this.onFileChanged, this, this.disposables);
         watcher.onDidDelete(this.onFileDeleted, this, this.disposables);
@@ -233,12 +239,12 @@ export class TestWatcherManager implements vscode.Disposable {
      * Creates a directory watcher for a specific directory
      */
     private createDirectoryWatcher(directoryPath: string): void {
-        const pattern = new vscode.RelativePattern(
+        const pattern: vscode.RelativePattern = new vscode.RelativePattern(
             directoryPath,
             ExtensionConstants.TestAdapter.TestSettingsFilePattern,
         );
 
-        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+        const watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 
         watcher.onDidCreate(this.onFileCreatedInDirectory, this, this.disposables);
         watcher.onDidDelete(this.onFileDeletedFromDirectory, this, this.disposables);
@@ -256,7 +262,7 @@ export class TestWatcherManager implements vscode.Disposable {
         );
 
         // Find the corresponding test item
-        const testItem = this.findTestItemByUri(uri);
+        const testItem: vscode.TestItem | undefined = this.findTestItemByUri(uri);
 
         if (testItem) {
             // Only update if the item was expanded (has children)
@@ -286,15 +292,15 @@ export class TestWatcherManager implements vscode.Disposable {
         );
 
         // Find and remove the corresponding test item
-        const testItem = this.findTestItemByUri(uri);
+        const testItem: vscode.TestItem | undefined = this.findTestItemByUri(uri);
 
         if (testItem) {
             this.controller.items.delete(testItem.id);
         }
 
         // Dispose the watcher for this file using normalized URI
-        const normalizedUriString = getNormalizedUriString(uri);
-        const watcher = this.fileWatchers.get(normalizedUriString);
+        const normalizedUriString: string = getNormalizedUriString(uri);
+        const watcher: vscode.FileSystemWatcher | undefined = this.fileWatchers.get(normalizedUriString);
 
         if (watcher) {
             watcher.dispose();
@@ -305,7 +311,7 @@ export class TestWatcherManager implements vscode.Disposable {
     /**
      * Handles file creation events in watched directories
      */
-    private async onFileCreatedInDirectory(uri: vscode.Uri): Promise<void> {
+    private onFileCreatedInDirectory(uri: vscode.Uri): void {
         this.outputChannel.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.fileCreatedInDirectory", { filePath: uri.fsPath }),
         );
@@ -320,7 +326,7 @@ export class TestWatcherManager implements vscode.Disposable {
         }
 
         try {
-            const testItem = this.addTestSettingsFile(uri);
+            const testItem: vscode.TestItem | undefined = this.addTestSettingsFile(uri);
 
             if (testItem) {
                 // Create a file watcher for this new settings file
@@ -331,7 +337,7 @@ export class TestWatcherManager implements vscode.Disposable {
                 );
             }
         } catch (error) {
-            const errorMessage = resolveI18nTemplate("PQSdk.testAdapter.errorAddingTestItem", {
+            const errorMessage: string = resolveI18nTemplate("PQSdk.testAdapter.errorAddingTestItem", {
                 filePath: uri.fsPath,
                 error: String(error),
             });
@@ -351,7 +357,7 @@ export class TestWatcherManager implements vscode.Disposable {
 
         // The individual file watcher should have already handled this,
         // but in case it didn't, let's ensure the test item is removed
-        const testItem = this.findTestItemByUri(uri);
+        const testItem: vscode.TestItem | undefined = this.findTestItemByUri(uri);
 
         if (testItem) {
             this.controller.items.delete(testItem.id);
@@ -364,14 +370,18 @@ export class TestWatcherManager implements vscode.Disposable {
      * @param forceUniqueId If true, a unique ID is generated to prevent VS Code from restoring the item's previous state.
      * @returns The created TestItem, or undefined if the file is not in a workspace.
      */
-    private addTestSettingsFile(settingsFileUri: vscode.Uri, forceUniqueId = false): vscode.TestItem | undefined {
-        const workspaceFolder = vscode.workspace.getWorkspaceFolder(settingsFileUri);
+    private addTestSettingsFile(
+        settingsFileUri: vscode.Uri,
+        forceUniqueId: boolean = false,
+    ): vscode.TestItem | undefined {
+        const workspaceFolder: vscode.WorkspaceFolder | undefined =
+            vscode.workspace.getWorkspaceFolder(settingsFileUri);
 
         if (!workspaceFolder) {
             // Only show error if workspaces exist but this file isn't in any of them
             // Silent skip when no workspaces are open at all
             if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-                const errorMessage = resolveI18nTemplate("PQSdk.testAdapter.error.settingsFileNotInWorkspace", {
+                const errorMessage: string = resolveI18nTemplate("PQSdk.testAdapter.error.settingsFileNotInWorkspace", {
                     settingsFilePath: settingsFileUri.fsPath,
                 });
 
@@ -382,18 +392,18 @@ export class TestWatcherManager implements vscode.Disposable {
             return undefined;
         }
 
-        const normalizedSettingsUri = vscode.Uri.file(getNormalizedPath(settingsFileUri.fsPath));
-        const label = path.basename(settingsFileUri.fsPath);
+        const normalizedSettingsUri: vscode.Uri = vscode.Uri.file(getNormalizedPath(settingsFileUri.fsPath));
+        const label: string = path.basename(settingsFileUri.fsPath);
 
         // The ID is what VS Code uses to uniquely identify the test item.
         // By default, we use the normalized URI.
         // For resets, we append a timestamp to force VS Code to treat it as a new item,
         // preventing state restoration (e.g., expanded/collapsed state).
-        const id = forceUniqueId
+        const id: string = forceUniqueId
             ? `${normalizedSettingsUri.toString()}?${Date.now()}`
             : getNormalizedUriString(settingsFileUri);
 
-        const testItem = createTestItem(
+        const testItem: vscode.TestItem = createTestItem(
             this.controller,
             id,
             label,
@@ -410,12 +420,12 @@ export class TestWatcherManager implements vscode.Disposable {
      * Finds a test item by its URI using normalized comparison
      */
     private findTestItemByUri(uri: vscode.Uri): vscode.TestItem | undefined {
-        const normalizedSearchUri = getNormalizedUriString(uri);
+        const normalizedSearchUri: string = getNormalizedUriString(uri);
 
         // Search through top-level items to find one with matching normalized URI
         for (const [, item] of this.controller.items) {
             if (item.uri) {
-                const normalizedItemUri = getNormalizedUriString(item.uri);
+                const normalizedItemUri: string = getNormalizedUriString(item.uri);
 
                 if (normalizedItemUri === normalizedSearchUri) {
                     return item;

@@ -6,23 +6,22 @@
  */
 
 import * as fs from "fs";
+import { FSWatcher, WatchEventType } from "fs";
 import * as vscode from "vscode";
-
-import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
-import { ExtensionConstants } from "./constants/PowerQuerySdkExtension";
-import { getFirstWorkspaceFolder } from "./utils/vscodes";
-import { handleLocaleChanged } from "./i18n/extension";
-
 import {
     ConfigurationChangeEvent,
     ExtensionContext,
     workspace as vscWorkspace,
     WorkspaceFoldersChangeEvent,
 } from "vscode";
+
 import { Disposable, IDisposable } from "./common/Disposable";
 import { DisposableEventEmitter, ExtractEventTypes } from "./common/DisposableEventEmitter";
-import { FSWatcher, WatchEventType } from "fs";
+import { ExtensionConfigurations } from "./constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "./constants/PowerQuerySdkExtension";
+import { handleLocaleChanged } from "./i18n/extension";
 import { SimplePqTestResultViewBroker } from "./panels/PqTestResultViewPanel";
+import { getFirstWorkspaceFolder } from "./utils/vscodes";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const GlobalEvents = Object.freeze({
