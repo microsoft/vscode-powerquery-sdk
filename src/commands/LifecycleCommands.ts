@@ -1100,10 +1100,21 @@ export class LifecycleCommands implements IDisposable {
                     });
 
                     const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-                        "**/*.{query,test}.pq",
+                        "**/*.{query,test,parameterquery}.pq",
                         "**/{bin,obj}/**",
                         1e2,
                     );
+
+                    // Prioritize parameterquery files before query/test files in the picker
+                    connectorQueryFiles.sort((a: vscode.Uri, b: vscode.Uri): number => {
+                        const aIsParameterQuery: boolean = a.fsPath.endsWith(".parameterquery.pq");
+                        const bIsParameterQuery: boolean = b.fsPath.endsWith(".parameterquery.pq");
+
+                        if (aIsParameterQuery && !bIsParameterQuery) return -1;
+                        if (!aIsParameterQuery && bIsParameterQuery) return 1;
+
+                        return a.fsPath.localeCompare(b.fsPath);
+                    });
 
                     async function collectInputs(): Promise<CreateAuthState> {
                         const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
