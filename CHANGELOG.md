@@ -4,6 +4,6 @@ All notable changes to the "vscode-powerquery-sdk" extension will be documented 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## v0.6.2
+## v0.7.2
 
-<TODO>
+- Fixed: `*.parameterquery.pq` files now appear in the set credential query file picker, prioritized above other query files
