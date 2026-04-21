@@ -37,6 +37,7 @@ import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
 import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
 import { debounce } from "../utils/debounce";
+import { connectorQueryFileExcludeGlob, connectorQueryFileGlob, parameterQueryFirstCompare } from "../utils/connectorQueryFiles";
 import { getMtimeOfAFile } from "../utils/files";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import {
@@ -1100,21 +1101,13 @@ export class LifecycleCommands implements IDisposable {
                     });
 
                     const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-                        "**/*.{query,test,parameterquery}.pq",
-                        "**/{bin,obj}/**",
+                        connectorQueryFileGlob,
+                        connectorQueryFileExcludeGlob,
                         1e2,
                     );
 
                     // Prioritize parameterquery files before query/test files in the picker
-                    connectorQueryFiles.sort((a: vscode.Uri, b: vscode.Uri): number => {
-                        const aIsParameterQuery: boolean = a.fsPath.endsWith(".parameterquery.pq");
-                        const bIsParameterQuery: boolean = b.fsPath.endsWith(".parameterquery.pq");
-
-                        if (aIsParameterQuery && !bIsParameterQuery) return -1;
-                        if (!aIsParameterQuery && bIsParameterQuery) return 1;
-
-                        return a.fsPath.localeCompare(b.fsPath);
-                    });
+                    connectorQueryFiles.sort(parameterQueryFirstCompare);
 
                     async function collectInputs(): Promise<CreateAuthState> {
                         const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
