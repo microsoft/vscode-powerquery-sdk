@@ -36,8 +36,12 @@ import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
 import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
+import {
+    connectorQueryFileExcludeGlob,
+    connectorQueryFileGlob,
+    parameterQueryFirstCompare,
+} from "../utils/connectorQueryFiles";
 import { debounce } from "../utils/debounce";
-import { connectorQueryFileExcludeGlob, connectorQueryFileGlob, parameterQueryFirstCompare } from "../utils/connectorQueryFiles";
 import { getMtimeOfAFile } from "../utils/files";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import {

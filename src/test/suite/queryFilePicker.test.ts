@@ -9,7 +9,11 @@ import * as assert from "assert";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { connectorQueryFileExcludeGlob, connectorQueryFileGlob, parameterQueryFirstCompare } from "../../utils/connectorQueryFiles";
+import {
+    connectorQueryFileExcludeGlob,
+    connectorQueryFileGlob,
+    parameterQueryFirstCompare,
+} from "../../utils/connectorQueryFiles";
 import { ensureRequiredExtensionsAreLoaded } from "../TestUtils";
 
 suite("Query File Picker Integration Tests", () => {
@@ -49,9 +53,9 @@ suite("Query File Picker Integration Tests", () => {
 
         files.sort(parameterQueryFirstCompare);
 
-        const lastParameterQueryIndex: number = files.map((f: vscode.Uri) =>
-            f.fsPath.endsWith(".parameterquery.pq"),
-        ).lastIndexOf(true);
+        const lastParameterQueryIndex: number = files
+            .map((f: vscode.Uri) => f.fsPath.endsWith(".parameterquery.pq"))
+            .lastIndexOf(true);
 
         const firstNonParameterQueryIndex: number = files.findIndex(
             (f: vscode.Uri) => !f.fsPath.endsWith(".parameterquery.pq"),
@@ -61,7 +65,7 @@ suite("Query File Picker Integration Tests", () => {
             assert.ok(
                 lastParameterQueryIndex < firstNonParameterQueryIndex,
                 `All .parameterquery.pq files should appear before other query files. ` +
-                `Last parameterquery at index ${lastParameterQueryIndex}, first other at index ${firstNonParameterQueryIndex}`,
+                    `Last parameterquery at index ${lastParameterQueryIndex}, first other at index ${firstNonParameterQueryIndex}`,
             );
         }
     });

@@ -17,6 +17,7 @@ export function parameterQueryFirstCompare(a: vscode.Uri, b: vscode.Uri): number
     const bIsPQ: boolean = b.fsPath.endsWith(".parameterquery.pq");
 
     if (aIsPQ && !bIsPQ) return -1;
+
     if (!aIsPQ && bIsPQ) return 1;
 
     return a.fsPath.localeCompare(b.fsPath);
