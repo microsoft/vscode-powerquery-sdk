@@ -36,6 +36,11 @@ import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
 import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
+import {
+    connectorQueryFileExcludeGlob,
+    connectorQueryFileGlob,
+    parameterQueryFirstCompare,
+} from "../utils/connectorQueryFiles";
 import { debounce } from "../utils/debounce";
 import { getMtimeOfAFile } from "../utils/files";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
@@ -1100,10 +1105,13 @@ export class LifecycleCommands implements IDisposable {
                     });
 
                     const connectorQueryFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-                        "**/*.{query,test}.pq",
-                        "**/{bin,obj}/**",
+                        connectorQueryFileGlob,
+                        connectorQueryFileExcludeGlob,
                         1e2,
                     );
+
+                    // Prioritize parameterquery files before query/test files in the picker
+                    connectorQueryFiles.sort(parameterQueryFirstCompare);
 
                     async function collectInputs(): Promise<CreateAuthState> {
                         const state: Partial<CreateAuthState> = {} as Partial<CreateAuthState>;
