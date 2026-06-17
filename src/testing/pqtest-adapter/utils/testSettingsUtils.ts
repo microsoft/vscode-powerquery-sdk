@@ -34,9 +34,15 @@ import {
  * @param outputChannel - Optional output channel for logging warnings
  * @returns Array of URIs to test settings files (.testsettings.json)
  */
-export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel): Promise<vscode.Uri[]> {
+export function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel): Promise<vscode.Uri[]> {
     const settingsFiles: string | string[] | undefined = ExtensionConfigurations.testSettingsFiles;
-    return resolveTestSettingsFileUris(settingsFiles, defaultFileSystemOperations, defaultWorkspaceOperations, outputChannel);
+
+    return resolveTestSettingsFileUris(
+        settingsFiles,
+        defaultFileSystemOperations,
+        defaultWorkspaceOperations,
+        outputChannel,
+    );
 }
 
 /**
@@ -50,8 +56,14 @@ export async function resolveTestSettingsFileUris(
     outputChannel?: PqSdkOutputChannel,
 ): Promise<vscode.Uri[]> {
     const result: vscode.Uri[] = [];
-    const configuredPaths: string[] =
-        typeof settingsFiles === "string" ? [settingsFiles] : Array.isArray(settingsFiles) ? settingsFiles : [];
+    let configuredPaths: string[] = [];
+
+    if (typeof settingsFiles === "string") {
+        configuredPaths = [settingsFiles];
+    } else if (Array.isArray(settingsFiles)) {
+        configuredPaths = settingsFiles;
+    }
+
     const testSettingsFilePattern: string = ExtensionConstants.TestAdapter.TestSettingsFilePattern;
     const testSettingsFileEnding: string = ExtensionConstants.TestAdapter.TestSettingsFileEnding;
     const baseConfigPath: string = ExtensionConstants.ConfigNames.PowerQuerySdk.name;
@@ -63,7 +75,10 @@ export async function resolveTestSettingsFileUris(
             const fileStat: vscode.FileStat = await fs.stat(vscode.Uri.file(settingsPath));
 
             if (fileStat.type === vscode.FileType.Directory) {
-                const pattern: vscode.RelativePattern = new vscode.RelativePattern(settingsPath, testSettingsFilePattern);
+                const pattern: vscode.RelativePattern = new vscode.RelativePattern(
+                    settingsPath,
+                    testSettingsFilePattern,
+                );
 
                 // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
                 const files: vscode.Uri[] = await workspace.findFiles(pattern);
