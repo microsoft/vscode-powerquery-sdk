@@ -29,8 +29,7 @@
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
         "onWebviewPanel:powerquery.sdk.tools.ResultWebView",
-        "onLanguage:powerquery",
-        "workspaceContains:**/*.testsettings.json"
+        "onLanguage:powerquery"
     ],
     "extensionDependencies": [
         "PowerQuery.vscode-powerquery"

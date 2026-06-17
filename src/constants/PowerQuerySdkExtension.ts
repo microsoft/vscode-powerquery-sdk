@@ -114,7 +114,7 @@ const TestAdapter = {
     TestControllerId: "powerqueryTestController" as const,
     TestControllerName: "Power Query Tests" as const,
     TestRunProfileName: "Run" as const,
-    TestSettingsFilePattern: "**/*.testsettings.json" as const,
+    TestSettingsFilePattern: "*.testsettings.json" as const,
     TestSettingsFileEnding: ".testsettings.json" as const,
     TestFilePattern: "**/*.query.pq" as const,
     TestFileEnding: ".query.pq" as const,

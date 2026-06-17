@@ -26,6 +26,11 @@ export interface FileSystemOperations {
  */
 export interface WorkspaceOperations {
     workspaceFolders: readonly vscode.WorkspaceFolder[] | undefined;
+    findFiles(
+        include: vscode.GlobPattern,
+        exclude?: vscode.GlobPattern | null,
+        maxResults?: number,
+    ): Thenable<vscode.Uri[]>;
 }
 
 /**

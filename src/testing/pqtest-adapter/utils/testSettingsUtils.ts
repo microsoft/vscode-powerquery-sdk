@@ -36,30 +36,44 @@ import {
  */
 export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel): Promise<vscode.Uri[]> {
     const settingsFiles: string | string[] | undefined = ExtensionConfigurations.testSettingsFiles;
+    return resolveTestSettingsFileUris(settingsFiles, defaultFileSystemOperations, defaultWorkspaceOperations, outputChannel);
+}
+
+/**
+ * Resolves configured test settings paths to concrete settings file URIs.
+ * Directory paths are limited to direct child .testsettings.json files to avoid recursive workspace scans.
+ */
+export async function resolveTestSettingsFileUris(
+    settingsFiles: string | string[] | undefined,
+    fs: FileSystemOperations = defaultFileSystemOperations,
+    workspace: WorkspaceOperations = defaultWorkspaceOperations,
+    outputChannel?: PqSdkOutputChannel,
+): Promise<vscode.Uri[]> {
     const result: vscode.Uri[] = [];
-    const testSettingsFilePattern: string = "**/*.testsettings.json";
-    const testSettingsFileEnding: string = ".testsettings.json";
+    const configuredPaths: string[] =
+        typeof settingsFiles === "string" ? [settingsFiles] : Array.isArray(settingsFiles) ? settingsFiles : [];
+    const testSettingsFilePattern: string = ExtensionConstants.TestAdapter.TestSettingsFilePattern;
+    const testSettingsFileEnding: string = ExtensionConstants.TestAdapter.TestSettingsFileEnding;
     const baseConfigPath: string = ExtensionConstants.ConfigNames.PowerQuerySdk.name;
     const settingsFilesConfigKey: string = ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testSettingsFiles;
 
-    if (typeof settingsFiles === "string") {
+    for (const settingsPath of configuredPaths) {
         try {
-            const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFiles));
+            // eslint-disable-next-line no-await-in-loop -- Sequential file validation required
+            const fileStat: vscode.FileStat = await fs.stat(vscode.Uri.file(settingsPath));
 
             if (fileStat.type === vscode.FileType.Directory) {
-                const pattern: vscode.RelativePattern = new vscode.RelativePattern(
-                    settingsFiles,
-                    testSettingsFilePattern,
-                );
+                const pattern: vscode.RelativePattern = new vscode.RelativePattern(settingsPath, testSettingsFilePattern);
 
-                const files: vscode.Uri[] = await vscode.workspace.findFiles(pattern);
+                // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
+                const files: vscode.Uri[] = await workspace.findFiles(pattern);
                 result.push(...files);
-            } else if (settingsFiles.endsWith(testSettingsFileEnding)) {
-                result.push(vscode.Uri.file(settingsFiles));
+            } else if (settingsPath.endsWith(testSettingsFileEnding)) {
+                result.push(vscode.Uri.file(settingsPath));
             } else {
                 void vscode.window.showErrorMessage(
                     resolveI18nTemplate("PQSdk.testAdapter.error.incorrectFileExtension", {
-                        settingsFile: settingsFiles,
+                        settingsFile: settingsPath,
                         configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
                         expectedExtension: testSettingsFileEnding,
                     }),
@@ -71,52 +85,11 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
             const errorMessage: string = e instanceof Error ? e.message : String(e);
 
             const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.accessingSettingsPath", {
-                settingsPath: settingsFiles,
+                settingsPath,
                 errorMessage,
             });
 
             outputChannel?.appendDebugLine(message);
-        }
-    } else if (Array.isArray(settingsFiles)) {
-        for (const settingsFile of settingsFiles) {
-            try {
-                // eslint-disable-next-line no-await-in-loop -- Sequential file validation required
-                const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFile));
-
-                if (fileStat.type === vscode.FileType.Directory) {
-                    // Directory support: scan for all .testsettings.json files recursively
-                    const pattern: vscode.RelativePattern = new vscode.RelativePattern(
-                        settingsFile,
-                        testSettingsFilePattern,
-                    );
-
-                    // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
-                    const files: vscode.Uri[] = await vscode.workspace.findFiles(pattern);
-                    result.push(...files);
-                } else if (settingsFile.endsWith(testSettingsFileEnding)) {
-                    result.push(vscode.Uri.file(settingsFile));
-                } else {
-                    void vscode.window.showErrorMessage(
-                        resolveI18nTemplate("PQSdk.testAdapter.error.incorrectFileExtension", {
-                            settingsFile,
-                            configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
-                            expectedExtension: testSettingsFileEnding,
-                        }),
-                    );
-                }
-
-                // Ignore files that don't exist
-            } catch (e) {
-                // Log errors as they might indicate real problems (permissions, network issues, etc.)
-                const errorMessage: string = e instanceof Error ? e.message : String(e);
-
-                const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.accessingSettingsPath", {
-                    settingsPath: settingsFile,
-                    errorMessage,
-                });
-
-                outputChannel?.appendDebugLine(message);
-            }
         }
     }
 
