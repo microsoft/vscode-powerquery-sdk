@@ -50,9 +50,9 @@ jobs:
         runs-on: ${{ matrix.os }}
         steps:
             - name: checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
             - name: setup node
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
               with:
                   node-version: "20"
             - run: node -v
@@ -74,7 +74,7 @@ jobs:
             #       max_attempts: 5
             #       command: npm run test:e2e
             - name: upload VSIX to artifactory
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
               with:
                   name: ${{ env.target }}
                   path: |
@@ -84,9 +84,9 @@ jobs:
         needs: build-and-test
         if: success()
         steps:
-            - uses: actions/download-artifact@v4
+            - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
             - run: echo $(find . -iname *.vsix)
-            - uses: Azure/pipelines@v1.2
+            - uses: Azure/pipelines@fac73367a779c3bd02c073d6c41bc81d18b2c0ad # v1.2
               with:
                   azure-devops-project-url: "https://dev.azure.com/powerbi/Power%20Query"
                   azure-pipeline-name: "PowerQuerySdkTools-VSCode-ToolsOfficial" # name of the Azure pipeline to be triggered
