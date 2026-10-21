@@ -14,6 +14,7 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
+import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
 import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
@@ -126,6 +127,15 @@ export class PqSdkNugetPackageService {
         const expectedPqTestPath: string = this.expectedPqSdkPath(maybeNextVersion);
 
         return fs.existsSync(expectedPqTestPath);
+    }
+
+    public cleanupUnusedPackages(): Promise<void> {
+        return cleanupNugetPackages(
+            path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder),
+            ExtensionConfigurations.PQTestLocation,
+            ExtensionConfigurations.packagesToKeep,
+            this.outputChannel,
+        );
     }
 
     public async updatePqSdkFromNuget(maybeNextVersion: string | undefined): Promise<string | undefined> {

@@ -161,6 +161,14 @@ export const ExtensionConfigurations = {
         ) as SdkExternalsVersionTags;
     },
 
+    get packagesToKeep(): number {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.externalsPackagesToKeep, 2);
+    },
+
     setPQTestLocation(
         pqTestLocation: string | undefined,
         configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,

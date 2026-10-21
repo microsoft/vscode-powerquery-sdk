@@ -584,6 +584,8 @@ export class LifecycleCommands implements IDisposable {
                 if (pqTestExecutableFullPath) {
                     await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
                 }
+            } else {
+                await this.pqSdkNugetPackageService.cleanupUnusedPackages();
             }
 
             return pqTestLocation;
@@ -634,6 +636,8 @@ export class LifecycleCommands implements IDisposable {
             // update the pqtest location by force in case it equals the previous one
             this.pqTestService.onPowerQueryTestLocationChanged();
         }
+
+        await this.pqSdkNugetPackageService.cleanupUnusedPackages();
     }
 
     /**
@@ -672,6 +676,8 @@ export class LifecycleCommands implements IDisposable {
                     this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(theNextVersion);
                     await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
                 }
+            } else {
+                await this.pqSdkNugetPackageService.cleanupUnusedPackages();
             }
 
             // check whether it got seized or not

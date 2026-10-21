@@ -37,6 +37,7 @@ const ConfigNames = {
             externalsNugetPath: "externals.nugetPath" as const,
             externalsNugetFeed: "externals.nugetFeed" as const,
             externalsVersionTag: "externals.versionTag" as const,
+            externalsPackagesToKeep: "externals.packagesToKeep" as const,
             pqTestLocation: "tools.location" as const,
             pqTestVersion: "tools.version" as const,
             defaultExtensionLocation: "defaultExtension" as const,
