@@ -10,7 +10,7 @@
         "audit": "npm audit"
     },
     "engines": {
-        "node": ">=22.15.0"
+        "node": ">= 22"
     },
     "dependencies": {
         "@babel/runtime": "^7.27.6",
