@@ -11,6 +11,8 @@
 process.env.BABEL_ENV = "development";
 process.env.NODE_ENV = "development";
 
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 const { merge } = require("webpack-merge");
 
 const commonConfig = require("./webpack.common");
@@ -24,7 +26,11 @@ const devConfig = {
         filename: "[name].js",
         publicPath: "http://localhost:3001/",
     },
-    plugins: [],
+    plugins: [
+        new CopyPlugin({
+            patterns: [{ from: path.resolve(paths.appPublic, "i18n"), to: path.resolve(paths.appBuild, "i18n") }],
+        }),
+    ],
 };
 
 module.exports = merge(commonConfig, devConfig);

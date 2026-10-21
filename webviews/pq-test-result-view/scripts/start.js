@@ -44,8 +44,17 @@ const server = http.createServer((request, response) => {
         return;
     }
 
-    const requestUrl = new URL(request.url, "http://localhost:3001");
-    const relativePath = decodeURIComponent(requestUrl.pathname).replace(/^\/+/, "") || "index.html";
+    let relativePath;
+
+    try {
+        const requestUrl = new URL(request.url, "http://localhost:3001");
+        relativePath = decodeURIComponent(requestUrl.pathname).replace(/^\/+/, "") || "index.html";
+    } catch {
+        response.writeHead(400);
+        response.end();
+        return;
+    }
+
     const requestedPath = path.resolve(paths.appBuild, relativePath);
     const buildRoot = `${path.resolve(paths.appBuild)}${path.sep}`;
 
@@ -91,6 +100,10 @@ const watcher = compiler.watch({}, (error, stats) => {
             timings: true,
         }),
     );
+
+    if (!stats.hasErrors()) {
+        console.log(`compiled successfully in ${stats.endTime - stats.startTime} ms`);
+    }
 });
 
 server.listen(3001, "localhost", () => {
