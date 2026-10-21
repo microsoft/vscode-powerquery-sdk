@@ -23,6 +23,23 @@ What you can do with this extension:
 - Leverage syntax highlighting and intellisense for writing M script
 - Manage your workspace settings and other project-level configurations
 
+## Test discovery
+
+Set `powerquery.sdk.test.settingsFiles` to a `.testsettings.json` file, a directory,
+or an array of file and directory paths. Relative paths are resolved from the first
+workspace folder; `${workspaceFolder}` is also supported.
+
+Without this setting, the extension does not search for or watch test settings.
+Configured directories are searched recursively, honoring `search.exclude` and
+`files.exclude`, including conditional sibling exclusions. Directory watcher events
+use the same exclusions without repeating discovery. Explicitly configured files
+are used directly, without a recursive search or search exclusions.
+
+For large or cloud-synced workspaces, configure individual settings files or the
+smallest directory containing them rather than the workspace root. Invalid settings
+are reported in the Test Explorer and the Power Query SDK output channel, not in
+error popups.
+
 ## Developer Guide
 
 ### Testing Architecture
