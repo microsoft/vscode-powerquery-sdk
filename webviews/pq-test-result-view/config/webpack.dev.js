@@ -11,36 +11,26 @@
 process.env.BABEL_ENV = "development";
 process.env.NODE_ENV = "development";
 
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 const { merge } = require("webpack-merge");
 
 const commonConfig = require("./webpack.common");
-// const packageJson = require("../package.json");
+const paths = require("./paths");
 
 const devConfig = {
     mode: "development",
     devtool: "eval-source-map",
     output: {
+        path: paths.appBuild,
+        filename: "[name].js",
         publicPath: "http://localhost:3001/",
     },
-    devServer: {
-        port: 3001,
-        // client: {
-        //     webSocketURL: {
-        //         hostname: "127.0.0.1",
-        //         pathname: "/ws",
-        //         // password: 'dev-server',
-        //         port: 3001,
-        //         protocol: "ws",
-        //         // username: 'webpack',
-        //     },
-        // },
-        client: false,
-        webSocketServer: false,
-        historyApiFallback: {
-            index: "index.html",
-        },
-    },
-    plugins: [],
+    plugins: [
+        new CopyPlugin({
+            patterns: [{ from: path.resolve(paths.appPublic, "i18n"), to: path.resolve(paths.appBuild, "i18n") }],
+        }),
+    ],
 };
 
 module.exports = merge(commonConfig, devConfig);

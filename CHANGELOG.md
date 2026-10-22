@@ -8,6 +8,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - Fixed: Removed recursive workspace-wide test-settings activation searches. Test discovery and watchers stay scoped to configured settings paths, and directory discovery honors `search.exclude` and `files.exclude`.
 - Fixed: Invalid or missing test settings now log diagnostics instead of displaying error popups.
+- Updated extension and webview dependencies to resolve all reported npm audit vulnerabilities.
+- Updated the development and build toolchain to require Node.js 22.13.0 or later on the Node 22 line, or Node.js 24 or later, and VS Code 1.100.0 or later.
 
 ## v0.7.2
 
