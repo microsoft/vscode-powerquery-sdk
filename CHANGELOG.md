@@ -8,6 +8,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - Added: Automatic SDK tool package cleanup controlled by `powerquery.sdk.externals.packagesToKeep` (default `2`), preserving the selected version.
 - Changed: NuGet unit tests use mocked feeds and processes so they run without public NuGet access.
+- Changed: Capped the Recommended SDK Tools NuGet package version at `2.160.2`.
 
 ## v0.7.3
 
