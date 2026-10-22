@@ -69,14 +69,18 @@ export async function cleanupNugetPackages(
             return;
         }
 
-        protectNugetPackage(baseNugetFolder, selectedToolsLocation);
+        await protectNugetPackage(baseNugetFolder, selectedToolsLocation);
 
         packages.sort((left: CachedSdkPackage, right: CachedSdkPackage) =>
             NugetVersions.compare(right.version, left.version),
         );
 
-        const protectedPackages: ReadonlyArray<CachedSdkPackage> = packages.filter((candidate: CachedSdkPackage) =>
-            nugetPackageIsInUse(baseNugetFolder, candidate.directory),
+        const usage: ReadonlyArray<boolean> = await Promise.all(
+            packages.map((candidate: CachedSdkPackage) => nugetPackageIsInUse(baseNugetFolder, candidate.directory)),
+        );
+
+        const protectedPackages: ReadonlyArray<CachedSdkPackage> = packages.filter(
+            (_candidate: CachedSdkPackage, index: number) => usage[index],
         );
 
         const obsoletePackages: ReadonlyArray<CachedSdkPackage> = packages

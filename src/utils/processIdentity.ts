@@ -5,13 +5,13 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { spawnSync, SpawnSyncReturns } from "child_process";
+import { execFile, ExecFileException } from "child_process";
 
-let currentProcessCreationTime: string | undefined;
+let currentProcessCreationTime: Promise<string | undefined> | undefined;
 
-export function getProcessCreationTime(pid: number): string | undefined {
+export function getProcessCreationTime(pid: number): Promise<string | undefined> {
     if (!Number.isSafeInteger(pid) || pid < 1 || pid > 2147483647) {
-        throw new Error(`Invalid Windows process ID: ${pid}`);
+        return Promise.reject(new Error(`Invalid Windows process ID: ${pid}`));
     }
 
     // Other PIDs can be reused; only this process's identity is safe to cache.
@@ -33,29 +33,42 @@ export function getProcessCreationTime(pid: number): string | undefined {
         "}",
     ].join(" ");
 
-    const result: SpawnSyncReturns<string> = spawnSync(
-        "powershell.exe",
-        ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
-        { encoding: "utf8", windowsHide: true, timeout: 10000 },
+    const query: Promise<string | undefined> = new Promise(
+        (resolve: (value: string | undefined) => void, reject: (reason: unknown) => void) => {
+            execFile(
+                "powershell.exe",
+                ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
+                { encoding: "utf8", windowsHide: true, timeout: 10000 },
+                (error: ExecFileException | null, stdout: string, stderr: string): void => {
+                    if (error) {
+                        if (error.code === 3 && !error.killed && !error.signal) {
+                            resolve(undefined);
+                        } else {
+                            reject(error);
+                        }
+
+                        return;
+                    }
+
+                    if (!/^[1-9]\d*$/.test(stdout.trim())) {
+                        reject(new Error(`Cannot verify Windows process identity for PID ${pid}: ${stderr || stdout}`));
+
+                        return;
+                    }
+
+                    resolve(stdout.trim());
+                },
+            );
+        },
     );
 
-    if (result.error) {
-        throw result.error;
-    }
-
-    if (result.status === 3) {
-        return undefined;
-    }
-
-    if (result.status !== 0 || !/^[1-9]\d*$/.test(result.stdout.trim())) {
-        throw new Error(`Cannot verify Windows process identity for PID ${pid}: ${result.stderr || result.stdout}`);
-    }
-
-    const creationTime: string = result.stdout.trim();
-
     if (pid === process.pid) {
-        currentProcessCreationTime = creationTime;
+        currentProcessCreationTime = query;
+
+        void query.catch(() => {
+            currentProcessCreationTime = undefined;
+        });
     }
 
-    return creationTime;
+    return query;
 }

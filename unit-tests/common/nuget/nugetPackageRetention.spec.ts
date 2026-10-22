@@ -24,7 +24,7 @@ describe("SDK package retention", () => {
     const setting = packageJson.contributes.configuration.properties["powerquery.sdk.externals.packagesToKeep"];
 
     beforeEach(() => {
-        sinon.stub(processIdentity, "getProcessCreationTime").returns("123");
+        sinon.stub(processIdentity, "getProcessCreationTime").resolves("123");
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-retention-"));
         cache = path.join(root, ".nuget");
         fs.mkdirSync(cache);
@@ -312,7 +312,7 @@ describe("SDK package retention", () => {
         expect(fs.readdirSync(usage)).to.deep.equal([]);
     });
 
-    it("does not probe inaccessible usage owners when selecting their package", () => {
+    it("does not probe inaccessible usage owners when selecting their package", async () => {
         const selected = addPackage("2.160.2");
         const otherPid = 2147483647;
         const kill = process.kill;
@@ -327,14 +327,14 @@ describe("SDK package retention", () => {
         fs.mkdirSync(usage, { recursive: true });
         fs.writeFileSync(path.join(usage, `use-${otherPid}-00000000-0000-0000-0000-000000000000`), "");
 
-        expect(() => protectNugetPackage(cache, selected)).not.to.throw();
+        await protectNugetPackage(cache, selected);
         expect(probe.calledWith(otherPid)).to.be.false;
         expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
     });
 
     it("keeps paths exposed earlier in this host available to existing queues and tasks", async () => {
         const previousSelection = addPackage("2.158.1");
-        protectNugetPackage(cache, previousSelection);
+        await protectNugetPackage(cache, previousSelection);
         const selected = addPackage("2.160.2");
 
         await cleanupNugetPackages(cache, selected, 1);
@@ -342,8 +342,8 @@ describe("SDK package retention", () => {
         expect(versions()).to.have.length(2);
     });
 
-    it("does not write usage markers for custom locations", () => {
-        protectNugetPackage(cache, root);
+    it("does not write usage markers for custom locations", async () => {
+        await protectNugetPackage(cache, root);
 
         expect(fs.readdirSync(cache)).to.deep.equal([]);
     });
@@ -361,7 +361,9 @@ describe("SDK package retention", () => {
                 path.basename(file).startsWith("cleanup-")
             ) {
                 selectedDuringCleanup = true;
-                protectNugetPackage(cache, newlySelected);
+                const usage = path.join(cache, ".sdk-package-usage", path.basename(path.dirname(newlySelected)));
+                fs.mkdirSync(usage, { recursive: true });
+                fs.writeFileSync(path.join(usage, `use-${process.pid}-123-00000000-0000-0000-0000-000000000000`), "");
             }
 
             return open(file, flags, mode);

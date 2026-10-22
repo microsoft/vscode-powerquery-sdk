@@ -113,7 +113,11 @@ describe("SDK package coordination across processes", function () {
             expect(fs.existsSync(path.join(obsolete, "PQTest.exe"))).to.be.true;
 
             fs.rmSync(path.dirname(obsolete), { recursive: true, force: true });
-            expect(() => protectNugetPackage(cache, obsolete)).to.throw("cleanup is in progress");
+            const failure = await protectNugetPackage(cache, obsolete).then(
+                () => undefined,
+                error => error,
+            );
+            expect(String(failure)).to.contain("cleanup is in progress");
         } finally {
             finishDeletion();
             await cleaning;

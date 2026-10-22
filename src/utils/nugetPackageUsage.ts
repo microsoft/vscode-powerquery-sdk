@@ -19,8 +19,8 @@ const markerPattern: RegExp = /^(use|cleanup)-([1-9]\d*)-([1-9]\d*)-([a-f0-9-]{3
 const legacyMarkerPattern: RegExp = /^(use|cleanup)-([1-9]\d*)-([a-f0-9-]{36})$/;
 const ownerToken: string = randomUUID();
 
-function currentOwner(): string {
-    const creationTime: string | undefined = getProcessCreationTime(process.pid);
+async function currentOwner(): Promise<string> {
+    const creationTime: string | undefined = await getProcessCreationTime(process.pid);
 
     if (!creationTime) {
         throw new Error("Cannot determine the current SDK host's process identity");
@@ -50,7 +50,11 @@ function removeMarker(marker: string): void {
     }
 }
 
-function processIsAlive(pid: number, creationTime: string | undefined): boolean {
+async function processIsAlive(
+    pid: number,
+    creationTime: string | undefined,
+    identities: Map<number, Promise<string | undefined>>,
+): Promise<boolean> {
     try {
         process.kill(pid, 0);
     } catch (error: unknown) {
@@ -66,7 +70,14 @@ function processIsAlive(pid: number, creationTime: string | undefined): boolean 
         throw new Error(`Cannot verify SDK package marker ownership without a process creation time: ${pid}`);
     }
 
-    return getProcessCreationTime(pid) === creationTime;
+    let identity: Promise<string | undefined> | undefined = identities.get(pid);
+
+    if (!identity) {
+        identity = getProcessCreationTime(pid);
+        identities.set(pid, identity);
+    }
+
+    return (await identity) === creationTime;
 }
 
 function assertRealDirectory(directory: string): void {
@@ -109,34 +120,51 @@ function getManagedPackageDirectory(baseNugetFolder: string, toolsLocation: stri
     return packageDirectory;
 }
 
-function getLiveMarkers(usageDirectory: string, kind?: "use" | "cleanup"): ReadonlyArray<string> {
+async function getLiveMarkers(usageDirectory: string, kind?: "use" | "cleanup"): Promise<ReadonlyArray<string>> {
     const markers: ReadonlyArray<fs.Dirent> = fs.readdirSync(usageDirectory, { withFileTypes: true });
-    const liveMarkers: string[] = [];
+    // Reuse identities only inside this immutable snapshot, never across scans where a PID could be reused.
+    const identities: Map<number, Promise<string | undefined>> = new Map();
 
-    for (const marker of markers) {
-        const match: RegExpExecArray | null = markerPattern.exec(marker.name) ?? legacyMarkerPattern.exec(marker.name);
+    const liveMarkers: ReadonlyArray<string | undefined> = await Promise.all(
+        markers.map(async (marker: fs.Dirent) => {
+            const match: RegExpExecArray | null =
+                markerPattern.exec(marker.name) ?? legacyMarkerPattern.exec(marker.name);
 
-        if (!marker.isFile() || !match) {
-            throw new Error(`Unrecognized SDK package usage marker: ${path.join(usageDirectory, marker.name)}`);
-        }
+            if (!marker.isFile() || !match) {
+                throw new Error(`Unrecognized SDK package usage marker: ${path.join(usageDirectory, marker.name)}`);
+            }
 
-        if (kind && match[1] !== kind) {
-            continue;
-        }
+            if (kind && match[1] !== kind) {
+                return undefined;
+            }
 
-        const creationTime: string | undefined = match.length === 5 ? match[3] : undefined;
+            const creationTime: string | undefined = match.length === 5 ? match[3] : undefined;
 
-        if (processIsAlive(Number(match[2]), creationTime)) {
-            liveMarkers.push(marker.name);
-        } else {
+            if (await processIsAlive(Number(match[2]), creationTime, identities)) {
+                return marker.name;
+            }
+
             removeMarker(path.join(usageDirectory, marker.name));
-        }
-    }
 
-    return liveMarkers;
+            return undefined;
+        }),
+    );
+
+    return liveMarkers.filter((marker: string | undefined): marker is string => marker !== undefined);
 }
 
-export function protectNugetPackage(baseNugetFolder: string, toolsLocation: string): void {
+export function nugetPackageRequiresProtection(baseNugetFolder: string, toolsLocation: string): boolean {
+    return (
+        getManagedPackageDirectory(baseNugetFolder, toolsLocation) !== undefined &&
+        (!fs.existsSync(baseNugetFolder) || !fs.lstatSync(baseNugetFolder).isSymbolicLink())
+    );
+}
+
+export async function protectNugetPackage(
+    baseNugetFolder: string,
+    toolsLocation: string,
+    signal?: AbortSignal,
+): Promise<void> {
     const packageDirectory: string | undefined = getManagedPackageDirectory(baseNugetFolder, toolsLocation);
 
     if (!packageDirectory) {
@@ -151,19 +179,24 @@ export function protectNugetPackage(baseNugetFolder: string, toolsLocation: stri
     }
 
     const usageDirectory: string = getUsageDirectory(baseNugetFolder, packageDirectory);
-    const marker: string = path.join(usageDirectory, `use-${currentOwner()}`);
+    const owner: string = await currentOwner();
+    signal?.throwIfAborted();
+    const marker: string = path.join(usageDirectory, `use-${owner}`);
 
     // Keep leases for this process's lifetime: existing queues/tasks may retain previous tool paths.
     // Publish before checking deletion intent; a cleaner must see our lease or we must see its guard.
     fs.closeSync(fs.openSync(marker, "a"));
 
-    if (getLiveMarkers(usageDirectory, "cleanup").length) {
+    const guards: ReadonlyArray<string> = await getLiveMarkers(usageDirectory, "cleanup");
+    signal?.throwIfAborted();
+
+    if (guards.length) {
         throw new NugetPackageCleanupInProgressError(toolsLocation);
     }
 }
 
-export function nugetPackageIsInUse(baseNugetFolder: string, packageDirectory: string): boolean {
-    return getLiveMarkers(getUsageDirectory(baseNugetFolder, packageDirectory), "use").length > 0;
+export async function nugetPackageIsInUse(baseNugetFolder: string, packageDirectory: string): Promise<boolean> {
+    return (await getLiveMarkers(getUsageDirectory(baseNugetFolder, packageDirectory), "use")).length > 0;
 }
 
 export async function removeUnusedNugetPackage(baseNugetFolder: string, packageDirectory: string): Promise<boolean> {
@@ -175,7 +208,7 @@ export async function removeUnusedNugetPackage(baseNugetFolder: string, packageD
     }
 
     const usageDirectory: string = getUsageDirectory(baseNugetFolder, packageDirectory);
-    const markerName: string = `cleanup-${currentOwner()}`;
+    const markerName: string = `cleanup-${await currentOwner()}`;
     const marker: string = path.join(usageDirectory, markerName);
 
     try {
@@ -189,7 +222,7 @@ export async function removeUnusedNugetPackage(baseNugetFolder: string, packageD
     }
 
     try {
-        const otherMarkers: ReadonlyArray<string> = getLiveMarkers(usageDirectory).filter(
+        const otherMarkers: ReadonlyArray<string> = (await getLiveMarkers(usageDirectory)).filter(
             (name: string) => name !== markerName,
         );
 

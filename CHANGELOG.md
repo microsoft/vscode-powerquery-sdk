@@ -10,7 +10,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Fixed: Package cleanup protects selections across SDK hosts and startup preserves usable selected tools even after newer cached versions are removed.
 - Fixed: SDK initialization retries cleanup contention without aborting activation, recognizes differently cased Windows paths, and ignores unrelated usage-owner checks when selecting tools.
 - Fixed: Normalized tool paths retain their protection, pending executable overrides cannot fall back to another SDK, and unrelated package recovery does not restart active service hosts.
-- Fixed: Package coordination validates OS process creation times so reused process IDs cannot retain stale cleanup guards or usage leases.
+- Fixed: Package coordination validates OS process creation times asynchronously without blocking VS Code, so reused process IDs cannot retain stale cleanup guards or usage leases.
 - Changed: NuGet unit tests use mocked feeds and processes so they run without public NuGet access.
 - Changed: Capped the Recommended SDK Tools NuGet package version at `2.160.2`.
 

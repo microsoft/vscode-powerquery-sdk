@@ -14,9 +14,8 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
-import { nugetPackageProtection } from "../utils/NugetPackageProtection";
+import { nugetPackageProtection, NugetPackageProtectionPendingError } from "../utils/NugetPackageProtection";
 import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
-import { NugetPackageCleanupInProgressError } from "../utils/nugetPackageUsage";
 import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
@@ -165,7 +164,7 @@ export class PqSdkNugetPackageService {
                 nugetPackageProtection.getProtectedLocation(baseNugetFolder, path.dirname(directExecutable));
             }
         } catch (error: unknown) {
-            if (!(error instanceof NugetPackageCleanupInProgressError)) {
+            if (!(error instanceof NugetPackageProtectionPendingError)) {
                 throw error;
             }
 

@@ -9,9 +9,13 @@ import { protectNugetPackage } from "../../../../src/utils/nugetPackageUsage";
 
 process.on("disconnect", () => process.exit(0));
 
-try {
-    protectNugetPackage(process.argv[2], process.argv[3]);
-    process.send?.({ protected: true });
-} catch (error: unknown) {
-    process.send?.({ protected: false, error: String(error) });
+async function protect(): Promise<void> {
+    try {
+        await protectNugetPackage(process.argv[2], process.argv[3]);
+        process.send?.({ protected: true });
+    } catch (error: unknown) {
+        process.send?.({ protected: false, error: String(error) });
+    }
 }
+
+void protect();

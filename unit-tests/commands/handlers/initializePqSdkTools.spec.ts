@@ -28,9 +28,9 @@ describe("SDK tool startup", () => {
     let queryProcess: sinon.SinonStub;
 
     beforeEach(() => {
-        sinon.stub(processIdentity, "getProcessCreationTime").returns("123");
+        sinon.stub(processIdentity, "getProcessCreationTime").resolves("123");
         queryProcess = sinon
-            .stub(cp, "spawnSync")
+            .stub(cp, "execFile")
             .throws(new Error("Startup unit tests must not query real processes"));
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-startup-"));
         cache = path.join(root, ".nuget");

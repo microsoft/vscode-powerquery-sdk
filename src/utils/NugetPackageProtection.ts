@@ -10,7 +10,18 @@ import * as path from "path";
 import { IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter } from "../common/DisposableEventEmitter";
 import type { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
-import { NugetPackageCleanupInProgressError, protectNugetPackage } from "./nugetPackageUsage";
+import {
+    NugetPackageCleanupInProgressError,
+    nugetPackageRequiresProtection,
+    protectNugetPackage,
+} from "./nugetPackageUsage";
+
+export class NugetPackageProtectionPendingError extends Error {
+    constructor(toolsLocation: string) {
+        super(`SDK package protection is pending; retry selecting ${toolsLocation}`);
+        this.name = "NugetPackageProtectionPendingError";
+    }
+}
 
 interface PendingProtection {
     readonly promise: Promise<void>;
@@ -25,6 +36,7 @@ interface ToolsLocationState {
 
 export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> {
     private readonly pending: Map<string, PendingProtection> = new Map();
+    private readonly protectedLocations: Set<string> = new Set();
     private disposed: boolean = false;
     private outputChannel: Pick<PqSdkOutputChannel, "appendInfoLine" | "appendErrorLine"> = {
         appendInfoLine: (message: string): void => console.info(message),
@@ -52,7 +64,7 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
         const toolsLocation: string = path.dirname(executablePath);
 
         if (!this.getProtectedLocation(baseNugetFolder, toolsLocation)) {
-            throw new NugetPackageCleanupInProgressError(toolsLocation);
+            throw new NugetPackageProtectionPendingError(toolsLocation);
         }
 
         return executablePath;
@@ -63,40 +75,34 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
             throw new Error("SDK package protection has been disposed");
         }
 
-        try {
-            protectNugetPackage(baseNugetFolder, toolsLocation);
+        const key: string = path.resolve(toolsLocation).toLowerCase();
 
+        // A verified process-lifetime lease prevents future cleanup from deleting this location.
+        if (this.protectedLocations.has(key) || !nugetPackageRequiresProtection(baseNugetFolder, toolsLocation)) {
             return toolsLocation;
-        } catch (error: unknown) {
-            if (!(error instanceof NugetPackageCleanupInProgressError)) {
-                throw error;
-            }
-
-            const key: string = path.resolve(toolsLocation).toLowerCase();
-
-            if (!this.pending.has(key)) {
-                this.outputChannel.appendInfoLine(`Waiting for SDK package protection: ${error.message}`);
-                const retry: PendingProtection = this.createRetry(baseNugetFolder, toolsLocation);
-                this.pending.set(key, retry);
-
-                void retry.promise
-                    .then(() => {
-                        this.pending.delete(key);
-                        this.emit("recovered");
-                    })
-                    .catch((failure: unknown) => {
-                        this.pending.delete(key);
-
-                        if (!this.disposed) {
-                            this.outputChannel.appendErrorLine(
-                                `Cannot protect configured SDK packages due to ${failure}`,
-                            );
-                        }
-                    });
-            }
-
-            return undefined;
         }
+
+        if (!this.pending.has(key)) {
+            this.outputChannel.appendInfoLine(`Waiting for SDK package protection: ${toolsLocation}`);
+            const retry: PendingProtection = this.createRetry(baseNugetFolder, toolsLocation);
+            this.pending.set(key, retry);
+
+            void retry.promise
+                .then(() => {
+                    this.pending.delete(key);
+                    this.protectedLocations.add(key);
+                    this.emit("recovered");
+                })
+                .catch((failure: unknown) => {
+                    this.pending.delete(key);
+
+                    if (!this.disposed) {
+                        this.outputChannel.appendErrorLine(`Cannot protect configured SDK packages due to ${failure}`);
+                    }
+                });
+        }
+
+        return undefined;
     }
 
     public async waitForPending(): Promise<void> {
@@ -112,17 +118,18 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
     }
 
     private createRetry(baseNugetFolder: string, toolsLocation: string): PendingProtection {
-        let timer: NodeJS.Timeout;
+        let timer: NodeJS.Timeout | undefined;
+        const controller: globalThis.AbortController = new globalThis.AbortController();
         let cancel: () => void = (): void => {};
 
         const promise: Promise<void> = new Promise((resolve: () => void, reject: (reason: unknown) => void) => {
-            const attempt: () => void = (): void => {
+            const attempt: () => Promise<void> = async (): Promise<void> => {
                 try {
-                    protectNugetPackage(baseNugetFolder, toolsLocation);
+                    await protectNugetPackage(baseNugetFolder, toolsLocation, controller.signal);
                     resolve();
                 } catch (error: unknown) {
-                    if (error instanceof NugetPackageCleanupInProgressError) {
-                        timer = setTimeout(attempt, 100);
+                    if (error instanceof NugetPackageCleanupInProgressError && !controller.signal.aborted) {
+                        timer = setTimeout(() => void attempt(), 100);
                         timer.unref();
                     } else {
                         reject(error);
@@ -130,11 +137,14 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
                 }
             };
 
-            timer = setTimeout(attempt, 100);
-            timer.unref();
+            void attempt();
 
             cancel = (): void => {
-                clearTimeout(timer);
+                if (timer) {
+                    clearTimeout(timer);
+                }
+
+                controller.abort();
                 reject(new Error("SDK package protection has been disposed"));
             };
         });
@@ -150,6 +160,7 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
         }
 
         this.pending.clear();
+        this.protectedLocations.clear();
         super.dispose();
     }
 }

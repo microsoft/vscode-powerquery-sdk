@@ -13,8 +13,8 @@ import * as sinon from "sinon";
 
 import { initializePqSdkTools } from "../../../src/commands/handlers/initializePqSdkTools";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
-import { NugetPackageProtection } from "../../../src/utils/NugetPackageProtection";
-import { NugetPackageCleanupInProgressError } from "../../../src/utils/nugetPackageUsage";
+import { NugetPackageProtection, NugetPackageProtectionPendingError } from "../../../src/utils/NugetPackageProtection";
+import { protectNugetPackage } from "../../../src/utils/nugetPackageUsage";
 import processIdentity = require("../../../src/utils/processIdentity");
 
 describe("Retryable SDK package protection", () => {
@@ -29,7 +29,7 @@ describe("Retryable SDK package protection", () => {
     let getCreationTime: sinon.SinonStub;
 
     beforeEach(() => {
-        getCreationTime = sinon.stub(processIdentity, "getProcessCreationTime").returns("123");
+        getCreationTime = sinon.stub(processIdentity, "getProcessCreationTime").resolves("123");
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-protection-"));
         cache = path.join(root, ".nuget");
         const packageName = `${ExtensionConstants.InternalMsftPqSdkToolsNugetName}.2.159.1`;
@@ -38,10 +38,7 @@ describe("Retryable SDK package protection", () => {
         fs.writeFileSync(path.join(tools, "PQTest.exe"), "");
         const usage = path.join(cache, ".sdk-package-usage", packageName);
         fs.mkdirSync(usage, { recursive: true });
-        guard = path.join(
-            usage,
-            `cleanup-${process.pid}-${processIdentity.getProcessCreationTime(process.pid)}-00000000-0000-0000-0000-000000000000`,
-        );
+        guard = path.join(usage, `cleanup-${process.pid}-123-00000000-0000-0000-0000-000000000000`);
         fs.writeFileSync(guard, "");
         clock = sinon.useFakeTimers();
         protection = new NugetPackageProtection();
@@ -69,8 +66,9 @@ describe("Retryable SDK package protection", () => {
         protection.subscribeOneEvent("recovered", refresh);
 
         expect(readDirectory()).to.be.undefined;
-        expect(readExecutable).to.throw(NugetPackageCleanupInProgressError);
+        expect(readExecutable).to.throw(NugetPackageProtectionPendingError);
         expect(appendInfoLine.calledOnce).to.be.true;
+        await clock.tickAsync(0);
         expect(clock.countTimers()).to.equal(1);
         await clock.tickAsync(300);
         expect(refresh.called).to.be.false;
@@ -86,6 +84,100 @@ describe("Retryable SDK package protection", () => {
         expect(exposedExecutable).to.equal(executable);
         expect(clock.countTimers()).to.equal(0);
         expect(appendErrorLine.called).to.be.false;
+    });
+
+    it("withholds paths without blocking timers while initial identity verification is pending", async () => {
+        fs.unlinkSync(guard);
+        let finish: (identity: string) => void = () => {
+            throw new Error("Verification did not start");
+        };
+        getCreationTime.returns(
+            new Promise<string>(resolve => {
+                finish = resolve;
+            }),
+        );
+        const refreshed = sinon.spy();
+        protection.subscribeOneEvent("recovered", refreshed);
+
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
+        expect(() => protection.getProtectedExecutablePath(cache, path.join(tools, "PQTest.exe"))).to.throw(
+            NugetPackageProtectionPendingError,
+        );
+        const ready = protection.waitForPending();
+        const heartbeat = sinon.spy();
+        setTimeout(heartbeat, 0);
+        await clock.tickAsync(0);
+        expect(heartbeat.calledOnce).to.be.true;
+        expect(refreshed.called).to.be.false;
+        expect(fs.readdirSync(path.dirname(guard))).to.deep.equal([]);
+
+        finish("123");
+        await clock.tickAsync(0);
+        await ready;
+
+        expect(protection.getProtectedLocation(cache, tools)).to.equal(tools);
+        expect(refreshed.calledOnce).to.be.true;
+        expect(getCreationTime.calledOnce).to.be.true;
+    });
+
+    it("deduplicates foreign-owner verification within one marker snapshot", async () => {
+        fs.unlinkSync(guard);
+        const otherPid = 2147483647;
+        const kill = process.kill;
+        sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
+        let finish: (identity: string) => void = () => {
+            throw new Error("Verification did not start");
+        };
+        const foreignIdentity = new Promise<string>(resolve => {
+            finish = resolve;
+        });
+        getCreationTime.callsFake(pid => (pid === otherPid ? foreignIdentity : Promise.resolve("123")));
+        const foreignGuards = [
+            `cleanup-${otherPid}-123-00000000-0000-0000-0000-000000000000`,
+            `cleanup-${otherPid}-123-11111111-1111-1111-1111-111111111111`,
+        ];
+        foreignGuards.forEach(marker => fs.writeFileSync(path.join(path.dirname(guard), marker), ""));
+        const protecting = protectNugetPackage(cache, tools);
+        await clock.tickAsync(0);
+        expect(getCreationTime.getCalls().filter(call => call.args[0] === otherPid)).to.have.length(1);
+
+        finish("456");
+        await protecting;
+        foreignGuards.forEach(marker => expect(fs.existsSync(path.join(path.dirname(guard), marker))).to.be.false);
+
+        const nextGuard = path.join(path.dirname(guard), foreignGuards[0]);
+        fs.writeFileSync(nextGuard, "");
+        await protectNugetPackage(cache, tools);
+        expect(getCreationTime.getCalls().filter(call => call.args[0] === otherPid)).to.have.length(2);
+    });
+
+    it("does not publish a lease after disposal during initial identity verification", async () => {
+        fs.unlinkSync(guard);
+        let finish: (identity: string) => void = () => {
+            throw new Error("Verification did not start");
+        };
+        getCreationTime.returns(
+            new Promise<string>(resolve => {
+                finish = resolve;
+            }),
+        );
+        const refreshed = sinon.spy();
+        protection.subscribeOneEvent("recovered", refreshed);
+        protection.getProtectedLocation(cache, tools);
+        const canceled = protection.waitForPending().then(
+            () => undefined,
+            error => error,
+        );
+
+        protection.dispose();
+        finish("123");
+        await clock.tickAsync(0);
+
+        expect(await canceled).to.have.property("message", "SDK package protection has been disposed");
+        expect(fs.readdirSync(path.dirname(guard))).to.deep.equal([]);
+        expect(refreshed.called).to.be.false;
+        expect(clock.countTimers()).to.equal(0);
     });
 
     it("waits before startup decides whether to acquire tools and preserves a usable selection after contention", async () => {
@@ -128,7 +220,7 @@ describe("Retryable SDK package protection", () => {
         const executable = path.join(tools, "PQTest.exe");
 
         expect(() => protection.getProtectedExecutablePath(cache, executable)).to.throw(
-            NugetPackageCleanupInProgressError,
+            NugetPackageProtectionPendingError,
         );
         expect(appendInfoLine.calledOnce).to.be.true;
 
@@ -146,9 +238,10 @@ describe("Retryable SDK package protection", () => {
         );
         fs.writeFileSync(staleGuard, "");
 
-        expect(protection.getProtectedLocation(cache, tools)).to.equal(tools);
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
         await protection.waitForPending();
 
+        expect(protection.getProtectedLocation(cache, tools)).to.equal(tools);
         expect(fs.existsSync(staleGuard)).to.be.false;
         expect(clock.countTimers()).to.equal(0);
         expect(appendErrorLine.called).to.be.false;
@@ -160,7 +253,7 @@ describe("Retryable SDK package protection", () => {
         let creationTime = "123";
         const kill = process.kill;
         sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
-        getCreationTime.callsFake(pid => (pid === otherPid ? creationTime : "123"));
+        getCreationTime.callsFake(pid => Promise.resolve(pid === otherPid ? creationTime : "123"));
         guard = path.join(path.dirname(guard), `cleanup-${otherPid}-123-00000000-0000-0000-0000-000000000000`);
         fs.writeFileSync(guard, "");
         expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
@@ -178,7 +271,7 @@ describe("Retryable SDK package protection", () => {
         expect(clock.countTimers()).to.equal(0);
     });
 
-    it("does not expire a live legacy guard whose process instance cannot be verified", () => {
+    it("does not expire a live legacy guard whose process instance cannot be verified", async () => {
         fs.unlinkSync(guard);
         const legacyGuard = path.join(
             path.dirname(guard),
@@ -186,7 +279,12 @@ describe("Retryable SDK package protection", () => {
         );
         fs.writeFileSync(legacyGuard, "");
 
-        expect(() => protection.getProtectedLocation(cache, tools)).to.throw("without a process creation time");
+        protection.getProtectedLocation(cache, tools);
+        const failure = await protection.waitForPending().then(
+            () => undefined,
+            error => error,
+        );
+        expect(failure).to.have.property("message").that.contains("without a process creation time");
         expect(fs.existsSync(legacyGuard)).to.be.true;
     });
 
