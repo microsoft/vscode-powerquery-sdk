@@ -25,6 +25,19 @@ What you can do with this extension:
 
 ## Test discovery
 
+The VS Code Test Explorer integration is enabled by default. To disable it, set:
+
+```json
+{
+    "powerquery.sdk.test.enabled": false
+}
+```
+
+Reload the VS Code window after changing this setting. When disabled, the SDK does
+not register its test controller or Test UI commands, discover or watch test settings,
+or run Test UI results cleanup. Connector commands, query evaluation, and debugging
+remain available.
+
 Set `powerquery.sdk.test.settingsFiles` to a `.testsettings.json` file, a directory,
 or an array of file and directory paths. Relative paths are resolved from the first
 workspace folder; `${workspaceFolder}` is also supported.

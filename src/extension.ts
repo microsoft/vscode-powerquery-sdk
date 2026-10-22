@@ -23,7 +23,7 @@ import { GlobalEventBus } from "./GlobalEventBus";
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
 import { PqServiceHostClient } from "./pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
-import { registerCommands, registerTestController } from "./testing/pqtest-adapter/TestController";
+import { registerTestAdapter } from "./testing/pqtest-adapter/TestController";
 import { stringifyJson } from "./utils/strings";
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 
@@ -100,8 +100,7 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
     });
 
     // Register test adapter
-    const testController: vscode.TestController = registerTestController(vscExtCtx, pqSdkOutputChannel);
-    registerCommands(vscExtCtx, testController, pqSdkOutputChannel);
+    registerTestAdapter(vscExtCtx, pqSdkOutputChannel);
 
     vscExtCtx.subscriptions.push(
         ...[
