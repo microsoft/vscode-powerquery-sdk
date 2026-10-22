@@ -15,6 +15,7 @@ import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
 import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
+import { protectNugetPackage } from "../utils/nugetPackageUsage";
 import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
@@ -36,6 +37,19 @@ export class PqSdkNugetPackageService {
     ) {
         this.nugetHttpService = new NugetHttpService(outputChannel);
         this.nugetCommandService = new NugetCommandService(vscExtCtx.extensionPath, outputChannel);
+        this.protectConfiguredPackages();
+
+        vscExtCtx.subscriptions.push(
+            vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+                if (event.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
+                    try {
+                        this.protectConfiguredPackages();
+                    } catch (error: unknown) {
+                        this.outputChannel?.appendErrorLine(`Cannot protect configured SDK packages due to ${error}`);
+                    }
+                }
+            }),
+        );
 
         this.globalEventBus?.on(
             GlobalEvents.VSCodeEvents.onProxySettingsChanged,
@@ -129,11 +143,27 @@ export class PqSdkNugetPackageService {
         return fs.existsSync(expectedPqTestPath);
     }
 
+    private protectConfiguredPackages(): string | undefined {
+        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
+        const toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+        const directExecutable: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
+
+        if (toolsLocation) {
+            protectNugetPackage(baseNugetFolder, toolsLocation);
+        }
+
+        if (directExecutable) {
+            protectNugetPackage(baseNugetFolder, path.dirname(directExecutable));
+        }
+
+        return toolsLocation;
+    }
+
     public cleanupUnusedPackages(): Promise<void> {
         return cleanupNugetPackages(
             path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder),
-            ExtensionConfigurations.PQTestLocation,
-            ExtensionConfigurations.packagesToKeep,
+            this.protectConfiguredPackages(),
+            ExtensionConfigurations.numberOfPackagesToKeep,
             this.outputChannel,
         );
     }
@@ -144,6 +174,8 @@ export class PqSdkNugetPackageService {
         if (!fs.existsSync(baseNugetFolder)) {
             fs.mkdirSync(baseNugetFolder);
         }
+
+        protectNugetPackage(baseNugetFolder, path.dirname(this.expectedPqSdkPath(maybeNextVersion)));
 
         if (ExtensionConfigurations.nugetPath) {
             return this.nugetCommandService.downloadAndExtractNugetPackage(

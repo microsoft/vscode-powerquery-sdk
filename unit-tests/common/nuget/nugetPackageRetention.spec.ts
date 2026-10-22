@@ -14,6 +14,7 @@ import * as sinon from "sinon";
 import packageJson from "../../../package.json";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { cleanupNugetPackages } from "../../../src/utils/nugetPackageRetention";
+import { protectNugetPackage } from "../../../src/utils/nugetPackageUsage";
 
 describe("SDK package retention", () => {
     let root: string;
@@ -41,7 +42,10 @@ describe("SDK package retention", () => {
     }
 
     function versions(): string[] {
-        return fs.readdirSync(cache).sort();
+        return fs
+            .readdirSync(cache)
+            .filter(name => name !== ".sdk-package-usage")
+            .sort();
     }
 
     it("keeps two packages by numeric version rather than name or modification time", async () => {
@@ -94,7 +98,9 @@ describe("SDK package retention", () => {
         const selected = addPackage("2.110.1");
         addPackage("2.109.1");
         const preserved = ["Other.Package.1.0.0", `${prefix}2.108.1-preview`, `${prefix}2.107.1.backup`];
-        for (const name of preserved) fs.mkdirSync(path.join(cache, name));
+        for (const name of preserved) {
+            fs.mkdirSync(path.join(cache, name));
+        }
         fs.writeFileSync(path.join(cache, `${prefix}2.106.1`), "");
 
         await cleanupNugetPackages(cache, selected, 1);
@@ -195,5 +201,111 @@ describe("SDK package retention", () => {
         expect(appendErrorLine.calledOnce).to.be.true;
         expect(appendErrorLine.firstCall.args[0]).to.contain("access denied");
         expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
+    });
+
+    it("counts other active hosts' selections toward retention and keeps both when the limit is one", async () => {
+        const selected = addPackage("2.160.2");
+        const otherSelection = addPackage("2.158.1");
+        addPackage("2.159.1");
+        const otherPid = 2147483647;
+        const kill = process.kill;
+        sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
+        const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.158.1`);
+        fs.mkdirSync(usage, { recursive: true });
+        fs.writeFileSync(path.join(usage, `use-${otherPid}-00000000-0000-0000-0000-000000000000`), "");
+
+        await cleanupNugetPackages(cache, selected, 1);
+
+        expect(versions()).to.deep.equal([`${prefix}2.158.1`, `${prefix}2.160.2`]);
+        expect(fs.existsSync(path.join(otherSelection, "PQTest.exe"))).to.be.true;
+    });
+
+    it("reclaims a dead host's leases before applying retention", async () => {
+        const selected = addPackage("2.160.2");
+        addPackage("2.158.1");
+        const deadPid = 2147483647;
+        const kill = process.kill;
+        sinon.stub(process, "kill").callsFake((pid, signal) => {
+            if (pid === deadPid) {
+                throw Object.assign(new Error("process exited"), { code: "ESRCH" });
+            }
+
+            return kill(pid, signal);
+        });
+        const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.158.1`);
+        fs.mkdirSync(usage, { recursive: true });
+        fs.writeFileSync(path.join(usage, `use-${deadPid}-00000000-0000-0000-0000-000000000000`), "");
+        fs.writeFileSync(path.join(usage, `cleanup-${deadPid}-00000000-0000-0000-0000-000000000000`), "");
+
+        await cleanupNugetPackages(cache, selected, 1);
+
+        expect(versions()).to.deep.equal([`${prefix}2.160.2`]);
+        expect(fs.readdirSync(usage)).to.deep.equal([]);
+    });
+
+    it("fails closed if another host's liveness cannot be verified", async () => {
+        const selected = addPackage("2.160.2");
+        addPackage("2.158.1");
+        const otherPid = 2147483647;
+        const kill = process.kill;
+        sinon.stub(process, "kill").callsFake((pid, signal) => {
+            if (pid === otherPid) {
+                throw Object.assign(new Error("access denied"), { code: "EPERM" });
+            }
+
+            return kill(pid, signal);
+        });
+        const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.158.1`);
+        fs.mkdirSync(usage, { recursive: true });
+        fs.writeFileSync(path.join(usage, `use-${otherPid}-00000000-0000-0000-0000-000000000000`), "");
+        const appendErrorLine = sinon.spy();
+
+        await cleanupNugetPackages(cache, selected, 1, { appendErrorLine, appendInfoLine: sinon.spy() });
+
+        expect(versions()).to.have.length(2);
+        expect(appendErrorLine.calledOnce).to.be.true;
+        expect(appendErrorLine.firstCall.args[0]).to.contain("access denied");
+    });
+
+    it("keeps paths exposed earlier in this host available to existing queues and tasks", async () => {
+        const previousSelection = addPackage("2.158.1");
+        protectNugetPackage(cache, previousSelection);
+        const selected = addPackage("2.160.2");
+
+        await cleanupNugetPackages(cache, selected, 1);
+
+        expect(versions()).to.have.length(2);
+    });
+
+    it("does not write usage markers for custom locations", () => {
+        protectNugetPackage(cache, root);
+
+        expect(fs.readdirSync(cache)).to.deep.equal([]);
+    });
+
+    it("rechecks usage when another selection wins the race after cleanup candidates were chosen", async () => {
+        const selected = addPackage("2.160.2");
+        const newlySelected = addPackage("2.158.1");
+        const open = fs.openSync;
+        let selectedDuringCleanup = false;
+        sinon.stub(fs, "openSync").callsFake((file, flags, mode) => {
+            if (
+                !selectedDuringCleanup &&
+                typeof file === "string" &&
+                flags === "wx" &&
+                path.basename(file).startsWith("cleanup-")
+            ) {
+                selectedDuringCleanup = true;
+                protectNugetPackage(cache, newlySelected);
+            }
+
+            return open(file, flags, mode);
+        });
+
+        await cleanupNugetPackages(cache, selected, 1);
+
+        expect(selectedDuringCleanup).to.be.true;
+        expect(fs.existsSync(path.join(newlySelected, "PQTest.exe"))).to.be.true;
+        expect(versions()).to.have.length(2);
     });
 });

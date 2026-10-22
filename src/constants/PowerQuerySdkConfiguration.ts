@@ -8,6 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { protectNugetPackage } from "../utils/nugetPackageUsage";
 import {
     resolvePathRelativeToWorkspace,
     resolvePathsRelativeToWorkspace,
@@ -15,6 +16,16 @@ import {
     resolveSubstitutedValuesInArray,
 } from "../utils/vscodes";
 import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
+
+function protectManagedToolsLocation(toolsLocation: string | undefined): void {
+    const extension: vscode.Extension<unknown> | undefined = vscode.extensions.getExtension(
+        `PowerQuery.${ExtensionConstants.ExtensionId}`,
+    );
+
+    if (extension && toolsLocation) {
+        protectNugetPackage(path.resolve(extension.extensionPath, ExtensionConstants.NugetBaseFolder), toolsLocation);
+    }
+}
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const ExtensionConfigurations = {
@@ -161,7 +172,7 @@ export const ExtensionConfigurations = {
         ) as SdkExternalsVersionTags;
     },
 
-    get packagesToKeep(): number {
+    get numberOfPackagesToKeep(): number {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
@@ -173,6 +184,8 @@ export const ExtensionConfigurations = {
         pqTestLocation: string | undefined,
         configurationTarget: vscode.ConfigurationTarget | boolean | null = vscode.ConfigurationTarget.Global,
     ): Thenable<void> {
+        protectManagedToolsLocation(pqTestLocation);
+
         // we should not cache it
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
@@ -190,11 +203,14 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
         );
 
-        return (
+        const location: string | undefined =
             config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation) ??
             // adaptability of a deprecated config item
-            config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestLocation)
-        );
+            config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestLocation);
+
+        protectManagedToolsLocation(location);
+
+        return location;
     },
 
     setPQTestVersion(
@@ -345,7 +361,13 @@ export const ExtensionConfigurations = {
             ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExecutablePath,
         );
 
-        return resolveSubstitutedValues(value);
+        const executablePath: string | undefined = resolveSubstitutedValues(value);
+
+        if (executablePath) {
+            protectManagedToolsLocation(path.dirname(executablePath));
+        }
+
+        return executablePath;
     },
     get CleanupIntermediateResultsAfterHours(): number {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
