@@ -2,7 +2,7 @@
     "name": "vscode-powerquery-sdk",
     "displayName": "Power Query SDK",
     "description": "Power Query Connector SDK",
-    "version": "0.7.3",
+    "version": "0.7.4",
     "author": "Microsoft Corporation",
     "license": "MIT",
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
@@ -14,8 +14,8 @@
         "url": "https://github.com/microsoft/vscode-powerquery-sdk/issues"
     },
     "engines": {
-        "node": ">= 20",
-        "vscode": "^1.95.0"
+        "node": "^22.13.0 || >=24",
+        "vscode": "^1.100.0"
     },
     "capabilities": {
         "untrustedWorkspaces": {
@@ -472,7 +472,7 @@
         ]
     },
     "scripts": {
-        "audit": "npm audit --omit=dev",
+        "audit": "npm audit --audit-level=low && npm --prefix webviews/pq-test-result-view audit --audit-level=low",
         "build": "npm run build:pq-test-result-view",
         "build:pq-test-result-view": "cd webviews/pq-test-result-view && npm run build",
         "clean": "ts-node scripts/clean.ts",
@@ -488,8 +488,8 @@
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "test": "npm run test:unit-test && npm run test:e2e",
         "test:e2e": "npm run compile-tests && vscode-test",
-        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
-        "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter mocha-multi-reporters --reporter-options configFile=mochaReporterConfig.json",
+        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter ./mochaReporter.js --reporter-option output=test-results.xml",
+        "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter ./mochaReporter.js --reporter-option output=test-results.xml",
         "test-ui": "vscode-test",
         "vsix": "npx @vscode/vsce@latest package --target win32-x64",
         "vscode:prepublish": "npm run package",
@@ -502,22 +502,23 @@
         "vscode-jsonrpc": "^8.2.0"
     },
     "overrides": {
-        "diff": "8.0.3"
+        "diff": "8.0.3",
+        "serialize-javascript": "7.1.2"
     },
     "devDependencies": {
         "@eslint/js": "^9.16.0",
         "@types/chai": "^4.3.12",
-        "@types/gulp": "^4.0.17",
         "@types/mocha": "^10.0.6",
         "@types/node": "^20.14.8",
         "@types/sinon": "^10.0.20",
+        "@types/vinyl-fs": "^3.0.8",
         "@types/vscode": "^1.95.0",
         "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "@typescript-eslint/parser": "^8.36.0",
         "@vscode/debugadapter": "^1.65.0",
         "@vscode/debugadapter-testsupport": "^1.65.0",
-        "@vscode/test-cli": "0.0.11",
+        "@vscode/test-cli": "^0.0.15",
         "@vscode/test-electron": "^2.5.2",
         "chai": "^4.5.0",
         "eslint": "^9.16.0",
@@ -529,9 +530,8 @@
         "glob": "^11.1.0",
         "husky": "^9.1.7",
         "lint-staged": "^16.1.2",
-        "mocha": "^10.8.2",
-        "mocha-junit-reporter": "^2.2.1",
-        "mocha-multi-reporters": "^1.5.1",
+        "mocha": "^12.0.3",
+        "picomatch": "^2.3.2",
         "prettier": "^3.6.2",
         "rimraf": "^6.0.1",
         "sinon": "^17.0.1",
