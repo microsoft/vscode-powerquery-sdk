@@ -85,6 +85,26 @@ describe("SDK package retention", () => {
         expect(versions()).to.deep.equal([`${prefix}2.100.1`]);
     });
 
+    it("protects a differently cased selected path with retention one", async () => {
+        const selected = addPackage("2.100.1");
+        addPackage("2.110.1");
+
+        await cleanupNugetPackages(cache, selected.toLowerCase(), 1);
+
+        expect(versions()).to.deep.equal([`${prefix}2.100.1`]);
+        expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
+    });
+
+    it("recognizes lowercase package directory names during cleanup", async () => {
+        const selected = addPackage("2.100.1");
+        const obsolete = addPackage("2.110.1");
+        fs.renameSync(path.dirname(obsolete), path.dirname(obsolete).toLowerCase());
+
+        await cleanupNugetPackages(cache, selected, 1);
+
+        expect(versions()).to.deep.equal([`${prefix}2.100.1`]);
+    });
+
     it("does not remove packages when the configured limit exceeds the cache size", async () => {
         const selected = addPackage("2.100.1");
         addPackage("2.110.1");
@@ -265,6 +285,26 @@ describe("SDK package retention", () => {
         expect(versions()).to.have.length(2);
         expect(appendErrorLine.calledOnce).to.be.true;
         expect(appendErrorLine.firstCall.args[0]).to.contain("access denied");
+    });
+
+    it("does not probe inaccessible usage owners when selecting their package", () => {
+        const selected = addPackage("2.160.2");
+        const otherPid = 2147483647;
+        const kill = process.kill;
+        const probe = sinon.stub(process, "kill").callsFake((pid, signal) => {
+            if (pid === otherPid) {
+                throw Object.assign(new Error("access denied"), { code: "EPERM" });
+            }
+
+            return kill(pid, signal);
+        });
+        const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.160.2`);
+        fs.mkdirSync(usage, { recursive: true });
+        fs.writeFileSync(path.join(usage, `use-${otherPid}-00000000-0000-0000-0000-000000000000`), "");
+
+        expect(() => protectNugetPackage(cache, selected)).not.to.throw();
+        expect(probe.calledWith(otherPid)).to.be.false;
+        expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
     });
 
     it("keeps paths exposed earlier in this host available to existing queues and tasks", async () => {

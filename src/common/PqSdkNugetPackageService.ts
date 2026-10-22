@@ -14,8 +14,8 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
+import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
-import { protectNugetPackage } from "../utils/nugetPackageUsage";
 import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
@@ -37,6 +37,12 @@ export class PqSdkNugetPackageService {
     ) {
         this.nugetHttpService = new NugetHttpService(outputChannel);
         this.nugetCommandService = new NugetCommandService(vscExtCtx.extensionPath, outputChannel);
+
+        if (outputChannel) {
+            nugetPackageProtection.setOutputChannel(outputChannel);
+        }
+
+        vscExtCtx.subscriptions.push(nugetPackageProtection);
         this.protectConfiguredPackages();
 
         vscExtCtx.subscriptions.push(
@@ -145,18 +151,23 @@ export class PqSdkNugetPackageService {
 
     private protectConfiguredPackages(): string | undefined {
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
-        const toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+        let toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
         const directExecutable: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
 
         if (toolsLocation) {
-            protectNugetPackage(baseNugetFolder, toolsLocation);
+            toolsLocation = nugetPackageProtection.getProtectedLocation(baseNugetFolder, toolsLocation);
         }
 
         if (directExecutable) {
-            protectNugetPackage(baseNugetFolder, path.dirname(directExecutable));
+            nugetPackageProtection.getProtectedLocation(baseNugetFolder, path.dirname(directExecutable));
         }
 
         return toolsLocation;
+    }
+
+    public async waitForConfiguredPackages(): Promise<void> {
+        this.protectConfiguredPackages();
+        await nugetPackageProtection.waitForPending();
     }
 
     public cleanupUnusedPackages(): Promise<void> {
@@ -175,7 +186,14 @@ export class PqSdkNugetPackageService {
             fs.mkdirSync(baseNugetFolder);
         }
 
-        protectNugetPackage(baseNugetFolder, path.dirname(this.expectedPqSdkPath(maybeNextVersion)));
+        if (
+            !nugetPackageProtection.getProtectedLocation(
+                baseNugetFolder,
+                path.dirname(this.expectedPqSdkPath(maybeNextVersion)),
+            )
+        ) {
+            await nugetPackageProtection.waitForPending();
+        }
 
         if (ExtensionConfigurations.nugetPath) {
             return this.nugetCommandService.downloadAndExtractNugetPackage(

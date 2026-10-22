@@ -17,6 +17,13 @@ const usageDirectoryName: string = ".sdk-package-usage";
 const markerPattern: RegExp = /^(use|cleanup)-([1-9]\d*)-([a-f0-9-]{36})$/;
 const owner: string = `${process.pid}-${randomUUID()}`;
 
+export class NugetPackageCleanupInProgressError extends Error {
+    constructor(toolsLocation: string) {
+        super(`SDK package cleanup is in progress; retry selecting ${toolsLocation}`);
+        this.name = "NugetPackageCleanupInProgressError";
+    }
+}
+
 function hasErrorCode(error: unknown, code: string): boolean {
     return error instanceof Error && "code" in error && error.code === code;
 }
@@ -76,7 +83,7 @@ function getManagedPackageDirectory(baseNugetFolder: string, toolsLocation: stri
     if (
         path.relative(baseNugetFolder, path.dirname(packageDirectory)) !== "" ||
         path.basename(toolsLocation).toLowerCase() !== "tools" ||
-        !packageName.startsWith(prefix) ||
+        !packageName.toLowerCase().startsWith(prefix.toLowerCase()) ||
         NugetVersions.createFromReleasedVersionString(packageName.slice(prefix.length)).isZero()
     ) {
         return undefined;
@@ -85,7 +92,7 @@ function getManagedPackageDirectory(baseNugetFolder: string, toolsLocation: stri
     return packageDirectory;
 }
 
-function getLiveMarkers(usageDirectory: string): ReadonlyArray<string> {
+function getLiveMarkers(usageDirectory: string, kind?: "use" | "cleanup"): ReadonlyArray<string> {
     const markers: ReadonlyArray<fs.Dirent> = fs.readdirSync(usageDirectory, { withFileTypes: true });
     const liveMarkers: string[] = [];
 
@@ -94,6 +101,10 @@ function getLiveMarkers(usageDirectory: string): ReadonlyArray<string> {
 
         if (!marker.isFile() || !match) {
             throw new Error(`Unrecognized SDK package usage marker: ${path.join(usageDirectory, marker.name)}`);
+        }
+
+        if (kind && match[1] !== kind) {
+            continue;
         }
 
         if (processIsAlive(Number(match[2]))) {
@@ -127,15 +138,13 @@ export function protectNugetPackage(baseNugetFolder: string, toolsLocation: stri
     // Publish before checking deletion intent; a cleaner must see our lease or we must see its guard.
     fs.closeSync(fs.openSync(marker, "a"));
 
-    if (getLiveMarkers(usageDirectory).some((name: string) => name.startsWith("cleanup-"))) {
-        throw new Error(`SDK package cleanup is in progress; retry selecting ${toolsLocation}`);
+    if (getLiveMarkers(usageDirectory, "cleanup").length) {
+        throw new NugetPackageCleanupInProgressError(toolsLocation);
     }
 }
 
 export function nugetPackageIsInUse(baseNugetFolder: string, packageDirectory: string): boolean {
-    return getLiveMarkers(getUsageDirectory(baseNugetFolder, packageDirectory)).some((name: string) =>
-        name.startsWith("use-"),
-    );
+    return getLiveMarkers(getUsageDirectory(baseNugetFolder, packageDirectory), "use").length > 0;
 }
 
 export async function removeUnusedNugetPackage(baseNugetFolder: string, packageDirectory: string): Promise<boolean> {

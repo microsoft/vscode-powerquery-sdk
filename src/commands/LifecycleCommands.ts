@@ -541,6 +541,8 @@ export class LifecycleCommands implements IDisposable {
 
     private async doCheckAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         try {
+            await this.pqSdkNugetPackageService.waitForConfiguredPackages();
+
             return await initializePqSdkTools({
                 selectedToolsLocation: ExtensionConfigurations.PQTestLocation,
                 selectedToolsReady: this.pqTestService.pqTestReady,
@@ -624,6 +626,8 @@ export class LifecycleCommands implements IDisposable {
      */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
         try {
+            await this.pqSdkNugetPackageService.waitForConfiguredPackages();
+
             if (!maybeNextVersion) {
                 maybeNextVersion = await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
             }

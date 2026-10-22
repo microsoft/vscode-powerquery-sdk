@@ -69,11 +69,11 @@ describe("SDK package coordination across processes", function () {
         return { child, result };
     }
 
-    it("keeps another host's selected tools until that host exits", async () => {
+    it("keeps another host's differently cased selection until that host exits", async () => {
         const selected = addPackage("2.160.2");
         const otherSelection = addPackage("2.158.1");
         const unused = addPackage("2.159.1");
-        const host = startHost(otherSelection);
+        const host = startHost(otherSelection.toLowerCase());
         expect(await host.result).to.deep.equal({ protected: true });
 
         await cleanupNugetPackages(cache, selected, 1);

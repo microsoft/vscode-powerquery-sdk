@@ -44,7 +44,7 @@ export async function cleanupNugetPackages(
         const prefix: string = `${ExtensionConstants.InternalMsftPqSdkToolsNugetName}.`;
 
         for (const entry of entries) {
-            if (!entry.isDirectory() || !entry.name.startsWith(prefix)) {
+            if (!entry.isDirectory() || !entry.name.toLowerCase().startsWith(prefix.toLowerCase())) {
                 continue;
             }
 

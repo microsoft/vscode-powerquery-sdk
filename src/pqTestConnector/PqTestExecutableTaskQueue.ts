@@ -29,6 +29,7 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { convertStringToInteger } from "../utils/numbers";
 import { pidIsRunning } from "../utils/pids";
 import { resolveSubstitutedValues } from "../utils/vscodes";
@@ -126,6 +127,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation,
                 this.onPowerQueryTestLocationChanged.bind(this),
             ),
+        );
+
+        this._disposables.push(
+            nugetPackageProtection.subscribeOneEvent("recovered", this.onPowerQueryTestLocationChanged.bind(this)),
         );
 
         this.onPowerQueryTestLocationChanged();
