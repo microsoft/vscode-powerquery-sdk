@@ -27,10 +27,10 @@ import { createTestItem } from "./utils/testUtils";
 import { getPathType } from "./utils/vscodeFs";
 
 export class TestWatcherManager implements vscode.Disposable {
-    private fileWatchers: Map<string, vscode.FileSystemWatcher> = new Map<string, vscode.FileSystemWatcher>();
-    private directoryWatchers: Map<string, vscode.FileSystemWatcher> = new Map<string, vscode.FileSystemWatcher>();
+    private fileWatchers: Map<string, vscode.Disposable> = new Map<string, vscode.Disposable>();
+    private directoryWatchers: Map<string, vscode.Disposable> = new Map<string, vscode.Disposable>();
     private disposables: vscode.Disposable[] = [];
-    private watcherDisposables: vscode.Disposable[] = [];
+    private pendingFileCreations: Map<string, symbol> = new Map<string, symbol>();
     private watcherGeneration: number = 0;
 
     constructor(
@@ -226,11 +226,15 @@ export class TestWatcherManager implements vscode.Disposable {
 
         const watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 
-        watcher.onDidChange(this.onFileChanged, this, this.watcherDisposables);
-        watcher.onDidDelete(this.onFileDeleted, this, this.watcherDisposables);
-
         // Use normalized URI string as key for consistent lookups
-        this.fileWatchers.set(getNormalizedUriString(uri), watcher);
+        this.fileWatchers.set(
+            getNormalizedUriString(uri),
+            vscode.Disposable.from(
+                watcher.onDidChange(this.onFileChanged, this),
+                watcher.onDidDelete(this.onFileDeleted, this),
+                watcher,
+            ),
+        );
     }
 
     /**
@@ -253,10 +257,14 @@ export class TestWatcherManager implements vscode.Disposable {
 
         const watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 
-        watcher.onDidCreate(this.onFileCreatedInDirectory, this, this.watcherDisposables);
-        watcher.onDidDelete(this.onFileDeletedFromDirectory, this, this.watcherDisposables);
-
-        this.directoryWatchers.set(directoryPath, watcher);
+        this.directoryWatchers.set(
+            directoryPath,
+            vscode.Disposable.from(
+                watcher.onDidCreate(this.onFileCreatedInDirectory, this),
+                watcher.onDidDelete(this.onFileDeletedFromDirectory, this),
+                watcher,
+            ),
+        );
     }
 
     /**
@@ -293,6 +301,9 @@ export class TestWatcherManager implements vscode.Disposable {
      * Handles file deletion events for settings files
      */
     private onFileDeleted(uri: vscode.Uri): void {
+        const normalizedUriString: string = getNormalizedUriString(uri);
+        this.pendingFileCreations.delete(normalizedUriString);
+
         this.outputChannel.appendDebugLine(
             resolveI18nTemplate("PQSdk.testAdapter.fileDeleted", { filePath: uri.fsPath }),
         );
@@ -305,8 +316,7 @@ export class TestWatcherManager implements vscode.Disposable {
         }
 
         // Dispose the watcher for this file using normalized URI
-        const normalizedUriString: string = getNormalizedUriString(uri);
-        const watcher: vscode.FileSystemWatcher | undefined = this.fileWatchers.get(normalizedUriString);
+        const watcher: vscode.Disposable | undefined = this.fileWatchers.get(normalizedUriString);
 
         if (watcher) {
             watcher.dispose();
@@ -333,10 +343,15 @@ export class TestWatcherManager implements vscode.Disposable {
             return;
         }
 
+        const normalizedUriString: string = getNormalizedUriString(uri);
+        const creation: symbol = Symbol();
+        this.pendingFileCreations.set(normalizedUriString, creation);
+
         try {
             if (
                 (await isTestSettingsExcluded(uri)) ||
                 generation !== this.watcherGeneration ||
+                this.pendingFileCreations.get(normalizedUriString) !== creation ||
                 this.findTestItemByUri(uri)
             ) {
                 return;
@@ -359,6 +374,10 @@ export class TestWatcherManager implements vscode.Disposable {
             });
 
             this.outputChannel.appendDebugLine(errorMessage);
+        } finally {
+            if (this.pendingFileCreations.get(normalizedUriString) === creation) {
+                this.pendingFileCreations.delete(normalizedUriString);
+            }
         }
     }
 
@@ -370,13 +389,7 @@ export class TestWatcherManager implements vscode.Disposable {
             resolveI18nTemplate("PQSdk.testAdapter.fileDeletedFromDirectory", { filePath: uri.fsPath }),
         );
 
-        // The individual file watcher should have already handled this,
-        // but in case it didn't, let's ensure the test item is removed
-        const testItem: vscode.TestItem | undefined = this.findTestItemByUri(uri);
-
-        if (testItem) {
-            this.controller.items.delete(testItem.id);
-        }
+        this.onFileDeleted(uri);
     }
 
     /**
@@ -454,12 +467,7 @@ export class TestWatcherManager implements vscode.Disposable {
      */
     private disposeWatchers(): void {
         this.watcherGeneration++;
-
-        for (const disposable of this.watcherDisposables) {
-            disposable.dispose();
-        }
-
-        this.watcherDisposables = [];
+        this.pendingFileCreations.clear();
 
         // Dispose file watchers
         for (const watcher of this.fileWatchers.values()) {

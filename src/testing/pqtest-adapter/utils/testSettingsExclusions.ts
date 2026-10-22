@@ -62,6 +62,7 @@ export async function isTestSettingsExcluded(uri: vscode.Uri): Promise<boolean> 
                 !minimatch(relativeCandidate, pattern, {
                     dot: true,
                     nonegate: true,
+                    nocomment: true,
                     noext: true,
                     nocase: process.platform === "win32",
                 })

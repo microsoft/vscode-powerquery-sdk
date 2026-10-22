@@ -44,6 +44,7 @@ suite("Test settings discovery", () => {
         created: vscode.EventEmitter<vscode.Uri>;
         deleted: vscode.EventEmitter<vscode.Uri>;
         dispose: sinon.SinonSpy;
+        listenerDisposed: sinon.SinonSpy;
     }>;
 
     setup(() => {
@@ -93,6 +94,26 @@ suite("Test settings discovery", () => {
             const created: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
             const changed: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
             const deleted: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
+            const listenerDisposed: sinon.SinonSpy = sandbox.spy();
+
+            function trackListeners(event: vscode.Event<vscode.Uri>): vscode.Event<vscode.Uri> {
+                return (
+                    listener: (event: vscode.Uri) => unknown,
+                    thisArgs?: unknown,
+                    disposables?: vscode.Disposable[],
+                ) => {
+                    const registration: vscode.Disposable = event(listener, thisArgs);
+
+                    const disposable: vscode.Disposable = new vscode.Disposable(() => {
+                        registration.dispose();
+                        listenerDisposed();
+                    });
+
+                    disposables?.push(disposable);
+
+                    return disposable;
+                };
+            }
 
             const dispose: sinon.SinonSpy = sandbox.spy(() => {
                 created.dispose();
@@ -100,15 +121,15 @@ suite("Test settings discovery", () => {
                 deleted.dispose();
             });
 
-            watchers.push({ pattern, created, deleted, dispose });
+            watchers.push({ pattern, created, deleted, dispose, listenerDisposed });
 
             return {
                 ignoreCreateEvents: false,
                 ignoreChangeEvents: false,
                 ignoreDeleteEvents: false,
-                onDidCreate: created.event,
-                onDidChange: changed.event,
-                onDidDelete: deleted.event,
+                onDidCreate: trackListeners(created.event),
+                onDidChange: trackListeners(changed.event),
+                onDidDelete: trackListeners(deleted.event),
                 dispose,
             };
         });
@@ -231,6 +252,13 @@ suite("Test settings discovery", () => {
         assert.strictEqual(await isTestSettingsExcluded(uri("tests/other.testsettings.json")), false);
     });
 
+    test("exclusions beginning with a hash are literal patterns, not comments", async () => {
+        filesExclude = { "#generated": true };
+
+        assert.strictEqual(await isTestSettingsExcluded(uri("#generated/sample.testsettings.json")), true);
+        assert.strictEqual(await isTestSettingsExcluded(uri("tests/sample.testsettings.json")), false);
+    });
+
     test("missing paths and incorrect extensions only log diagnostics", async () => {
         settings = [uri("missing.testsettings.json").fsPath, uri("not-settings.json").fsPath];
         stat.onFirstCall().rejects(vscode.FileSystemError.FileNotFound());
@@ -281,6 +309,46 @@ suite("Test settings discovery", () => {
         assert.ok(!pattern.pattern.includes("*"));
         assert.strictEqual(findFiles.callCount, 0);
     });
+
+    test("directory deletion cancels an in-flight create instead of adding a stale item", async () => {
+        settings = uri("tests").fsPath;
+        directoryStat();
+        manager = new TestWatcherManager(controller, output);
+        await manager.initialize();
+
+        const file: vscode.Uri = uri("tests/transient.testsettings.json");
+        watchers[0].created.fire(file);
+        watchers[0].deleted.fire(file);
+        await new Promise<void>(resolve => setImmediate(resolve));
+
+        assert.strictEqual(controller.items.size, 0);
+        assert.strictEqual(watchers.length, 1);
+    });
+
+    for (const deletionSource of ["file", "directory"]) {
+        test(`${deletionSource} deletion disposes the file watcher and its listeners immediately`, async () => {
+            settings = uri("tests").fsPath;
+            directoryStat();
+            manager = new TestWatcherManager(controller, output);
+            await manager.initialize();
+
+            const file: vscode.Uri = uri("tests/transient.testsettings.json");
+            const directoryWatcher: (typeof watchers)[number] = watchers[0];
+            directoryWatcher.created.fire(file);
+            await new Promise<void>(resolve => setImmediate(resolve));
+            const fileWatcher: (typeof watchers)[number] = watchers[1];
+
+            (deletionSource === "file" ? fileWatcher : directoryWatcher).deleted.fire(file);
+
+            assert.strictEqual(controller.items.size, 0);
+            assert.strictEqual(fileWatcher.dispose.callCount, 1);
+            assert.strictEqual(fileWatcher.listenerDisposed.callCount, 2);
+
+            manager.dispose();
+            assert.strictEqual(fileWatcher.dispose.callCount, 1);
+            assert.strictEqual(fileWatcher.listenerDisposed.callCount, 2);
+        });
+    }
 
     test("exclusion changes reset discovery and dispose previous watchers", async () => {
         settings = [uri("tests").fsPath, uri("tests").fsPath];
