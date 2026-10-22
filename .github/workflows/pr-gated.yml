@@ -9,9 +9,9 @@ jobs:
         runs-on: windows-latest
         steps:
             - name: checkout
-              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: setup node
-              uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version: "22"
             - run: node -v
@@ -19,13 +19,13 @@ jobs:
             - run: npm run test:unit-test
             - run: npm run vsix
             - name: retry 5 times e2e test cases
-              uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
+              uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
               with:
                   timeout_minutes: 10
                   max_attempts: 5
                   command: npm run test:e2e
             - name: upload VSIX to artifactory
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
                   name: vsix-artifact
                   path: |
