@@ -15,6 +15,7 @@ import packageJson from "../../../package.json";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { cleanupNugetPackages } from "../../../src/utils/nugetPackageRetention";
 import { protectNugetPackage } from "../../../src/utils/nugetPackageUsage";
+import processIdentity = require("../../../src/utils/processIdentity");
 
 describe("SDK package retention", () => {
     let root: string;
@@ -240,9 +241,13 @@ describe("SDK package retention", () => {
         const otherPid = 2147483647;
         const kill = process.kill;
         sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
+        const getCreationTime = processIdentity.getProcessCreationTime;
+        sinon.stub(processIdentity, "getProcessCreationTime").callsFake(pid => {
+            return pid === otherPid ? "123" : getCreationTime(pid);
+        });
         const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.158.1`);
         fs.mkdirSync(usage, { recursive: true });
-        fs.writeFileSync(path.join(usage, `use-${otherPid}-00000000-0000-0000-0000-000000000000`), "");
+        fs.writeFileSync(path.join(usage, `use-${otherPid}-123-00000000-0000-0000-0000-000000000000`), "");
 
         await cleanupNugetPackages(cache, selected, 1);
 
@@ -295,6 +300,19 @@ describe("SDK package retention", () => {
         expect(versions()).to.have.length(2);
         expect(appendErrorLine.calledOnce).to.be.true;
         expect(appendErrorLine.firstCall.args[0]).to.contain("access denied");
+    });
+
+    it("reclaims usage leases whose PID has been reused by another process instance", async () => {
+        const selected = addPackage("2.160.2");
+        const unused = addPackage("2.158.1");
+        const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.158.1`);
+        fs.mkdirSync(usage, { recursive: true });
+        fs.writeFileSync(path.join(usage, `use-${process.pid}-1-00000000-0000-0000-0000-000000000000`), "");
+
+        await cleanupNugetPackages(cache, selected, 1);
+
+        expect(fs.existsSync(unused)).to.be.false;
+        expect(fs.readdirSync(usage)).to.deep.equal([]);
     });
 
     it("does not probe inaccessible usage owners when selecting their package", () => {

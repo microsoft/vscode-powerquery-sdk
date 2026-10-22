@@ -12,10 +12,22 @@ import * as path from "path";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { removeDirectoryRecursively } from "./files";
 import { NugetVersions } from "./NugetVersions";
+import { getProcessCreationTime } from "./processIdentity";
 
 const usageDirectoryName: string = ".sdk-package-usage";
-const markerPattern: RegExp = /^(use|cleanup)-([1-9]\d*)-([a-f0-9-]{36})$/;
-const owner: string = `${process.pid}-${randomUUID()}`;
+const markerPattern: RegExp = /^(use|cleanup)-([1-9]\d*)-([1-9]\d*)-([a-f0-9-]{36})$/;
+const legacyMarkerPattern: RegExp = /^(use|cleanup)-([1-9]\d*)-([a-f0-9-]{36})$/;
+const ownerToken: string = randomUUID();
+
+function currentOwner(): string {
+    const creationTime: string | undefined = getProcessCreationTime(process.pid);
+
+    if (!creationTime) {
+        throw new Error("Cannot determine the current SDK host's process identity");
+    }
+
+    return `${process.pid}-${creationTime}-${ownerToken}`;
+}
 
 export class NugetPackageCleanupInProgressError extends Error {
     constructor(toolsLocation: string) {
@@ -38,11 +50,9 @@ function removeMarker(marker: string): void {
     }
 }
 
-function processIsAlive(pid: number): boolean {
+function processIsAlive(pid: number, creationTime: string | undefined): boolean {
     try {
         process.kill(pid, 0);
-
-        return true;
     } catch (error: unknown) {
         // Permission errors and unknown failures must not authorize deleting another host's tools.
         if (!hasErrorCode(error, "ESRCH")) {
@@ -51,6 +61,12 @@ function processIsAlive(pid: number): boolean {
 
         return false;
     }
+
+    if (!creationTime) {
+        throw new Error(`Cannot verify SDK package marker ownership without a process creation time: ${pid}`);
+    }
+
+    return getProcessCreationTime(pid) === creationTime;
 }
 
 function assertRealDirectory(directory: string): void {
@@ -98,7 +114,7 @@ function getLiveMarkers(usageDirectory: string, kind?: "use" | "cleanup"): Reado
     const liveMarkers: string[] = [];
 
     for (const marker of markers) {
-        const match: RegExpExecArray | null = markerPattern.exec(marker.name);
+        const match: RegExpExecArray | null = markerPattern.exec(marker.name) ?? legacyMarkerPattern.exec(marker.name);
 
         if (!marker.isFile() || !match) {
             throw new Error(`Unrecognized SDK package usage marker: ${path.join(usageDirectory, marker.name)}`);
@@ -108,7 +124,9 @@ function getLiveMarkers(usageDirectory: string, kind?: "use" | "cleanup"): Reado
             continue;
         }
 
-        if (processIsAlive(Number(match[2]))) {
+        const creationTime: string | undefined = match.length === 5 ? match[3] : undefined;
+
+        if (processIsAlive(Number(match[2]), creationTime)) {
             liveMarkers.push(marker.name);
         } else {
             removeMarker(path.join(usageDirectory, marker.name));
@@ -133,7 +151,7 @@ export function protectNugetPackage(baseNugetFolder: string, toolsLocation: stri
     }
 
     const usageDirectory: string = getUsageDirectory(baseNugetFolder, packageDirectory);
-    const marker: string = path.join(usageDirectory, `use-${owner}`);
+    const marker: string = path.join(usageDirectory, `use-${currentOwner()}`);
 
     // Keep leases for this process's lifetime: existing queues/tasks may retain previous tool paths.
     // Publish before checking deletion intent; a cleaner must see our lease or we must see its guard.
@@ -157,7 +175,7 @@ export async function removeUnusedNugetPackage(baseNugetFolder: string, packageD
     }
 
     const usageDirectory: string = getUsageDirectory(baseNugetFolder, packageDirectory);
-    const markerName: string = `cleanup-${owner}`;
+    const markerName: string = `cleanup-${currentOwner()}`;
     const marker: string = path.join(usageDirectory, markerName);
 
     try {

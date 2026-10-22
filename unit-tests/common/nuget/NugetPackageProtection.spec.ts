@@ -15,6 +15,7 @@ import { initializePqSdkTools } from "../../../src/commands/handlers/initializeP
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { NugetPackageProtection } from "../../../src/utils/NugetPackageProtection";
 import { NugetPackageCleanupInProgressError } from "../../../src/utils/nugetPackageUsage";
+import processIdentity = require("../../../src/utils/processIdentity");
 
 describe("Retryable SDK package protection", () => {
     let root: string;
@@ -35,7 +36,10 @@ describe("Retryable SDK package protection", () => {
         fs.writeFileSync(path.join(tools, "PQTest.exe"), "");
         const usage = path.join(cache, ".sdk-package-usage", packageName);
         fs.mkdirSync(usage, { recursive: true });
-        guard = path.join(usage, `cleanup-${process.pid}-00000000-0000-0000-0000-000000000000`);
+        guard = path.join(
+            usage,
+            `cleanup-${process.pid}-${processIdentity.getProcessCreationTime(process.pid)}-00000000-0000-0000-0000-000000000000`,
+        );
         fs.writeFileSync(guard, "");
         clock = sinon.useFakeTimers();
         protection = new NugetPackageProtection();
@@ -130,6 +134,61 @@ describe("Retryable SDK package protection", () => {
         await clock.tickAsync(100);
 
         expect(protection.getProtectedExecutablePath(cache, executable)).to.equal(executable);
+    });
+
+    it("reclaims a persisted guard when its PID belongs to a different process instance", async () => {
+        fs.unlinkSync(guard);
+        const staleGuard = path.join(
+            path.dirname(guard),
+            `cleanup-${process.pid}-1-00000000-0000-0000-0000-000000000000`,
+        );
+        fs.writeFileSync(staleGuard, "");
+
+        expect(protection.getProtectedLocation(cache, tools)).to.equal(tools);
+        await protection.waitForPending();
+
+        expect(fs.existsSync(staleGuard)).to.be.false;
+        expect(clock.countTimers()).to.equal(0);
+        expect(appendErrorLine.called).to.be.false;
+    });
+
+    it("resumes waiting startup when a cleanup owner's PID is reused between retries", async () => {
+        fs.unlinkSync(guard);
+        const otherPid = 2147483647;
+        let creationTime = "123";
+        const kill = process.kill;
+        sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
+        const getCreationTime = processIdentity.getProcessCreationTime;
+        sinon
+            .stub(processIdentity, "getProcessCreationTime")
+            .callsFake(pid => (pid === otherPid ? creationTime : getCreationTime(pid)));
+        guard = path.join(path.dirname(guard), `cleanup-${otherPid}-123-00000000-0000-0000-0000-000000000000`);
+        fs.writeFileSync(guard, "");
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
+        const ready = protection.waitForPending();
+        await clock.tickAsync(300);
+        expect(fs.existsSync(guard)).to.be.true;
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
+
+        creationTime = "456";
+        await clock.tickAsync(100);
+        await ready;
+
+        expect(fs.existsSync(guard)).to.be.false;
+        expect(protection.getProtectedLocation(cache, tools)).to.equal(tools);
+        expect(clock.countTimers()).to.equal(0);
+    });
+
+    it("does not expire a live legacy guard whose process instance cannot be verified", () => {
+        fs.unlinkSync(guard);
+        const legacyGuard = path.join(
+            path.dirname(guard),
+            `cleanup-${process.pid}-00000000-0000-0000-0000-000000000000`,
+        );
+        fs.writeFileSync(legacyGuard, "");
+
+        expect(() => protection.getProtectedLocation(cache, tools)).to.throw("without a process creation time");
+        expect(fs.existsSync(legacyGuard)).to.be.true;
     });
 
     it("does not block a custom direct executable when an unrelated package is pending", () => {
