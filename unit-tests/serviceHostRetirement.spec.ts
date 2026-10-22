@@ -58,5 +58,7 @@ describe("Retired service-host configuration", () => {
 
         checkDirectory(path.join(root, "src"));
         expect(manifest.dependencies).not.to.have.property("vscode-jsonrpc");
+        expect(manifest.devDependencies).not.to.have.property("ws");
+        expect(manifest.devDependencies).not.to.have.property("@types/ws");
     });
 });

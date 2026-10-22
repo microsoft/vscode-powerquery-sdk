@@ -506,7 +506,6 @@
         "@types/sinon": "^10.0.20",
         "@types/vinyl-fs": "^3.0.8",
         "@types/vscode": "^1.95.0",
-        "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "@typescript-eslint/parser": "^8.36.0",
         "@vscode/debugadapter": "^1.65.0",
@@ -535,8 +534,7 @@
         "vinyl-fs": "^4.0.2",
         "vscode-nls-dev": "^4.0.4",
         "webpack": "^5.105.1",
-        "webpack-cli": "^6.0.1",
-        "ws": "^8.18.3"
+        "webpack-cli": "^6.0.1"
     },
     "lint-staged": {
         "!(src)/**/*.{ts}": [
