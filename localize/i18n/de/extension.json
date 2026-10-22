@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "Aktivieren",
   "PQSdk.common.cancel": "Abbrechen",
+  "PQSdk.taskProvider.taskFailed": "Die Aufgabe {taskName} ist fehlgeschlagen oder wurde abgebrochen.",
   "PQSdk.query.saveAndRun": "Speichern und ausführen",
   "PQSdk.query.saveRequired": "PQTest.exe führt gespeicherte Dateien aus. {queryFile} vor der Ausführung speichern?",
   "PQSdk.query.executionCancelled": "Ausführung abgebrochen. {queryFile} muss vor der Ausführung gespeichert werden.",

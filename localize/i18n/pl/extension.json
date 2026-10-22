@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "Włącz",
   "PQSdk.common.cancel": "Anuluj",
+  "PQSdk.taskProvider.taskFailed": "Zadanie {taskName} nie powiodło się lub zostało anulowane.",
   "PQSdk.query.saveAndRun": "Zapisz i uruchom",
   "PQSdk.query.saveRequired": "PQTest.exe uruchamia zapisane pliki. Czy zapisać {queryFile} przed uruchomieniem?",
   "PQSdk.query.executionCancelled": "Anulowano wykonywanie. Przed uruchomieniem należy zapisać {queryFile}.",

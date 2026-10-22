@@ -44,6 +44,13 @@ target document first. Cancelling or a failed save prevents execution. Untitled
 queries must be saved to a local file before running. Independently invoked shell
 commands run the files on disk; save any editor changes yourself first.
 
+CLI tasks preserve their workspace, configured connector paths, and existing
+build dependencies. Run/debug continues to respect `preLaunchTask`; neither adds
+an implicit connector rebuild. Lifecycle query and connection commands retain
+their existing build-before-run behavior and stop when that build fails.
+The query result view continues to display failed tests and their diagnostics,
+including test batteries containing both passed and failed queries.
+
 Operations no longer reuse a warm service process and may take longer. Existing
 credential storage is unchanged, and this update does not remove cached tool
 packages or stop old service-host processes. After updating, reload all SDK

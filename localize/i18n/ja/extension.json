@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "有効化",
   "PQSdk.common.cancel": "キャンセル",
+  "PQSdk.taskProvider.taskFailed": "タスク {taskName} が失敗したか、キャンセルされました。",
   "PQSdk.query.saveAndRun": "保存して実行",
   "PQSdk.query.saveRequired": "PQTest.exe は保存済みのファイルを実行します。実行前に {queryFile} を保存しますか?",
   "PQSdk.query.executionCancelled": "実行がキャンセルされました。実行前に {queryFile} を保存する必要があります。",

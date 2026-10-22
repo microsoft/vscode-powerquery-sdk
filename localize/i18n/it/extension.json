@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "Abilita",
   "PQSdk.common.cancel": "Annulla",
+  "PQSdk.taskProvider.taskFailed": "L'attività {taskName} non è riuscita o è stata annullata.",
   "PQSdk.query.saveAndRun": "Salva ed esegui",
   "PQSdk.query.saveRequired": "PQTest.exe esegue file salvati. Salvare {queryFile} prima dell’esecuzione?",
   "PQSdk.query.executionCancelled": "Esecuzione annullata. È necessario salvare {queryFile} prima dell’esecuzione.",

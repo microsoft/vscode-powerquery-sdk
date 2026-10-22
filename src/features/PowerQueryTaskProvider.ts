@@ -12,7 +12,7 @@ import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
 import { buildPqTestArgs, IPQTestService } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
-import { extensionI18n } from "../i18n/extension";
+import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PqTestTaskTerminal } from "./PqTestTaskTerminal";
 
@@ -84,15 +84,7 @@ const makePQXCompileTaskDefinition: PowerQueryTaskDefinition = {
     additionalArgs: [],
 };
 
-interface PendingTaskResolver {
-    resolve: (execution: vscode.TaskExecution) => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    reject: (reason: any) => void;
-}
-
 export class PowerQueryTaskProvider implements vscode.TaskProvider {
-    private static pendingTaskMap: WeakMap<vscode.Task, PendingTaskResolver> = new WeakMap();
-
     public static TaskType: string = ExtensionConstants.PowerQueryTaskType;
     // the ExtensionConfigurations.msbuildPath might change during the runtime,
     // thus we also have to build the task during the runtime
@@ -112,26 +104,46 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     }
 
     public static executeTask(task: vscode.Task): Promise<vscode.TaskExecution> {
-        void vscode.tasks.executeTask(task);
+        return new Promise((resolve: (execution: vscode.TaskExecution) => void, reject: (error: unknown) => void) => {
+            let execution: vscode.TaskExecution | undefined;
+            let exitCode: number | undefined;
 
-        return new Promise<vscode.TaskExecution>(
-            (resolve: PendingTaskResolver["resolve"], reject: PendingTaskResolver["reject"]) => {
-                this.pendingTaskMap.set(task, { resolve, reject });
-            },
-        );
-    }
+            const matches = (candidate: vscode.TaskExecution): boolean =>
+                candidate === execution || candidate.task === task;
 
-    public static ActivateModule(): void {
-        vscode.tasks.onDidEndTask((event: vscode.TaskEndEvent) => {
-            const theTask: vscode.Task = event.execution.task;
+            const processListener: vscode.Disposable = vscode.tasks.onDidEndTaskProcess(
+                (event: vscode.TaskProcessEndEvent) => {
+                    if (matches(event.execution)) {
+                        exitCode = event.exitCode;
+                    }
+                },
+            );
 
-            const maybePendingTaskResolver: PendingTaskResolver | undefined =
-                PowerQueryTaskProvider.pendingTaskMap.get(theTask);
+            const taskListener: vscode.Disposable = vscode.tasks.onDidEndTask((event: vscode.TaskEndEvent) => {
+                if (matches(event.execution)) {
+                    processListener.dispose();
+                    taskListener.dispose();
 
-            if (maybePendingTaskResolver) {
-                maybePendingTaskResolver.resolve(event.execution);
-                PowerQueryTaskProvider.pendingTaskMap.delete(theTask);
-            }
+                    if (exitCode === 0) {
+                        resolve(event.execution);
+                    } else {
+                        reject(
+                            new Error(resolveI18nTemplate("PQSdk.taskProvider.taskFailed", { taskName: task.name })),
+                        );
+                    }
+                }
+            });
+
+            void vscode.tasks.executeTask(task).then(
+                (started: vscode.TaskExecution) => {
+                    execution = started;
+                },
+                (error: unknown) => {
+                    processListener.dispose();
+                    taskListener.dispose();
+                    reject(error);
+                },
+            );
         });
     }
 
@@ -200,7 +212,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         }
 
         if (pqtestExe && !token.isCancellationRequested) {
-            return PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, pqtestExe);
+            return PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, pqtestExe, task.scope);
         }
 
         return undefined;
@@ -209,22 +221,31 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
     private static getTaskForPQTestTaskDefinition(
         taskDef: PowerQueryTaskDefinition,
         executablePath: string,
+        scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace,
     ): vscode.Task {
         const args: string[] = buildPqTestArgs(taskDef);
 
         const execution: vscode.ProcessExecution | vscode.CustomExecution =
             taskDef.operation === "run-test" ||
+            taskDef.operation === "test-connection" ||
+            taskDef.operation === "refresh-credential" ||
             taskDef.stdinStr !== undefined ||
             taskDef.credentialTemplate !== undefined
                 ? new vscode.CustomExecution((resolvedDefinition: vscode.TaskDefinition) =>
-                      Promise.resolve(new PqTestTaskTerminal(resolvedDefinition as PowerQueryTaskDefinition)),
+                      Promise.resolve(
+                          new PqTestTaskTerminal(
+                              resolvedDefinition as PowerQueryTaskDefinition,
+                              executablePath,
+                              typeof scope === "object" ? scope.uri.fsPath : undefined,
+                          ),
+                      ),
                   )
                 : new vscode.ProcessExecution(executablePath, args);
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(
             taskDef,
-            vscode.TaskScope.Workspace,
+            scope,
             taskDef.label ?? taskDef.operation,
             taskDef.operation === "compile" ? TaskLabelPrefix.Build : TaskLabelPrefix.PQTest,
             execution,
@@ -267,5 +288,3 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         return task;
     }
 }
-// activate the PowerQueryTaskProvider module to subscribe vsc tasks
-PowerQueryTaskProvider.ActivateModule();

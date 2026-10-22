@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "Enable",
   "PQSdk.common.cancel": "Cancel",
+  "PQSdk.taskProvider.taskFailed": "Task {taskName} failed or was cancelled.",
   "PQSdk.query.saveAndRun": "Save and Run",
   "PQSdk.query.saveRequired": "PQTest.exe runs saved files. Save {queryFile} before running?",
   "PQSdk.query.executionCancelled": "Execution cancelled. {queryFile} must be saved before running.",

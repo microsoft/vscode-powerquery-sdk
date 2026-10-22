@@ -30,20 +30,23 @@ import {
 import { PqTestExecutableTaskQueue } from "../../pqTestConnector/PqTestExecutableTaskQueue";
 import { inferAnyGeneralErrorString } from "../../pqTestConnector/PqTestTaskUtils";
 import * as taskUtils from "../../pqTestConnector/PqTestTaskUtils";
+import { findExecutable } from "../../utils/executables";
 import { ensureQueryDocumentSaved } from "../../utils/queryDocuments";
 
 suite("CLI-only execution", () => {
     let sandbox: sinon.SinonSandbox;
     let directory: string;
     let executable: string;
+    let directExecutable: string | undefined;
 
     setup(() => {
         sandbox = sinon.createSandbox();
         directory = fs.mkdtempSync(path.join(os.tmpdir(), "pq-sdk-cli-"));
         executable = path.join(directory, "PQTest.exe");
+        directExecutable = undefined;
         fs.writeFileSync(executable, "");
         sandbox.stub(ExtensionConfigurations, "PQTestLocation").get(() => directory);
-        sandbox.stub(ExtensionConfigurations, "pqTestExecutablePath").get(() => undefined);
+        sandbox.stub(ExtensionConfigurations, "pqTestExecutablePath").get(() => directExecutable);
         sandbox.stub(ExtensionConfigurations, "msbuildPath").get(() => undefined);
         sandbox.stub(taskUtils, "executeBuildTaskAndAwaitIfNeeded").resolves();
     });
@@ -183,7 +186,11 @@ suite("CLI-only execution", () => {
                 const definition = task.definition as PowerQueryTaskDefinition;
                 const resolved = await provider.resolveTask(task, new vscode.CancellationTokenSource().token);
 
-                if (definition.operation === "run-test") {
+                if (
+                    definition.operation === "run-test" ||
+                    definition.operation === "test-connection" ||
+                    definition.operation === "refresh-credential"
+                ) {
                     assert.ok(task.execution instanceof vscode.CustomExecution);
                     assert.ok(resolved?.execution instanceof vscode.CustomExecution);
                 } else if (definition.operation !== "msbuild" && definition.operation !== "compile") {
@@ -243,6 +250,7 @@ suite("CLI-only execution", () => {
     });
 
     test("query tasks run PQTest with the configured connector and propagate process failures", async () => {
+        (taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).rejects(new Error("Unexpected build"));
         const document = mockDocument({ isDirty: false });
         const originalSpawn = childProcess.spawn.bind(childProcess);
 
@@ -269,7 +277,7 @@ suite("CLI-only execution", () => {
         assert.strictEqual(exitCode, 7);
         assert.strictEqual(spawn.firstCall.args[0], executable);
         assert.ok(spawn.firstCall.args[1]?.includes(path.join(directory, "Configured.mez")));
-        assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).calledOnce);
+        assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
     });
 
     test("missing PQTest produces an actionable error, without host discovery", async () => {
@@ -338,6 +346,148 @@ suite("CLI-only execution", () => {
         assert.strictEqual(exitCode, 1);
     });
 
+    test("query tasks report failed test batteries without losing their output", async () => {
+        stubCli([{ Status: "Passed" }, { Status: "Failed", Error: { Message: "Query failed" } }]);
+        const terminal = new PqTestTaskTerminal({ type: PowerQueryTaskProvider.TaskType, operation: "run-test" });
+        let exitCode: number | undefined;
+        let output = "";
+
+        terminal.onDidClose(code => {
+            exitCode = code;
+        });
+
+        terminal.onDidWrite(text => {
+            output += text;
+        });
+
+        await terminal.open(undefined);
+        assert.strictEqual(exitCode, 1);
+        assert.match(output, /Query failed/);
+    });
+
+    test("relative query paths check the dirty document in the task working directory", async () => {
+        mockDocument();
+        sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+        const spawn = sandbox.stub(childProcess, "spawn");
+
+        const terminal = new PqTestTaskTerminal({
+            type: PowerQueryTaskProvider.TaskType,
+            operation: "run-test",
+            workingDirectory: directory,
+            pathToQueryFile: "hidden.query.pq",
+        });
+
+        let exitCode: number | undefined;
+
+        terminal.onDidClose(code => {
+            exitCode = code;
+        });
+
+        await terminal.open(undefined);
+        assert.strictEqual(exitCode, 1);
+        assert.ok(spawn.notCalled);
+        assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
+    });
+
+    for (const operation of ["test-connection", "refresh-credential"] as const) {
+        test(`${operation} tasks cancel without spawning when saving the query is declined`, async () => {
+            const document = mockDocument();
+            sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+            const spawn = sandbox.stub(childProcess, "spawn");
+
+            const terminal = new PqTestTaskTerminal({
+                type: PowerQueryTaskProvider.TaskType,
+                operation,
+                pathToQueryFile: document.uri.fsPath,
+            });
+
+            let exitCode: number | undefined;
+
+            terminal.onDidClose(code => {
+                exitCode = code;
+            });
+
+            await terminal.open(undefined);
+            assert.strictEqual(exitCode, 1);
+            assert.ok(spawn.notCalled);
+        });
+    }
+
+    for (const exitCode of [0, 1, undefined]) {
+        test(`build tasks settle with process exit code ${exitCode} and dispose their listeners`, async () => {
+            const taskEnded = new vscode.EventEmitter<vscode.TaskEndEvent>();
+            const processEnded = new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
+            const taskSubscription = sandbox.stub(vscode.tasks, "onDidEndTask").callsFake(taskEnded.event);
+            const processSubscription = sandbox.stub(vscode.tasks, "onDidEndTaskProcess").callsFake(processEnded.event);
+
+            const task = new vscode.Task(
+                { type: PowerQueryTaskProvider.TaskType },
+                vscode.TaskScope.Workspace,
+                "compile",
+                "build",
+                new vscode.ProcessExecution(executable),
+            );
+
+            const execution: vscode.TaskExecution = { task, terminate: sandbox.stub() };
+            sandbox.stub(vscode.tasks, "executeTask").resolves(execution);
+
+            try {
+                const pending = PowerQueryTaskProvider.executeTask(task);
+                const taskDisposed = sandbox.spy(taskSubscription.firstCall.returnValue, "dispose");
+                const processDisposed = sandbox.spy(processSubscription.firstCall.returnValue, "dispose");
+                processEnded.fire({ execution, exitCode });
+                taskEnded.fire({ execution });
+
+                if (exitCode === 0) {
+                    assert.strictEqual(await pending, execution);
+                } else {
+                    await assert.rejects(pending, /compile.*failed or was cancelled/);
+                }
+
+                assert.ok(taskDisposed.calledOnce);
+                assert.ok(processDisposed.calledOnce);
+            } finally {
+                taskEnded.dispose();
+                processEnded.dispose();
+            }
+        });
+    }
+
+    test("build startup failures reject and dispose their listeners", async () => {
+        const taskDisposed = sandbox.spy();
+        const processDisposed = sandbox.spy();
+        sandbox.stub(vscode.tasks, "onDidEndTask").returns(new vscode.Disposable(taskDisposed));
+        sandbox.stub(vscode.tasks, "onDidEndTaskProcess").returns(new vscode.Disposable(processDisposed));
+        sandbox.stub(vscode.tasks, "executeTask").rejects(new Error("Cannot start compiler"));
+        const task = PowerQueryTaskProvider.buildMakePQXCompileTask(directory);
+
+        await assert.rejects(PowerQueryTaskProvider.executeTask(task), /Cannot start compiler/);
+        assert.ok(taskDisposed.calledOnce);
+        assert.ok(processDisposed.calledOnce);
+    });
+
+    for (const exitCode of [0, 7]) {
+        test(`actual build process completion propagates exit code ${exitCode}`, async () => {
+            const node = findExecutable("node", [".exe", ""]);
+            assert.ok(node);
+
+            const task = new vscode.Task(
+                { type: PowerQueryTaskProvider.TaskType },
+                vscode.TaskScope.Workspace,
+                `CLI review build ${exitCode}`,
+                "build",
+                new vscode.ProcessExecution(node, ["-e", `process.exit(${exitCode})`]),
+                [],
+            );
+
+            if (exitCode === 0) {
+                assert.strictEqual((await PowerQueryTaskProvider.executeTask(task)).task.name, task.name);
+            } else {
+                await assert.rejects(PowerQueryTaskProvider.executeTask(task), /failed or was cancelled/);
+            }
+        });
+    }
+
     test("closing a query task while saving prevents spawning", async () => {
         const document = mockDocument();
         const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
@@ -388,6 +538,9 @@ suite("CLI-only execution", () => {
     });
 
     test("VS Code resolves saved query task variables before the CLI starts", async () => {
+        directExecutable = path.join(directory, "override", "PQTest.exe");
+        fs.mkdirSync(path.dirname(directExecutable));
+        fs.writeFileSync(directExecutable, "");
         const spawn = stubCli([{ Status: "Passed", Output: [{ Result: 42 }] }]);
         let output = "";
         const originalOpen = PqTestTaskTerminal.prototype.open;
@@ -426,11 +579,12 @@ suite("CLI-only execution", () => {
         const source = new vscode.CancellationTokenSource();
 
         const task = await provider.resolveTask(
-            new vscode.Task(definition, vscode.TaskScope.Workspace, "CLI variable resolution", "pqtest"),
+            new vscode.Task(definition, folder, "CLI variable resolution", "pqtest"),
             source.token,
         );
 
         assert.ok(task);
+        assert.strictEqual(task.scope, folder);
         let subscription: vscode.Disposable | undefined;
 
         const ended = new Promise<void>(resolve => {
@@ -449,6 +603,12 @@ suite("CLI-only execution", () => {
             assert.ok(open.calledOnce, `CLI task terminal did not open. Output: ${output}`);
             assert.ok(spawn.calledOnce, `Expected one CLI process, saw ${spawn.callCount}. Output: ${output}`);
             assert.strictEqual(spawn.firstCall.args[0], executable);
+
+            assert.strictEqual(
+                path.normalize(spawn.firstCall.args[2]?.cwd as string).toLowerCase(),
+                path.normalize(folder.uri.fsPath).toLowerCase(),
+            );
+
             const args = spawn.firstCall.args[1]?.map((arg: string) => path.normalize(arg).toLowerCase());
 
             assert.ok(
@@ -524,6 +684,7 @@ suite("CLI-only execution", () => {
     });
 
     test("run/debug uses the CLI and still renders successful query results", async () => {
+        (taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).rejects(new Error("Unexpected build"));
         const result = [{ Value: 42 }];
         const spawn = stubCli(result);
         const command = sandbox.stub(vscode.commands, "executeCommand").resolves();
@@ -544,8 +705,32 @@ suite("CLI-only execution", () => {
         }
     });
 
-    test("run/debug does not render structured query failures as successful results", async () => {
-        stubCli([{ Status: "Failed", Error: { Message: "Query failed" } }]);
+    test("run/debug preserves mixed query results and diagnostics for the result view", async () => {
+        const result = [
+            { Status: "Passed", Output: [{ Value: 42 }] },
+            { Status: "Failed", Error: { Message: "Query failed" }, Details: "Failure diagnostics" },
+        ];
+
+        stubCli(result);
+        const command = sandbox.stub(vscode.commands, "executeCommand").resolves();
+        const task = new PqTestExecutableOnceTask();
+
+        const exited = new Promise<void>(resolve => {
+            task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+        });
+
+        try {
+            await task.run(path.join(directory, "test.query.pq"), { operation: "run-test" });
+            await exited;
+            assert.ok(command.calledOnce);
+            assert.deepStrictEqual(command.firstCall.args[1], result);
+        } finally {
+            task.dispose();
+        }
+    });
+
+    test("run/debug does not render operation failures as query results", async () => {
+        const spawn = stubCli({ Status: "Failure", Message: "CLI command failed" });
         const command = sandbox.stub(vscode.commands, "executeCommand").resolves();
         const task = new PqTestExecutableOnceTask();
 
@@ -557,6 +742,7 @@ suite("CLI-only execution", () => {
             await task.run(path.join(directory, "test.query.pq"), { operation: "run-test" });
             await exited;
             assert.ok(command.notCalled);
+            assert.strictEqual(spawn.callCount, 1);
         } finally {
             task.dispose();
         }
@@ -583,6 +769,15 @@ suite("CLI-only execution", () => {
             sandbox.stub(document, "isDirty").get(() => false);
             await assert.rejects(queue.RefreshCredential(), /CLI command failed/);
             assert.strictEqual(spawn.firstCall.args[0], executable);
+            spawn.resetHistory();
+
+            (taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).rejects(
+                new Error("Connector build failed"),
+            );
+
+            await assert.rejects(queue.RunTestBattery(document.uri.fsPath), /Connector build failed/);
+            await assert.rejects(queue.TestConnection(), /Connector build failed/);
+            assert.ok(spawn.notCalled);
         } finally {
             queue.dispose();
             bus.dispose();
@@ -604,7 +799,7 @@ suite("CLI-only execution", () => {
 
         assert.strictEqual(
             inferAnyGeneralErrorString([{ Status: "Failed", Error: { Message: "Credentials are required" } }]),
-            "Credentials are required",
+            "",
         );
     });
 });

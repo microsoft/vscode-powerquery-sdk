@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "Activer",
   "PQSdk.common.cancel": "Annuler",
+  "PQSdk.taskProvider.taskFailed": "La tâche {taskName} a échoué ou a été annulée.",
   "PQSdk.query.saveAndRun": "Enregistrer et exécuter",
   "PQSdk.query.saveRequired": "PQTest.exe exécute les fichiers enregistrés. Enregistrer {queryFile} avant l’exécution ?",
   "PQSdk.query.executionCancelled": "Exécution annulée. {queryFile} doit être enregistré avant l’exécution.",

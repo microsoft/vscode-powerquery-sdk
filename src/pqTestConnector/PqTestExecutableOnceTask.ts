@@ -20,7 +20,7 @@ import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
 import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
-import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
+import { formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -140,15 +140,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
             // do fork one process and execute the task
             const pqTestExeFullPath: string = this.pqTestFullPath;
-
-            if (task.operation === "run-test" || task.operation === "test-connection") {
-                await executeBuildTaskAndAwaitIfNeeded(path.dirname(pqTestExeFullPath));
-                await ensureQueryDocumentSaved(task.pathToQueryFile);
-            }
-
-            if (this.disposed) {
-                return undefined;
-            }
 
             const processArgs: string[] = buildPqTestArgs(task);
 

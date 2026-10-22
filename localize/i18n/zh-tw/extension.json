@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "啟用",
   "PQSdk.common.cancel": "取消",
+  "PQSdk.taskProvider.taskFailed": "工作 {taskName} 失敗或已取消。",
   "PQSdk.query.saveAndRun": "儲存並執行",
   "PQSdk.query.saveRequired": "PQTest.exe 會執行已儲存的檔案。是否在執行前儲存 {queryFile}？",
   "PQSdk.query.executionCancelled": "已取消執行。必須先儲存 {queryFile} 才能執行。",

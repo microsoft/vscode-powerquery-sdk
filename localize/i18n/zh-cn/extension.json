@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "启用",
   "PQSdk.common.cancel": "取消",
+  "PQSdk.taskProvider.taskFailed": "任务 {taskName} 失败或已取消。",
   "PQSdk.query.saveAndRun": "保存并运行",
   "PQSdk.query.saveRequired": "PQTest.exe 运行已保存的文件。是否在运行前保存 {queryFile}？",
   "PQSdk.query.executionCancelled": "已取消执行。必须先保存 {queryFile} 才能运行。",

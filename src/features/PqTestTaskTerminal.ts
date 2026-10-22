@@ -11,9 +11,10 @@ import * as vscode from "vscode";
 import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
 import { buildPqTestArgs } from "../common/PQTestService";
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
-import { executeBuildTaskAndAwaitIfNeeded, inferAnyGeneralErrorString } from "../pqTestConnector/PqTestTaskUtils";
+import { inferAnyGeneralErrorString } from "../pqTestConnector/PqTestTaskUtils";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
 import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
+import { getFirstWorkspaceFolder } from "../utils/vscodes";
 
 export class PqTestTaskTerminal implements vscode.Pseudoterminal {
     private readonly writeEmitter: vscode.EventEmitter<string> = new vscode.EventEmitter<string>();
@@ -23,27 +24,27 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
     private process?: SpawnedProcess;
     private closed: boolean = false;
 
-    constructor(private readonly definition: PowerQueryTaskDefinition) {}
+    constructor(
+        private readonly definition: PowerQueryTaskDefinition,
+        private readonly executablePath?: string,
+        private readonly workspaceDirectory?: string,
+    ) {}
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
         try {
-            await ensureQueryDocumentSaved(this.definition.pathToQueryFile);
+            const executable: string = this.executablePath ?? resolvePqTestExecutablePath();
 
-            if (this.closed) {
-                return;
-            }
+            const workingDirectory: string =
+                this.definition.workingDirectory ??
+                this.workspaceDirectory ??
+                getFirstWorkspaceFolder()?.uri.fsPath ??
+                path.dirname(executable);
 
-            const executable: string = resolvePqTestExecutablePath();
+            const queryFile: string | undefined = this.definition.pathToQueryFile
+                ? path.resolve(workingDirectory, this.definition.pathToQueryFile)
+                : undefined;
 
-            if (this.definition.operation === "run-test" || this.definition.operation === "test-connection") {
-                await executeBuildTaskAndAwaitIfNeeded(path.dirname(executable));
-            }
-
-            if (this.closed) {
-                return;
-            }
-
-            await ensureQueryDocumentSaved(this.definition.pathToQueryFile);
+            await ensureQueryDocumentSaved(queryFile);
 
             if (this.closed) {
                 return;
@@ -52,7 +53,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
             this.process = new SpawnedProcess(
                 executable,
                 buildPqTestArgs(this.definition),
-                { cwd: this.definition.workingDirectory ?? path.dirname(executable), timeout: 0 },
+                { cwd: workingDirectory, timeout: 0 },
                 {
                     stdinStr:
                         this.definition.stdinStr ??
@@ -67,10 +68,23 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
             const result: ProcessExit = await this.process.deferred$;
 
             if (result.exitCode === 0) {
-                const error: string = inferAnyGeneralErrorString(JSON.parse(result.stdout));
+                const payload: unknown = JSON.parse(result.stdout);
+                const error: string = inferAnyGeneralErrorString(payload);
 
                 if (error) {
                     this.write(`${error}\n`);
+                    this.finish(1);
+
+                    return;
+                }
+
+                if (
+                    Array.isArray(payload) &&
+                    payload.some(
+                        (item: unknown) =>
+                            item !== null && typeof item === "object" && "Status" in item && item.Status === "Failed",
+                    )
+                ) {
                     this.finish(1);
 
                     return;

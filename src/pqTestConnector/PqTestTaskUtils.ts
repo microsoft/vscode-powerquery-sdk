@@ -17,8 +17,8 @@ import { getAnyMProjFilesBeneathTheFirstWorkspace, getFirstWorkspaceFolder } fro
 
 export async function executeBuildTaskAndAwaitIfNeeded(
     pqTestLocation: string,
-    lastPqRelatedFileTouchedDate: Date = new Date(),
-    lastPqRelatedFileTouchedDateUpdater: (nextLastPqRelatedFileTouchedDate: Date) => void = () => {},
+    lastPqRelatedFileTouchedDate: Date,
+    lastPqRelatedFileTouchedDateUpdater: (nextLastPqRelatedFileTouchedDate: Date) => void,
 ): Promise<void> {
     const nullableCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
     let needToRebuildBeforeEvaluation: boolean = true;
@@ -88,7 +88,7 @@ export function inferAnyGeneralErrorString(resultJson: unknown): string {
             return resultJson.ErrorStatus;
         }
 
-        if ("Status" in resultJson && (resultJson.Status === "Failure" || resultJson.Status === "Failed")) {
+        if ("Status" in resultJson && resultJson.Status === "Failure") {
             if ("Message" in resultJson && typeof resultJson.Message === "string" && resultJson.Message) {
                 return resultJson.Message;
             }

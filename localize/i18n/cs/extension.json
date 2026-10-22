@@ -1,6 +1,7 @@
 {
   "PQSdk.common.enable": "Povolit",
   "PQSdk.common.cancel": "Storno",
+  "PQSdk.taskProvider.taskFailed": "Úloha {taskName} selhala nebo byla zrušena.",
   "PQSdk.query.saveAndRun": "Uložit a spustit",
   "PQSdk.query.saveRequired": "PQTest.exe spouští uložené soubory. Chcete před spuštěním uložit {queryFile}?",
   "PQSdk.query.executionCancelled": "Spuštění bylo zrušeno. Soubor {queryFile} je nutné před spuštěním uložit.",
