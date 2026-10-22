@@ -24,6 +24,7 @@ describe("SDK package retention", () => {
     const setting = packageJson.contributes.configuration.properties["powerquery.sdk.externals.packagesToKeep"];
 
     beforeEach(() => {
+        sinon.stub(processIdentity, "getProcessCreationTime").returns("123");
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-retention-"));
         cache = path.join(root, ".nuget");
         fs.mkdirSync(cache);
@@ -241,10 +242,6 @@ describe("SDK package retention", () => {
         const otherPid = 2147483647;
         const kill = process.kill;
         sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
-        const getCreationTime = processIdentity.getProcessCreationTime;
-        sinon.stub(processIdentity, "getProcessCreationTime").callsFake(pid => {
-            return pid === otherPid ? "123" : getCreationTime(pid);
-        });
         const usage = path.join(cache, ".sdk-package-usage", `${prefix}2.158.1`);
         fs.mkdirSync(usage, { recursive: true });
         fs.writeFileSync(path.join(usage, `use-${otherPid}-123-00000000-0000-0000-0000-000000000000`), "");

@@ -26,8 +26,10 @@ describe("Retryable SDK package protection", () => {
     let clock: sinon.SinonFakeTimers;
     let appendInfoLine: sinon.SinonSpy;
     let appendErrorLine: sinon.SinonSpy;
+    let getCreationTime: sinon.SinonStub;
 
     beforeEach(() => {
+        getCreationTime = sinon.stub(processIdentity, "getProcessCreationTime").returns("123");
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-protection-"));
         cache = path.join(root, ".nuget");
         const packageName = `${ExtensionConstants.InternalMsftPqSdkToolsNugetName}.2.159.1`;
@@ -158,10 +160,7 @@ describe("Retryable SDK package protection", () => {
         let creationTime = "123";
         const kill = process.kill;
         sinon.stub(process, "kill").callsFake((pid, signal) => (pid === otherPid ? true : kill(pid, signal)));
-        const getCreationTime = processIdentity.getProcessCreationTime;
-        sinon
-            .stub(processIdentity, "getProcessCreationTime")
-            .callsFake(pid => (pid === otherPid ? creationTime : getCreationTime(pid)));
+        getCreationTime.callsFake(pid => (pid === otherPid ? creationTime : "123"));
         guard = path.join(path.dirname(guard), `cleanup-${otherPid}-123-00000000-0000-0000-0000-000000000000`);
         fs.writeFileSync(guard, "");
         expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;

@@ -6,6 +6,7 @@
  */
 
 import { expect } from "chai";
+import cp = require("child_process");
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -14,6 +15,7 @@ import * as sinon from "sinon";
 import { initializePqSdkTools } from "../../../src/commands/handlers/initializePqSdkTools";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { cleanupNugetPackages } from "../../../src/utils/nugetPackageRetention";
+import processIdentity = require("../../../src/utils/processIdentity");
 
 describe("SDK tool startup", () => {
     let root: string;
@@ -23,8 +25,13 @@ describe("SDK tool startup", () => {
     let cleanup: sinon.SinonStub;
     let onPackageAcquired: sinon.SinonSpy;
     let selectTools: sinon.SinonStub;
+    let queryProcess: sinon.SinonStub;
 
     beforeEach(() => {
+        sinon.stub(processIdentity, "getProcessCreationTime").returns("123");
+        queryProcess = sinon
+            .stub(cp, "spawnSync")
+            .throws(new Error("Startup unit tests must not query real processes"));
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-startup-"));
         cache = path.join(root, ".nuget");
         fs.mkdirSync(cache);
@@ -36,6 +43,7 @@ describe("SDK tool startup", () => {
     });
 
     afterEach(() => {
+        sinon.restore();
         fs.rmSync(root, { recursive: true, force: true });
     });
 
@@ -81,6 +89,7 @@ describe("SDK tool startup", () => {
         expect(acquire.called).to.be.false;
         expect(onPackageAcquired.called).to.be.false;
         expect(selectTools.called).to.be.false;
+        expect(queryProcess.called).to.be.false;
     });
 
     it("acquires and selects tools when the current selection is not usable", async () => {
