@@ -104,7 +104,7 @@ describe("DisplayExtensionInfoHandler", () => {
             // Arrange
             const error = "String error";
             (mockPqTestService.DisplayExtensionInfo as SinonStub).rejects(error);
-            handler = new DisplayExtensionInfoHandler(mockPqTestService, { featureUseServiceHost: false });
+            handler = new DisplayExtensionInfoHandler(mockPqTestService);
 
             // Act
             const result = await handler.execute({});

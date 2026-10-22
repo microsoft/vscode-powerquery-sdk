@@ -7,8 +7,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import WebSocket from "ws";
-
 import { cancelable } from "./cancelable";
 import { CancellationToken } from "./CancellationToken";
 import { noop } from "./noop";
@@ -17,16 +15,14 @@ import { AnyFunction } from "./types";
 
 export type AnyEventListener = (type: string, callback: AnyFunction) => void;
 
-export type ExpectedEmitter =
-    | {
-          addEventListener?: AnyEventListener;
-          removeEventListener?: AnyEventListener;
-          addListener?: AnyEventListener;
-          removeListener?: AnyEventListener;
-          on?: AnyEventListener;
-          off?: AnyEventListener;
-      }
-    | WebSocket;
+export type ExpectedEmitter = {
+    addEventListener?: AnyEventListener;
+    removeEventListener?: AnyEventListener;
+    addListener?: AnyEventListener;
+    removeListener?: AnyEventListener;
+    on?: AnyEventListener;
+    off?: AnyEventListener;
+};
 
 export function makeEventAdder(
     cancellationToken: CancellationToken,

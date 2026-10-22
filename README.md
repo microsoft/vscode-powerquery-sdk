@@ -31,13 +31,13 @@ This extension uses a modern, comprehensive testing approach designed for reliab
 
 #### Test Types
 
-- **Unit Tests** (152 tests): Pure business logic testing with no external dependencies
+- **Unit Tests**: Pure business logic testing with no external dependencies
     - Property-based testing for validation logic
     - Performance testing with automated thresholds
     - Edge case and boundary condition testing
     - Service logic testing with dependency injection
 
-- **Integration Tests** (13 tests): VS Code API integration testing
+- **Integration Tests**: VS Code API integration testing
     - Extension loading and command registration
     - Schema management and validation
     - File system operations in VS Code context

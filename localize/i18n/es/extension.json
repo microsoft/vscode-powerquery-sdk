@@ -1,6 +1,12 @@
 {
   "PQSdk.common.enable": "Habilitar",
   "PQSdk.common.cancel": "Cancelar",
+  "PQSdk.taskProvider.taskFailed": "La tarea {taskName} falló o se canceló.",
+  "PQSdk.query.saveAndRun": "Guardar y ejecutar",
+  "PQSdk.query.saveRequired": "PQTest.exe ejecuta archivos guardados. ¿Guardar {queryFile} antes de ejecutar?",
+  "PQSdk.query.executionCancelled": "Ejecución cancelada. Debe guardar {queryFile} antes de ejecutar.",
+  "PQSdk.query.saveFailed": "Se canceló la ejecución porque no se pudo guardar {queryFile}.",
+  "PQSdk.query.saveToFile": "Guarde {queryFile} en un archivo local antes de ejecutarlo con PQTest.exe.",
   "PQSdk.common.open.file": "Abrir {fileName}",
   "PQSdk.common.logLevel.Debug": "Depurar",
   "PQSdk.common.logLevel.Trace": "Seguimiento",

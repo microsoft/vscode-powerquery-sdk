@@ -35,7 +35,6 @@ import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
-import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
 import {
     connectorQueryFileExcludeGlob,
     connectorQueryFileGlob,
@@ -98,9 +97,7 @@ export class LifecycleCommands implements IDisposable {
         private readonly schemaManagementService: SchemaManagementService,
     ) {
         // Initialize command handlers
-        this.displayExtensionInfoHandler = new DisplayExtensionInfoHandler(pqTestService, {
-            featureUseServiceHost: ExtensionConfigurations.featureUseServiceHost,
-        });
+        this.displayExtensionInfoHandler = new DisplayExtensionInfoHandler(pqTestService);
 
         this.deleteCredentialHandler = new DeleteCredentialHandler(pqTestService);
         this.listCredentialsHandler = new ListCredentialsHandler(pqTestService);
@@ -240,12 +237,7 @@ export class LifecycleCommands implements IDisposable {
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
             : undefined;
 
-        if (
-            resolvedPQTestExtensionFileLocation &&
-            fs.existsSync(resolvedPQTestExtensionFileLocation) &&
-            (!ExtensionConfigurations.featureUseServiceHost ||
-                (this.pqTestService as PqServiceHostClient).pqServiceHostConnected)
-        ) {
+        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
             const currentMtime: Date = getMtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
             if (currentMtime > this.lastMtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
@@ -1457,13 +1449,7 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
 
                 try {
-                    if (ExtensionConfigurations.featureUseServiceHost) {
-                        result = await (this.pqTestService as PqServiceHostClient).RunTestBatteryFromContent(
-                            pathToQueryFile?.fsPath,
-                        );
-                    } else {
-                        result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
-                    }
+                    result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.run.test.result", {

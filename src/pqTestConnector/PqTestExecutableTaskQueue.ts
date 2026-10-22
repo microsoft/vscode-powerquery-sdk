@@ -31,6 +31,8 @@ import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { convertStringToInteger } from "../utils/numbers";
 import { pidIsRunning } from "../utils/pids";
+import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
@@ -369,7 +371,15 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
+    private async doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
+        await ensureQueryDocumentSaved(task.pathToQueryFile);
+
+        if (!this.pqTestReady) {
+            this.pqTestFullPath = resolvePqTestExecutablePath();
+            this.pqTestLocation = path.dirname(this.pqTestFullPath);
+            this.pqTestReady = true;
+        }
+
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -581,9 +591,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
-
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
         const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
@@ -599,6 +606,9 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             pathToQueryFile = configPQTestQueryFileLocation;
         }
 
+        await ensureQueryDocumentSaved(pathToQueryFile);
+        await this.ExecuteBuildTaskAndAwaitIfNeeded();
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "run-test",
@@ -608,13 +618,19 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     public async TestConnection(): Promise<GenericResult> {
+        const pathToQueryFile: string | undefined = resolveSubstitutedValues(
+            ExtensionConfigurations.DefaultQueryFileLocation,
+        );
+
+        await ensureQueryDocumentSaved(pathToQueryFile);
+
         // maybe we need to execute the build task before evaluating.
         await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
         return this.doEnqueueOneTask<GenericResult>({
             operation: "test-connection",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            pathToQueryFile,
         });
     }
 }

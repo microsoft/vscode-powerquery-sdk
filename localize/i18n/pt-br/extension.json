@@ -1,6 +1,12 @@
 {
   "PQSdk.common.enable": "Habilitar",
   "PQSdk.common.cancel": "Cancelar",
+  "PQSdk.taskProvider.taskFailed": "A tarefa {taskName} falhou ou foi cancelada.",
+  "PQSdk.query.saveAndRun": "Salvar e executar",
+  "PQSdk.query.saveRequired": "PQTest.exe executa arquivos salvos. Salvar {queryFile} antes de executar?",
+  "PQSdk.query.executionCancelled": "Execução cancelada. {queryFile} deve ser salvo antes da execução.",
+  "PQSdk.query.saveFailed": "A execução foi cancelada porque não foi possível salvar {queryFile}.",
+  "PQSdk.query.saveToFile": "Salve {queryFile} em um arquivo local antes de executá-lo com PQTest.exe.",
   "PQSdk.common.open.file": "Abrir {fileName}",
   "PQSdk.common.logLevel.Debug": "Depurar",
   "PQSdk.common.logLevel.Trace": "Rastreamento",
