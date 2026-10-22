@@ -1,6 +1,11 @@
 {
   "PQSdk.common.enable": "Enable",
   "PQSdk.common.cancel": "Cancel",
+  "PQSdk.query.saveAndRun": "Save and Run",
+  "PQSdk.query.saveRequired": "PQTest.exe runs saved files. Save {queryFile} before running?",
+  "PQSdk.query.executionCancelled": "Execution cancelled. {queryFile} must be saved before running.",
+  "PQSdk.query.saveFailed": "Execution cancelled because {queryFile} could not be saved.",
+  "PQSdk.query.saveToFile": "Save {queryFile} to a local file before running it with PQTest.exe.",
   "PQSdk.common.open.file": "Open {fileName}",
   "PQSdk.common.logLevel.Debug": "Debug",
   "PQSdk.common.logLevel.Trace": "Trace",
@@ -258,4 +263,3 @@
   "PQSdk.testAdapter.cleanup.entryDeleteFailed": "Failed to delete {entryPath}: {errorMessage}",
   "PQSdk.testAdapter.cleanup.completed": "Cleaned up {count} old intermediate test result(s) from {folderPath}"
 }
-

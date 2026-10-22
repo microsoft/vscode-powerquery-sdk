@@ -1,6 +1,11 @@
 {
   "PQSdk.common.enable": "啟用",
   "PQSdk.common.cancel": "取消",
+  "PQSdk.query.saveAndRun": "儲存並執行",
+  "PQSdk.query.saveRequired": "PQTest.exe 會執行已儲存的檔案。是否在執行前儲存 {queryFile}？",
+  "PQSdk.query.executionCancelled": "已取消執行。必須先儲存 {queryFile} 才能執行。",
+  "PQSdk.query.saveFailed": "因為無法儲存 {queryFile}，已取消執行。",
+  "PQSdk.query.saveToFile": "使用 PQTest.exe 執行之前，請將 {queryFile} 儲存至本機檔案。",
   "PQSdk.common.open.file": "開啟 {fileName}",
   "PQSdk.common.logLevel.Debug": "偵錯",
   "PQSdk.common.logLevel.Trace": "追蹤",

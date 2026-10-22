@@ -14,7 +14,7 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { extensionI18n } from "../i18n/extension";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
-import { PqSdkTaskTerminal } from "./PqSdkTaskTerminal";
+import { PqTestTaskTerminal } from "./PqTestTaskTerminal";
 
 const enum TaskLabelPrefix {
     Build = "build",
@@ -149,19 +149,11 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         result.push(PowerQueryTaskProvider.buildMsbuildTask());
         result.push(PowerQueryTaskProvider.buildMakePQXCompileTask(this.pqTestService.pqTestLocation));
 
-        const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
-
-        if (useServiceHost) {
-            pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
-                result.push(PqSdkTaskTerminal.getTaskForPQTestTaskDefinition(taskDef));
-            });
-        } else {
-            pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
-                result.push(
-                    PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
-                );
-            });
-        }
+        pqTestOperations.forEach((taskDef: PowerQueryTaskDefinition) => {
+            result.push(
+                PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, this.pqTestService.pqTestFullPath),
+            );
+        });
 
         return result;
     }
@@ -207,11 +199,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             return undefined;
         }
 
-        const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
-
-        if (useServiceHost) {
-            return PqSdkTaskTerminal.getTaskForPQTestTaskDefinition(taskDef);
-        } else if (pqtestExe && !token.isCancellationRequested) {
+        if (pqtestExe && !token.isCancellationRequested) {
             return PowerQueryTaskProvider.getTaskForPQTestTaskDefinition(taskDef, pqtestExe);
         }
 
@@ -223,7 +211,15 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         executablePath: string,
     ): vscode.Task {
         const args: string[] = buildPqTestArgs(taskDef);
-        const processExecution: vscode.ProcessExecution = new vscode.ProcessExecution(executablePath, args);
+
+        const execution: vscode.ProcessExecution | vscode.CustomExecution =
+            taskDef.operation === "run-test" ||
+            taskDef.stdinStr !== undefined ||
+            taskDef.credentialTemplate !== undefined
+                ? new vscode.CustomExecution((resolvedDefinition: vscode.TaskDefinition) =>
+                      Promise.resolve(new PqTestTaskTerminal(resolvedDefinition as PowerQueryTaskDefinition)),
+                  )
+                : new vscode.ProcessExecution(executablePath, args);
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(
@@ -231,7 +227,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             vscode.TaskScope.Workspace,
             taskDef.label ?? taskDef.operation,
             taskDef.operation === "compile" ? TaskLabelPrefix.Build : TaskLabelPrefix.PQTest,
-            processExecution,
+            execution,
             [] /* no problemMatchers */,
         );
 

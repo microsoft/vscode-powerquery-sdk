@@ -1,6 +1,11 @@
 {
   "PQSdk.common.enable": "Включить",
   "PQSdk.common.cancel": "Отмена",
+  "PQSdk.query.saveAndRun": "Сохранить и выполнить",
+  "PQSdk.query.saveRequired": "PQTest.exe выполняет сохраненные файлы. Сохранить {queryFile} перед выполнением?",
+  "PQSdk.query.executionCancelled": "Выполнение отменено. Перед выполнением необходимо сохранить {queryFile}.",
+  "PQSdk.query.saveFailed": "Выполнение отменено, поскольку не удалось сохранить {queryFile}.",
+  "PQSdk.query.saveToFile": "Сохраните {queryFile} в локальный файл перед выполнением с помощью PQTest.exe.",
   "PQSdk.common.open.file": "Открыть {fileName}",
   "PQSdk.common.logLevel.Debug": "Отладка",
   "PQSdk.common.logLevel.Trace": "Трассировка",

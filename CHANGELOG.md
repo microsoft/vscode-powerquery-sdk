@@ -4,6 +4,13 @@ All notable changes to the "vscode-powerquery-sdk" extension will be documented 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.8.0
+
+- Removed the experimental `PQServiceHost` backend. All operations now use `PQTest.exe`, regardless of the SdkTools version.
+- Deprecated `powerquery.sdk.features.useServiceHost`. The setting is ignored and can be removed; no informational notice or reload prompt is shown.
+- Query commands, query tasks, and run/debug now require saving dirty query documents before execution. Untitled queries must first be saved to a local file.
+- Operations may take longer because they no longer reuse a warm service process. Existing credentials, cached packages, custom tool locations, and tool-version selection are preserved.
+
 ## v0.7.3
 
 - Updated extension and webview dependencies to resolve all reported npm audit vulnerabilities.

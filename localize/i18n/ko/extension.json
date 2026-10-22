@@ -1,6 +1,11 @@
 {
   "PQSdk.common.enable": "사용",
   "PQSdk.common.cancel": "취소",
+  "PQSdk.query.saveAndRun": "저장 후 실행",
+  "PQSdk.query.saveRequired": "PQTest.exe는 저장된 파일을 실행합니다. 실행하기 전에 {queryFile}을(를) 저장하시겠습니까?",
+  "PQSdk.query.executionCancelled": "실행이 취소되었습니다. 실행하기 전에 {queryFile}을(를) 저장해야 합니다.",
+  "PQSdk.query.saveFailed": "{queryFile}을(를) 저장할 수 없어 실행이 취소되었습니다.",
+  "PQSdk.query.saveToFile": "PQTest.exe로 실행하기 전에 {queryFile}을(를) 로컬 파일에 저장하세요.",
   "PQSdk.common.open.file": "{fileName} 열기",
   "PQSdk.common.logLevel.Debug": "디버그",
   "PQSdk.common.logLevel.Trace": "추적",

@@ -17,8 +17,8 @@ import { getAnyMProjFilesBeneathTheFirstWorkspace, getFirstWorkspaceFolder } fro
 
 export async function executeBuildTaskAndAwaitIfNeeded(
     pqTestLocation: string,
-    lastPqRelatedFileTouchedDate: Date,
-    lastPqRelatedFileTouchedDateUpdater: (nextLastPqRelatedFileTouchedDate: Date) => void,
+    lastPqRelatedFileTouchedDate: Date = new Date(),
+    lastPqRelatedFileTouchedDateUpdater: (nextLastPqRelatedFileTouchedDate: Date) => void = () => {},
 ): Promise<void> {
     const nullableCurrentWorkspace: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;
     let needToRebuildBeforeEvaluation: boolean = true;
@@ -70,26 +70,47 @@ export async function executeBuildTaskAndAwaitIfNeeded(
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function inferAnyGeneralErrorString(resultJson: any): string {
-    let result: string = "";
-
+export function inferAnyGeneralErrorString(resultJson: unknown): string {
     if (Array.isArray(resultJson)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resultJson.some((one: any) => {
-            if (typeof one["ErrorStatus"] === "string" && one["ErrorStatus"]) {
-                result = one["ErrorStatus"];
+        for (const item of resultJson) {
+            const message: string = inferAnyGeneralErrorString(item);
 
-                return true;
+            if (message) {
+                return message;
             }
+        }
 
-            return false;
-        });
-    } else if (typeof resultJson["ErrorStatus"] === "string" && resultJson["ErrorStatus"]) {
-        result = resultJson["ErrorStatus"];
+        return "";
     }
 
-    return result;
+    if (resultJson && typeof resultJson === "object") {
+        if ("ErrorStatus" in resultJson && typeof resultJson.ErrorStatus === "string" && resultJson.ErrorStatus) {
+            return resultJson.ErrorStatus;
+        }
+
+        if ("Status" in resultJson && (resultJson.Status === "Failure" || resultJson.Status === "Failed")) {
+            if ("Message" in resultJson && typeof resultJson.Message === "string" && resultJson.Message) {
+                return resultJson.Message;
+            }
+
+            if (
+                "Error" in resultJson &&
+                resultJson.Error &&
+                typeof resultJson.Error === "object" &&
+                "Message" in resultJson.Error &&
+                typeof resultJson.Error.Message === "string" &&
+                resultJson.Error.Message
+            ) {
+                return resultJson.Error.Message;
+            }
+
+            return "Details" in resultJson && typeof resultJson.Details === "string" && resultJson.Details
+                ? resultJson.Details
+                : JSON.stringify(resultJson);
+        }
+    }
+
+    return "";
 }
 
 export function formatArguments(args: string[]): string {

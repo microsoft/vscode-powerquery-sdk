@@ -1,6 +1,11 @@
 {
   "PQSdk.common.enable": "Włącz",
   "PQSdk.common.cancel": "Anuluj",
+  "PQSdk.query.saveAndRun": "Zapisz i uruchom",
+  "PQSdk.query.saveRequired": "PQTest.exe uruchamia zapisane pliki. Czy zapisać {queryFile} przed uruchomieniem?",
+  "PQSdk.query.executionCancelled": "Anulowano wykonywanie. Przed uruchomieniem należy zapisać {queryFile}.",
+  "PQSdk.query.saveFailed": "Anulowano wykonywanie, ponieważ nie można zapisać {queryFile}.",
+  "PQSdk.query.saveToFile": "Zapisz {queryFile} w pliku lokalnym przed uruchomieniem go za pomocą PQTest.exe.",
   "PQSdk.common.open.file": "Otwórz plik {fileName}",
   "PQSdk.common.logLevel.Debug": "Debuguj",
   "PQSdk.common.logLevel.Trace": "Ślad",
