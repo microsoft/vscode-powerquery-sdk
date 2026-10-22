@@ -5,6 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import * as path from "path";
+
 import type { PqSdkNugetPackageService } from "../../common/PqSdkNugetPackageService";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 
@@ -41,7 +43,9 @@ export async function initializePqSdkTools(options: PqSdkToolStartupOptions): Pr
 
     if (executablePath) {
         await options.selectTools(executablePath, version);
+
+        return path.dirname(executablePath);
     }
 
-    return options.selectedToolsLocation;
+    return undefined;
 }

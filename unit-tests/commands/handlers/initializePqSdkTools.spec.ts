@@ -88,11 +88,27 @@ describe("SDK tool startup", () => {
         const executable = path.join(tools, "PQTest.exe");
         acquire.resolves(executable);
 
-        await initializePqSdkTools(options(tools, false));
+        expect(await initializePqSdkTools(options(tools, false))).to.equal(tools);
 
         sinon.assert.callOrder(findVersion, acquire, onPackageAcquired, selectTools);
         expect(acquire.calledOnceWithExactly("2.160.2")).to.be.true;
         expect(selectTools.calledOnceWithExactly(executable, "2.160.2")).to.be.true;
+    });
+
+    it("returns the newly selected location rather than the previous unusable selection", async () => {
+        const previous = addPackage("2.159.1");
+        const next = addPackage("2.160.2");
+        acquire.resolves(path.join(next, "PQTest.exe"));
+
+        expect(await initializePqSdkTools(options(previous, false))).to.equal(next);
+    });
+
+    it("does not report an unusable previous selection as success after acquisition fails", async () => {
+        const previous = addPackage("2.159.1");
+
+        expect(await initializePqSdkTools(options(previous, false))).to.be.undefined;
+        expect(selectTools.called).to.be.false;
+        expect(cleanup.called).to.be.false;
     });
 
     it("prompts only after acquisition fails and does not copy a missing package schema", async () => {

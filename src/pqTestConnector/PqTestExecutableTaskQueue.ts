@@ -130,7 +130,14 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         );
 
         this._disposables.push(
-            nugetPackageProtection.subscribeOneEvent("recovered", this.onPowerQueryTestLocationChanged.bind(this)),
+            nugetPackageProtection.subscribeToLocationRecovery(
+                () => ({
+                    configuredLocation: ExtensionConfigurations.PQTestLocation,
+                    currentLocation: this.pqTestLocation,
+                    ready: this.pqTestReady,
+                }),
+                this.onPowerQueryTestLocationChanged.bind(this),
+            ),
         );
 
         this.onPowerQueryTestLocationChanged();

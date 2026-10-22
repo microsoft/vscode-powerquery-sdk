@@ -76,13 +76,14 @@ function getUsageDirectory(baseNugetFolder: string, packageDirectory: string): s
 }
 
 function getManagedPackageDirectory(baseNugetFolder: string, toolsLocation: string): string | undefined {
-    const packageDirectory: string = path.dirname(path.resolve(toolsLocation));
+    const resolvedToolsLocation: string = path.resolve(toolsLocation);
+    const packageDirectory: string = path.dirname(resolvedToolsLocation);
     const prefix: string = `${ExtensionConstants.InternalMsftPqSdkToolsNugetName}.`;
     const packageName: string = path.basename(packageDirectory);
 
     if (
         path.relative(baseNugetFolder, path.dirname(packageDirectory)) !== "" ||
-        path.basename(toolsLocation).toLowerCase() !== "tools" ||
+        path.basename(resolvedToolsLocation).toLowerCase() !== "tools" ||
         !packageName.toLowerCase().startsWith(prefix.toLowerCase()) ||
         NugetVersions.createFromReleasedVersionString(packageName.slice(prefix.length)).isZero()
     ) {

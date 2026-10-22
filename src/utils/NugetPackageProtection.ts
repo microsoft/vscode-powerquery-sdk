@@ -7,6 +7,7 @@
 
 import * as path from "path";
 
+import { IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter } from "../common/DisposableEventEmitter";
 import type { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { NugetPackageCleanupInProgressError, protectNugetPackage } from "./nugetPackageUsage";
@@ -14,6 +15,12 @@ import { NugetPackageCleanupInProgressError, protectNugetPackage } from "./nuget
 interface PendingProtection {
     readonly promise: Promise<void>;
     readonly cancel: () => void;
+}
+
+interface ToolsLocationState {
+    readonly configuredLocation: string | undefined;
+    readonly currentLocation: string;
+    readonly ready: boolean;
 }
 
 export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> {
@@ -26,6 +33,29 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
 
     public setOutputChannel(outputChannel: Pick<PqSdkOutputChannel, "appendInfoLine" | "appendErrorLine">): void {
         this.outputChannel = outputChannel;
+    }
+
+    public subscribeToLocationRecovery(getState: () => ToolsLocationState, refresh: () => void): IDisposable {
+        return this.subscribeOneEvent("recovered", () => {
+            const state: ToolsLocationState = getState();
+
+            if (
+                state.configuredLocation &&
+                (!state.ready || path.relative(state.currentLocation, state.configuredLocation) !== "")
+            ) {
+                refresh();
+            }
+        });
+    }
+
+    public getProtectedExecutablePath(baseNugetFolder: string, executablePath: string): string {
+        const toolsLocation: string = path.dirname(executablePath);
+
+        if (!this.getProtectedLocation(baseNugetFolder, toolsLocation)) {
+            throw new NugetPackageCleanupInProgressError(toolsLocation);
+        }
+
+        return executablePath;
     }
 
     public getProtectedLocation(baseNugetFolder: string, toolsLocation: string): string | undefined {

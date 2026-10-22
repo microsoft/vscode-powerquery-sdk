@@ -14,6 +14,7 @@ import * as sinon from "sinon";
 import { initializePqSdkTools } from "../../../src/commands/handlers/initializePqSdkTools";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { NugetPackageProtection } from "../../../src/utils/NugetPackageProtection";
+import { NugetPackageCleanupInProgressError } from "../../../src/utils/nugetPackageUsage";
 
 describe("Retryable SDK package protection", () => {
     let root: string;
@@ -49,11 +50,10 @@ describe("Retryable SDK package protection", () => {
         fs.rmSync(root, { recursive: true, force: true });
     });
 
-    it("defers directory and direct-executable exposure without throwing, and refreshes consumers after recovery", async () => {
+    it("defers exposure and refreshes directory and direct-executable consumers after recovery", async () => {
         const executable = path.join(tools, "PQTest.exe");
         const readDirectory = () => protection.getProtectedLocation(cache, tools);
-        const readExecutable = () =>
-            protection.getProtectedLocation(cache, path.dirname(executable)) ? executable : undefined;
+        const readExecutable = () => protection.getProtectedExecutablePath(cache, executable);
         let exposedDirectory: string | undefined;
         let exposedExecutable: string | undefined;
         const refresh = sinon.spy(() => {
@@ -63,7 +63,7 @@ describe("Retryable SDK package protection", () => {
         protection.subscribeOneEvent("recovered", refresh);
 
         expect(readDirectory()).to.be.undefined;
-        expect(readExecutable()).to.be.undefined;
+        expect(readExecutable).to.throw(NugetPackageCleanupInProgressError);
         expect(appendInfoLine.calledOnce).to.be.true;
         expect(clock.countTimers()).to.equal(1);
         await clock.tickAsync(300);
@@ -116,6 +116,102 @@ describe("Retryable SDK package protection", () => {
         expect(cleanup.calledOnce).to.be.true;
         expect(findVersion.called).to.be.false;
         expect(acquire.called).to.be.false;
+    });
+
+    it("reports a retryable error for a pending direct executable override rather than an unset path", async () => {
+        const executable = path.join(tools, "PQTest.exe");
+
+        expect(() => protection.getProtectedExecutablePath(cache, executable)).to.throw(
+            NugetPackageCleanupInProgressError,
+        );
+        expect(appendInfoLine.calledOnce).to.be.true;
+
+        fs.unlinkSync(guard);
+        await clock.tickAsync(100);
+
+        expect(protection.getProtectedExecutablePath(cache, executable)).to.equal(executable);
+    });
+
+    it("does not block a custom direct executable when an unrelated package is pending", () => {
+        protection.getProtectedLocation(cache, tools);
+        const customExecutable = path.join(root, "custom", "PQTest.exe");
+
+        expect(protection.getProtectedExecutablePath(cache, customExecutable)).to.equal(customExecutable);
+    });
+
+    it("does not refresh a ready consumer when an unrelated package recovers", async () => {
+        const activeTools = path.join(root, "active-tools");
+        fs.mkdirSync(activeTools);
+        const refresh = sinon.spy();
+        protection.subscribeToLocationRecovery(
+            () => ({ configuredLocation: activeTools, currentLocation: activeTools, ready: true }),
+            refresh,
+        );
+        protection.getProtectedLocation(cache, tools);
+        fs.unlinkSync(guard);
+        await clock.tickAsync(100);
+
+        expect(refresh.called).to.be.false;
+    });
+
+    it("refreshes only once when a pending consumer's effective location becomes available", async () => {
+        let currentLocation = "";
+        let ready = false;
+        const refresh = sinon.spy(() => {
+            currentLocation = tools;
+            ready = true;
+        });
+        protection.subscribeToLocationRecovery(
+            () => ({
+                configuredLocation: protection.getProtectedLocation(cache, tools),
+                currentLocation,
+                ready,
+            }),
+            refresh,
+        );
+        protection.getProtectedLocation(cache, tools);
+        protection.emit("recovered");
+        expect(refresh.called).to.be.false;
+
+        fs.unlinkSync(guard);
+        await clock.tickAsync(100);
+        protection.emit("recovered");
+
+        expect(refresh.calledOnce).to.be.true;
+    });
+
+    it("does not refresh a ready consumer for an equivalent Windows path", () => {
+        const refresh = sinon.spy();
+        protection.subscribeToLocationRecovery(
+            () => ({ configuredLocation: `${tools.toLowerCase()}${path.sep}.`, currentLocation: tools, ready: true }),
+            refresh,
+        );
+        protection.emit("recovered");
+
+        expect(refresh.called).to.be.false;
+    });
+
+    it("refreshes when the effective configured location changes", () => {
+        const refresh = sinon.spy();
+        protection.subscribeToLocationRecovery(
+            () => ({ configuredLocation: tools, currentLocation: path.join(root, "previous"), ready: true }),
+            refresh,
+        );
+        protection.emit("recovered");
+
+        expect(refresh.calledOnce).to.be.true;
+    });
+
+    it("stops refreshing a disposed consumer", () => {
+        const refresh = sinon.spy();
+        const subscription = protection.subscribeToLocationRecovery(
+            () => ({ configuredLocation: tools, currentLocation: "", ready: false }),
+            refresh,
+        );
+        subscription.dispose();
+        protection.emit("recovered");
+
+        expect(refresh.called).to.be.false;
     });
 
     it("reacquires removed tools only after deletion finishes", async () => {

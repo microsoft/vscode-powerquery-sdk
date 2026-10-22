@@ -95,6 +95,16 @@ describe("SDK package retention", () => {
         expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
     });
 
+    it("protects a selected path ending in tools\\.", async () => {
+        const selected = addPackage("2.100.1");
+        addPackage("2.110.1");
+
+        await cleanupNugetPackages(cache, `${selected}${path.sep}.`, 1);
+
+        expect(versions()).to.deep.equal([`${prefix}2.100.1`]);
+        expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
+    });
+
     it("recognizes lowercase package directory names during cleanup", async () => {
         const selected = addPackage("2.100.1");
         const obsolete = addPackage("2.110.1");

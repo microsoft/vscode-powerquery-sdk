@@ -17,19 +17,20 @@ import {
 } from "../utils/vscodes";
 import { ExtensionConstants, PqModeType, SdkExternalsVersionTags } from "./PowerQuerySdkExtension";
 
-function protectManagedToolsLocation(toolsLocation: string | undefined): string | undefined {
+function getManagedNugetFolder(): string | undefined {
     const extension: vscode.Extension<unknown> | undefined = vscode.extensions.getExtension(
         `PowerQuery.${ExtensionConstants.ExtensionId}`,
     );
 
-    if (extension && toolsLocation) {
-        return nugetPackageProtection.getProtectedLocation(
-            path.resolve(extension.extensionPath, ExtensionConstants.NugetBaseFolder),
-            toolsLocation,
-        );
-    }
+    return extension ? path.resolve(extension.extensionPath, ExtensionConstants.NugetBaseFolder) : undefined;
+}
 
-    return toolsLocation;
+function protectManagedToolsLocation(toolsLocation: string | undefined): string | undefined {
+    const baseNugetFolder: string | undefined = getManagedNugetFolder();
+
+    return baseNugetFolder && toolsLocation
+        ? nugetPackageProtection.getProtectedLocation(baseNugetFolder, toolsLocation)
+        : toolsLocation;
 }
 
 // eslint-disable-next-line @typescript-eslint/typedef
@@ -367,12 +368,11 @@ export const ExtensionConfigurations = {
         );
 
         const executablePath: string | undefined = resolveSubstitutedValues(value);
+        const baseNugetFolder: string | undefined = getManagedNugetFolder();
 
-        if (executablePath && !protectManagedToolsLocation(path.dirname(executablePath))) {
-            return undefined;
-        }
-
-        return executablePath;
+        return baseNugetFolder && executablePath
+            ? nugetPackageProtection.getProtectedExecutablePath(baseNugetFolder, executablePath)
+            : executablePath;
     },
     get CleanupIntermediateResultsAfterHours(): number {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(

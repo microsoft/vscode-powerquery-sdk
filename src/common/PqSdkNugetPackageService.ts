@@ -16,6 +16,7 @@ import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
 import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
+import { NugetPackageCleanupInProgressError } from "../utils/nugetPackageUsage";
 import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
@@ -152,14 +153,23 @@ export class PqSdkNugetPackageService {
     private protectConfiguredPackages(): string | undefined {
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
         let toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
-        const directExecutable: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
 
         if (toolsLocation) {
             toolsLocation = nugetPackageProtection.getProtectedLocation(baseNugetFolder, toolsLocation);
         }
 
-        if (directExecutable) {
-            nugetPackageProtection.getProtectedLocation(baseNugetFolder, path.dirname(directExecutable));
+        try {
+            const directExecutable: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
+
+            if (directExecutable) {
+                nugetPackageProtection.getProtectedLocation(baseNugetFolder, path.dirname(directExecutable));
+            }
+        } catch (error: unknown) {
+            if (!(error instanceof NugetPackageCleanupInProgressError)) {
+                throw error;
+            }
+
+            // The getter has scheduled a retry; initialization waits without exposing this override.
         }
 
         return toolsLocation;
