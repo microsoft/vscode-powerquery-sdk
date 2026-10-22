@@ -23,21 +23,6 @@ What you can do with this extension:
 - Leverage syntax highlighting and intellisense for writing M script
 - Manage your workspace settings and other project-level configurations
 
-### SDK tool package retention
-
-`powerquery.sdk.externals.packagesToKeep` controls how many downloaded SDK tool
-packages are retained in the extension's `.nuget` cache. The default is `2`, and
-the minimum is `1`. After successfully selecting or reusing extension-managed
-tools, the extension keeps the selected version and the newest remaining versions
-up to that total, deleting older cached packages. The selected version is kept
-even when it is older than other cached versions.
-
-Custom tool locations and unrelated cache contents are not removed. Failed
-downloads do not trigger cleanup. If a cached package cannot be removed, the
-failure is logged in the **Power Query SDK** output channel without preventing
-use of the selected SDK. Changes to the retention count take effect on the next
-successful tool selection, update, or reuse.
-
 ## Developer Guide
 
 ### Testing Architecture
@@ -69,11 +54,6 @@ npm run test:unit-test
 # Run only integration tests (requires VS Code)
 npm run test:e2e
 ```
-
-NuGet unit tests mock HTTP responses and child processes, including a local ZIP
-fixture for extraction, so they do not require nuget.org access or nuget.exe.
-Integration tests that acquire real SDK tools still require access to their
-configured feed.
 
 #### Test Development Patterns
 
