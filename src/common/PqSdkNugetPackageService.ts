@@ -14,6 +14,8 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
+import { nugetPackageProtection, NugetPackageProtectionPendingError } from "../utils/NugetPackageProtection";
+import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
 import { NugetVersions } from "../utils/NugetVersions";
 import { NugetCommandService } from "./nuget/NugetCommandService";
 import { NugetHttpService } from "./nuget/NugetHttpService";
@@ -35,6 +37,25 @@ export class PqSdkNugetPackageService {
     ) {
         this.nugetHttpService = new NugetHttpService(outputChannel);
         this.nugetCommandService = new NugetCommandService(vscExtCtx.extensionPath, outputChannel);
+
+        if (outputChannel) {
+            nugetPackageProtection.setOutputChannel(outputChannel);
+        }
+
+        vscExtCtx.subscriptions.push(nugetPackageProtection);
+        this.protectConfiguredPackages();
+
+        vscExtCtx.subscriptions.push(
+            vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+                if (event.affectsConfiguration(ExtensionConstants.ConfigNames.PowerQuerySdk.name)) {
+                    try {
+                        this.protectConfiguredPackages();
+                    } catch (error: unknown) {
+                        this.outputChannel?.appendErrorLine(`Cannot protect configured SDK packages due to ${error}`);
+                    }
+                }
+            }),
+        );
 
         this.globalEventBus?.on(
             GlobalEvents.VSCodeEvents.onProxySettingsChanged,
@@ -128,11 +149,59 @@ export class PqSdkNugetPackageService {
         return fs.existsSync(expectedPqTestPath);
     }
 
+    private protectConfiguredPackages(): string | undefined {
+        const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
+        let toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+
+        if (toolsLocation) {
+            toolsLocation = nugetPackageProtection.getProtectedLocation(baseNugetFolder, toolsLocation);
+        }
+
+        try {
+            const directExecutable: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
+
+            if (directExecutable) {
+                nugetPackageProtection.getProtectedLocation(baseNugetFolder, path.dirname(directExecutable));
+            }
+        } catch (error: unknown) {
+            if (!(error instanceof NugetPackageProtectionPendingError)) {
+                throw error;
+            }
+
+            // The getter has scheduled a retry; initialization waits without exposing this override.
+        }
+
+        return toolsLocation;
+    }
+
+    public async waitForConfiguredPackages(): Promise<void> {
+        this.protectConfiguredPackages();
+        await nugetPackageProtection.waitForPending();
+    }
+
+    public cleanupUnusedPackages(): Promise<void> {
+        return cleanupNugetPackages(
+            path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder),
+            this.protectConfiguredPackages(),
+            ExtensionConfigurations.numberOfPackagesToKeep,
+            this.outputChannel,
+        );
+    }
+
     public async updatePqSdkFromNuget(maybeNextVersion: string | undefined): Promise<string | undefined> {
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
 
         if (!fs.existsSync(baseNugetFolder)) {
             fs.mkdirSync(baseNugetFolder);
+        }
+
+        if (
+            !nugetPackageProtection.getProtectedLocation(
+                baseNugetFolder,
+                path.dirname(this.expectedPqSdkPath(maybeNextVersion)),
+            )
+        ) {
+            await nugetPackageProtection.waitForPending();
         }
 
         if (ExtensionConfigurations.nugetPath) {
