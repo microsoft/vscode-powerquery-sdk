@@ -266,6 +266,11 @@ export class MQueryDebugSession extends LoggingDebugSession {
         return new Source(path.dirname(filePath), this.convertDebuggerPathToClient(filePath), undefined, undefined);
     }
 
+    public override shutdown(): void {
+        this.pqTestExecutableOnceTask?.dispose();
+        super.shutdown();
+    }
+
     appendLine(value: string, category: "stdout" | "stderr" | "console" = "stdout"): void {
         const e: DebugProtocol.OutputEvent = new OutputEvent(`${this.prefixLineWithTimeStamp(value)}\n`, category);
 
