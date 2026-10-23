@@ -16,6 +16,8 @@ import * as sinon from "sinon";
 import { setImmediate } from "timers";
 import * as vscode from "vscode";
 
+import { NugetHttpService } from "../../common/nuget/NugetHttpService";
+import { PqSdkNugetPackageService } from "../../common/PqSdkNugetPackageService";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { PowerQueryTaskProvider } from "../../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
@@ -106,6 +108,70 @@ suite("SDK package readiness consumers", () => {
             return child;
         });
     }
+
+    function createPackageService(): PqSdkNugetPackageService {
+        sandbox.stub(ExtensionConfigurations, "PQTestLocation").get(() => undefined);
+        sandbox.stub(ExtensionConfigurations, "pqTestExecutablePath").get(() => undefined);
+        sandbox.stub(ExtensionConfigurations, "nugetPath").get(() => undefined);
+
+        sandbox
+            .stub(nugetPackageProtection, "getProtectedLocationAsync")
+            .callsFake((base: string, location: string) => protection.getProtectedLocationAsync(base, location));
+
+        sandbox.stub(nugetPackageProtection, "waitForPending").rejects(new Error("Unexpected global wait"));
+
+        const subscriptions: vscode.Disposable[] = [];
+
+        const service: PqSdkNugetPackageService = new PqSdkNugetPackageService({
+            extensionPath: root,
+            subscriptions,
+        } as vscode.ExtensionContext);
+
+        disposables.push(...subscriptions.filter((entry: vscode.Disposable) => entry !== nugetPackageProtection));
+
+        return service;
+    }
+
+    test("package acquisition does not wait for an unrelated package's cleanup guard", async () => {
+        const otherTools: string = path.join(cache, "Microsoft.PowerQuery.SdkTools.2.159.1", "tools");
+        const usage: string = path.join(cache, ".sdk-package-usage", path.basename(path.dirname(otherTools)));
+        fs.mkdirSync(usage, { recursive: true });
+
+        fs.writeFileSync(path.join(usage, `cleanup-${process.pid}-123-00000000-0000-0000-0000-000000000000`), "");
+
+        protection.getProtectedLocation(cache, otherTools);
+        fs.unlinkSync(path.join(tools, "PQTest.exe"));
+
+        const download: sinon.SinonStub = sandbox
+            .stub(NugetHttpService.prototype, "downloadAndExtractNugetPackage")
+            .callsFake((): Promise<void> => {
+                fs.writeFileSync(path.join(tools, "PQTest.exe"), "");
+
+                return Promise.resolve();
+            });
+
+        const pending: Promise<string | undefined> = createPackageService().updatePqSdkFromNuget("2.160.2");
+        await assertWaiting(pending);
+        sinon.assert.notCalled(download);
+        finishIdentity("123");
+
+        assert.strictEqual(await pending, path.join(tools, "PQTest.exe"));
+        sinon.assert.calledOnce(download);
+        assert.strictEqual(protection.getProtectedLocation(cache, otherTools), undefined);
+    });
+
+    test("package acquisition propagates its own verification failure without downloading", async () => {
+        const download: sinon.SinonStub = sandbox
+            .stub(NugetHttpService.prototype, "downloadAndExtractNugetPackage")
+            .resolves();
+
+        const pending: Promise<string | undefined> = createPackageService().updatePqSdkFromNuget("2.160.2");
+        await assertWaiting(pending);
+        rejectIdentity(new Error("identity unavailable"));
+
+        await assert.rejects(pending, /identity unavailable/);
+        sinon.assert.notCalled(download);
+    });
 
     test("executable debugging waits and launches exactly once", async () => {
         const spawn: sinon.SinonStub = stubSpawn();

@@ -195,14 +195,10 @@ export class PqSdkNugetPackageService {
             fs.mkdirSync(baseNugetFolder);
         }
 
-        if (
-            !nugetPackageProtection.getProtectedLocation(
-                baseNugetFolder,
-                path.dirname(this.expectedPqSdkPath(maybeNextVersion)),
-            )
-        ) {
-            await nugetPackageProtection.waitForPending();
-        }
+        await nugetPackageProtection.getProtectedLocationAsync(
+            baseNugetFolder,
+            path.dirname(this.expectedPqSdkPath(maybeNextVersion)),
+        );
 
         if (ExtensionConfigurations.nugetPath) {
             return this.nugetCommandService.downloadAndExtractNugetPackage(
