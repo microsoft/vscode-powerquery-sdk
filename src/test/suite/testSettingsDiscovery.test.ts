@@ -310,6 +310,82 @@ suite("Test settings discovery", () => {
         assert.strictEqual(findFiles.callCount, 0);
     });
 
+    test("explicit settings files bypass directory exclusions when recreated", async () => {
+        const directory: vscode.Uri = uri("tests");
+        const file: vscode.Uri = uri("tests/generated/sample.testsettings.json");
+        settings = [directory.fsPath, file.fsPath];
+        filesExclude = { "tests/generated": true };
+        directoryStat();
+
+        stat.withArgs(sinon.match((fileUri: vscode.Uri) => fileUri.fsPath === file.fsPath)).resolves({
+            type: vscode.FileType.File,
+            ctime: 0,
+            mtime: 0,
+            size: 0,
+        });
+
+        manager = new TestWatcherManager(controller, output);
+        await manager.initialize();
+
+        assert.strictEqual(controller.items.size, 1);
+        const directoryWatcher: (typeof watchers)[number] = watchers[1];
+        directoryWatcher.deleted.fire(file);
+        assert.strictEqual(controller.items.size, 0);
+        directoryWatcher.created.fire(file);
+        await new Promise<void>(resolve => setImmediate(resolve));
+
+        assert.strictEqual(controller.items.size, 1);
+        assert.strictEqual(watchers.length, 3);
+        assert.strictEqual(watchers[0].dispose.callCount, 1);
+        assert.strictEqual(findFiles.callCount, 1);
+    });
+
+    for (const source of ["explicit files", "directory and explicit file"]) {
+        (process.platform === "win32" ? test : test.skip)(
+            `case-equivalent ${source} do not leak Windows file watchers`,
+            async () => {
+                const file: vscode.Uri = uri("tests/Sample.testsettings.json");
+                const alias: vscode.Uri = uri("tests/sample.testsettings.json");
+                settings = [file.fsPath, alias.fsPath];
+
+                if (source === "directory and explicit file") {
+                    settings = [uri("tests").fsPath, alias.fsPath];
+                    directoryStat();
+                    findFiles.resolves([file]);
+
+                    stat.withArgs(sinon.match((fileUri: vscode.Uri) => fileUri.fsPath === alias.fsPath)).resolves({
+                        type: vscode.FileType.File,
+                        ctime: 0,
+                        mtime: 0,
+                        size: 0,
+                    });
+                }
+
+                manager = new TestWatcherManager(controller, output);
+                await manager.initialize();
+                const watchersPerGeneration: number = source === "explicit files" ? 1 : 2;
+                assert.strictEqual(watchers.length, watchersPerGeneration);
+
+                configurationChanged.fire({ affectsConfiguration: (key: string) => key === "search.exclude" });
+                await new Promise<void>(resolve => setImmediate(resolve));
+
+                assert.strictEqual(watchers.length, watchersPerGeneration * 2);
+
+                for (const watcher of watchers.slice(0, watchersPerGeneration)) {
+                    assert.strictEqual(watcher.dispose.callCount, 1);
+                    assert.strictEqual(watcher.listenerDisposed.callCount, 2);
+                }
+
+                manager.dispose();
+
+                for (const watcher of watchers) {
+                    assert.strictEqual(watcher.dispose.callCount, 1);
+                    assert.strictEqual(watcher.listenerDisposed.callCount, 2);
+                }
+            },
+        );
+    }
+
     test("directory deletion cancels an in-flight create instead of adding a stale item", async () => {
         settings = uri("tests").fsPath;
         directoryStat();

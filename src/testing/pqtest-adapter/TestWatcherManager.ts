@@ -217,6 +217,12 @@ export class TestWatcherManager implements vscode.Disposable {
      * Creates a file watcher for a specific settings file
      */
     private createFileWatcher(uri: vscode.Uri): void {
+        const normalizedUriString: string = getNormalizedUriString(uri);
+
+        if (this.fileWatchers.has(normalizedUriString)) {
+            return;
+        }
+
         const workspaceFolder: vscode.WorkspaceFolder =
             vscode.workspace.getWorkspaceFolder(uri) || vscode.workspace.workspaceFolders![0];
 
@@ -228,7 +234,7 @@ export class TestWatcherManager implements vscode.Disposable {
 
         // Use normalized URI string as key for consistent lookups
         this.fileWatchers.set(
-            getNormalizedUriString(uri),
+            normalizedUriString,
             vscode.Disposable.from(
                 watcher.onDidChange(this.onFileChanged, this),
                 watcher.onDidDelete(this.onFileDeleted, this),
@@ -344,12 +350,19 @@ export class TestWatcherManager implements vscode.Disposable {
         }
 
         const normalizedUriString: string = getNormalizedUriString(uri);
+        const settingsFiles: string | string[] | undefined = ExtensionConfigurations.testSettingsFiles;
+        const configuredPaths: string[] = typeof settingsFiles === "string" ? [settingsFiles] : (settingsFiles ?? []);
+
+        const explicitlyConfigured: boolean = configuredPaths.some(
+            (configuredPath: string) => getNormalizedUriString(vscode.Uri.file(configuredPath)) === normalizedUriString,
+        );
+
         const creation: symbol = Symbol();
         this.pendingFileCreations.set(normalizedUriString, creation);
 
         try {
             if (
-                (await isTestSettingsExcluded(uri)) ||
+                (!explicitlyConfigured && (await isTestSettingsExcluded(uri))) ||
                 generation !== this.watcherGeneration ||
                 this.pendingFileCreations.get(normalizedUriString) !== creation ||
                 this.findTestItemByUri(uri)
