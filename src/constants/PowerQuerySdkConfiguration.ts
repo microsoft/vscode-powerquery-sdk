@@ -8,6 +8,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { Cancel } from "../common/promises/CancellationToken";
 import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import {
     resolvePathRelativeToWorkspace,
@@ -31,6 +32,44 @@ function protectManagedToolsLocation(toolsLocation: string | undefined): string 
     return baseNugetFolder && toolsLocation
         ? nugetPackageProtection.getProtectedLocation(baseNugetFolder, toolsLocation)
         : toolsLocation;
+}
+
+async function protectManagedToolsLocationAsync(
+    toolsLocation: string | undefined,
+    token?: vscode.CancellationToken,
+): Promise<string | undefined> {
+    if (token?.isCancellationRequested) {
+        throw new Cancel();
+    }
+
+    const baseNugetFolder: string | undefined = getManagedNugetFolder();
+
+    return baseNugetFolder && toolsLocation
+        ? await nugetPackageProtection.getProtectedLocationAsync(baseNugetFolder, toolsLocation, token)
+        : toolsLocation;
+}
+
+function getConfiguredToolsLocation(): string | undefined {
+    const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+        ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+    );
+
+    return (
+        config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation) ??
+        config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestLocation)
+    );
+}
+
+function getConfiguredExecutablePath(): string | undefined {
+    const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+        ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+    );
+
+    const value: string | undefined = config.get(
+        ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExecutablePath,
+    );
+
+    return resolveSubstitutedValues(value);
 }
 
 // eslint-disable-next-line @typescript-eslint/typedef
@@ -206,17 +245,11 @@ export const ExtensionConfigurations = {
         );
     },
     get PQTestLocation(): string | undefined {
-        // we should not cache it
-        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
-        );
+        return protectManagedToolsLocation(getConfiguredToolsLocation());
+    },
 
-        const location: string | undefined =
-            config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestLocation) ??
-            // adaptability of a deprecated config item
-            config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestLocation);
-
-        return protectManagedToolsLocation(location);
+    getPQTestLocation(token?: vscode.CancellationToken): Promise<string | undefined> {
+        return protectManagedToolsLocationAsync(getConfiguredToolsLocation(), token);
     },
 
     setPQTestVersion(
@@ -359,20 +392,18 @@ export const ExtensionConfigurations = {
         return value;
     },
     get pqTestExecutablePath(): string | undefined {
-        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
-        );
-
-        const value: string | undefined = config.get(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.pqTestExecutablePath,
-        );
-
-        const executablePath: string | undefined = resolveSubstitutedValues(value);
+        const executablePath: string | undefined = getConfiguredExecutablePath();
         const baseNugetFolder: string | undefined = getManagedNugetFolder();
 
         return baseNugetFolder && executablePath
             ? nugetPackageProtection.getProtectedExecutablePath(baseNugetFolder, executablePath)
             : executablePath;
+    },
+    async getPqTestExecutablePath(token?: vscode.CancellationToken): Promise<string | undefined> {
+        const executablePath: string | undefined = getConfiguredExecutablePath();
+        await protectManagedToolsLocationAsync(executablePath ? path.dirname(executablePath) : undefined, token);
+
+        return executablePath;
     },
     get CleanupIntermediateResultsAfterHours(): number {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(

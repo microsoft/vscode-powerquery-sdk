@@ -6,9 +6,11 @@
  */
 
 import * as path from "path";
+import type { CancellationToken } from "vscode";
 
 import { IDisposable } from "../common/Disposable";
 import { DisposableEventEmitter } from "../common/DisposableEventEmitter";
+import { Cancel } from "../common/promises/CancellationToken";
 import type { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import {
     NugetPackageCleanupInProgressError,
@@ -103,6 +105,50 @@ export class NugetPackageProtection extends DisposableEventEmitter<"recovered"> 
         }
 
         return undefined;
+    }
+
+    public async getProtectedLocationAsync(
+        baseNugetFolder: string,
+        toolsLocation: string,
+        token?: CancellationToken,
+    ): Promise<string> {
+        if (token?.isCancellationRequested) {
+            throw new Cancel();
+        }
+
+        if (!this.getProtectedLocation(baseNugetFolder, toolsLocation)) {
+            const entry: PendingProtection | undefined = this.pending.get(path.resolve(toolsLocation).toLowerCase());
+
+            if (!entry) {
+                throw new Error(`No pending SDK package protection for ${toolsLocation}`);
+            }
+
+            let cancellation: IDisposable | undefined;
+
+            try {
+                // Cancel only this caller's wait, not protection shared by other consumers.
+                await new Promise<void>((resolve: () => void, reject: (reason: unknown) => void) => {
+                    cancellation = token?.onCancellationRequested(() => reject(new Cancel()));
+                    void entry.promise.then(resolve, reject);
+
+                    if (token?.isCancellationRequested) {
+                        reject(new Cancel());
+                    }
+                });
+            } finally {
+                cancellation?.dispose();
+            }
+        }
+
+        if (token?.isCancellationRequested) {
+            throw new Cancel();
+        }
+
+        if (this.disposed) {
+            throw new Error("SDK package protection has been disposed");
+        }
+
+        return toolsLocation;
     }
 
     public async waitForPending(): Promise<void> {

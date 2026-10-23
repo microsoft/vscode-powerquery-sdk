@@ -11,6 +11,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import type { CancellationToken } from "vscode";
 
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
@@ -24,12 +25,15 @@ export const PQTEST_EXECUTABLE_NAME: string = "PQTest.exe";
  * 1. Direct executable path (powerquery.sdk.test.pqtest)
  * 2. Tools directory + executable name (powerquery.sdk.tools.location)
  *
+ * Waits for the selected package's protection before exposing its executable.
+ * Cancellation stops this request without canceling other consumers' protection.
+ *
  * @throws Error if PQTest.exe cannot be found or configured
  * @returns Full path to PQTest.exe
  */
-export function resolvePqTestExecutablePath(): string {
+export async function resolvePqTestExecutablePath(token?: CancellationToken): Promise<string> {
     // First check if direct PQTest executable path is configured
-    const directExecutablePath: string | undefined = ExtensionConfigurations.pqTestExecutablePath;
+    const directExecutablePath: string | undefined = await ExtensionConfigurations.getPqTestExecutablePath(token);
 
     if (directExecutablePath) {
         // Validate that the path ends with PQTest.exe
@@ -55,7 +59,7 @@ export function resolvePqTestExecutablePath(): string {
     }
 
     // Fall back to tools directory + executable name
-    const toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+    const toolsLocation: string | undefined = await ExtensionConfigurations.getPQTestLocation(token);
 
     if (!toolsLocation) {
         throw new Error(extensionI18n["PQSdk.taskQueue.error.pqtestLocationNotSet"]);

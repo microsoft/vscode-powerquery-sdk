@@ -10,6 +10,7 @@ import fs = require("fs");
 import * as os from "os";
 import * as path from "path";
 import * as sinon from "sinon";
+import type { CancellationToken } from "vscode";
 
 import { initializePqSdkTools } from "../../../src/commands/handlers/initializePqSdkTools";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
@@ -150,6 +151,58 @@ describe("Retryable SDK package protection", () => {
         fs.writeFileSync(nextGuard, "");
         await protectNugetPackage(cache, tools);
         expect(getCreationTime.getCalls().filter(call => call.args[0] === otherPid)).to.have.length(2);
+    });
+
+    it("awaits only the requested location, not an unrelated pending package", async () => {
+        protection.getProtectedLocation(cache, tools);
+        const otherTools = path.join(cache, "Microsoft.PowerQuery.SdkTools.2.160.2", "tools");
+
+        expect(await protection.getProtectedLocationAsync(cache, otherTools)).to.equal(otherTools);
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
+    });
+
+    it("cancels one waiter without canceling another waiter or the shared lease", async () => {
+        const dispose = sinon.spy();
+        const onCancellationRequested = sinon.stub().returns({ dispose });
+        const token: CancellationToken = { isCancellationRequested: false, onCancellationRequested };
+        const canceled = protection.getProtectedLocationAsync(cache, tools, token).then(
+            () => undefined,
+            error => error,
+        );
+        const waiting = protection.getProtectedLocationAsync(cache, tools);
+        onCancellationRequested.firstCall.args[0]();
+
+        expect(await canceled).to.be.instanceOf(Error);
+        expect(dispose.calledOnce).to.be.true;
+        fs.unlinkSync(guard);
+        await clock.tickAsync(100);
+
+        expect(await waiting).to.equal(tools);
+        expect(protection.getProtectedLocation(cache, tools)).to.equal(tools);
+    });
+
+    it("does not start verification for an already canceled request", async () => {
+        const onCancellationRequested = sinon.stub();
+        const token: CancellationToken = { isCancellationRequested: true, onCancellationRequested };
+        const failure = await protection.getProtectedLocationAsync(cache, tools, token).then(
+            () => undefined,
+            error => error,
+        );
+
+        expect(failure).to.be.instanceOf(Error);
+        expect(getCreationTime.called).to.be.false;
+        expect(onCancellationRequested.called).to.be.false;
+    });
+
+    it("propagates identity failures to asynchronous consumers", async () => {
+        getCreationTime.rejects(new Error("identity unavailable"));
+        const failure = await protection.getProtectedLocationAsync(cache, tools).then(
+            () => undefined,
+            error => error,
+        );
+
+        expect(failure).to.have.property("message", "identity unavailable");
+        expect(protection.getProtectedLocation(cache, tools)).to.be.undefined;
     });
 
     it("does not publish a lease after disposal during initial identity verification", async () => {

@@ -11,6 +11,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Fixed: SDK initialization retries cleanup contention without aborting activation, recognizes differently cased Windows paths, and ignores unrelated usage-owner checks when selecting tools.
 - Fixed: Normalized tool paths retain their protection, pending executable overrides cannot fall back to another SDK, and unrelated package recovery does not restart active service hosts.
 - Fixed: Package coordination validates OS process creation times asynchronously without blocking VS Code, so reused process IDs cannot retain stale cleanup guards or usage leases.
+- Fixed: Test discovery, test runs, executable debugging, and build tasks wait for SDK package protection instead of failing during cold activation.
 - Changed: NuGet unit tests use mocked feeds and processes so they run without public NuGet access.
 - Changed: Capped the Recommended SDK Tools NuGet package version at `2.160.2`.
 
