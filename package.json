@@ -2,7 +2,7 @@
     "name": "vscode-powerquery-sdk",
     "displayName": "Power Query SDK",
     "description": "Power Query Connector SDK",
-    "version": "0.7.3",
+    "version": "0.7.5",
     "author": "Microsoft Corporation",
     "license": "MIT",
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
@@ -29,8 +29,7 @@
         "onStartupFinished",
         "onCommand:workbench.action.tasks.runTask",
         "onWebviewPanel:powerquery.sdk.tools.ResultWebView",
-        "onLanguage:powerquery",
-        "workspaceContains:**/*.testsettings.json"
+        "onLanguage:powerquery"
     ],
     "extensionDependencies": [
         "PowerQuery.vscode-powerquery"
@@ -176,6 +175,13 @@
                     "order": 30,
                     "deprecationMessage": "Deprecated: Please use powerquery.sdk.defaultQueryFile instead.",
                     "description": "%extension.pqtest.config.pqtest.queryFile.description%"
+                },
+                "powerquery.sdk.test.enabled": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": true,
+                    "order": 39,
+                    "description": "%extension.pqtest.config.test.enabled.description%"
                 },
                 "powerquery.sdk.test.settingsFiles": {
                     "scope": "window",
@@ -336,6 +342,22 @@
                 {
                     "command": "powerquery.sdk.tools.RunTestBatteryCommand",
                     "when": "editorLangId == powerquery"
+                },
+                {
+                    "command": "powerquery.sdk.test.openOutputFile",
+                    "when": "config.powerquery.sdk.test.enabled"
+                },
+                {
+                    "command": "powerquery.sdk.test.refreshTests",
+                    "when": "config.powerquery.sdk.test.enabled"
+                },
+                {
+                    "command": "powerquery.sdk.test.refreshSettingsItemTests",
+                    "when": "config.powerquery.sdk.test.enabled"
+                },
+                {
+                    "command": "powerquery.sdk.test.clearTests",
+                    "when": "config.powerquery.sdk.test.enabled"
                 }
             ],
             "editor/context": [
@@ -348,40 +370,40 @@
             "testing/item/gutter": [
                 {
                     "command": "powerquery.sdk.test.openOutputFile",
-                    "when": "controllerId == 'powerqueryTestController'"
+                    "when": "config.powerquery.sdk.test.enabled && controllerId == 'powerqueryTestController'"
                 }
             ],
             "testing/item/context": [
                 {
                     "command": "powerquery.sdk.test.openOutputFile",
                     "group": "inline",
-                    "when": "testId =~ /^test:/"
+                    "when": "config.powerquery.sdk.test.enabled && testId =~ /^test:/"
                 },
                 {
                     "command": "powerquery.sdk.test.openOutputFile",
                     "group": "navigation@1",
-                    "when": "testId =~ /^test:/"
+                    "when": "config.powerquery.sdk.test.enabled && testId =~ /^test:/"
                 },
                 {
                     "command": "powerquery.sdk.test.refreshSettingsItemTests",
-                    "when": "testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
+                    "when": "config.powerquery.sdk.test.enabled && testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
                     "group": "inline"
                 },
                 {
                     "command": "powerquery.sdk.test.refreshSettingsItemTests",
-                    "when": "testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
+                    "when": "config.powerquery.sdk.test.enabled && testId =~ /^(?!test:|folder:).*\\.testsettings\\.json/",
                     "group": "navigation@1"
                 }
             ],
             "view/title": [
                 {
                     "command": "powerquery.sdk.test.refreshTests",
-                    "when": "view == 'workbench.view.testing'",
+                    "when": "config.powerquery.sdk.test.enabled && view == 'workbench.view.testing'",
                     "group": "navigation"
                 },
                 {
                     "command": "powerquery.sdk.test.clearTests",
-                    "when": "view == 'workbench.view.testing'",
+                    "when": "config.powerquery.sdk.test.enabled && view == 'workbench.view.testing'",
                     "group": "navigation"
                 }
             ]
@@ -490,6 +512,7 @@
     },
     "dependencies": {
         "axios": "^1.12.0",
+        "minimatch": "^10.2.6",
         "node-stream-zip": "^1.15.0",
         "vscode-jsonrpc": "^8.2.0"
     },
