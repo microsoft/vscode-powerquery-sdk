@@ -70,6 +70,16 @@ npm test
 
 Use the smallest relevant command first. `npm test` runs both unit and VS Code integration tests and is appropriate for broad or cross-cutting changes.
 
+### Manual Testing and Debugging in VS Code
+
+- Before launching or claiming readiness for manual testing, read `.vscode/launch.json` and `.vscode/tasks.json`. Run the selected launch configuration's actual `preLaunchTask`, including all `dependsOn` tasks, in this worktree. Do not assume that `npm run compile` covers every launch configuration.
+- **Run Extension** uses `${defaultBuildTask}`, currently `Watch_VSC_PQ_SDK` (`npm run watch` from the repository root). Wait for its initial compilation to succeed before launching the Extension Development Host.
+- **Run Extension [Dev Mode]** uses `Develop_Extensions`, currently both `Watch_VSC_PQ_SDK` and `Dev_PQTest_Result_WebView` (`npm start` from `webviews/pq-test-result-view/`). Wait for both initial compilations and verify that the webview development server is responsive. Preserve `WEBVIEW_DEV_MODE=true` from the launch configuration.
+- **Extension UI Tests** uses `npm: compile-tests`. The separate `tasks: watch-tests` task also starts the extension watcher, webview development server, and root `npm run watch-tests`; wait for all three to be ready when using that task.
+- Keep required watchers and servers running while the debugging session uses them. Reuse ready tasks in this worktree rather than starting duplicates, and stop processes started solely for a completed validation.
+- Check the Problems panel and task output for the files changed, not just the root build result. `npm run lint` scans only `src`; explicitly lint changed unit tests with `npx eslint <changed-test-paths> --config eslint.config.js`. For changes to `webpack.config.js`, also run `npx tsc --allowJs --checkJs --noEmit --strict --skipLibCheck --target ES2020 --module commonjs webpack.config.js` to catch editor-visible JSDoc and JavaScript type errors.
+- Fix errors before launch; do not bypass a failed prelaunch task with **Debug Anyway** or claim that an Extension Development Host was tested when only compilation was checked. If a task cannot run, report the blocker.
+
 ## Webview Changes
 
 - Treat `webviews/pq-test-result-view/` as a separate package. Its dependencies belong in its own `package.json`.

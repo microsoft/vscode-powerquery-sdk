@@ -6,7 +6,7 @@
  */
 
 import { expect } from "chai";
-import cp = require("child_process");
+import cp from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -15,6 +15,7 @@ import * as sinon from "sinon";
 import { initializePqSdkTools } from "../../../src/commands/handlers/initializePqSdkTools";
 import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { cleanupNugetPackages } from "../../../src/utils/nugetPackageRetention";
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Sinon needs writable CommonJS exports.
 import processIdentity = require("../../../src/utils/processIdentity");
 
 describe("SDK tool startup", () => {
@@ -29,9 +30,9 @@ describe("SDK tool startup", () => {
 
     beforeEach(() => {
         sinon.stub(processIdentity, "getProcessCreationTime").resolves("123");
-        queryProcess = sinon
-            .stub(cp, "execFile")
-            .throws(new Error("Startup unit tests must not query real processes"));
+
+        queryProcess = sinon.stub(cp, "execFile").throws(new Error("Startup unit tests must not query real processes"));
+
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-startup-"));
         cache = path.join(root, ".nuget");
         fs.mkdirSync(cache);
@@ -77,12 +78,15 @@ describe("SDK tool startup", () => {
         const newer = addPackage("2.160.2");
         cleanup.callsFake(() => cleanupNugetPackages(cache, selected, 1));
 
-        for (let activation = 0; activation < 2; activation++) {
+        async function verifyActivation(): Promise<void> {
             const ready = fs.existsSync(path.join(selected, "PQTest.exe"));
             expect(await initializePqSdkTools(options(selected, ready))).to.equal(selected);
             expect(fs.existsSync(newer)).to.be.false;
             expect(fs.existsSync(path.join(selected, "PQTest.exe"))).to.be.true;
         }
+
+        await verifyActivation();
+        await verifyActivation();
 
         expect(cleanup.callCount).to.equal(2);
         expect(findVersion.called).to.be.false;
@@ -133,6 +137,49 @@ describe("SDK tool startup", () => {
     it("does not select tools or clean packages after unsuccessful acquisition without a prompt", async () => {
         await initializePqSdkTools(options(undefined, false));
 
+        expect(selectTools.called).to.be.false;
+        expect(cleanup.called).to.be.false;
+    });
+
+    it("reports a missing downloaded executable before offering a local tools selection", async () => {
+        const onAcquisitionFailed = sinon.stub().resolves();
+        const promptForTools = sinon.stub().resolves(undefined);
+
+        expect(
+            await initializePqSdkTools({
+                ...options(undefined, false),
+                onAcquisitionFailed,
+                promptForTools,
+            }),
+        ).to.be.undefined;
+
+        sinon.assert.callOrder(acquire, onAcquisitionFailed, promptForTools);
+        expect(onAcquisitionFailed.calledOnce).to.be.true;
+        expect(selectTools.called).to.be.false;
+    });
+
+    it("does not report a download failure when acquisition succeeds", async () => {
+        const onAcquisitionFailed = sinon.stub().resolves();
+        acquire.resolves(path.join(root, "tools", "PQTest.exe"));
+
+        await initializePqSdkTools({ ...options(undefined, false), onAcquisitionFailed });
+
+        expect(onAcquisitionFailed.called).to.be.false;
+    });
+
+    it("propagates version lookup failures without attempting acquisition or selecting tools", async () => {
+        const failure = new Error("proxy authentication required");
+        findVersion.rejects(failure);
+        let caught: unknown;
+
+        try {
+            await initializePqSdkTools(options(undefined, false));
+        } catch (error: unknown) {
+            caught = error;
+        }
+
+        expect(caught).to.equal(failure);
+        expect(acquire.called).to.be.false;
         expect(selectTools.called).to.be.false;
         expect(cleanup.called).to.be.false;
     });

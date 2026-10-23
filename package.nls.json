@@ -1,6 +1,6 @@
 {
     "extension.pqtest.CreateNewProjectCommand.title": "Create an extension project",
-    "extension.pqtest.SeizePqTestCommand.title": "Update SDK Tool",
+    "extension.pqtest.SeizePqTestCommand.title": "Update PQ SDK Tools",
     "extension.pqtest.SetupCurrentWorkspaceCommand.title": "Setup workspace",
     "extension.pqtest.DeleteCredentialCommand.title": "Clear ALL credentials",
     "extension.pqtest.DisplayExtensionInfoCommand.title": "Connector info",
@@ -14,8 +14,8 @@
     "extension.pqtest.test.refreshSettingsItemTests.title": "Refresh Tests",
     "extension.pqtest.test.clearTests.title": "Clear Tests",
     "extension.pqtest.config.externals.msbuildPath.description": "Local path to msbuild.exe installation folder.",
-    "extension.pqtest.config.externals.nugetPath.description": "Local path to nuget.exe installation folder.",
-    "extension.pqtest.config.externals.nugetFeed.description": "Suggested nuget feed URL.",
+    "extension.pqtest.config.externals.nugetPath.description": "Local path to the folder containing nuget.exe, not the executable itself. Set this to use the NuGet CLI and an alternative package source configured with powerquery.sdk.externals.nugetFeed.",
+    "extension.pqtest.config.externals.nugetFeed.description": "NuGet package source URL or local feed folder containing Microsoft.PowerQuery.SdkTools. Requires powerquery.sdk.externals.nugetPath; otherwise the SDK downloads directly from nuget.org.",
     "extension.pqtest.config.externals.packagesToKeep.description": "Number of downloaded SDK tool packages to keep, including the selected version. Packages used during an open SDK session are protected until that host exits, so the limit may temporarily be exceeded. Minimum: 1.",
     "extension.pqtest.config.externals.versionTag.description": "The version tag of the PQ SDK tools to be downloaded.",
     "extension.pqtest.config.externals.versionTag.recommended.description": "The stable version",

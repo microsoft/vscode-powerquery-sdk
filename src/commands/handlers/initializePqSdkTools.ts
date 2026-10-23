@@ -19,6 +19,7 @@ interface PqSdkToolStartupOptions {
     >;
     readonly onPackageAcquired: (version: string) => void;
     readonly selectTools: (executablePath: string, version: string) => Promise<void>;
+    readonly onAcquisitionFailed?: () => void;
     readonly promptForTools?: () => Promise<string | undefined>;
 }
 
@@ -38,6 +39,7 @@ export async function initializePqSdkTools(options: PqSdkToolStartupOptions): Pr
     if (executablePath) {
         options.onPackageAcquired(version);
     } else {
+        options.onAcquisitionFailed?.();
         executablePath = await options.promptForTools?.();
     }
 
