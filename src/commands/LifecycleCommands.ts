@@ -35,7 +35,6 @@ import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel, SimplePqTestResultViewBroker } from "../panels/PqTestResultViewPanel";
-import { PqServiceHostClient } from "../pqTestConnector/PqServiceHostClient";
 import {
     connectorQueryFileExcludeGlob,
     connectorQueryFileGlob,
@@ -43,6 +42,7 @@ import {
 } from "../utils/connectorQueryFiles";
 import { debounce } from "../utils/debounce";
 import { getMtimeOfAFile } from "../utils/files";
+import { getLocalSdkToolsLocation } from "../utils/localSdkTools";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
@@ -99,9 +99,7 @@ export class LifecycleCommands implements IDisposable {
         private readonly schemaManagementService: SchemaManagementService,
     ) {
         // Initialize command handlers
-        this.displayExtensionInfoHandler = new DisplayExtensionInfoHandler(pqTestService, {
-            featureUseServiceHost: ExtensionConfigurations.featureUseServiceHost,
-        });
+        this.displayExtensionInfoHandler = new DisplayExtensionInfoHandler(pqTestService);
 
         this.deleteCredentialHandler = new DeleteCredentialHandler(pqTestService);
         this.listCredentialsHandler = new ListCredentialsHandler(pqTestService);
@@ -118,6 +116,10 @@ export class LifecycleCommands implements IDisposable {
         });
 
         globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePqTestVersion, () => {
+            if (getLocalSdkToolsLocation()) {
+                return;
+            }
+
             // when PqTestVersion changed in the mode non-customized version tag, users might have it updated
             // thus we need to compare it with current expected version and reset it back the one we expected
             if (
@@ -241,12 +243,7 @@ export class LifecycleCommands implements IDisposable {
             ? resolveSubstitutedValues(currentPQTestExtensionFileLocation)
             : undefined;
 
-        if (
-            resolvedPQTestExtensionFileLocation &&
-            fs.existsSync(resolvedPQTestExtensionFileLocation) &&
-            (!ExtensionConfigurations.featureUseServiceHost ||
-                (this.pqTestService as PqServiceHostClient).pqServiceHostConnected)
-        ) {
+        if (resolvedPQTestExtensionFileLocation && fs.existsSync(resolvedPQTestExtensionFileLocation)) {
             const currentMtime: Date = getMtimeOfAFile(resolvedPQTestExtensionFileLocation);
 
             if (currentMtime > this.lastMtimeOfMezFileWhoseInfoSeized && this.pqTestService.pqTestReady) {
@@ -544,6 +541,7 @@ export class LifecycleCommands implements IDisposable {
             await this.pqSdkNugetPackageService.waitForConfiguredPackages();
 
             return await initializePqSdkTools({
+                localToolsLocation: getLocalSdkToolsLocation(),
                 selectedToolsLocation: ExtensionConfigurations.PQTestLocation,
                 selectedToolsReady: this.pqTestService.pqTestReady,
                 packageService: this.pqSdkNugetPackageService,
@@ -551,6 +549,9 @@ export class LifecycleCommands implements IDisposable {
                     this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(version);
                 },
                 selectTools: this.doUpdatePqTestLocationAndStartItIfNeeded.bind(this),
+                onAcquisitionFailed: (): void => {
+                    void this.showSdkToolsUpdateError(extensionI18n["PQSdk.lifecycle.warning.pqtest.seized.failed"]);
+                },
                 promptForTools: skipQueryDialog
                     ? undefined
                     : async (): Promise<string | undefined> => {
@@ -571,7 +572,7 @@ export class LifecycleCommands implements IDisposable {
         } catch (error: any | string) {
             const errorMessage: string = error instanceof Error ? error.message : error;
 
-            void vscode.window.showErrorMessage(
+            void this.showSdkToolsUpdateError(
                 resolveI18nTemplate("PQSdk.lifecycle.command.update.sdkTool.errorMessage", {
                     errorMessage,
                 }),
@@ -581,6 +582,39 @@ export class LifecycleCommands implements IDisposable {
         }
 
         return undefined;
+    }
+
+    private async showSdkToolsUpdateError(message: string): Promise<void> {
+        const guidance: string = extensionI18n["PQSdk.lifecycle.sdkTool.download.guidance"];
+        const openSettings: string = extensionI18n["PQSdk.lifecycle.sdkTool.download.openSettings"];
+        const troubleshooting: string = extensionI18n["PQSdk.lifecycle.sdkTool.download.troubleshooting"];
+        const showOutput: string = extensionI18n["PQSdk.lifecycle.sdkTool.download.showOutput"];
+
+        this.outputChannel.appendErrorLine(message);
+        this.outputChannel.appendErrorLine(guidance);
+
+        const selection: string | undefined = await vscode.window.showErrorMessage(
+            `${extensionI18n["PQSdk.lifecycle.sdkTool.download.errorMessage"]} ${guidance}`,
+            openSettings,
+            troubleshooting,
+            showOutput,
+        );
+
+        try {
+            if (selection === openSettings) {
+                await vscode.commands.executeCommand("workbench.action.openSettings", "powerquery.sdk.externals.nuget");
+            } else if (selection === troubleshooting) {
+                await vscode.env.openExternal(
+                    Uri.parse(
+                        "https://github.com/microsoft/vscode-powerquery-sdk/blob/main/README.md#sdk-tools-download-and-network-troubleshooting",
+                    ),
+                );
+            } else if (selection === showOutput) {
+                this.outputChannel.show(true);
+            }
+        } catch (error: unknown) {
+            this.outputChannel.appendErrorLine(`Cannot open SDK Tools download guidance due to ${error}`);
+        }
     }
 
     /**
@@ -626,6 +660,12 @@ export class LifecycleCommands implements IDisposable {
      */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
         try {
+            const localTools: string | undefined = getLocalSdkToolsLocation();
+
+            if (localTools) {
+                return localTools;
+            }
+
             await this.pqSdkNugetPackageService.waitForConfiguredPackages();
 
             if (!maybeNextVersion) {
@@ -655,6 +695,10 @@ export class LifecycleCommands implements IDisposable {
                 if (pqTestExecutableFullPath) {
                     this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(theNextVersion);
                     await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
+                } else {
+                    void this.showSdkToolsUpdateError(extensionI18n["PQSdk.lifecycle.warning.pqtest.seized.failed"]);
+
+                    return undefined;
                 }
             } else {
                 await this.pqSdkNugetPackageService.cleanupUnusedPackages();
@@ -689,7 +733,7 @@ export class LifecycleCommands implements IDisposable {
         } catch (error: any | string) {
             const errorMessage: string = error instanceof Error ? error.message : error;
 
-            void vscode.window.showErrorMessage(
+            void this.showSdkToolsUpdateError(
                 resolveI18nTemplate("PQSdk.lifecycle.command.manuallyUpdate.sdkTool.errorMessage", {
                     errorMessage,
                 }),
@@ -1443,13 +1487,7 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
 
                 try {
-                    if (ExtensionConfigurations.featureUseServiceHost) {
-                        result = await (this.pqTestService as PqServiceHostClient).RunTestBatteryFromContent(
-                            pathToQueryFile?.fsPath,
-                        );
-                    } else {
-                        result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
-                    }
+                    result = await this.pqTestService.RunTestBattery(pathToQueryFile);
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.run.test.result", {

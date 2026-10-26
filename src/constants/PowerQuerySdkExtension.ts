@@ -42,7 +42,6 @@ const ConfigNames = {
             pqTestVersion: "tools.version" as const,
             defaultExtensionLocation: "defaultExtension" as const,
             defaultQueryFileLocation: "defaultQueryFile" as const,
-            featureUseServiceHost: "features.useServiceHost" as const,
             testSettingsFiles: "test.settingsFiles" as const,
             testExtensionPaths: "test.extensionPaths" as const,
             pqTestExecutablePath: "test.pqtest" as const,
@@ -75,7 +74,7 @@ const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
  *  Inclusive maximum nuget version
  *  2.117 or 2.117.x wil limit the version of the sdkTool seized beneath 2.118
  */
-const MaximumPqTestNugetVersion: string = "2.160.2" as const;
+const MaximumPqTestNugetVersion: string = "2.170.x" as const;
 /**
  *  Exclusive minimum nuget version
  *  2.114 or 2.114.x wil limit the version of the sdkTool seized above 2.114.x like 2.115.0

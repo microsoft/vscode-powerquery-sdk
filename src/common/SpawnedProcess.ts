@@ -91,7 +91,7 @@ export class SpawnedProcess {
                     rej(error);
                 });
 
-                theCpStream.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+                theCpStream.on("close", (code: number | null, signal: NodeJS.Signals | null) => {
                     this._exitCode = code;
                     this._signal = signal;
                     additionalOption?.onExit?.(code, signal, this._stderr, this._stdout);

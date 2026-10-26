@@ -1,6 +1,12 @@
 {
   "PQSdk.common.enable": "有効化",
   "PQSdk.common.cancel": "キャンセル",
+  "PQSdk.taskProvider.taskFailed": "タスク {taskName} が失敗したか、キャンセルされました。",
+  "PQSdk.query.saveAndRun": "保存して実行",
+  "PQSdk.query.saveRequired": "PQTest.exe は保存済みのファイルを実行します。実行前に {queryFile} を保存しますか?",
+  "PQSdk.query.executionCancelled": "実行がキャンセルされました。実行前に {queryFile} を保存する必要があります。",
+  "PQSdk.query.saveFailed": "{queryFile} を保存できなかったため、実行がキャンセルされました。",
+  "PQSdk.query.saveToFile": "PQTest.exe で実行する前に、{queryFile} をローカル ファイルに保存してください。",
   "PQSdk.common.open.file": "{fileName} を開く",
   "PQSdk.common.logLevel.Debug": "デバッグ",
   "PQSdk.common.logLevel.Trace": "トレース",

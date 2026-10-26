@@ -1,6 +1,12 @@
 {
   "PQSdk.common.enable": "Enable",
   "PQSdk.common.cancel": "Cancel",
+  "PQSdk.taskProvider.taskFailed": "Task {taskName} failed or was cancelled.",
+  "PQSdk.query.saveAndRun": "Save and Run",
+  "PQSdk.query.saveRequired": "PQTest.exe runs saved files. Save {queryFile} before running?",
+  "PQSdk.query.executionCancelled": "Execution cancelled. {queryFile} must be saved before running.",
+  "PQSdk.query.saveFailed": "Execution cancelled because {queryFile} could not be saved.",
+  "PQSdk.query.saveToFile": "Save {queryFile} to a local file before running it with PQTest.exe.",
   "PQSdk.common.open.file": "Open {fileName}",
   "PQSdk.common.logLevel.Debug": "Debug",
   "PQSdk.common.logLevel.Trace": "Trace",
@@ -19,6 +25,11 @@
   "PQSdk.lifecycle.command.select.workspace": "Select workspace",
   "PQSdk.lifecycle.command.update.sdkTool.errorMessage": "Failed to update PowerQuery.SdkTools package due to {errorMessage}",
   "PQSdk.lifecycle.command.manuallyUpdate.sdkTool.errorMessage": "Failed to manually update PowerQuery.SdkTools package due to {errorMessage}",
+  "PQSdk.lifecycle.sdkTool.download.errorMessage": "Unable to download SDK Tools from NuGet. See the Power Query SDK output for error details.",
+  "PQSdk.lifecycle.sdkTool.download.guidance": "If nuget.org is blocked or your network requires a proxy or authentication, configure powerquery.sdk.externals.nugetPath with the folder containing nuget.exe and powerquery.sdk.externals.nugetFeed with an accessible source for Microsoft.PowerQuery.SdkTools. Both settings are needed to use an alternative feed. See the README troubleshooting guidance, then retry Update PQ SDK Tools.",
+  "PQSdk.lifecycle.sdkTool.download.openSettings": "Configure NuGet",
+  "PQSdk.lifecycle.sdkTool.download.troubleshooting": "Troubleshooting",
+  "PQSdk.lifecycle.sdkTool.download.showOutput": "Show Output",
   "PQSdk.lifecycle.command.delete.credentials.title": "Deleting credentials",
   "PQSdk.lifecycle.command.delete.credentials.result": "DeleteCredential result {result}",
   "PQSdk.lifecycle.command.delete.credentials.errorMessage": "Failed to delete credentials due to {errorMessage}",
@@ -82,7 +93,7 @@
   "PQSdk.lifecycleTreeView.item.evaluateOpenedFile.title": "Evaluate current file",
   "PQSdk.lifecycleTreeView.item.testConnection.title": "Run TestConnection function",
   "PQSdk.lifecycleTreeView.item.displayExtensionInfo.title": "Connector info",
-  "PQSdk.lifecycleTreeView.item.updateSdk.title": "Update SDK Tools",
+  "PQSdk.lifecycleTreeView.item.updateSdk.title": "Update PQ SDK Tools",
   "PQSdk.lifecycleTreeView.item.updateSdk.currentVersion.label": "Current version: {currentPqSdkNugetVersion}",
   "PQSdk.taskProvider.makePQx.compile.label": "Build connector project using MakePQX",
   "PQSdk.taskQueue.info.debugTaskFound": "[Debug task found] {pqTestExeFullPath} {arguments}",
@@ -258,4 +269,3 @@
   "PQSdk.testAdapter.cleanup.entryDeleteFailed": "Failed to delete {entryPath}: {errorMessage}",
   "PQSdk.testAdapter.cleanup.completed": "Cleaned up {count} old intermediate test result(s) from {folderPath}"
 }
-

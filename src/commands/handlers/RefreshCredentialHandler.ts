@@ -38,6 +38,11 @@ export class RefreshCredentialHandler
     public async execute(_params: RefreshCredentialParams): Promise<CommandResult<RefreshCredentialResult>> {
         try {
             const result: GenericResult = await this.pqTestService.RefreshCredential();
+
+            if (result.Status === "Failure") {
+                return { success: false, error: result.Message || JSON.stringify(result) };
+            }
+
             const formattedOutput: string = this.prettifyJson(result);
 
             return {

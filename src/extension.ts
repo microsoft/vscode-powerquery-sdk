@@ -21,18 +21,18 @@ import { PowerQueryTaskProvider } from "./features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "./features/PqSdkOutputChannel";
 import { GlobalEventBus } from "./GlobalEventBus";
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
-import { PqServiceHostClient } from "./pqTestConnector/PqServiceHostClient";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
 import { registerCommands, registerTestController } from "./testing/pqtest-adapter/TestController";
+import { initializeLocalSdkTools } from "./utils/localSdkTools";
 import { stringifyJson } from "./utils/strings";
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
+    initializeLocalSdkTools(vscExtCtx.extensionMode !== vscode.ExtensionMode.Production);
+
     const vscPowerQuery: PQLSExt.PowerQueryApi = vscode.extensions.getExtension(
         ExtensionConstants.PQLanguageServiceExtensionId,
     )?.exports;
-
-    const useServiceHost: boolean = ExtensionConfigurations.featureUseServiceHost;
 
     // let's make extension::activate serves as minimum as possible:
     // for now:
@@ -60,9 +60,11 @@ export function activate(vscExtCtx: vscode.ExtensionContext): void {
         }
     }
 
-    const disposablePqTestServices: IPQTestService & IDisposable = useServiceHost
-        ? new PqServiceHostClient(globalEventBus, pqSdkOutputChannel)
-        : new PqTestExecutableTaskQueue(vscExtCtx, globalEventBus, pqSdkOutputChannel);
+    const disposablePqTestServices: IPQTestService & IDisposable = new PqTestExecutableTaskQueue(
+        vscExtCtx,
+        globalEventBus,
+        pqSdkOutputChannel,
+    );
 
     disposablePqTestServices.currentExtensionInfos.subscribe((infos: ExtensionInfo[]) => {
         const theUri: vscode.Uri | undefined = getFirstWorkspaceFolder()?.uri;
