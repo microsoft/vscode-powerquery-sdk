@@ -1543,11 +1543,20 @@ suite("CLI-only execution", () => {
         });
     }
 
-    for (const accept of [false, true]) {
-        test(`Test Explorer ${accept ? "saves" : "rejects"} a dirty parameter query resolved relative to its settings file`, async () => {
+    for (const { accept, bom } of [
+        { accept: false, bom: false },
+        { accept: true, bom: false },
+        { accept: false, bom: true },
+        { accept: true, bom: true },
+    ]) {
+        test(`Test Explorer ${accept ? "saves" : "rejects"} a dirty parameter query resolved relative to its ${bom ? "BOM-prefixed" : "UTF-8"} settings file`, async () => {
             const settingsFile = vscode.Uri.file(path.join(directory, "batch.testsettings.json"));
 
-            fs.writeFileSync(settingsFile.fsPath, JSON.stringify({ ParameterQueryFilePath: "parameters.pq" }));
+            fs.writeFileSync(
+                settingsFile.fsPath,
+                `${bom ? "\uFEFF" : ""}${JSON.stringify({ ParameterQueryFilePath: "parameters.pq" })}`,
+            );
+
             const controller = vscode.tests.createTestController("cli-save-parameters", "CLI save parameters");
             const cancellation = new vscode.CancellationTokenSource();
             const document = mockDocument({ uri: vscode.Uri.file(path.join(directory, "parameters.pq")) });

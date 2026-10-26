@@ -11,6 +11,7 @@
  */
 
 import * as path from "path";
+import { TextDecoder } from "util";
 import * as vscode from "vscode";
 
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
@@ -92,7 +93,7 @@ export class TestRunExecutor {
                 .filter((uri: vscode.Uri | undefined): uri is vscode.Uri => uri !== undefined);
 
             const settings: { ParameterQueryFilePath?: unknown } = JSON.parse(
-                Buffer.from(await vscode.workspace.fs.readFile(this.settingsFile)).toString("utf8"),
+                new TextDecoder().decode(await vscode.workspace.fs.readFile(this.settingsFile)),
             ) as { ParameterQueryFilePath?: unknown };
 
             if (typeof settings.ParameterQueryFilePath === "string" && settings.ParameterQueryFilePath.length > 0) {
