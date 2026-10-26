@@ -47,6 +47,12 @@ suite("CLI-only execution", () => {
         fs.writeFileSync(executable, "");
         sandbox.stub(ExtensionConfigurations, "PQTestLocation").get(() => directory);
         sandbox.stub(ExtensionConfigurations, "pqTestExecutablePath").get(() => directExecutable);
+        sandbox.stub(ExtensionConfigurations, "getPQTestLocation").resolves(directory);
+
+        sandbox
+            .stub(ExtensionConfigurations, "getPqTestExecutablePath")
+            .callsFake(() => Promise.resolve(directExecutable));
+
         sandbox.stub(ExtensionConfigurations, "msbuildPath").get(() => undefined);
         sandbox.stub(taskUtils, "executeBuildTaskAndAwaitIfNeeded").resolves();
     });

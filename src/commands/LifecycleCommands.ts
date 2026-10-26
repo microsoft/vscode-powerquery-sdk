@@ -54,6 +54,7 @@ import {
 import { DeleteCredentialHandler, DeleteCredentialResult } from "./handlers/DeleteCredentialHandler";
 import { DisplayExtensionInfoHandler, DisplayExtensionInfoResult } from "./handlers/DisplayExtensionInfoHandler";
 import { CommandResult } from "./handlers/ICommandHandler";
+import { initializePqSdkTools } from "./handlers/initializePqSdkTools";
 import { ListCredentialsHandler, ListCredentialsResult } from "./handlers/ListCredentialsHandler";
 import { RefreshCredentialHandler, RefreshCredentialResult } from "./handlers/RefreshCredentialHandler";
 import { TestConnectionHandler, TestConnectionResult } from "./handlers/TestConnectionHandler";
@@ -532,53 +533,32 @@ export class LifecycleCommands implements IDisposable {
 
     private async doCheckAndTryToUpdatePqTest(skipQueryDialog: boolean = false): Promise<string | undefined> {
         try {
-            const pqTestLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
+            await this.pqSdkNugetPackageService.waitForConfiguredPackages();
 
-            const maybeNewVersion: string | undefined =
-                await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
+            return await initializePqSdkTools({
+                selectedToolsLocation: ExtensionConfigurations.PQTestLocation,
+                selectedToolsReady: this.pqTestService.pqTestReady,
+                packageService: this.pqSdkNugetPackageService,
+                onPackageAcquired: (version: string): void => {
+                    this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(version);
+                },
+                selectTools: this.doUpdatePqTestLocationAndStartItIfNeeded.bind(this),
+                promptForTools: skipQueryDialog
+                    ? undefined
+                    : async (): Promise<string | undefined> => {
+                          const locations: Uri[] | undefined = await vscode.window.showOpenDialog({
+                              openLabel: extensionI18n["PQSdk.lifecycle.warning.pqtest.required"],
+                              canSelectFiles: true,
+                              canSelectFolders: false,
+                              canSelectMany: false,
+                              filters: {
+                                  Executable: ["exe"],
+                              },
+                          });
 
-            // have to use || over here, we want to turn empty string into a valid version
-            // '' ?? other -> '', '' || other -> other
-            const theNextVersion: string = maybeNewVersion || ExtensionConstants.SuggestedPqTestNugetVersion;
-
-            // we should not update to the latest unless the latest nuget doesn't exist on start
-            // users might just want to use the previous one purposely
-            // therefore do not try to update when, like, pqTestLocation.indexOf(maybeNewVersion) === -1
-            if (
-                !pqTestLocation ||
-                !this.pqTestService.pqTestReady ||
-                !this.pqSdkNugetPackageService.nugetPqSdkExistsSync(theNextVersion)
-            ) {
-                let pqTestExecutableFullPath: string | undefined =
-                    await this.pqSdkNugetPackageService.updatePqSdkFromNuget(theNextVersion);
-
-                // Copy schema file after successful NuGet package update
-                if (pqTestExecutableFullPath) {
-                    this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(theNextVersion);
-                }
-
-                if (!pqTestExecutableFullPath && !skipQueryDialog) {
-                    const pqTestLocationUrls: Uri[] | undefined = await vscode.window.showOpenDialog({
-                        openLabel: extensionI18n["PQSdk.lifecycle.warning.pqtest.required"],
-                        canSelectFiles: true,
-                        canSelectFolders: false,
-                        canSelectMany: false,
-                        filters: {
-                            Executable: ["exe"],
-                        },
-                    });
-
-                    if (pqTestLocationUrls?.[0]) {
-                        pqTestExecutableFullPath = pqTestLocationUrls[0].fsPath;
-                    }
-                }
-
-                if (pqTestExecutableFullPath) {
-                    await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
-                }
-            }
-
-            return pqTestLocation;
+                          return locations?.[0]?.fsPath;
+                      },
+            });
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any | string) {
             const errorMessage: string = error instanceof Error ? error.message : error;
@@ -596,7 +576,7 @@ export class LifecycleCommands implements IDisposable {
     }
 
     /**
-     * check and only update pqTest if needed like: not ready, not existing, the latest one doesn't exist either
+     * Reuse usable selected tools; acquire tools only when the selection is missing or not ready.
      * and this method should be invoked only once
      *
      * @param skipQueryDialog skip to pop up a dialog to let users fill in the pqTest.exe path
@@ -626,6 +606,8 @@ export class LifecycleCommands implements IDisposable {
             // update the pqtest location by force in case it equals the previous one
             this.pqTestService.onPowerQueryTestLocationChanged();
         }
+
+        await this.pqSdkNugetPackageService.cleanupUnusedPackages();
     }
 
     /**
@@ -636,6 +618,8 @@ export class LifecycleCommands implements IDisposable {
      */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
         try {
+            await this.pqSdkNugetPackageService.waitForConfiguredPackages();
+
             if (!maybeNextVersion) {
                 maybeNextVersion = await this.pqSdkNugetPackageService.findNullableNewPqSdkVersion();
             }
@@ -664,6 +648,8 @@ export class LifecycleCommands implements IDisposable {
                     this.schemaManagementService.copyUserSettingsSchemaFromNugetPackage(theNextVersion);
                     await this.doUpdatePqTestLocationAndStartItIfNeeded(pqTestExecutableFullPath, theNextVersion);
                 }
+            } else {
+                await this.pqSdkNugetPackageService.cleanupUnusedPackages();
             }
 
             // check whether it got seized or not

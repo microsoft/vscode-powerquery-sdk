@@ -29,6 +29,7 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { convertStringToInteger } from "../utils/numbers";
 import { pidIsRunning } from "../utils/pids";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
@@ -126,6 +127,17 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         this._disposables.unshift(
             this.globalEventBus.subscribeOneEvent(
                 GlobalEvents.VSCodeEvents.ConfigDidChangePowerQueryTestLocation,
+                this.onPowerQueryTestLocationChanged.bind(this),
+            ),
+        );
+
+        this._disposables.push(
+            nugetPackageProtection.subscribeToLocationRecovery(
+                () => ({
+                    configuredLocation: ExtensionConfigurations.PQTestLocation,
+                    currentLocation: this.pqTestLocation,
+                    ready: this.pqTestReady,
+                }),
                 this.onPowerQueryTestLocationChanged.bind(this),
             ),
         );
@@ -375,9 +387,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         await ensureQueryDocumentSaved(task.pathToQueryFile);
 
         if (!this.pqTestReady) {
-            this.pqTestFullPath = resolvePqTestExecutablePath();
+            this.pqTestFullPath = await resolvePqTestExecutablePath();
             this.pqTestLocation = path.dirname(this.pqTestFullPath);
             this.pqTestReady = true;
+            await ensureQueryDocumentSaved(task.pathToQueryFile);
         }
 
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;

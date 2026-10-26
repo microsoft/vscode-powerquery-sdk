@@ -47,6 +47,7 @@ export class MQueryDebugSession extends LoggingDebugSession {
     private readonly configurationDone: WaitNotify = new WaitNotify();
     private readonly processForked: DeferredValue<boolean> = new DeferredValue<boolean>(false);
     private readonly pqTestExecutableOnceTask: PqTestExecutableOnceTask;
+    private stopped: boolean = false;
 
     constructor() {
         super();
@@ -145,6 +146,10 @@ export class MQueryDebugSession extends LoggingDebugSession {
         // wait 1 second until configuration has finished (and configurationDoneRequest has been called)
         await this.configurationDone.wait(2e3);
 
+        if (this.stopped) {
+            return;
+        }
+
         // start the program in the runtime, do not await here
         void this.pqTestExecutableOnceTask.run(args.program, {
             operation: args.operation ?? "run-test",
@@ -160,8 +165,18 @@ export class MQueryDebugSession extends LoggingDebugSession {
         _args: DebugProtocol.DisconnectArguments,
     ): void {
         this.processForked.resolve(false);
+        this.stopped = true;
+        this.configurationDone.notify();
         this.pqTestExecutableOnceTask.dispose();
         this.sendResponse(response);
+    }
+
+    public override shutdown(): void {
+        this.stopped = true;
+        this.configurationDone.notify();
+        this.processForked.resolve(false);
+        this.pqTestExecutableOnceTask.dispose();
+        super.shutdown();
     }
 
     protected override async loadedSourcesRequest(

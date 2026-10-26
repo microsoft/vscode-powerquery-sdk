@@ -254,6 +254,14 @@
                     "description": "%extension.pqtest.config.externals.nugetFeed.description%",
                     "default": ""
                 },
+                "powerquery.sdk.externals.packagesToKeep": {
+                    "scope": "machine",
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 1,
+                    "order": 51,
+                    "description": "%extension.pqtest.config.externals.packagesToKeep.description%"
+                },
                 "powerquery.sdk.test.pqtest": {
                     "scope": "machine-overridable",
                     "type": "string",

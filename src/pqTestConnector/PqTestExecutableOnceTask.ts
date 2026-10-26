@@ -47,6 +47,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
     protected _disposables: Array<IDisposable> = [];
     private process?: SpawnedProcess;
     private disposed: boolean = false;
+    private readonly readinessCancellation: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
 
     constructor() {
         this.eventBus = new DisposableEventEmitter();
@@ -75,16 +76,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
         setTimeout(() => {
             this.eventBus.emit(PqTestExecutableOnceTaskQueueEvents.onOutput, "stdError", errorStr);
         }, 0);
-    }
-
-    private get pqTestFullPath(): string {
-        try {
-            return resolvePqTestExecutablePath();
-        } catch (error) {
-            const errorMessage: string = error instanceof Error ? error.message : String(error);
-            this.handleErrorStr(errorMessage);
-            throw error;
-        }
     }
 
     private populateTestTaskPayload(program: string, task: PQTestTask): PQTestTask {
@@ -139,7 +130,17 @@ export class PqTestExecutableOnceTask implements IDisposable {
             }
 
             // do fork one process and execute the task
-            const pqTestExeFullPath: string = this.pqTestFullPath;
+            const pqTestExeFullPath: string = await resolvePqTestExecutablePath(this.readinessCancellation.token);
+
+            if (this.readinessCancellation.token.isCancellationRequested) {
+                return undefined;
+            }
+
+            await ensureQueryDocumentSaved(task.pathToQueryFile);
+
+            if (this.disposed) {
+                return undefined;
+            }
 
             const processArgs: string[] = buildPqTestArgs(task);
 
@@ -263,7 +264,9 @@ export class PqTestExecutableOnceTask implements IDisposable {
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
-            this.handleErrorStr(typeof err === "string" ? err : err.toString());
+            if (!this.readinessCancellation.token.isCancellationRequested) {
+                this.handleErrorStr(typeof err === "string" ? err : err.toString());
+            }
 
             return undefined; // Default return for errors
         } finally {
@@ -274,6 +277,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
     public dispose = (): void => {
         this.disposed = true;
         this.process?.cpStream?.kill();
+        this.readinessCancellation.cancel();
+        this.readinessCancellation.dispose();
 
         for (const oneDisposable of this._disposables) {
             oneDisposable.dispose();

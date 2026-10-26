@@ -151,10 +151,22 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         // noop
     }
 
-    public provideTasks(_token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
+    private async waitForToolsProtection(token: vscode.CancellationToken): Promise<boolean> {
+        try {
+            await ExtensionConfigurations.getPQTestLocation(token);
+        } catch (error: unknown) {
+            if (!token.isCancellationRequested) {
+                throw error;
+            }
+        }
+
+        return !token.isCancellationRequested;
+    }
+
+    public async provideTasks(token: vscode.CancellationToken): Promise<vscode.Task[]> {
         const result: vscode.Task[] = [];
 
-        if (!this.pqTestService.pqTestReady) {
+        if (!(await this.waitForToolsProtection(token)) || !this.pqTestService.pqTestReady) {
             return result;
         }
 
@@ -170,10 +182,8 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         return result;
     }
 
-    public resolveTask(task: vscode.Task, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task> {
+    public async resolveTask(task: vscode.Task, token: vscode.CancellationToken): Promise<vscode.Task | undefined> {
         const taskDef: PowerQueryTaskDefinition = task.definition as PowerQueryTaskDefinition;
-
-        const pqtestExe: string = this.pqTestService.pqTestFullPath;
 
         if (taskDef.operation === "msbuild") {
             const msbuildFullPath: string | undefined = ExtensionConfigurations.msbuildPath;
@@ -184,6 +194,12 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
 
             return undefined;
         }
+
+        if (!(await this.waitForToolsProtection(token))) {
+            return undefined;
+        }
+
+        const pqtestExe: string = this.pqTestService.pqTestFullPath;
 
         if (taskDef.operation === "compile") {
             const currentWorkingFolder: string | undefined = getFirstWorkspaceFolder()?.uri.fsPath;

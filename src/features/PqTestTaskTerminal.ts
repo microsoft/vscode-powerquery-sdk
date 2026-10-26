@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 import { PowerQueryTaskDefinition } from "../common/PowerQueryTask";
 import { buildPqTestArgs } from "../common/PQTestService";
 import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
+import { protectManagedToolsLocationAsync } from "../constants/PowerQuerySdkConfiguration";
 import { inferAnyGeneralErrorString } from "../pqTestConnector/PqTestTaskUtils";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
 import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
@@ -23,6 +24,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
     readonly onDidClose: vscode.Event<number> = this.closeEmitter.event;
     private process?: SpawnedProcess;
     private closed: boolean = false;
+    private readonly readinessCancellation: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
 
     constructor(
         private readonly definition: PowerQueryTaskDefinition,
@@ -32,7 +34,22 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
         try {
-            const executable: string = this.executablePath ?? resolvePqTestExecutablePath();
+            let executable: string;
+
+            if (this.executablePath) {
+                await protectManagedToolsLocationAsync(
+                    path.dirname(this.executablePath),
+                    this.readinessCancellation.token,
+                );
+
+                executable = this.executablePath;
+            } else {
+                executable = await resolvePqTestExecutablePath(this.readinessCancellation.token);
+            }
+
+            if (this.closed) {
+                return;
+            }
 
             const workingDirectory: string =
                 this.definition.workingDirectory ??
@@ -100,6 +117,8 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
 
     close(): void {
         this.closed = true;
+        this.readinessCancellation.cancel();
+        this.readinessCancellation.dispose();
         this.process?.cpStream?.kill();
         this.writeEmitter.dispose();
         this.closeEmitter.dispose();
