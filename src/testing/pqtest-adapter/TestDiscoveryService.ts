@@ -44,7 +44,7 @@ export class TestDiscoveryService {
         let testPath: string;
 
         try {
-            testPath = await getTestPathFromSettings(settingsFileUri.fsPath);
+            testPath = await getTestPathFromSettings(settingsFileUri.fsPath, undefined, undefined, this.outputChannel);
         } catch (err: unknown) {
             const error: string = resolveI18nTemplate("PQSdk.testDiscoveryService.failedToReadTestDirectory", {
                 settingsFilePath: settingsFileUri.fsPath,

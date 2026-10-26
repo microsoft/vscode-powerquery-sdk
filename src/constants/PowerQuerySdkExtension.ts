@@ -43,6 +43,7 @@ const ConfigNames = {
             defaultExtensionLocation: "defaultExtension" as const,
             defaultQueryFileLocation: "defaultQueryFile" as const,
             featureUseServiceHost: "features.useServiceHost" as const,
+            testEnabled: "test.enabled" as const,
             testSettingsFiles: "test.settingsFiles" as const,
             testExtensionPaths: "test.extensionPaths" as const,
             pqTestExecutablePath: "test.pqtest" as const,

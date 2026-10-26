@@ -19,6 +19,7 @@ import {
     QueryFilePathValidationResult,
     validateQueryFilePathField,
 } from "../core/queryFilePathValidation";
+import { getTestSettingsExcludePattern, isTestSettingsExcluded } from "./testSettingsExclusions";
 import {
     defaultFileSystemOperations,
     defaultWorkspaceOperations,
@@ -36,91 +37,70 @@ import {
  */
 export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel): Promise<vscode.Uri[]> {
     const settingsFiles: string | string[] | undefined = ExtensionConfigurations.testSettingsFiles;
-    const result: vscode.Uri[] = [];
-    const testSettingsFilePattern: string = "**/*.testsettings.json";
-    const testSettingsFileEnding: string = ".testsettings.json";
+    const result: Map<string, vscode.Uri> = new Map<string, vscode.Uri>();
+    const testSettingsFilePattern: string = ExtensionConstants.TestAdapter.TestSettingsFilePattern;
+    const testSettingsFileEnding: string = ExtensionConstants.TestAdapter.TestSettingsFileEnding;
     const baseConfigPath: string = ExtensionConstants.ConfigNames.PowerQuerySdk.name;
     const settingsFilesConfigKey: string = ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testSettingsFiles;
 
-    if (typeof settingsFiles === "string") {
+    const configuredPaths: string[] = typeof settingsFiles === "string" ? [settingsFiles] : (settingsFiles ?? []);
+
+    for (const settingsFile of new Set(configuredPaths)) {
         try {
-            const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFiles));
+            // eslint-disable-next-line no-await-in-loop -- Sequential file validation required
+            const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFile));
 
             if (fileStat.type === vscode.FileType.Directory) {
+                // Directory support: scan for all .testsettings.json files recursively
                 const pattern: vscode.RelativePattern = new vscode.RelativePattern(
-                    settingsFiles,
+                    settingsFile,
                     testSettingsFilePattern,
                 );
 
-                const files: vscode.Uri[] = await vscode.workspace.findFiles(pattern);
-                result.push(...files);
-            } else if (settingsFiles.endsWith(testSettingsFileEnding)) {
-                result.push(vscode.Uri.file(settingsFiles));
+                // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
+                const files: vscode.Uri[] = await vscode.workspace.findFiles(
+                    pattern,
+                    getTestSettingsExcludePattern(vscode.Uri.file(settingsFile)),
+                );
+
+                // eslint-disable-next-line no-await-in-loop -- Filter each directory before continuing
+                const included: boolean[] = await Promise.all(
+                    files.map(async (uri: vscode.Uri) => !(await isTestSettingsExcluded(uri))),
+                );
+
+                files.forEach((uri: vscode.Uri, index: number) => {
+                    if (included[index]) {
+                        result.set(uri.toString(), uri);
+                    }
+                });
+            } else if (settingsFile.endsWith(testSettingsFileEnding)) {
+                const uri: vscode.Uri = vscode.Uri.file(settingsFile);
+                result.set(uri.toString(), uri);
             } else {
-                void vscode.window.showErrorMessage(
+                outputChannel?.appendDebugLine(
                     resolveI18nTemplate("PQSdk.testAdapter.error.incorrectFileExtension", {
-                        settingsFile: settingsFiles,
+                        settingsFile,
                         configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
                         expectedExtension: testSettingsFileEnding,
                     }),
                 );
             }
-            // Ignore paths that don't exist
+
+            // Ignore files that don't exist
         } catch (e) {
             // Log errors as they might indicate real problems (permissions, network issues, etc.)
             const errorMessage: string = e instanceof Error ? e.message : String(e);
 
             const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.accessingSettingsPath", {
-                settingsPath: settingsFiles,
+                settingsPath: settingsFile,
                 errorMessage,
             });
 
             outputChannel?.appendDebugLine(message);
         }
-    } else if (Array.isArray(settingsFiles)) {
-        for (const settingsFile of settingsFiles) {
-            try {
-                // eslint-disable-next-line no-await-in-loop -- Sequential file validation required
-                const fileStat: vscode.FileStat = await vscode.workspace.fs.stat(vscode.Uri.file(settingsFile));
-
-                if (fileStat.type === vscode.FileType.Directory) {
-                    // Directory support: scan for all .testsettings.json files recursively
-                    const pattern: vscode.RelativePattern = new vscode.RelativePattern(
-                        settingsFile,
-                        testSettingsFilePattern,
-                    );
-
-                    // eslint-disable-next-line no-await-in-loop -- Sequential file search required for each directory
-                    const files: vscode.Uri[] = await vscode.workspace.findFiles(pattern);
-                    result.push(...files);
-                } else if (settingsFile.endsWith(testSettingsFileEnding)) {
-                    result.push(vscode.Uri.file(settingsFile));
-                } else {
-                    void vscode.window.showErrorMessage(
-                        resolveI18nTemplate("PQSdk.testAdapter.error.incorrectFileExtension", {
-                            settingsFile,
-                            configPath: `${baseConfigPath}.${settingsFilesConfigKey}`,
-                            expectedExtension: testSettingsFileEnding,
-                        }),
-                    );
-                }
-
-                // Ignore files that don't exist
-            } catch (e) {
-                // Log errors as they might indicate real problems (permissions, network issues, etc.)
-                const errorMessage: string = e instanceof Error ? e.message : String(e);
-
-                const message: string = resolveI18nTemplate("PQSdk.testAdapter.error.accessingSettingsPath", {
-                    settingsPath: settingsFile,
-                    errorMessage,
-                });
-
-                outputChannel?.appendDebugLine(message);
-            }
-        }
     }
 
-    return result;
+    return [...result.values()];
 }
 
 /**
@@ -158,8 +138,7 @@ export async function getTestPathFromSettings(
             settingsFilePath,
         });
 
-        outputChannel?.appendErrorLine(message);
-        void vscode.window.showErrorMessage(message);
+        outputChannel?.appendDebugLine(message);
         throw new Error(message);
     }
 
@@ -177,15 +156,15 @@ export async function getTestPathFromSettings(
         });
 
         const fullMessage: string = `${baseMessage}: ${errorMessage}`;
-        outputChannel?.appendErrorLine(fullMessage);
-        void vscode.window.showErrorMessage(fullMessage);
+        outputChannel?.appendDebugLine(fullMessage);
         throw new Error(fullMessage);
     }
 
     // Validate QueryFilePath field using pure validation function
-    const validationResult: QueryFilePathValidationResult = validateQueryFilePathField(
-        (json as { QueryFilePath?: unknown }).QueryFilePath,
-    );
+    const queryFilePath: unknown =
+        json !== null && typeof json === "object" && "QueryFilePath" in json ? json.QueryFilePath : undefined;
+
+    const validationResult: QueryFilePathValidationResult = validateQueryFilePathField(queryFilePath);
 
     if (!validationResult.isValid) {
         const i18nKey: ExtensionI18nKeys = queryFilePathErrorCodeToI18nKey[validationResult.errorCode!];
@@ -194,8 +173,7 @@ export async function getTestPathFromSettings(
             settingsFilePath,
         });
 
-        outputChannel?.appendErrorLine(message);
-        void vscode.window.showErrorMessage(message);
+        outputChannel?.appendDebugLine(message);
         throw new Error(message);
     }
 
@@ -228,8 +206,7 @@ export async function getTestPathFromSettings(
                     },
                 );
 
-                outputChannel?.appendErrorLine(invalidFileMessage);
-                void vscode.window.showErrorMessage(invalidFileMessage);
+                outputChannel?.appendDebugLine(invalidFileMessage);
                 throw new Error(invalidFileMessage);
             }
 
@@ -240,8 +217,7 @@ export async function getTestPathFromSettings(
                 resolvedPath: resolvedQueryFilePath,
             });
 
-            outputChannel?.appendErrorLine(notFoundMessage);
-            void vscode.window.showErrorMessage(notFoundMessage);
+            outputChannel?.appendDebugLine(notFoundMessage);
             throw new Error(notFoundMessage);
         }
 
@@ -254,8 +230,7 @@ export async function getTestPathFromSettings(
                 },
             );
 
-            outputChannel?.appendErrorLine(unexpectedMessage);
-            void vscode.window.showErrorMessage(unexpectedMessage);
+            outputChannel?.appendDebugLine(unexpectedMessage);
             throw new Error(unexpectedMessage);
         }
     }
