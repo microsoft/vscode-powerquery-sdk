@@ -19,8 +19,10 @@ import * as vscode from "vscode";
 import { NugetHttpService } from "../../common/nuget/NugetHttpService";
 import { PqSdkNugetPackageService } from "../../common/PqSdkNugetPackageService";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
+import { MQueryDebugSession } from "../../debugAdaptor/MQueryDebugSession";
 import { PowerQueryTaskProvider } from "../../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { DISCONNECTED, PqServiceHostClientLite, READY } from "../../pqTestConnector/PqServiceHostClientLite";
 import { PqTestExecutableOnceTask } from "../../pqTestConnector/PqTestExecutableOnceTask";
 import { PqTestExecutableTaskQueue } from "../../pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestDiscoveryRunner } from "../../testing/pqtest-adapter/helpers/PqTestDiscoveryRunner";
@@ -33,6 +35,22 @@ import * as testSettingsUtils from "../../testing/pqtest-adapter/utils/testSetti
 import { NugetPackageProtection, nugetPackageProtection } from "../../utils/NugetPackageProtection";
 import { resolvePqTestExecutablePath } from "../../utils/pqTestPath";
 import * as processIdentity from "../../utils/processIdentity";
+
+class TestDebugSession extends MQueryDebugSession {
+    public launch(): Promise<void> {
+        return this.launchRequest(
+            { type: "response", seq: 1, request_seq: 1, success: true, command: "launch" },
+            { program: "query.pq" },
+        );
+    }
+
+    public finishConfiguration(): void {
+        this.configurationDoneRequest(
+            { type: "response", seq: 2, request_seq: 2, success: true, command: "configurationDone" },
+            {},
+        );
+    }
+}
 
 suite("SDK package readiness consumers", () => {
     let sandbox: sinon.SinonSandbox;
@@ -199,6 +217,107 @@ suite("SDK package readiness consumers", () => {
         await protection.waitForPending();
 
         sinon.assert.notCalled(spawn);
+    });
+
+    function createServiceHostDebugSession(): {
+        session: TestDebugSession;
+        connect: sinon.SinonStub;
+        run: sinon.SinonStub;
+    } {
+        sandbox.stub(ExtensionConfigurations, "featureUseServiceHost").get(() => true);
+
+        sandbox
+            .stub(ExtensionConfigurations, "PQTestLocation")
+            .get(() => protection.getProtectedLocation(cache, tools));
+
+        sandbox
+            .stub(nugetPackageProtection, "subscribeToLocationRecovery")
+            .callsFake((getState, recover) => protection.subscribeToLocationRecovery(getState, recover));
+
+        const connect: sinon.SinonStub = sandbox.stub(
+            PqServiceHostClientLite.prototype,
+            "onPowerQueryTestLocationChanged",
+        );
+
+        const run: sinon.SinonStub = sandbox
+            .stub(PqServiceHostClientLite.prototype, "RunTestBatteryFromContent")
+            .resolves({});
+
+        const session: TestDebugSession = new TestDebugSession();
+        session.setRunAsServer(true);
+        sandbox.stub(session, "sendResponse");
+        sandbox.stub(session, "sendEvent");
+        disposables.push({ dispose: () => session.shutdown() });
+
+        return { session, connect, run };
+    }
+
+    test("service-host debug shutdown unsubscribes recovery and cancels pending readiness", async () => {
+        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
+            createServiceHostDebugSession();
+
+        protection.getProtectedLocation(cache, tools);
+        const launching: Promise<void> = session.launch();
+        session.finishConfiguration();
+        await launching;
+
+        sinon.assert.calledOnce(connect);
+        const client: PqServiceHostClientLite = connect.firstCall.thisValue;
+        assert.strictEqual(client.listenerCount(READY), 1);
+
+        session.shutdown();
+        finishIdentity("123");
+        await protection.waitForPending();
+        await new Promise<void>((resolve: () => void) => setImmediate(resolve));
+
+        sinon.assert.calledOnce(connect);
+        assert.strictEqual(client.listenerCount(READY), 0);
+        assert.strictEqual(client.listenerCount(DISCONNECTED), 0);
+        client.emit(READY);
+        await new Promise<void>((resolve: () => void) => setImmediate(resolve));
+        sinon.assert.notCalled(run);
+    });
+
+    test("service-host debug shutdown wins over an already signaled connection", async () => {
+        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
+            createServiceHostDebugSession();
+
+        const launching: Promise<void> = session.launch();
+        session.finishConfiguration();
+        await launching;
+        const client: PqServiceHostClientLite = connect.firstCall.thisValue;
+        client.emit(READY);
+        session.shutdown();
+        await new Promise<void>((resolve: () => void) => setImmediate(resolve));
+
+        sinon.assert.notCalled(run);
+    });
+
+    test("service-host debug shutdown before configuration prevents connection", async () => {
+        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
+            createServiceHostDebugSession();
+
+        const launching: Promise<void> = session.launch();
+        session.shutdown();
+        await launching;
+
+        sinon.assert.notCalled(connect);
+        sinon.assert.notCalled(run);
+    });
+
+    test("service-host debugging executes once when readiness completes without shutdown", async () => {
+        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
+            createServiceHostDebugSession();
+
+        const launching: Promise<void> = session.launch();
+        session.finishConfiguration();
+        await launching;
+        const client: PqServiceHostClientLite = connect.firstCall.thisValue;
+        client.emit(READY);
+        await new Promise<void>((resolve: () => void) => setImmediate(resolve));
+
+        sinon.assert.calledOnce(run);
+        assert.strictEqual(run.firstCall.args[0], path.resolve("query.pq"));
     });
 
     test("a pending direct override never falls back to the tools directory", async () => {

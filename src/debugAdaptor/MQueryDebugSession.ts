@@ -19,6 +19,8 @@ import * as path from "path";
 
 import { DeferredValue } from "../common/DeferredValue";
 import { ExtensionInfo, GenericResult } from "../common/PQTestService";
+import { InternalPromise } from "../common/promises/cancelable";
+import { CancellationTokenSource } from "../common/promises/CancellationToken";
 import { fromEvents } from "../common/promises/fromEvents";
 import { WaitNotify } from "../common/WaitNotify";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
@@ -51,6 +53,8 @@ interface ILaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
 export class MQueryDebugSession extends LoggingDebugSession {
     private readonly configurationDone: WaitNotify = new WaitNotify();
+    private readonly launchCancellation: CancellationTokenSource = new CancellationTokenSource();
+    private serviceHostReadiness?: InternalPromise<unknown>;
     private readonly processForked: DeferredValue<boolean> = new DeferredValue<boolean>(false);
     private readonly pqTestExecutableOnceTask?: PqTestExecutableOnceTask;
     private readonly pqServiceHostClientLite?: PqServiceHostClientLite;
@@ -160,6 +164,10 @@ export class MQueryDebugSession extends LoggingDebugSession {
         // wait 1 second until configuration has finished (and configurationDoneRequest has been called)
         await this.configurationDone.wait(2e3);
 
+        if (this.launchCancellation.token.requested) {
+            return;
+        }
+
         this.currentProgram = args.program;
 
         if (this.useServiceHost) {
@@ -182,7 +190,17 @@ export class MQueryDebugSession extends LoggingDebugSession {
 
             try {
                 // wait for the pqServiceHostClientLite's socket got ready
-                await fromEvents(this.pqServiceHostClientLite, [READY], [DISCONNECTED]);
+                this.serviceHostReadiness = fromEvents(
+                    this.pqServiceHostClientLite,
+                    [READY],
+                    [DISCONNECTED],
+                ) as InternalPromise<unknown>;
+
+                await Promise.race([this.serviceHostReadiness, this.launchCancellation.token.promise]);
+
+                if (this.launchCancellation.token.requested) {
+                    return;
+                }
 
                 const theOperation: string = args.operation ?? "run-test";
 
@@ -234,6 +252,10 @@ export class MQueryDebugSession extends LoggingDebugSession {
                         break;
                 }
             } catch (e) {
+                if (this.launchCancellation.token.requested) {
+                    return;
+                }
+
                 // / noop
                 if (e instanceof Error || typeof e === "string") {
                     this.appendErrorLine(e.toString());
@@ -267,7 +289,11 @@ export class MQueryDebugSession extends LoggingDebugSession {
     }
 
     public override shutdown(): void {
+        this.launchCancellation.cancel("Debug session shut down");
+        this.configurationDone.notify();
+        this.serviceHostReadiness?.cancel("Debug session shut down");
         this.pqTestExecutableOnceTask?.dispose();
+        this.pqServiceHostClientLite?.dispose();
         super.shutdown();
     }
 
