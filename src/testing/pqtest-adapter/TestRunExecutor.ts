@@ -89,7 +89,7 @@ export class TestRunExecutor {
         try {
             for (const item of this.testItems) {
                 // eslint-disable-next-line no-await-in-loop
-                await ensureQueryDocumentSaved(item.uri?.fsPath);
+                await ensureQueryDocumentSaved(item.uri);
             }
 
             // Step 1: Determine which extension(s) to use based on precedence rules

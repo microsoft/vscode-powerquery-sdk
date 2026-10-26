@@ -258,7 +258,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
                           ),
                       ),
                   )
-                : new vscode.ProcessExecution(executablePath, args);
+                : new vscode.ProcessExecution(executablePath, args, taskDef.options);
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(

@@ -629,7 +629,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
+    public async RunTestBattery(queryFile: string | vscode.Uri = ""): Promise<any> {
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
         const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
@@ -637,22 +637,22 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         );
 
         // todo maybe we could export this lang id to from the lang svc extension
-        if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
-            pathToQueryFile = activeTextEditor.document.uri.fsPath;
+        if (!queryFile && activeTextEditor?.document.languageId === "powerquery") {
+            queryFile = activeTextEditor.document.uri;
         }
 
-        if (!pathToQueryFile && configPQTestQueryFileLocation) {
-            pathToQueryFile = configPQTestQueryFileLocation;
+        if (!queryFile && configPQTestQueryFileLocation) {
+            queryFile = configPQTestQueryFileLocation;
         }
 
-        await ensureQueryDocumentSaved(pathToQueryFile, this.pqTestLocation || undefined);
+        await ensureQueryDocumentSaved(queryFile, this.pqTestLocation || undefined);
         await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "run-test",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile,
+            pathToQueryFile: typeof queryFile === "string" ? queryFile : queryFile.fsPath,
         });
     }
 

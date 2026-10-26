@@ -53,11 +53,13 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
                 return;
             }
 
-            const workingDirectory: string =
-                this.definition.workingDirectory ??
-                this.workspaceDirectory ??
-                getFirstWorkspaceFolder()?.uri.fsPath ??
-                path.dirname(executable);
+            const workspaceDirectory: string =
+                this.workspaceDirectory ?? getFirstWorkspaceFolder()?.uri.fsPath ?? path.dirname(executable);
+
+            const workingDirectory: string = path.resolve(
+                workspaceDirectory,
+                this.definition.options?.cwd ?? this.definition.workingDirectory ?? workspaceDirectory,
+            );
 
             const queryFile: string | undefined = this.definition.pathToQueryFile
                 ? path.resolve(workingDirectory, this.definition.pathToQueryFile)
@@ -83,10 +85,27 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
                 return;
             }
 
+            const environment: NodeJS.ProcessEnv = { ...process.env };
+
+            for (const [name, value] of Object.entries(this.definition.options?.env ?? {})) {
+                const key: string =
+                    process.platform === "win32"
+                        ? (Object.keys(environment).find(
+                              (candidate: string) => candidate.toLowerCase() === name.toLowerCase(),
+                          ) ?? name)
+                        : name;
+
+                environment[key] = value;
+            }
+
             this.process = new SpawnedProcess(
                 executable,
                 buildPqTestArgs(this.definition),
-                { cwd: workingDirectory, timeout: 0 },
+                {
+                    cwd: workingDirectory,
+                    env: environment,
+                    timeout: 0,
+                },
                 {
                     stdinStr:
                         this.definition.stdinStr ??
@@ -155,7 +174,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
             this.scope,
             this.definition.label ?? this.definition.operation,
             "pqtest",
-            new vscode.ProcessExecution(executable, args, { cwd: workingDirectory }),
+            new vscode.ProcessExecution(executable, args, { ...this.definition.options, cwd: workingDirectory }),
             [],
         );
 

@@ -155,6 +155,14 @@ suite("CLI-only execution", () => {
         assert.ok((document.save as sinon.SinonStub).notCalled);
     });
 
+    test("untitled query URIs are rejected before resolving paths against the execution directory", async () => {
+        const document = mockDocument({ uri: vscode.Uri.parse("untitled:Untitled-1"), isUntitled: true });
+
+        await assert.rejects(ensureQueryDocumentSaved(document.uri, directory), /local file/);
+        assert.ok((document.save as sinon.SinonStub).notCalled);
+        await ensureQueryDocumentSaved("Untitled-1", directory);
+    });
+
     test("saving another document is never required", async () => {
         const document = mockDocument();
         const prompt = sandbox.stub(vscode.window, "showWarningMessage");
@@ -402,6 +410,83 @@ suite("CLI-only execution", () => {
         assert.strictEqual(exitCode, 1);
         assert.ok(spawn.notCalled);
         assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
+    });
+
+    for (const operation of ["run-test", "set-credential"]) {
+        test(`${operation} save guards resolve relative queries against options.cwd`, async () => {
+            const document = mockDocument({ uri: vscode.Uri.file(path.join(directory, "tests", "hidden.query.pq")) });
+            sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+            const spawn = sandbox.stub(childProcess, "spawn");
+            const executeTask = sandbox.stub(vscode.tasks, "executeTask");
+
+            const terminal = new PqTestTaskTerminal(
+                {
+                    type: PowerQueryTaskProvider.TaskType,
+                    operation,
+                    workingDirectory: directory,
+                    options: { cwd: "tests" },
+                    pathToQueryFile: "hidden.query.pq",
+                    additionalArgs: operation === "set-credential" ? ["--interactive"] : undefined,
+                },
+                executable,
+                directory,
+            );
+
+            let exitCode: number | undefined;
+
+            terminal.onDidClose(code => {
+                exitCode = code;
+            });
+
+            await terminal.open(undefined);
+            assert.strictEqual(exitCode, 1);
+            assert.ok(spawn.notCalled);
+            assert.ok(executeTask.notCalled);
+            assert.ok((document.save as sinon.SinonStub).notCalled);
+        });
+    }
+
+    test("spawned query tasks apply options.cwd and merge options.env with inherited variables", async () => {
+        const testsDirectory = path.join(directory, "tests");
+        fs.mkdirSync(testsDirectory);
+        fs.writeFileSync(path.join(testsDirectory, "task.query.pq"), "1");
+        sandbox.stub(process, "env").value({ ...process.env, PQSDK_TEST_TASK_OPTION: "inherited" });
+        const variableName = process.platform === "win32" ? "pqsdk_test_task_option" : "PQSDK_TEST_TASK_OPTION";
+        const originalSpawn = childProcess.spawn.bind(childProcess);
+
+        const spawn = sandbox
+            .stub(childProcess, "spawn")
+            .callsFake((_command, _args, options) =>
+                originalSpawn(
+                    process.execPath,
+                    [
+                        "-e",
+                        "const ok = process.env.PQSDK_TEST_TASK_OPTION === 'configured' && process.env.PATH !== undefined && require('fs').existsSync('task.query.pq'); process.stdout.write(JSON.stringify({ Status: ok ? 'Success' : 'Failure', Message: 'Task options not applied' }));",
+                    ],
+                    { ...options, env: { ...options?.env, ELECTRON_RUN_AS_NODE: "1" } },
+                ),
+            );
+
+        const terminal = new PqTestTaskTerminal(
+            {
+                type: PowerQueryTaskProvider.TaskType,
+                operation: "run-test",
+                pathToQueryFile: "task.query.pq",
+                options: { cwd: "tests", env: { [variableName]: "configured" } },
+            },
+            executable,
+            directory,
+        );
+
+        let exitCode: number | undefined;
+
+        terminal.onDidClose(code => {
+            exitCode = code;
+        });
+
+        await terminal.open(undefined);
+        assert.strictEqual(exitCode, 0);
+        assert.strictEqual(spawn.firstCall.args[2]?.cwd, testsDirectory);
     });
 
     for (const operation of [
@@ -666,7 +751,17 @@ suite("CLI-only execution", () => {
                 assert.ok((document.save as sinon.SinonStub).calledOnce);
                 assert.ok(task.execution.args.includes("--interactive"));
                 nativeTask = task;
-                task.execution = new vscode.ProcessExecution(node, ["-e", "process.exit(7)"]);
+                assert.strictEqual(task.execution.options?.cwd, directory);
+                assert.strictEqual(task.execution.options?.env?.PQSDK_TEST_TASK_OPTION, "native");
+
+                task.execution = new vscode.ProcessExecution(
+                    node,
+                    [
+                        "-e",
+                        `process.exit(process.env.PQSDK_TEST_TASK_OPTION === 'native' && process.cwd().toLowerCase() === ${JSON.stringify(directory.toLowerCase())} ? 0 : 7);`,
+                    ],
+                    task.execution.options,
+                );
             }
 
             return originalExecuteTask(task);
@@ -687,6 +782,7 @@ suite("CLI-only execution", () => {
                         operation: "set-credential",
                         pathToQueryFile: document.uri.fsPath,
                         additionalArgs: ["--interactive"],
+                        options: { cwd: directory, env: { PQSDK_TEST_TASK_OPTION: "native" } },
                         label: "CLI guarded interactive credential",
                     },
                     vscode.TaskScope.Workspace,
@@ -697,7 +793,7 @@ suite("CLI-only execution", () => {
             );
 
             assert.ok(task?.execution instanceof vscode.CustomExecution);
-            await assert.rejects(PowerQueryTaskProvider.executeTask(task), /failed or was cancelled/);
+            await PowerQueryTaskProvider.executeTask(task);
             assert.ok(nativeTask);
         } finally {
             cancellation.dispose();
@@ -921,6 +1017,113 @@ suite("CLI-only execution", () => {
         }
     });
 
+    test("saved tasks.json options survive resolution and VS Code substitutes their variables", async () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        assert.ok(folder);
+        const taskDirectory = fs.mkdtempSync(path.join(folder.uri.fsPath, "pq-sdk-cli-options-"));
+        const configuration = vscode.workspace.getConfiguration("tasks", folder.uri);
+        const previousTasks = configuration.inspect<unknown[]>("tasks")?.workspaceFolderValue;
+        const previousVersion = configuration.inspect<string>("version")?.workspaceFolderValue;
+        const configPath = path.join(folder.uri.fsPath, ".vscode", "tasks.json");
+        const configExisted = fs.existsSync(configPath);
+        const configDirectoryExisted = fs.existsSync(path.dirname(configPath));
+        const spawn = stubCli([{ Status: "Passed", Output: [{ Result: 42 }] }]);
+
+        const provider = new PowerQueryTaskProvider({
+            pqTestReady: true,
+            pqTestFullPath: executable,
+        } as IPQTestService);
+
+        sandbox.stub(provider, "provideTasks").resolves([]);
+        const registration = vscode.tasks.registerTaskProvider(PowerQueryTaskProvider.TaskType, provider);
+        const cancellation = new vscode.CancellationTokenSource();
+        const originalOpen = PqTestTaskTerminal.prototype.open;
+        let output = "";
+
+        sandbox.stub(PqTestTaskTerminal.prototype, "open").callsFake(async function (
+            this: PqTestTaskTerminal,
+            dimensions: vscode.TerminalDimensions | undefined,
+        ): Promise<void> {
+            const subscription = this.onDidWrite(text => {
+                output += text;
+            });
+
+            try {
+                await originalOpen.call(this, dimensions);
+            } finally {
+                subscription.dispose();
+            }
+        });
+
+        try {
+            await configuration.update("version", "2.0.0", vscode.ConfigurationTarget.WorkspaceFolder);
+
+            await configuration.update(
+                "tasks",
+                [
+                    {
+                        type: PowerQueryTaskProvider.TaskType,
+                        operation: "run-test",
+                        label: "CLI saved task options",
+                        pathToQueryFile: "task.query.pq",
+                        pathToConnector: "connector.mez",
+                        options: {
+                            cwd: `\${workspaceFolder}\\${path.basename(taskDirectory)}`,
+                            env: { PQSDK_TEST_TASK_OPTION: "${workspaceFolder}" },
+                        },
+                        problemMatcher: [],
+                    },
+                ],
+                vscode.ConfigurationTarget.WorkspaceFolder,
+            );
+
+            const tasks = await vscode.tasks.fetchTasks({ type: PowerQueryTaskProvider.TaskType });
+            const task = tasks.find(candidate => candidate.name === "CLI saved task options");
+
+            assert.ok(
+                task,
+                `The saved Power Query task must be discovered; found ${tasks.map(candidate => candidate.name).join(", ")}`,
+            );
+
+            const resolved = await provider.resolveTask(task, cancellation.token);
+            assert.ok(resolved);
+
+            await PowerQueryTaskProvider.executeTask(resolved).then(undefined, error => {
+                assert.fail(`${String(error)}; task output: ${output}; CLI launches: ${spawn.callCount}`);
+            });
+
+            assert.ok(spawn.calledOnce);
+
+            assert.strictEqual(
+                path.resolve(spawn.firstCall.args[2]?.cwd as string).toLowerCase(),
+                taskDirectory.toLowerCase(),
+            );
+
+            assert.strictEqual(
+                spawn.firstCall.args[2]?.env?.PQSDK_TEST_TASK_OPTION?.toLowerCase(),
+                folder.uri.fsPath.toLowerCase(),
+            );
+
+            assert.ok(spawn.firstCall.args[1]?.includes("task.query.pq"));
+            assert.ok(spawn.firstCall.args[1]?.includes("connector.mez"));
+        } finally {
+            registration.dispose();
+            cancellation.dispose();
+            await configuration.update("tasks", previousTasks, vscode.ConfigurationTarget.WorkspaceFolder);
+            await configuration.update("version", previousVersion, vscode.ConfigurationTarget.WorkspaceFolder);
+
+            if (!configExisted && fs.existsSync(configPath)) {
+                fs.unlinkSync(configPath);
+            }
+
+            if (!configDirectoryExisted && fs.existsSync(path.dirname(configPath))) {
+                fs.rmdirSync(path.dirname(configPath));
+            }
+
+            fs.rmdirSync(taskDirectory);
+        }
+    });
+
     test("credential-template tasks send only the template to the CLI standard input", async () => {
         const originalSpawn = childProcess.spawn.bind(childProcess);
 
@@ -1076,6 +1279,37 @@ suite("CLI-only execution", () => {
             context.subscriptions.forEach(disposable => disposable.dispose());
         }
     });
+
+    for (const explicitTarget of [false, true]) {
+        test(`lifecycle query execution rejects an untitled ${explicitTarget ? "URI" : "active document"} before building`, async () => {
+            const document = mockDocument({
+                uri: vscode.Uri.parse("untitled:Untitled-1"),
+                isUntitled: true,
+                languageId: "powerquery",
+            });
+
+            sandbox.stub(vscode.window, "activeTextEditor").get(() => ({ document }) as vscode.TextEditor);
+            sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
+            sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => undefined);
+            const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+            const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+            const output = sandbox.createStubInstance(PqSdkOutputChannel);
+            const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+            const spawn = sandbox.stub(childProcess, "spawn");
+
+            try {
+                await assert.rejects(queue.RunTestBattery(explicitTarget ? document.uri : undefined), /local file/);
+                assert.ok(spawn.notCalled);
+                assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
+                assert.ok((document.save as sinon.SinonStub).notCalled);
+            } finally {
+                queue.dispose();
+                bus.dispose();
+                output.dispose();
+                context.subscriptions.forEach(disposable => disposable.dispose());
+            }
+        });
+    }
 
     for (const save of [false, true]) {
         test(`queued queries preserve serialization when the deferred save is ${save ? "accepted" : "declined"}`, async () => {
