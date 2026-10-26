@@ -20,6 +20,7 @@ import { CLOSED, ERROR, OPEN } from "../common/sockets/SocketClient";
 import { SpawnedProcess } from "../common/SpawnedProcess";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { PqSdkOutputChannelLight } from "../features/PqSdkOutputChannel";
+import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { convertStringToInteger } from "../utils/numbers";
 import { delay, isPortBusy, pidIsRunning } from "../utils/pids";
 import { getFirstWorkspaceFolder, resolveSubstitutedValues } from "../utils/vscodes";
@@ -121,6 +122,17 @@ export class PqServiceHostClientLite
 
     constructor(protected readonly outputChannel: PqSdkOutputChannelLight) {
         super();
+
+        this._disposables.push(
+            nugetPackageProtection.subscribeToLocationRecovery(
+                () => ({
+                    configuredLocation: ExtensionConfigurations.PQTestLocation,
+                    currentLocation: this.pqTestLocation,
+                    ready: this.pqTestReady,
+                }),
+                this.onPowerQueryTestLocationChanged.bind(this),
+            ),
+        );
     }
 
     /**

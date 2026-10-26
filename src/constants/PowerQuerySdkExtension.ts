@@ -37,6 +37,7 @@ const ConfigNames = {
             externalsNugetPath: "externals.nugetPath" as const,
             externalsNugetFeed: "externals.nugetFeed" as const,
             externalsVersionTag: "externals.versionTag" as const,
+            externalsPackagesToKeep: "externals.packagesToKeep" as const,
             pqTestLocation: "tools.location" as const,
             pqTestVersion: "tools.version" as const,
             defaultExtensionLocation: "defaultExtension" as const,
@@ -75,7 +76,7 @@ const PublicMsftPqSdkToolsNugetName: string = InternalMsftPqSdkToolsNugetName;
  *  Inclusive maximum nuget version
  *  2.117 or 2.117.x wil limit the version of the sdkTool seized beneath 2.118
  */
-const MaximumPqTestNugetVersion: string = "2.161.x" as const;
+const MaximumPqTestNugetVersion: string = "2.160.2" as const;
 /**
  *  Exclusive minimum nuget version
  *  2.114 or 2.114.x wil limit the version of the sdkTool seized above 2.114.x like 2.115.0

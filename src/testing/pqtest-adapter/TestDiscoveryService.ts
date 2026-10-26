@@ -92,7 +92,11 @@ export class TestDiscoveryService {
         );
 
         // Get PQTest executable path
-        const pqTestPath: string = resolvePqTestExecutablePath();
+        const pqTestPath: string = await resolvePqTestExecutablePath(token);
+
+        if (token?.isCancellationRequested) {
+            throw new Error(extensionI18n["PQSdk.testDiscoveryService.testDiscoveryCancelled"]);
+        }
 
         // Execute discovery using PqTestDiscoveryRunner
         const discoveryRunner: PqTestDiscoveryRunner = new PqTestDiscoveryRunner(

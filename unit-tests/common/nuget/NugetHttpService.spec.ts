@@ -5,61 +5,118 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import * as chai from "chai";
+import axios, { AxiosInstance } from "axios";
+import { expect } from "chai";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
+import * as sinon from "sinon";
+import { Readable } from "stream";
 
-import { makeOneTmpDir } from "../../../src/utils/osUtils";
-import { MAX_AWAIT_TIME } from "../../../src/test/common";
 import { NugetHttpService } from "../../../src/common/nuget/NugetHttpService";
+import { ExtensionConstants } from "../../../src/constants/PowerQuerySdkExtension";
 import { NugetVersions } from "../../../src/utils/NugetVersions";
-import { PqSdkTestOutputChannel } from "../../../src/test/utils/pqSdkTestOutputChannel";
 import { TestConstants } from "../testConstants";
-import { tryRemoveDirectoryRecursively } from "../../../src/utils/files";
 
-const expect = chai.expect;
+// A real ZIP containing a nuspec and a placeholder executable, not downloaded SDK binaries.
+const packageZip = Buffer.from(
+    "UEsDBBQAAAAIAAAAIVC61AEsEwAAAAsAAAAkAAAATWljcm9zb2Z0LlBvd2VyUXVlcnkuU2RrVG9vbHMubnVzcGVjsilITM5OTE9V0LcDAAAA//8DAFBLAwQUAAAACAAAACFQ4UzL6hcAAAAPAAAAEAAAAHRvb2xzL1BRVGVzdC5leGXKzU/OVkitSE0uLUlMykkFAAAA//8DAFBLAQIUABQAAAAIAAAAIVC61AEsEwAAAAsAAAAkAAAAAAAAAAAAAAAAAAAAAABNaWNyb3NvZnQuUG93ZXJRdWVyeS5TZGtUb29scy5udXNwZWNQSwECFAAUAAAACAAAACFQ4UzL6hcAAAAPAAAAEAAAAAAAAAAAAAAAAABVAAAAdG9vbHMvUFFUZXN0LmV4ZVBLBQYAAAAAAgACAJAAAACaAAAAAAA=",
+    "base64",
+);
 
-describe(`${TestConstants.ExternalTestFlag} NugetHttpService unit tests`, () => {
-    const testOutputChannel = PqSdkTestOutputChannel.getInstance();
-    const nugetHttpService = new NugetHttpService(testOutputChannel);
+describe("NugetHttpService unit tests (offline)", () => {
+    let service: NugetHttpService;
+    let instance: AxiosInstance;
+    let get: sinon.SinonStub;
+    let root: string;
+    let clock: sinon.SinonFakeTimers;
+    let appendErrorLine: sinon.SinonSpy;
 
-    afterEach(() => testOutputChannel.emit());
+    beforeEach(() => {
+        root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-http-"));
+        instance = axios.create();
+        get = sinon.stub(instance, "get").callsFake(async () => ({
+            data: { versions: ["2.111.1", "2.110.2", "2.109.1", "2.110.1", "2.112.0-preview"] },
+        }));
+        sinon.stub(axios, "create").returns(instance);
+        appendErrorLine = sinon.spy();
+        clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+        service = new NugetHttpService({ appendErrorLine, appendInfoLine: sinon.spy() });
+    });
 
-    it("getPackageReleasedVersions v1", async () => {
-        const res = await nugetHttpService.getPackageReleasedVersions(TestConstants.SdkPackageName);
-        expect(res.versions.length).gt(1);
-    }).timeout(MAX_AWAIT_TIME);
+    afterEach(async () => {
+        await clock.tickAsync(4000);
+        sinon.restore();
+        fs.rmSync(root, { recursive: true, force: true });
+    });
 
-    it("getSortedPackageReleasedVersions v1", async () => {
-        const allVersions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
-            TestConstants.SdkPackageName,
+    it("requests the package index and filters prerelease versions", async () => {
+        const result = await service.getPackageReleasedVersions(TestConstants.SdkPackageName);
+
+        expect(get.firstCall.args[0]).to.equal("v3-flatcontainer/microsoft.powerquery.sdktools/index.json");
+        expect(result.versions).to.deep.equal(["2.111.1", "2.110.2", "2.109.1", "2.110.1"]);
+    });
+
+    it("sorts and applies minimum and fuzzy maximum version bounds", async () => {
+        const all = await service.getSortedPackageReleasedVersions(TestConstants.SdkPackageName);
+        expect(all.map(version => version.toString())).to.deep.equal(["2.109.1", "2.110.1", "2.110.2", "2.111.1"]);
+
+        const bounded = await service.getSortedPackageReleasedVersions(TestConstants.SdkPackageName, {
+            minimumNugetVersion: NugetVersions.createFromReleasedVersionString("2.110.1"),
+            maximumNugetVersion: NugetVersions.createFromFuzzyVersionString("2.110.x"),
+        });
+        expect(bounded.map(version => version.toString())).to.deep.equal(["2.110.1", "2.110.2"]);
+    });
+
+    it("includes the configured SDK Tools maximum but excludes newer patch and minor versions", async () => {
+        get.resolves({ data: { versions: ["2.161.0", "2.160.3", "2.160.2", "2.160.1"] } });
+
+        expect(ExtensionConstants.MaximumPqTestNugetVersion).to.equal("2.160.2");
+
+        const bounded = await service.getSortedPackageReleasedVersions(TestConstants.SdkPackageName, {
+            maximumNugetVersion: NugetVersions.createFromFuzzyVersionString(
+                ExtensionConstants.MaximumPqTestNugetVersion,
+            ),
+        });
+
+        expect(bounded.map(version => version.toString())).to.deep.equal(["2.160.1", "2.160.2"]);
+    });
+
+    it("downloads a mocked package stream and extracts the real ZIP locally", async () => {
+        get.resolves({ data: Readable.from(packageZip) });
+
+        await service.downloadAndExtractNugetPackage(TestConstants.SdkPackageName, "2.110.2", root);
+
+        expect(get.firstCall.args).to.deep.equal([
+            "v3-flatcontainer/microsoft.powerquery.sdktools/2.110.2/microsoft.powerquery.sdktools.2.110.2.nupkg",
+            { responseType: "stream" },
+        ]);
+        expect(fs.readFileSync(path.join(root, "Microsoft.PowerQuery.SdkTools.nuspec"), "utf8")).to.equal(
+            "<package />",
         );
+        expect(fs.readFileSync(path.join(root, "tools", "PQTest.exe"), "utf8")).to.equal("mock executable");
+    });
 
-        expect(allVersions.length).gt(1);
+    it("logs and propagates feed failures rather than requiring a real feed", async () => {
+        const failure = new Error("feed unavailable");
+        get.rejects(failure);
+        let caught: unknown;
 
-        const _2_110_Versions: NugetVersions[] = await nugetHttpService.getSortedPackageReleasedVersions(
-            TestConstants.SdkPackageName,
-            {
-                maximumNugetVersion: NugetVersions.createFromFuzzyVersionString("2.110.x"),
-            },
-        );
+        try {
+            await service.getPackageReleasedVersions(TestConstants.SdkPackageName);
+        } catch (error: unknown) {
+            caught = error;
+        }
 
-        expect(_2_110_Versions.length).gt(1);
-        expect(_2_110_Versions.length).lt(allVersions.length);
-        expect(_2_110_Versions[_2_110_Versions.length - 1].minor).eq("110");
-        expect(parseInt(allVersions[_2_110_Versions.length].minor, 10)).gt(110);
-    }).timeout(MAX_AWAIT_TIME);
+        expect(caught).to.equal(failure);
+        expect(appendErrorLine.calledOnce).to.be.true;
+    });
 
-    it("downloadAndExtractNugetPackage v1", async () => {
-        const oneTmpDir = makeOneTmpDir();
-        const res = await nugetHttpService.getPackageReleasedVersions(TestConstants.SdkPackageName);
-        expect(res.versions.length).gt(1);
-        const theVersion = res.versions[res.versions.length - 1];
-        await nugetHttpService.downloadAndExtractNugetPackage(TestConstants.SdkPackageName, theVersion, oneTmpDir);
+    it("configures the proxy without sending network requests", () => {
+        service.updateAxiosInstance("https://example.invalid", "http://localhost:8080", "test-authorization");
 
-        expect(fs.existsSync(path.resolve(oneTmpDir, "Microsoft.PowerQuery.SdkTools.nuspec"))).true;
-        expect(fs.existsSync(path.resolve(oneTmpDir, "tools", "PQTest.exe"))).true;
-
-        await tryRemoveDirectoryRecursively(oneTmpDir);
-    }).timeout(MAX_AWAIT_TIME);
+        expect(axios.create).to.have.property("callCount", 3);
+        expect(instance.defaults.headers.common["Authorization"]).to.equal("test-authorization");
+        expect(get.called).to.be.false;
+    });
 });

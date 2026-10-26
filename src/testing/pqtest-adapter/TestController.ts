@@ -149,12 +149,20 @@ async function runHandler(
         let pqTestPath: string;
 
         try {
-            pqTestPath = resolvePqTestExecutablePath();
+            pqTestPath = await resolvePqTestExecutablePath(token);
         } catch (error) {
+            if (token.isCancellationRequested) {
+                return;
+            }
+
             const errorMessage: string = error instanceof Error ? error.message : String(error);
             outputChannel.appendErrorLine(`Failed to resolve PQTest.exe path: ${errorMessage}`);
             vscode.window.showErrorMessage(`Failed to resolve PQTest.exe path: ${errorMessage}`);
 
+            return;
+        }
+
+        if (token.isCancellationRequested) {
             return;
         }
 
