@@ -382,6 +382,35 @@ suite("CLI-only execution", () => {
         assert.ok(!fs.existsSync(path.join(directory, "PQServiceHost.exe")));
     });
 
+    for (const stdout of ["", " \r\n"]) {
+        test(`tasks with suppressed stdout ${JSON.stringify(stdout)} retain the successful process exit`, async () => {
+            const settingsFile = path.join(directory, "skip-output.json");
+            fs.writeFileSync(settingsFile, JSON.stringify({ SkipOutput: true }));
+            const originalSpawn = childProcess.spawn.bind(childProcess);
+
+            sandbox.stub(childProcess, "spawn").callsFake(() =>
+                originalSpawn(process.execPath, ["-e", `process.stdout.write(${JSON.stringify(stdout)});`], {
+                    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+                }),
+            );
+
+            const terminal = new PqTestTaskTerminal({
+                type: PowerQueryTaskProvider.TaskType,
+                operation: "run-test",
+                settingsFile,
+            });
+
+            let exitCode: number | undefined;
+
+            terminal.onDidClose(code => {
+                exitCode = code;
+            });
+
+            await terminal.open(undefined);
+            assert.strictEqual(exitCode, 0);
+        });
+    }
+
     test("query tasks propagate structured failures even when the process exits successfully", async () => {
         stubCli({ Status: "Failure", Message: "Query failed" });
 
@@ -1422,6 +1451,96 @@ suite("CLI-only execution", () => {
             assert.strictEqual(spawn.firstCall.args[0], executable);
             assert.ok(command.calledOnce);
             assert.deepStrictEqual(command.firstCall.args[1], result);
+        } finally {
+            task.dispose();
+        }
+    });
+
+    for (const workingDirectory of ["explicit", "executable directory"]) {
+        for (const accept of [false, true]) {
+            test(`run/debug ${accept ? "saves" : "rejects"} settings parameter queries using the ${workingDirectory}`, async () => {
+                const document = mockDocument({ uri: vscode.Uri.file(path.join(directory, "parameters.pq")) });
+
+                (document.save as sinon.SinonStub).callsFake(() => {
+                    sandbox.stub(document, "isDirty").get(() => false);
+
+                    return Promise.resolve(true);
+                });
+
+                fs.writeFileSync(
+                    path.join(directory, "debug.json"),
+                    JSON.stringify({ ParameterQueryFilePath: "parameters.pq" }),
+                );
+
+                const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+                prompt.resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+                sandbox.stub(vscode.commands, "executeCommand").resolves();
+                const spawn = stubCli([{ Status: "Passed", Output: [] }]);
+                const task = new PqTestExecutableOnceTask();
+
+                const exited = new Promise<void>(resolve => {
+                    task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+                });
+
+                try {
+                    await task.run(path.join(directory, "launch.query.pq"), {
+                        operation: "run-test",
+                        workingDirectory: workingDirectory === "explicit" ? directory : undefined,
+                        additionalArgs: ["--settingsFile", "debug.json"],
+                    });
+
+                    await exited;
+                    assert.strictEqual(spawn.callCount, accept ? 1 : 0);
+                    assert.ok(prompt.calledOnce);
+                    assert.strictEqual((document.save as sinon.SinonStub).callCount, accept ? 1 : 0);
+
+                    if (accept) {
+                        assert.strictEqual(spawn.firstCall.args[2]?.cwd, directory);
+                    }
+                } finally {
+                    task.dispose();
+                }
+            });
+        }
+    }
+
+    test("run/debug rechecks settings parameter queries dirtied during executable readiness", async () => {
+        const document = mockDocument({
+            uri: vscode.Uri.file(path.join(directory, "parameters.pq")),
+            isDirty: false,
+        });
+
+        fs.writeFileSync(
+            path.join(directory, "debug.json"),
+            JSON.stringify({ ParameterQueryFilePath: "parameters.pq" }),
+        );
+
+        const readiness = ExtensionConfigurations.getPqTestExecutablePath as sinon.SinonStub;
+
+        readiness.callsFake(() => {
+            sandbox.stub(document, "isDirty").get(() => true);
+
+            return Promise.resolve(undefined);
+        });
+
+        sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+        const spawn = sandbox.stub(childProcess, "spawn");
+        const task = new PqTestExecutableOnceTask();
+
+        const exited = new Promise<void>(resolve => {
+            task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+        });
+
+        try {
+            await task.run(path.join(directory, "launch.query.pq"), {
+                operation: "run-test",
+                workingDirectory: directory,
+                additionalArgs: ["--settingsFile", "debug.json"],
+            });
+
+            await exited;
+            assert.ok(readiness.calledOnce);
+            assert.ok(spawn.notCalled);
         } finally {
             task.dispose();
         }

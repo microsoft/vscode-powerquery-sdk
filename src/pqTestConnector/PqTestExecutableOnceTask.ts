@@ -18,6 +18,7 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { ensurePqTestQueryDocumentsSaved } from "../utils/pqTestQueryDocuments";
 import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
@@ -125,6 +126,12 @@ export class PqTestExecutableOnceTask implements IDisposable {
             this._pathToQueryFile = task.pathToQueryFile;
             await ensureQueryDocumentSaved(task.pathToQueryFile);
 
+            const processArgs: string[] = buildPqTestArgs(task);
+
+            if (task.workingDirectory) {
+                await ensurePqTestQueryDocumentsSaved(processArgs, task.workingDirectory);
+            }
+
             if (this.disposed) {
                 return undefined;
             }
@@ -136,13 +143,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 return undefined;
             }
 
-            await ensureQueryDocumentSaved(task.pathToQueryFile);
+            const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
+
+            await ensurePqTestQueryDocumentsSaved(processArgs, workingDir);
 
             if (this.disposed) {
                 return undefined;
             }
-
-            const processArgs: string[] = buildPqTestArgs(task);
 
             this.handleTaskCreated();
 
@@ -152,10 +159,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
                     arguments: formatArguments(processArgs),
                 }),
             );
-
-            // Determine working directory: use task.workingDirectory if provided,
-            // otherwise fall back to pqtest.exe directory
-            const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
 
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,

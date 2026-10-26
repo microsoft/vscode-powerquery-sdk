@@ -115,7 +115,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
 
             const result: ProcessExit = await this.process.deferred$;
 
-            if (result.exitCode === 0) {
+            if (result.exitCode === 0 && result.stdout.trim().length > 0) {
                 const payload: unknown = JSON.parse(result.stdout);
                 const error: string = inferAnyGeneralErrorString(payload);
 
