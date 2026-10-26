@@ -64,22 +64,30 @@ export async function ensurePqTestQueryDocumentsSaved(
         }
     }
 
-    const queryFiles: vscode.Uri[] = queries.map((query: string) => vscode.Uri.file(query));
+    const matchesQueryDirectory = (document: vscode.TextDocument): boolean =>
+        document.uri.scheme === "file" &&
+        document.uri.fsPath.toLowerCase().endsWith(".query.pq") &&
+        queries.some((query: string) => {
+            const relative: string = path.relative(query, document.uri.fsPath);
 
-    // QueryFilePath can name a test directory rather than an individual query.
-    for (const document of vscode.workspace.textDocuments) {
-        if (
-            document.uri.scheme === "file" &&
-            document.uri.fsPath.toLowerCase().endsWith(".query.pq") &&
-            queries.some((query: string) => {
-                const relative: string = path.relative(query, document.uri.fsPath);
+            return relative.length > 0 && !path.isAbsolute(relative) && relative.split(path.sep)[0] !== "..";
+        });
 
-                return relative.length > 0 && !path.isAbsolute(relative) && relative.split(path.sep)[0] !== "..";
-            })
-        ) {
-            queryFiles.push(document.uri);
-        }
-    }
+    do {
+        const queryFiles: vscode.Uri[] = queries.map((query: string) => vscode.Uri.file(query));
 
-    await ensureQueryDocumentsSaved(queryFiles);
+        // QueryFilePath can name a test directory rather than an individual query.
+        queryFiles.push(
+            ...vscode.workspace.textDocuments
+                .filter(matchesQueryDirectory)
+                .map((document: vscode.TextDocument) => document.uri),
+        );
+
+        // eslint-disable-next-line no-await-in-loop
+        await ensureQueryDocumentsSaved(queryFiles);
+    } while (
+        vscode.workspace.textDocuments.some(
+            (document: vscode.TextDocument) => document.isDirty && matchesQueryDirectory(document),
+        )
+    );
 }
