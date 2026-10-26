@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as sinon from "sinon";
+import { setImmediate } from "timers";
 import * as vscode from "vscode";
 
 import { PowerQueryTaskDefinition } from "../../common/PowerQueryTask";
@@ -791,6 +792,90 @@ suite("CLI-only execution", () => {
             context.subscriptions.forEach(disposable => disposable.dispose());
         }
     });
+
+    for (const save of [false, true]) {
+        test(`queued queries preserve serialization when the deferred save is ${save ? "accepted" : "declined"}`, async () => {
+            const document = mockDocument({ isDirty: false });
+            let dirty = false;
+            sandbox.stub(document, "isDirty").get(() => dirty);
+
+            (document.save as sinon.SinonStub).callsFake(() => {
+                dirty = false;
+
+                return Promise.resolve(true);
+            });
+
+            sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
+            sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => document.uri.fsPath);
+            const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+            const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+            const output = new PqSdkOutputChannel();
+            const pidFile = path.join(directory, PqTestExecutableTaskQueue.ExecutablePidLockFileName);
+            fs.writeFileSync(pidFile, String(process.pid));
+            const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+            const spawn = stubCli([]);
+            let dismiss: (value: string | undefined) => void = () => {};
+            let prompted: () => void = () => {};
+
+            const promptShown = new Promise<void>(resolve => {
+                prompted = resolve;
+            });
+
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+
+            prompt.callsFake(() => {
+                prompted();
+
+                return new Promise<string | undefined>(resolve => {
+                    dismiss = resolve;
+                });
+            });
+
+            try {
+                const query = queue.RefreshCredential();
+                const completed = save ? query : assert.rejects(query, /cancelled/i);
+                const next = queue.ListCredentials();
+                await new Promise<void>(resolve => setImmediate(resolve));
+                assert.ok(spawn.notCalled);
+                dirty = true;
+                fs.writeFileSync(pidFile, "");
+                await promptShown;
+                // Simulate another queue check while the save decision is pending.
+                fs.writeFileSync(pidFile, "");
+                await new Promise<void>(resolve => setImmediate(resolve));
+                assert.ok(spawn.notCalled);
+
+                if (save) {
+                    // A foreign process acquired the shared lock during the save prompt.
+                    fs.writeFileSync(pidFile, String(process.pid));
+                }
+
+                dismiss(save ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+
+                if (save) {
+                    await new Promise<void>(resolve => setImmediate(resolve));
+                    assert.ok(spawn.notCalled);
+                    fs.writeFileSync(pidFile, "");
+                }
+
+                await completed;
+                assert.deepStrictEqual(await next, []);
+                assert.strictEqual(spawn.callCount, save ? 2 : 1);
+                assert.ok(spawn.lastCall.args[1]?.includes("list-credential"));
+
+                if (save) {
+                    assert.ok(spawn.firstCall.args[1]?.includes("refresh-credential"));
+                    assert.ok((document.save as sinon.SinonStub).calledOnce);
+                }
+            } finally {
+                dismiss(undefined);
+                queue.dispose();
+                bus.dispose();
+                output.dispose();
+                context.subscriptions.forEach(disposable => disposable.dispose());
+            }
+        });
+    }
 
     test("structured CLI failures remain errors even with a successful process exit", () => {
         assert.strictEqual(inferAnyGeneralErrorString(null), "");

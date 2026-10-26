@@ -91,6 +91,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private lastPqRelatedFileTouchedDate: Date = new Date(0);
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
+    private checkingQueryDocument: boolean = false;
     protected _disposables: Array<IDisposable> = [];
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
@@ -259,6 +260,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     private async doCheckPidAndDequeueOneTaskIfAny(): Promise<void> {
+        if (this.checkingQueryDocument) {
+            return;
+        }
+
         const pidNumber: number | undefined = this.doSeizePQTestPidFromLockFile();
 
         if (typeof pidNumber !== "number" && this.pqTestFullPath) {
@@ -266,6 +271,27 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             const pendingTask: PqTestExecutableTask | undefined = this.pendingTasks.shift();
 
             if (pendingTask) {
+                this.checkingQueryDocument = true;
+
+                try {
+                    await ensureQueryDocumentSaved(pendingTask.pathToQueryFile);
+                } catch (error: unknown) {
+                    pendingTask.reject(error instanceof Error ? error : String(error));
+                    this.checkingQueryDocument = false;
+                    void this.doCheckPidAndDequeueOneTaskIfAny();
+
+                    return;
+                }
+
+                this.checkingQueryDocument = false;
+
+                // Another extension host may have started a process while the save prompt was open.
+                if (!this.pqTestFullPath || typeof this.doSeizePQTestPidFromLockFile() === "number") {
+                    this.pendingTasks.unshift(pendingTask);
+
+                    return;
+                }
+
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
                 const processArgs: string[] = buildPqTestArgs(pendingTask);
