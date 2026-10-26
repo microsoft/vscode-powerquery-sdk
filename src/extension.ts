@@ -23,10 +23,13 @@ import { GlobalEventBus } from "./GlobalEventBus";
 import { PqTestResultViewPanel } from "./panels/PqTestResultViewPanel";
 import { PqTestExecutableTaskQueue } from "./pqTestConnector/PqTestExecutableTaskQueue";
 import { registerCommands, registerTestController } from "./testing/pqtest-adapter/TestController";
+import { initializeLocalSdkTools } from "./utils/localSdkTools";
 import { stringifyJson } from "./utils/strings";
 import { getFirstWorkspaceFolder, maybeHandleNewWorkspaceCreated } from "./utils/vscodes";
 
 export function activate(vscExtCtx: vscode.ExtensionContext): void {
+    initializeLocalSdkTools(vscExtCtx.extensionMode !== vscode.ExtensionMode.Production);
+
     const vscPowerQuery: PQLSExt.PowerQueryApi = vscode.extensions.getExtension(
         ExtensionConstants.PQLanguageServiceExtensionId,
     )?.exports;

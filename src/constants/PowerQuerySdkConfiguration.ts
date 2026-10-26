@@ -9,6 +9,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import { Cancel } from "../common/promises/CancellationToken";
+import { getLocalSdkToolsLocation } from "../utils/localSdkTools";
 import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import {
     resolvePathRelativeToWorkspace,
@@ -245,10 +246,18 @@ export const ExtensionConfigurations = {
         );
     },
     get PQTestLocation(): string | undefined {
-        return protectManagedToolsLocation(getConfiguredToolsLocation());
+        return getLocalSdkToolsLocation() ?? protectManagedToolsLocation(getConfiguredToolsLocation());
     },
 
     getPQTestLocation(token?: vscode.CancellationToken): Promise<string | undefined> {
+        if (getLocalSdkToolsLocation()) {
+            if (token?.isCancellationRequested) {
+                return Promise.reject(new Cancel());
+            }
+
+            return Promise.resolve(getLocalSdkToolsLocation());
+        }
+
         return protectManagedToolsLocationAsync(getConfiguredToolsLocation(), token);
     },
 
@@ -381,6 +390,12 @@ export const ExtensionConfigurations = {
         return value;
     },
     get pqTestExecutablePath(): string | undefined {
+        const localTools: string | undefined = getLocalSdkToolsLocation();
+
+        if (localTools) {
+            return path.join(localTools, "PQTest.exe");
+        }
+
         const executablePath: string | undefined = getConfiguredExecutablePath();
         const baseNugetFolder: string | undefined = getManagedNugetFolder();
 
@@ -389,6 +404,16 @@ export const ExtensionConfigurations = {
             : executablePath;
     },
     async getPqTestExecutablePath(token?: vscode.CancellationToken): Promise<string | undefined> {
+        const localTools: string | undefined = getLocalSdkToolsLocation();
+
+        if (localTools) {
+            if (token?.isCancellationRequested) {
+                throw new Cancel();
+            }
+
+            return path.join(localTools, "PQTest.exe");
+        }
+
         const executablePath: string | undefined = getConfiguredExecutablePath();
         await protectManagedToolsLocationAsync(executablePath ? path.dirname(executablePath) : undefined, token);
 

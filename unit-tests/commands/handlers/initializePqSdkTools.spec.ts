@@ -108,6 +108,23 @@ describe("SDK tool startup", () => {
         expect(selectTools.calledOnceWithExactly(executable, "2.160.2")).to.be.true;
     });
 
+    it("uses local tools without querying, downloading, pruning, or saving a selection", async () => {
+        const localToolsLocation = path.join(root, "local-tools");
+
+        expect(
+            await initializePqSdkTools({
+                ...options(undefined, false),
+                localToolsLocation,
+            }),
+        ).to.equal(localToolsLocation);
+
+        sinon.assert.notCalled(findVersion);
+        sinon.assert.notCalled(acquire);
+        sinon.assert.notCalled(cleanup);
+        sinon.assert.notCalled(selectTools);
+        sinon.assert.notCalled(onPackageAcquired);
+    });
+
     it("returns the newly selected location rather than the previous unusable selection", async () => {
         const previous = addPackage("2.159.1");
         const next = addPackage("2.160.2");

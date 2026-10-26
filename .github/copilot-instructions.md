@@ -72,6 +72,7 @@ Use the smallest relevant command first. `npm test` runs both unit and VS Code i
 
 ### Manual Testing and Debugging in VS Code
 
+- In restricted-network environments, use `PQSDK_TEST_TOOLS_PATH` with a validated local extracted tools directory for development/test hosts, or configure the isolated internal-feed run described in `TESTING.md`. Do not repeatedly retry nuget.org. Real feed tests require `PQSDK_TEST_EXTERNAL=1` and explicit internal-feed configuration.
 - Before launching or claiming readiness for manual testing, read `.vscode/launch.json` and `.vscode/tasks.json`. Run the selected launch configuration's actual `preLaunchTask`, including all `dependsOn` tasks, in this worktree. Do not assume that `npm run compile` covers every launch configuration.
 - **Run Extension** uses `${defaultBuildTask}`, currently `Watch_VSC_PQ_SDK` (`npm run watch` from the repository root). Wait for its initial compilation to succeed before launching the Extension Development Host.
 - **Run Extension [Dev Mode]** uses `Develop_Extensions`, currently both `Watch_VSC_PQ_SDK` and `Dev_PQTest_Result_WebView` (`npm start` from `webviews/pq-test-result-view/`). Wait for both initial compilations and verify that the webview development server is responsive. Preserve `WEBVIEW_DEV_MODE=true` from the launch configuration.

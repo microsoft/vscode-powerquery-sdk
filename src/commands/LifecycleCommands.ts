@@ -42,6 +42,7 @@ import {
 } from "../utils/connectorQueryFiles";
 import { debounce } from "../utils/debounce";
 import { getMtimeOfAFile } from "../utils/files";
+import { getLocalSdkToolsLocation } from "../utils/localSdkTools";
 import { prettifyJson, resolveTemplateSubstitutedValues } from "../utils/strings";
 import {
     getAnyPqFileBeneathTheFirstWorkspace,
@@ -115,6 +116,10 @@ export class LifecycleCommands implements IDisposable {
         });
 
         globalEventBus.on(GlobalEvents.VSCodeEvents.ConfigDidChangePqTestVersion, () => {
+            if (getLocalSdkToolsLocation()) {
+                return;
+            }
+
             // when PqTestVersion changed in the mode non-customized version tag, users might have it updated
             // thus we need to compare it with current expected version and reset it back the one we expected
             if (
@@ -536,6 +541,7 @@ export class LifecycleCommands implements IDisposable {
             await this.pqSdkNugetPackageService.waitForConfiguredPackages();
 
             return await initializePqSdkTools({
+                localToolsLocation: getLocalSdkToolsLocation(),
                 selectedToolsLocation: ExtensionConfigurations.PQTestLocation,
                 selectedToolsReady: this.pqTestService.pqTestReady,
                 packageService: this.pqSdkNugetPackageService,
@@ -654,6 +660,12 @@ export class LifecycleCommands implements IDisposable {
      */
     public async manuallyUpdatePqTest(maybeNextVersion?: string): Promise<string | undefined> {
         try {
+            const localTools: string | undefined = getLocalSdkToolsLocation();
+
+            if (localTools) {
+                return localTools;
+            }
+
             await this.pqSdkNugetPackageService.waitForConfiguredPackages();
 
             if (!maybeNextVersion) {

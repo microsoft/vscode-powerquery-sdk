@@ -11,6 +11,45 @@ The project uses a **unit-first testing philosophy** with the following hierarch
 
 ## Unit Testing Patterns
 
+### Local testing without nuget.org
+
+Use an extracted SDK Tools package obtained from an organization-approved feed. Keep the entire `tools` directory together, including `PQTest.exe`, `MakePQX.exe`, and their dependencies:
+
+```powershell
+$env:PQSDK_TEST_TOOLS_PATH = 'C:\Tools\PowerQuerySdk\tools'
+npm run test:e2e
+```
+
+The override applies only to extension development and test hosts. It is validated before SDK activation, takes precedence over saved tool paths, and bypasses SDK package discovery, downloading, and pruning. **Update PQ SDK Tools** reuses the same local directory instead of checking NuGet. It does not change saved User or Workspace settings, copy the local tools, or delete them. Invalid paths fail activation without falling back to nuget.org. Installed production extensions ignore the variable.
+
+For F5 debugging, supply `PQSDK_TEST_TOOLS_PATH` in the selected launch configuration's `env` object, or start VS Code from a process that already has the variable set. Setting it only in an existing integrated terminal does not change the environment of that VS Code process. Follow the prelaunch tasks in `.vscode/launch.json` and `.vscode/tasks.json`.
+
+Unset the override to restore ordinary acquisition:
+
+```powershell
+Remove-Item Env:PQSDK_TEST_TOOLS_PATH
+```
+
+The default integration run excludes `[External]` tests. Ordinary acquisition logic is covered by mocked unit tests, and the command-registration test does not contact a feed. Offline unit tests remain available with `npm run test:unit-test:no-external`.
+
+### Test acquisition against an approved internal feed
+
+Use a separate run when testing actual NuGet acquisition, rather than tool execution:
+
+```powershell
+Remove-Item Env:PQSDK_TEST_TOOLS_PATH -ErrorAction SilentlyContinue
+$env:PQSDK_TEST_NUGET_PATH = 'C:\Tools\NuGet'
+$env:PQSDK_TEST_NUGET_FEED = 'https://packages.example.com/nuget/v3/index.json'
+$env:PQSDK_TEST_EXTERNAL = '1'
+npm run test:e2e
+```
+
+The runner requires both feed variables, validates `nuget.exe`, and creates an isolated workspace file under the ignored `.vscode-test` directory with the corresponding `powerquery.sdk.externals.nugetPath` and `powerquery.sdk.externals.nugetFeed` settings. Those settings are present before activation; neither your normal User settings nor the tracked fixtures are modified. You can also set the feed variables without `PQSDK_TEST_EXTERNAL` to use an internal feed during ordinary test startup. Do not include credentials in the feed URL; configure NuGet authentication separately.
+
+`PQSDK_TEST_EXTERNAL=1` includes real feed tests, which install into a temporary directory and require successful package discovery and extraction. It cannot be combined with `PQSDK_TEST_TOOLS_PATH`. Remove the three feed-related environment variables after that run.
+
+These options eliminate SDK package requests to nuget.org, not downloads of the VS Code test runtime or language-service extension. Those may still require network access or an already provisioned test installation.
+
 ### 1. Property-Based Testing
 
 Use property-based testing for validation logic and business rules.

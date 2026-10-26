@@ -11,6 +11,7 @@ import type { PqSdkNugetPackageService } from "../../common/PqSdkNugetPackageSer
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 
 interface PqSdkToolStartupOptions {
+    readonly localToolsLocation?: string;
     readonly selectedToolsLocation: string | undefined;
     readonly selectedToolsReady: boolean;
     readonly packageService: Pick<
@@ -24,6 +25,10 @@ interface PqSdkToolStartupOptions {
 }
 
 export async function initializePqSdkTools(options: PqSdkToolStartupOptions): Promise<string | undefined> {
+    if (options.localToolsLocation) {
+        return options.localToolsLocation;
+    }
+
     // Reuse usable selected tools even if retention removed an unselected newer version.
     if (options.selectedToolsLocation && options.selectedToolsReady) {
         await options.packageService.cleanupUnusedPackages();
