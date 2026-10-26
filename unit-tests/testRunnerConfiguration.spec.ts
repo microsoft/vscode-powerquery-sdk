@@ -50,13 +50,13 @@ describe("Isolated SDK test runner configuration", () => {
         );
     }
 
-    it("excludes real feed tests by default and forwards a validated local override", () => {
+    it("forwards a validated local override without replacing command-line test filters", () => {
         const result = load({ PQSDK_TEST_TOOLS_PATH: root });
         expect(result.status, result.stderr).to.equal(0);
         const config = JSON.parse(result.stdout);
         expect(config.env.PQSDK_TEST_TOOLS_PATH).to.equal(root);
-        expect(config.mocha.grep).to.equal("\\[External\\]");
-        expect(config.mocha.invert).to.equal(true);
+        expect(config.mocha).not.to.have.property("grep");
+        expect(config.mocha).not.to.have.property("invert");
     });
 
     it("rejects invalid local paths before starting VS Code", () => {

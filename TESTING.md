@@ -44,7 +44,7 @@ Unset the override to restore ordinary acquisition:
 Remove-Item Env:PQSDK_TEST_TOOLS_PATH, Env:PQSDK_TEST_TOOLS_AUTODISCOVER -ErrorAction SilentlyContinue
 ```
 
-The default integration run excludes `[External]` tests. Ordinary acquisition logic is covered by mocked unit tests, and the command-registration test does not contact a feed. Offline unit tests remain available with `npm run test:unit-test:no-external`.
+The real feed-acquisition test is skipped unless `PQSDK_TEST_EXTERNAL=1`, even when selected with `--grep`. The runner leaves command-line test filters unchanged so focused runs execute only the requested tests. Ordinary acquisition logic is covered by mocked unit tests, and the command-registration test does not contact a feed. Offline unit tests remain available with `npm run test:unit-test:no-external`.
 
 ### Test acquisition against an approved internal feed
 

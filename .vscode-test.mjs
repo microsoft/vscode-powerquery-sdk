@@ -77,7 +77,6 @@ export default defineConfig({
         PQSDK_TEST_EXTERNAL: process.env.PQSDK_TEST_EXTERNAL,
     },
     mocha: {
-        ...(external ? {} : { grep: "\\[External\\]", invert: true }),
         timeout: 20000,
         retries: 1,
     },
