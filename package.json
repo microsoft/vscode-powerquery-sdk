@@ -330,6 +330,9 @@
                                 }
                             }
                         }
+                    },
+                    "settingsFile": {
+                        "type": "string"
                     }
                 }
             }
