@@ -648,6 +648,140 @@ suite("CLI-only execution", () => {
         assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
     });
 
+    for (const { settingsFilters, cliFilters, expectedQueries } of [
+        { settingsFilters: [], cliFilters: ["A.query.pq"], expectedQueries: ["A.query.pq"] },
+        { settingsFilters: ["A.query.pq"], cliFilters: [], expectedQueries: ["A.query.pq"] },
+        {
+            settingsFilters: ["!**/B.query.pq"],
+            cliFilters: [],
+            expectedQueries: ["A.query.pq", "nested/A-extra.query.pq"],
+        },
+        {
+            settingsFilters: [],
+            cliFilters: ["**/a*.query.pq"],
+            expectedQueries: ["A.query.pq", "nested/A-extra.query.pq"],
+        },
+        { settingsFilters: ["A.query.pq"], cliFilters: ["B.query.pq"], expectedQueries: ["A.query.pq", "B.query.pq"] },
+        { settingsFilters: ["A.query.pq", "B.query.pq"], cliFilters: ["!B.query.pq"], expectedQueries: ["A.query.pq"] },
+        { settingsFilters: ["!B.query.pq"], cliFilters: ["B.query.pq"], expectedQueries: [] },
+        { settingsFilters: ["!**/*.pq"], cliFilters: [], expectedQueries: [] },
+    ]) {
+        for (const testExplorer of [false, true]) {
+            test(`${testExplorer ? "Test Explorer" : "query task"} applies settings ${JSON.stringify(settingsFilters)} and CLI ${JSON.stringify(cliFilters)} without filtering parameter queries`, async () => {
+                fs.mkdirSync(path.join(directory, "nested"));
+                const names = ["A.query.pq", "B.query.pq", "nested/A-extra.query.pq", "parameters.pq"];
+                const dirty = new Set(names);
+
+                const documents = names.map(
+                    name =>
+                        ({
+                            uri: vscode.Uri.file(path.join(directory, ...name.split("/"))),
+                            isUntitled: false,
+                            get isDirty(): boolean {
+                                return dirty.has(name);
+                            },
+                            save: sandbox.stub().callsFake(() => {
+                                dirty.delete(name);
+
+                                return Promise.resolve(true);
+                            }) as vscode.TextDocument["save"],
+                        }) as vscode.TextDocument,
+                );
+
+                sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+                const settingsFile = vscode.Uri.file(path.join(directory, "batch.json"));
+
+                fs.writeFileSync(
+                    settingsFile.fsPath,
+                    JSON.stringify({
+                        QueryFilePath: ".",
+                        ParameterQueryFilePath: "parameters.pq",
+                        TestFilters: settingsFilters,
+                    }),
+                );
+
+                const expected = [...expectedQueries, "parameters.pq"];
+                const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+
+                prompt.callsFake((message: string) => {
+                    assert.ok(
+                        expected.some(name =>
+                            message.toLowerCase().includes(path.join(directory, ...name.split("/")).toLowerCase()),
+                        ),
+                    );
+
+                    return Promise.resolve(extensionI18n["PQSdk.query.saveAndRun"]);
+                });
+
+                const additionalArgs = cliFilters.flatMap((filter, index) =>
+                    index % 2 === 0 ? ["--testFilter", filter] : [`--testFilter=${filter}`],
+                );
+
+                const output = sandbox.createStubInstance(PqSdkOutputChannel);
+
+                if (testExplorer) {
+                    const controller = vscode.tests.createTestController(
+                        "cli-effective-filters",
+                        "CLI effective filters",
+                    );
+
+                    const cancellation = new vscode.CancellationTokenSource();
+                    const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+                    const executor = new TestRunExecutor(executable, settingsFile, testRun, output, cancellation.token);
+
+                    documents.slice(0, 3).forEach((document, index) => {
+                        executor.addTestItem(controller.createTestItem(String(index), String(index), document.uri));
+                    });
+
+                    sandbox.stub(testSettingsUtils, "determineExtensionsForTests").resolves(undefined);
+                    sandbox.stub(testSettingsUtils, "buildIntermediateResultsArgs").resolves([]);
+
+                    const run = sandbox
+                        .stub(SpawnedProcessStreaming.prototype, "run")
+                        .resolves(Readable.from(['runStart:{"tests":[]}\nrunEnd:{"passed":0,"failed":0}\n']));
+
+                    try {
+                        await executor.execute(additionalArgs);
+                        assert.ok(run.calledOnce);
+                    } finally {
+                        testRun.end();
+                        controller.dispose();
+                        cancellation.dispose();
+                    }
+                } else {
+                    const spawn = stubCli([{ Status: "Passed" }]);
+
+                    const terminal = new PqTestTaskTerminal({
+                        type: PowerQueryTaskProvider.TaskType,
+                        operation: "run-test",
+                        options: { cwd: directory },
+                        settingsFile: settingsFile.fsPath,
+                        additionalArgs,
+                    });
+
+                    let exitCode: number | undefined;
+
+                    terminal.onDidClose(code => {
+                        exitCode = code;
+                    });
+
+                    await terminal.open(undefined);
+                    assert.strictEqual(exitCode, 0);
+                    assert.ok(spawn.calledOnce);
+                }
+
+                assert.strictEqual(prompt.callCount, expected.length);
+
+                for (const [index, name] of names.entries()) {
+                    assert.strictEqual(
+                        (documents[index].save as sinon.SinonStub).callCount,
+                        expected.includes(name) ? 1 : 0,
+                    );
+                }
+            });
+        }
+    }
+
     for (const form of [
         "query argument",
         "equals query argument",

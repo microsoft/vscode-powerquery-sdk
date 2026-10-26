@@ -11,14 +11,12 @@
  */
 
 import * as path from "path";
-import { TextDecoder } from "util";
 import * as vscode from "vscode";
 
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
 import { ensurePqTestQueryDocumentsSaved } from "../../utils/pqTestQueryDocuments";
-import { ensureQueryDocumentsSaved } from "../../utils/queryDocuments";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
@@ -93,51 +91,12 @@ export class TestRunExecutor {
                 .map((item: vscode.TestItem) => item.uri)
                 .filter((uri: vscode.Uri | undefined): uri is vscode.Uri => uri !== undefined);
 
-            const settings: { QueryFilePath?: unknown; ParameterQueryFilePath?: unknown } = JSON.parse(
-                new TextDecoder().decode(await vscode.workspace.fs.readFile(this.settingsFile)),
-            ) as { QueryFilePath?: unknown; ParameterQueryFilePath?: unknown };
-
-            if (typeof settings.ParameterQueryFilePath === "string" && settings.ParameterQueryFilePath.length > 0) {
-                queryFiles.push(vscode.Uri.file(path.resolve(workingDirectory, settings.ParameterQueryFilePath)));
-            }
-
-            const hasTestFilter: boolean = (additionalArgs ?? []).some(
-                (arg: string) => arg === "--testFilter" || arg.startsWith("--testFilter="),
-            );
-
-            const folderQueryArgs: string[] = [];
-            const filterArgs: readonly string[] = additionalArgs ?? [];
-
-            for (let index: number = 0; index < filterArgs.length; index++) {
-                const arg: string = filterArgs[index];
-                let filter: string | undefined;
-
-                if (arg === "--testFilter") {
-                    filter = filterArgs[++index];
-                } else if (arg.startsWith("--testFilter=")) {
-                    filter = arg.slice("--testFilter=".length);
-                }
-
-                const folderSuffix: string = "/**/*.query.pq";
-
-                if (filter && filter.endsWith(folderSuffix) && typeof settings.QueryFilePath === "string") {
-                    folderQueryArgs.push(
-                        "--queryFile",
-                        path.resolve(workingDirectory, settings.QueryFilePath, filter.slice(0, -folderSuffix.length)),
-                    );
-                }
-            }
-
             const ensureRunQueriesSaved = async (): Promise<void> => {
-                if (hasTestFilter && folderQueryArgs.length === 0) {
-                    await ensureQueryDocumentsSaved(queryFiles);
-                } else {
-                    await ensurePqTestQueryDocumentsSaved(
-                        hasTestFilter ? folderQueryArgs : ["--settingsFile", this.settingsFile.fsPath],
-                        workingDirectory,
-                        queryFiles,
-                    );
-                }
+                await ensurePqTestQueryDocumentsSaved(
+                    ["--settingsFile", this.settingsFile.fsPath, ...(additionalArgs ?? [])],
+                    workingDirectory,
+                    queryFiles,
+                );
             };
 
             await ensureRunQueriesSaved();
