@@ -23,6 +23,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
     readonly onDidWrite: vscode.Event<string> = this.writeEmitter.event;
     readonly onDidClose: vscode.Event<number> = this.closeEmitter.event;
     private process?: SpawnedProcess;
+    private nativeExecution?: vscode.TaskExecution;
     private closed: boolean = false;
     private readonly readinessCancellation: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
 
@@ -30,6 +31,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
         private readonly definition: PowerQueryTaskDefinition,
         private readonly executablePath?: string,
         private readonly workspaceDirectory?: string,
+        private readonly scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace,
     ) {}
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
@@ -64,6 +66,20 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
             await ensureQueryDocumentSaved(queryFile);
 
             if (this.closed) {
+                return;
+            }
+
+            if (
+                this.definition.stdinStr === undefined &&
+                this.definition.credentialTemplate === undefined &&
+                (this.definition.additionalArgs?.includes("--interactive") ||
+                    (this.definition.operation !== "run-test" &&
+                        this.definition.operation !== "test-connection" &&
+                        this.definition.operation !== "refresh-credential"))
+            ) {
+                // Preserve native input and output handling for tasks that only need a save guard.
+                this.finish(await this.runNativeTask(executable, workingDirectory));
+
                 return;
             }
 
@@ -120,6 +136,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
         this.readinessCancellation.cancel();
         this.readinessCancellation.dispose();
         this.process?.cpStream?.kill();
+        this.nativeExecution?.terminate();
         this.writeEmitter.dispose();
         this.closeEmitter.dispose();
     }
@@ -127,6 +144,53 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
     handleInput(data: string): void {
         if (data === "\x03") {
             this.finish(130);
+        }
+    }
+
+    private async runNativeTask(executable: string, workingDirectory: string): Promise<number> {
+        const args: string[] = buildPqTestArgs(this.definition);
+
+        const task: vscode.Task = new vscode.Task(
+            { type: "process", command: executable, args },
+            this.scope,
+            this.definition.label ?? this.definition.operation,
+            "pqtest",
+            new vscode.ProcessExecution(executable, args, { cwd: workingDirectory }),
+            [],
+        );
+
+        let exitCode: number | undefined;
+        const subscriptions: vscode.Disposable[] = [];
+
+        try {
+            return await new Promise<number>((resolve: (code: number) => void, reject: (error: unknown) => void) => {
+                const matches = (execution: vscode.TaskExecution): boolean =>
+                    execution === this.nativeExecution || execution.task === task;
+
+                subscriptions.push(
+                    vscode.tasks.onDidEndTaskProcess((event: vscode.TaskProcessEndEvent) => {
+                        if (matches(event.execution)) {
+                            exitCode = event.exitCode;
+                        }
+                    }),
+                    vscode.tasks.onDidEndTask((event: vscode.TaskEndEvent) => {
+                        if (matches(event.execution)) {
+                            this.nativeExecution = undefined;
+                            resolve(exitCode ?? 1);
+                        }
+                    }),
+                );
+
+                void vscode.tasks.executeTask(task).then((execution: vscode.TaskExecution) => {
+                    this.nativeExecution = execution;
+
+                    if (this.closed) {
+                        execution.terminate();
+                    }
+                }, reject);
+            });
+        } finally {
+            subscriptions.forEach((subscription: vscode.Disposable) => subscription.dispose());
         }
     }
 

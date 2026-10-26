@@ -10,7 +10,10 @@ import * as vscode from "vscode";
 
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 
-export async function ensureQueryDocumentSaved(queryFile: string | undefined): Promise<void> {
+export async function ensureQueryDocumentSaved(
+    queryFile: string | undefined,
+    workingDirectory: string = process.cwd(),
+): Promise<void> {
     if (!queryFile) {
         return;
     }
@@ -18,8 +21,10 @@ export async function ensureQueryDocumentSaved(queryFile: string | undefined): P
     const normalizePath = (value: string): string =>
         process.platform === "win32" ? path.resolve(value).toLowerCase() : path.resolve(value);
 
+    const resolvedQueryFile: string = normalizePath(path.resolve(workingDirectory, queryFile));
+
     const document: vscode.TextDocument | undefined = vscode.workspace.textDocuments.find(
-        (candidate: vscode.TextDocument) => normalizePath(candidate.uri.fsPath) === normalizePath(queryFile),
+        (candidate: vscode.TextDocument) => normalizePath(candidate.uri.fsPath) === resolvedQueryFile,
     );
 
     if (!document) {

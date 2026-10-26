@@ -274,7 +274,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 this.checkingQueryDocument = true;
 
                 try {
-                    await ensureQueryDocumentSaved(pendingTask.pathToQueryFile);
+                    await ensureQueryDocumentSaved(pendingTask.pathToQueryFile, this.pqTestLocation || undefined);
                 } catch (error: unknown) {
                     pendingTask.reject(error instanceof Error ? error : String(error));
                     this.checkingQueryDocument = false;
@@ -410,13 +410,13 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
-        await ensureQueryDocumentSaved(task.pathToQueryFile);
+        await ensureQueryDocumentSaved(task.pathToQueryFile, this.pqTestLocation || undefined);
 
         if (!this.pqTestReady) {
             this.pqTestFullPath = await resolvePqTestExecutablePath();
             this.pqTestLocation = path.dirname(this.pqTestFullPath);
             this.pqTestReady = true;
-            await ensureQueryDocumentSaved(task.pathToQueryFile);
+            await ensureQueryDocumentSaved(task.pathToQueryFile, this.pqTestLocation);
         }
 
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
@@ -645,7 +645,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             pathToQueryFile = configPQTestQueryFileLocation;
         }
 
-        await ensureQueryDocumentSaved(pathToQueryFile);
+        await ensureQueryDocumentSaved(pathToQueryFile, this.pqTestLocation || undefined);
         await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -661,7 +661,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             ExtensionConfigurations.DefaultQueryFileLocation,
         );
 
-        await ensureQueryDocumentSaved(pathToQueryFile);
+        await ensureQueryDocumentSaved(pathToQueryFile, this.pqTestLocation || undefined);
 
         // maybe we need to execute the build task before evaluating.
         await this.ExecuteBuildTaskAndAwaitIfNeeded();

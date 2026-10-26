@@ -164,6 +164,13 @@ suite("CLI-only execution", () => {
         assert.ok((document.save as sinon.SinonStub).notCalled);
     });
 
+    test("relative query save checks use the execution directory rather than the extension host directory", async () => {
+        const document = mockDocument();
+        sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+
+        await assert.rejects(ensureQueryDocumentSaved(path.basename(document.uri.fsPath), directory), /cancelled/i);
+    });
+
     for (const legacyValue of [undefined, false, true]) {
         test(`provided and saved tasks use CLI execution with legacy setting ${legacyValue}`, async () => {
             const originalGetConfiguration = vscode.workspace.getConfiguration.bind(vscode.workspace);
@@ -196,7 +203,8 @@ suite("CLI-only execution", () => {
                 if (
                     definition.operation === "run-test" ||
                     definition.operation === "test-connection" ||
-                    definition.operation === "refresh-credential"
+                    definition.operation === "refresh-credential" ||
+                    definition.pathToQueryFile !== undefined
                 ) {
                     assert.ok(task.execution instanceof vscode.CustomExecution);
                     assert.ok(resolved?.execution instanceof vscode.CustomExecution);
@@ -396,16 +404,24 @@ suite("CLI-only execution", () => {
         assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
     });
 
-    for (const operation of ["test-connection", "refresh-credential"] as const) {
+    for (const operation of [
+        "test-connection",
+        "refresh-credential",
+        "credential-template",
+        "run-compare",
+        "set-credential",
+    ]) {
         test(`${operation} tasks cancel without spawning when saving the query is declined`, async () => {
             const document = mockDocument();
             sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
             const spawn = sandbox.stub(childProcess, "spawn");
+            const executeTask = sandbox.stub(vscode.tasks, "executeTask");
 
             const terminal = new PqTestTaskTerminal({
                 type: PowerQueryTaskProvider.TaskType,
                 operation,
                 pathToQueryFile: document.uri.fsPath,
+                additionalArgs: operation === "set-credential" ? ["--interactive"] : undefined,
             });
 
             let exitCode: number | undefined;
@@ -417,8 +433,276 @@ suite("CLI-only execution", () => {
             await terminal.open(undefined);
             assert.strictEqual(exitCode, 1);
             assert.ok(spawn.notCalled);
+            assert.ok(executeTask.notCalled);
         });
     }
+
+    for (const operation of ["credential-template", "run-compare"]) {
+        test(`saved ${operation} tasks validate query saves without parsing their operation-specific output as query results`, async () => {
+            const provider = new PowerQueryTaskProvider({
+                pqTestReady: true,
+                pqTestFullPath: executable,
+            } as IPQTestService);
+
+            const definition: PowerQueryTaskDefinition = {
+                type: PowerQueryTaskProvider.TaskType,
+                operation,
+                pathToQueryFile: path.join(directory, "test.query.pq"),
+            };
+
+            const cancellation = new vscode.CancellationTokenSource();
+            const node = findExecutable("node", [".exe", ""]);
+            assert.ok(node);
+            const originalExecuteTask = vscode.tasks.executeTask.bind(vscode.tasks);
+
+            const output: string =
+                operation === "credential-template"
+                    ? JSON.stringify({ AuthenticationKind: "Anonymous", AuthenticationProperties: {} })
+                    : 'runStart:{"tests":[]}\nrunEnd:{"passed":0,"failed":0}\n';
+
+            const executeTask = sandbox.stub(vscode.tasks, "executeTask").callsFake(task => {
+                assert.ok(task.execution instanceof vscode.ProcessExecution);
+                assert.ok(task.execution.args.includes(operation));
+
+                task.execution = new vscode.ProcessExecution(node, [
+                    "-e",
+                    `process.stdout.write(${JSON.stringify(output)});`,
+                ]);
+
+                return originalExecuteTask(task);
+            });
+
+            try {
+                const resolved = await provider.resolveTask(
+                    new vscode.Task(definition, vscode.TaskScope.Workspace, operation, "pqtest"),
+                    cancellation.token,
+                );
+
+                assert.ok(resolved?.execution instanceof vscode.CustomExecution);
+                const terminal = new PqTestTaskTerminal(definition);
+                let exitCode: number | undefined;
+
+                terminal.onDidClose?.(code => {
+                    exitCode = typeof code === "number" ? code : undefined;
+                });
+
+                await terminal.open(undefined);
+                assert.strictEqual(exitCode, 0);
+                assert.ok(executeTask.calledOnce);
+            } finally {
+                cancellation.dispose();
+            }
+        });
+    }
+
+    test("interactive task startup failures dispose native-task listeners and report the failure", async () => {
+        const taskDisposed = sandbox.spy();
+        const processDisposed = sandbox.spy();
+        sandbox.stub(vscode.tasks, "onDidEndTask").returns(new vscode.Disposable(taskDisposed));
+        sandbox.stub(vscode.tasks, "onDidEndTaskProcess").returns(new vscode.Disposable(processDisposed));
+        sandbox.stub(vscode.tasks, "executeTask").rejects(new Error("Cannot start interactive PQTest"));
+
+        const terminal = new PqTestTaskTerminal({
+            type: PowerQueryTaskProvider.TaskType,
+            operation: "set-credential",
+            additionalArgs: ["--interactive"],
+        });
+
+        let exitCode: number | undefined;
+        let output = "";
+
+        terminal.onDidClose(code => {
+            exitCode = code;
+        });
+
+        terminal.onDidWrite(text => {
+            output += text;
+        });
+
+        await terminal.open(undefined);
+        assert.strictEqual(exitCode, 1);
+        assert.match(output, /Cannot start interactive PQTest/);
+        assert.ok(taskDisposed.calledOnce);
+        assert.ok(processDisposed.calledOnce);
+    });
+
+    test("closing an interactive task cancels its native task even while startup is pending", async () => {
+        const taskEnded = new vscode.EventEmitter<vscode.TaskEndEvent>();
+        const processEnded = new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
+        sandbox.stub(vscode.tasks, "onDidEndTask").callsFake(taskEnded.event);
+        sandbox.stub(vscode.tasks, "onDidEndTaskProcess").callsFake(processEnded.event);
+        let started: () => void = () => {};
+        let release: () => void = () => {};
+
+        const starting = new Promise<void>(resolve => {
+            started = resolve;
+        });
+
+        const startup = new Promise<void>(resolve => {
+            release = resolve;
+        });
+
+        const terminate = sandbox.stub();
+
+        sandbox.stub(vscode.tasks, "executeTask").callsFake(async task => {
+            const execution: vscode.TaskExecution = { task, terminate };
+
+            terminate.callsFake(() => {
+                processEnded.fire({ execution, exitCode: undefined });
+                taskEnded.fire({ execution });
+            });
+
+            started();
+            await startup;
+
+            return execution;
+        });
+
+        const terminal = new PqTestTaskTerminal({
+            type: PowerQueryTaskProvider.TaskType,
+            operation: "set-credential",
+            additionalArgs: ["--interactive"],
+        });
+
+        try {
+            const pending = terminal.open(undefined);
+            await starting;
+            terminal.close();
+            release();
+            await pending;
+            assert.ok(terminate.calledOnce);
+        } finally {
+            release();
+            terminal.close();
+            taskEnded.dispose();
+            processEnded.dispose();
+        }
+    });
+
+    for (const exitCode of [0, 7, undefined]) {
+        test(`interactive credential tasks save before native terminal execution and propagate exit code ${exitCode}`, async () => {
+            const document = mockDocument();
+
+            (document.save as sinon.SinonStub).callsFake(() => {
+                sandbox.stub(document, "isDirty").get(() => false);
+
+                return Promise.resolve(true);
+            });
+
+            chooseSave();
+            const taskEnded = new vscode.EventEmitter<vscode.TaskEndEvent>();
+            const processEnded = new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
+            sandbox.stub(vscode.tasks, "onDidEndTask").callsFake(taskEnded.event);
+            sandbox.stub(vscode.tasks, "onDidEndTaskProcess").callsFake(processEnded.event);
+
+            const executeTask = sandbox.stub(vscode.tasks, "executeTask").callsFake(task => {
+                assert.ok((document.save as sinon.SinonStub).calledOnce);
+                assert.ok(task.execution instanceof vscode.ProcessExecution);
+                assert.ok(task.execution.args.includes("--interactive"));
+                assert.ok(task.execution.args.includes(document.uri.fsPath));
+                assert.strictEqual(task.execution.process, executable);
+                assert.strictEqual(task.execution.options?.cwd, directory);
+                assert.strictEqual(task.definition.type, "process");
+
+                const execution: vscode.TaskExecution = { task, terminate: sandbox.stub() };
+
+                setImmediate(() => {
+                    processEnded.fire({ execution, exitCode });
+                    taskEnded.fire({ execution });
+                });
+
+                return Promise.resolve(execution);
+            });
+
+            const spawn = sandbox.stub(childProcess, "spawn");
+
+            const terminal = new PqTestTaskTerminal(
+                {
+                    type: PowerQueryTaskProvider.TaskType,
+                    operation: "set-credential",
+                    pathToQueryFile: document.uri.fsPath,
+                    additionalArgs: ["--interactive"],
+                },
+                executable,
+                directory,
+            );
+
+            let result: number | undefined;
+
+            terminal.onDidClose(code => {
+                result = code;
+            });
+
+            try {
+                await terminal.open(undefined);
+                assert.strictEqual(result, exitCode ?? 1);
+                assert.ok(executeTask.calledOnce);
+                assert.ok(spawn.notCalled);
+            } finally {
+                terminal.close();
+                taskEnded.dispose();
+                processEnded.dispose();
+            }
+        });
+    }
+
+    test("a guarded interactive task launches a real native process task without resolving itself again", async () => {
+        const node = findExecutable("node", [".exe", ""]);
+        assert.ok(node);
+        const document = mockDocument();
+
+        (document.save as sinon.SinonStub).callsFake(() => {
+            sandbox.stub(document, "isDirty").get(() => false);
+
+            return Promise.resolve(true);
+        });
+
+        chooseSave();
+        const originalExecuteTask = vscode.tasks.executeTask.bind(vscode.tasks);
+        let nativeTask: vscode.Task | undefined;
+
+        sandbox.stub(vscode.tasks, "executeTask").callsFake(task => {
+            if (task.execution instanceof vscode.ProcessExecution && task.definition.type === "process") {
+                assert.ok((document.save as sinon.SinonStub).calledOnce);
+                assert.ok(task.execution.args.includes("--interactive"));
+                nativeTask = task;
+                task.execution = new vscode.ProcessExecution(node, ["-e", "process.exit(7)"]);
+            }
+
+            return originalExecuteTask(task);
+        });
+
+        const provider = new PowerQueryTaskProvider({
+            pqTestReady: true,
+            pqTestFullPath: executable,
+        } as IPQTestService);
+
+        const cancellation = new vscode.CancellationTokenSource();
+
+        try {
+            const task = await provider.resolveTask(
+                new vscode.Task(
+                    {
+                        type: PowerQueryTaskProvider.TaskType,
+                        operation: "set-credential",
+                        pathToQueryFile: document.uri.fsPath,
+                        additionalArgs: ["--interactive"],
+                        label: "CLI guarded interactive credential",
+                    },
+                    vscode.TaskScope.Workspace,
+                    "CLI guarded interactive credential",
+                    "pqtest",
+                ),
+                cancellation.token,
+            );
+
+            assert.ok(task?.execution instanceof vscode.CustomExecution);
+            await assert.rejects(PowerQueryTaskProvider.executeTask(task), /failed or was cancelled/);
+            assert.ok(nativeTask);
+        } finally {
+            cancellation.dispose();
+        }
+    });
 
     for (const exitCode of [0, 1, undefined]) {
         test(`build tasks settle with process exit code ${exitCode} and dispose their listeners`, async () => {
@@ -759,7 +1043,7 @@ suite("CLI-only execution", () => {
         const document = mockDocument();
         const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
         sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
-        sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => document.uri.fsPath);
+        sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => path.basename(document.uri.fsPath));
         const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
         const bus = new GlobalEventBus(context as vscode.ExtensionContext);
         const output = new PqSdkOutputChannel();
@@ -767,7 +1051,7 @@ suite("CLI-only execution", () => {
         const spawn = stubCli({ Status: "Failure", Message: "CLI command failed" });
 
         try {
-            await assert.rejects(queue.RunTestBattery(document.uri.fsPath), /cancelled/i);
+            await assert.rejects(queue.RunTestBattery(path.basename(document.uri.fsPath)), /cancelled/i);
             await assert.rejects(queue.TestConnection(), /cancelled/i);
             await assert.rejects(queue.RefreshCredential(), /cancelled/i);
             assert.ok(spawn.notCalled);
@@ -806,7 +1090,11 @@ suite("CLI-only execution", () => {
             });
 
             sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
-            sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => document.uri.fsPath);
+
+            sandbox
+                .stub(ExtensionConfigurations, "DefaultQueryFileLocation")
+                .get(() => path.basename(document.uri.fsPath));
+
             const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
             const bus = new GlobalEventBus(context as vscode.ExtensionContext);
             const output = new PqSdkOutputChannel();

@@ -245,6 +245,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             taskDef.operation === "run-test" ||
             taskDef.operation === "test-connection" ||
             taskDef.operation === "refresh-credential" ||
+            taskDef.pathToQueryFile !== undefined ||
             taskDef.stdinStr !== undefined ||
             taskDef.credentialTemplate !== undefined
                 ? new vscode.CustomExecution((resolvedDefinition: vscode.TaskDefinition) =>
@@ -253,6 +254,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
                               resolvedDefinition as PowerQueryTaskDefinition,
                               executablePath,
                               typeof scope === "object" ? scope.uri.fsPath : undefined,
+                              scope,
                           ),
                       ),
                   )
