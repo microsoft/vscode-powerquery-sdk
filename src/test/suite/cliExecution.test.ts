@@ -138,7 +138,8 @@ suite("CLI-only execution", () => {
                         process.execPath,
                         [
                             "-e",
-                            `let input = ''; process.stdin.on('data', chunk => input += chunk); process.stdin.on('end', () => { const payload = JSON.parse(input); require('assert').deepStrictEqual(payload.AuthenticationProperties, ${JSON.stringify(expectedProperties)}); process.stdout.write(JSON.stringify({Status: 'Success'})); });`,
+                            "let input = ''; process.stdin.on('data', chunk => input += chunk); process.stdin.on('end', () => { const payload = JSON.parse(input); require('assert').deepStrictEqual(payload.AuthenticationProperties, JSON.parse(process.argv[1])); process.stdout.write(JSON.stringify({Status: 'Success'})); });",
+                            JSON.stringify(expectedProperties),
                         ],
                         { env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } },
                     ),
