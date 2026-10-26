@@ -81,9 +81,9 @@ describe("TestConnectionHandler", () => {
             const result: CommandResult<TestConnectionResult> = await handler.execute({});
 
             // Assert
-            expect(result.success).to.equal(true); // Handler succeeded, but connection failed
-            expect(result.data!.result.Status).to.equal("Failure");
-            expect(result.data!.formattedOutput).to.contain("Failure");
+            expect(result.success).to.equal(false);
+            expect(result.data).to.equal(undefined);
+            expect(result.error).to.equal("Connection failed");
         });
 
         it("should return error result when service throws Error", async () => {

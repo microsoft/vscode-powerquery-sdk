@@ -5,6 +5,8 @@
  * LICENSE file in the root of this projects source tree.
  */
 
+import type { Uri } from "vscode";
+
 import { PQTestTask } from "./PowerQueryTask";
 import type { ValueEventEmitter } from "./ValueEventEmitter";
 import * as PQLSExt from "./vscode-powerquery.api.d";
@@ -129,7 +131,7 @@ export interface IPQTestService {
     readonly SetCredentialFromCreateAuthState: (createAuthState: CreateAuthState) => Promise<GenericResult>;
     readonly RefreshCredential: () => Promise<GenericResult>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    readonly RunTestBattery: (pathToQueryFile?: string) => Promise<any>;
+    readonly RunTestBattery: (pathToQueryFile?: string | Uri) => Promise<any>;
     readonly TestConnection: () => Promise<GenericResult>;
 }
 

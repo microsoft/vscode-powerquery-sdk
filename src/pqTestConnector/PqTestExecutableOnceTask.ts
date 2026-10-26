@@ -18,8 +18,10 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { ensurePqTestQueryDocumentsSaved } from "../utils/pqTestQueryDocuments";
+import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
-import { formatArguments } from "./PqTestTaskUtils";
+import { formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -44,6 +46,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
     public readonly eventBus: DisposableEventEmitter<PqTestExecutableOnceTaskEventTypes>;
     protected _disposables: Array<IDisposable> = [];
+    private process?: SpawnedProcess;
+    private disposed: boolean = false;
     private readonly readinessCancellation: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
 
     constructor() {
@@ -120,6 +124,18 @@ export class PqTestExecutableOnceTask implements IDisposable {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;
+            await ensureQueryDocumentSaved(task.pathToQueryFile);
+
+            const processArgs: string[] = buildPqTestArgs(task);
+
+            if (task.workingDirectory) {
+                await ensurePqTestQueryDocumentsSaved(processArgs, task.workingDirectory);
+            }
+
+            if (this.disposed) {
+                return undefined;
+            }
+
             // do fork one process and execute the task
             const pqTestExeFullPath: string = await resolvePqTestExecutablePath(this.readinessCancellation.token);
 
@@ -127,7 +143,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 return undefined;
             }
 
-            const processArgs: string[] = buildPqTestArgs(task);
+            const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
+
+            await ensurePqTestQueryDocumentsSaved(processArgs, workingDir);
+
+            if (this.disposed) {
+                return undefined;
+            }
 
             this.handleTaskCreated();
 
@@ -137,10 +159,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
                     arguments: formatArguments(processArgs),
                 }),
             );
-
-            // Determine working directory: use task.workingDirectory if provided,
-            // otherwise fall back to pqtest.exe directory
-            const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
 
             const spawnProcess: SpawnedProcess = new SpawnedProcess(
                 pqTestExeFullPath,
@@ -161,6 +179,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 },
             );
 
+            this.process = spawnProcess;
+
             let processExit: ProcessExit = {
                 stdout: "",
                 stderr: "",
@@ -178,11 +198,23 @@ export class PqTestExecutableOnceTask implements IDisposable {
             if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
                 this.handleOutputStr(spawnProcess.stdOut);
 
+                if (!spawnProcess.stdOut.trim()) {
+                    return undefined;
+                }
+
                 // dump result to the web view if any result found
                 if (task.operation === "run-test") {
                     try {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const result: any = JSON.parse(spawnProcess.stdOut);
+
+                        const error: string = inferAnyGeneralErrorString(result);
+
+                        if (error) {
+                            this.handleErrorStr(error);
+
+                            return undefined;
+                        }
 
                         if (result) {
                             void vscode.commands.executeCommand(
@@ -190,8 +222,12 @@ export class PqTestExecutableOnceTask implements IDisposable {
                                 result,
                             );
                         }
-                    } catch {
-                        // noop
+                    } catch (error: unknown) {
+                        this.handleErrorStr(
+                            resolveI18nTemplate("PQSdk.taskQueue.error.failedToParseJsonOutput", {
+                                error: String(error),
+                            }),
+                        );
                     }
                 }
 
@@ -200,6 +236,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
                     try {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const result: any = JSON.parse(spawnProcess.stdOut);
+                        const error: string = inferAnyGeneralErrorString(result);
+
+                        if (error) {
+                            this.handleErrorStr(error);
+
+                            return undefined;
+                        }
 
                         return result;
                     } catch (e) {
@@ -239,6 +282,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
     }
 
     public dispose = (): void => {
+        this.disposed = true;
+        this.process?.cpStream?.kill();
         this.readinessCancellation.cancel();
         this.readinessCancellation.dispose();
 

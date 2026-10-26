@@ -22,8 +22,11 @@ import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfigurat
 import { MQueryDebugSession } from "../../debugAdaptor/MQueryDebugSession";
 import { PowerQueryTaskProvider } from "../../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
-import { DISCONNECTED, PqServiceHostClientLite, READY } from "../../pqTestConnector/PqServiceHostClientLite";
-import { PqTestExecutableOnceTask } from "../../pqTestConnector/PqTestExecutableOnceTask";
+import { PqTestTaskTerminal } from "../../features/PqTestTaskTerminal";
+import {
+    PqTestExecutableOnceTask,
+    PqTestExecutableOnceTaskQueueEvents,
+} from "../../pqTestConnector/PqTestExecutableOnceTask";
 import { PqTestExecutableTaskQueue } from "../../pqTestConnector/PqTestExecutableTaskQueue";
 import { PqTestDiscoveryRunner } from "../../testing/pqtest-adapter/helpers/PqTestDiscoveryRunner";
 import { registerTestController } from "../../testing/pqtest-adapter/TestController";
@@ -121,7 +124,7 @@ suite("SDK package readiness consumers", () => {
     function stubSpawn(): sinon.SinonStub {
         return sandbox.stub(cp, "spawn").callsFake(() => {
             const child: cp.ChildProcess = new cp.ChildProcess();
-            process.nextTick(() => child.emit("exit", 0, null));
+            process.nextTick(() => child.emit("close", 0, null));
 
             return child;
         });
@@ -219,105 +222,75 @@ suite("SDK package readiness consumers", () => {
         sinon.assert.notCalled(spawn);
     });
 
-    function createServiceHostDebugSession(): {
+    function createDebugSession(): {
         session: TestDebugSession;
-        connect: sinon.SinonStub;
-        run: sinon.SinonStub;
+        spawn: sinon.SinonStub;
     } {
-        sandbox.stub(ExtensionConfigurations, "featureUseServiceHost").get(() => true);
-
-        sandbox
-            .stub(ExtensionConfigurations, "PQTestLocation")
-            .get(() => protection.getProtectedLocation(cache, tools));
-
-        sandbox
-            .stub(nugetPackageProtection, "subscribeToLocationRecovery")
-            .callsFake((getState, recover) => protection.subscribeToLocationRecovery(getState, recover));
-
-        const connect: sinon.SinonStub = sandbox.stub(
-            PqServiceHostClientLite.prototype,
-            "onPowerQueryTestLocationChanged",
-        );
-
-        const run: sinon.SinonStub = sandbox
-            .stub(PqServiceHostClientLite.prototype, "RunTestBatteryFromContent")
-            .resolves({});
-
+        const spawn: sinon.SinonStub = stubSpawn();
         const session: TestDebugSession = new TestDebugSession();
         session.setRunAsServer(true);
         sandbox.stub(session, "sendResponse");
         sandbox.stub(session, "sendEvent");
         disposables.push({ dispose: () => session.shutdown() });
 
-        return { session, connect, run };
+        return { session, spawn };
     }
 
-    test("service-host debug shutdown unsubscribes recovery and cancels pending readiness", async () => {
-        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
-            createServiceHostDebugSession();
+    test("CLI debug shutdown cancels pending package readiness", async () => {
+        const { session, spawn } = createDebugSession();
 
-        protection.getProtectedLocation(cache, tools);
         const launching: Promise<void> = session.launch();
         session.finishConfiguration();
         await launching;
 
-        sinon.assert.calledOnce(connect);
-        const client: PqServiceHostClientLite = connect.firstCall.thisValue;
-        assert.strictEqual(client.listenerCount(READY), 1);
+        await assertWaiting(protection.waitForPending());
+        sinon.assert.notCalled(spawn);
 
         session.shutdown();
         finishIdentity("123");
         await protection.waitForPending();
         await new Promise<void>((resolve: () => void) => setImmediate(resolve));
 
-        sinon.assert.calledOnce(connect);
-        assert.strictEqual(client.listenerCount(READY), 0);
-        assert.strictEqual(client.listenerCount(DISCONNECTED), 0);
-        client.emit(READY);
-        await new Promise<void>((resolve: () => void) => setImmediate(resolve));
-        sinon.assert.notCalled(run);
+        sinon.assert.notCalled(spawn);
     });
 
-    test("service-host debug shutdown wins over an already signaled connection", async () => {
-        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
-            createServiceHostDebugSession();
+    test("CLI debug shutdown wins over just-completed protection", async () => {
+        const { session, spawn } = createDebugSession();
 
         const launching: Promise<void> = session.launch();
         session.finishConfiguration();
         await launching;
-        const client: PqServiceHostClientLite = connect.firstCall.thisValue;
-        client.emit(READY);
+        finishIdentity("123");
         session.shutdown();
         await new Promise<void>((resolve: () => void) => setImmediate(resolve));
 
-        sinon.assert.notCalled(run);
+        sinon.assert.notCalled(spawn);
     });
 
-    test("service-host debug shutdown before configuration prevents connection", async () => {
-        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
-            createServiceHostDebugSession();
+    test("CLI debug shutdown before configuration prevents execution", async () => {
+        const { session, spawn } = createDebugSession();
 
         const launching: Promise<void> = session.launch();
         session.shutdown();
         await launching;
 
-        sinon.assert.notCalled(connect);
-        sinon.assert.notCalled(run);
+        sinon.assert.notCalled(spawn);
+        sinon.assert.notCalled(getTools);
     });
 
-    test("service-host debugging executes once when readiness completes without shutdown", async () => {
-        const { session, connect, run }: ReturnType<typeof createServiceHostDebugSession> =
-            createServiceHostDebugSession();
+    test("CLI debugging executes once when package protection completes without shutdown", async () => {
+        const { session, spawn } = createDebugSession();
 
         const launching: Promise<void> = session.launch();
         session.finishConfiguration();
         await launching;
-        const client: PqServiceHostClientLite = connect.firstCall.thisValue;
-        client.emit(READY);
+        sinon.assert.notCalled(spawn);
+        finishIdentity("123");
+        await protection.waitForPending();
         await new Promise<void>((resolve: () => void) => setImmediate(resolve));
 
-        sinon.assert.calledOnce(run);
-        assert.strictEqual(run.firstCall.args[0], path.resolve("query.pq"));
+        sinon.assert.calledOnce(spawn);
+        assert.strictEqual(spawn.firstCall.args[0], path.join(tools, "PQTest.exe"));
     });
 
     test("a pending direct override never falls back to the tools directory", async () => {
@@ -401,6 +374,97 @@ suite("SDK package readiness consumers", () => {
         finishIdentity("123");
 
         assert.strictEqual(await pending, executable);
+    });
+
+    function createTerminal(): PqTestTaskTerminal {
+        useRealConfiguration();
+
+        const terminal = new PqTestTaskTerminal(
+            { type: PowerQueryTaskProvider.TaskType, operation: "run-test" },
+            path.join(tools, "PQTest.exe"),
+            root,
+        );
+
+        disposables.push({ dispose: () => terminal.close() });
+
+        return terminal;
+    }
+
+    test("CLI task terminals protect their captured executable before launching", async () => {
+        const spawn = stubSpawn();
+        const terminal = createTerminal();
+        const pending = terminal.open(undefined);
+        await assertWaiting(pending);
+        sinon.assert.notCalled(spawn);
+        finishIdentity("123");
+        await pending;
+
+        sinon.assert.calledOnce(spawn);
+        assert.strictEqual(spawn.firstCall.args[0], path.join(tools, "PQTest.exe"));
+    });
+
+    test("closing a CLI task terminal cancels its protection wait without launching", async () => {
+        const spawn = stubSpawn();
+        const terminal = createTerminal();
+        const pending = terminal.open(undefined);
+        await assertWaiting(pending);
+        terminal.close();
+        await pending;
+        finishIdentity("123");
+        await protection.waitForPending();
+
+        sinon.assert.notCalled(spawn);
+    });
+
+    test("CLI task terminals surface protection failures without launching", async () => {
+        const spawn = stubSpawn();
+        const terminal = createTerminal();
+        let outputText = "";
+        let exitCode: number | undefined;
+
+        terminal.onDidWrite(text => {
+            outputText += text;
+        });
+
+        terminal.onDidClose(code => {
+            exitCode = code;
+        });
+
+        const pending = terminal.open(undefined);
+        await assertWaiting(pending);
+        rejectIdentity(new Error("identity unavailable"));
+        await pending;
+
+        sinon.assert.notCalled(spawn);
+        assert.match(outputText, /identity unavailable/);
+        assert.strictEqual(exitCode, 1);
+    });
+
+    test("executable debugging rechecks unsaved queries after waiting for protection", async () => {
+        const spawn = stubSpawn();
+        const query = path.join(root, "query.pq");
+
+        fs.writeFileSync(query, "42");
+        const document = await vscode.workspace.openTextDocument(vscode.Uri.file(query));
+        sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+        const task = new PqTestExecutableOnceTask();
+        disposables.push(task);
+
+        const exited = new Promise<void>(resolve => {
+            task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+        });
+
+        const pending = task.run(query, { operation: "run-test" });
+        await assertWaiting(pending);
+        const edit = new vscode.WorkspaceEdit();
+        edit.insert(document.uri, new vscode.Position(0, 0), "1 + ");
+        assert.ok(await vscode.workspace.applyEdit(edit));
+        assert.ok(document.isDirty);
+        finishIdentity("123");
+        await pending;
+        await exited;
+
+        sinon.assert.notCalled(spawn);
     });
 
     function discover(): Promise<unknown> {
