@@ -316,6 +316,23 @@
                     "credentialTemplate": {
                         "type": "object",
                         "description": "%extension.pqtest.taskDefinitions.properties.credentialTemplate.description%"
+                    },
+                    "options": {
+                        "type": "object",
+                        "properties": {
+                            "cwd": {
+                                "type": "string"
+                            },
+                            "env": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "settingsFile": {
+                        "type": "string"
                     }
                 }
             }

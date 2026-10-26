@@ -14,7 +14,7 @@ import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { protectManagedToolsLocationAsync } from "../constants/PowerQuerySdkConfiguration";
 import { inferAnyGeneralErrorString } from "../pqTestConnector/PqTestTaskUtils";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
-import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
+import { ensurePqTestQueryDocumentsSaved } from "../utils/pqTestQueryDocuments";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 
 export class PqTestTaskTerminal implements vscode.Pseudoterminal {
@@ -53,17 +53,15 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
                 return;
             }
 
-            const workingDirectory: string =
-                this.definition.workingDirectory ??
-                this.workspaceDirectory ??
-                getFirstWorkspaceFolder()?.uri.fsPath ??
-                path.dirname(executable);
+            const workspaceDirectory: string =
+                this.workspaceDirectory ?? getFirstWorkspaceFolder()?.uri.fsPath ?? path.dirname(executable);
 
-            const queryFile: string | undefined = this.definition.pathToQueryFile
-                ? path.resolve(workingDirectory, this.definition.pathToQueryFile)
-                : undefined;
+            const workingDirectory: string = path.resolve(
+                workspaceDirectory,
+                this.definition.options?.cwd ?? this.definition.workingDirectory ?? workspaceDirectory,
+            );
 
-            await ensureQueryDocumentSaved(queryFile);
+            await ensurePqTestQueryDocumentsSaved(buildPqTestArgs(this.definition), workingDirectory);
 
             if (this.closed) {
                 return;
@@ -83,10 +81,27 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
                 return;
             }
 
+            const environment: NodeJS.ProcessEnv = { ...process.env };
+
+            for (const [name, value] of Object.entries(this.definition.options?.env ?? {})) {
+                const key: string =
+                    process.platform === "win32"
+                        ? (Object.keys(environment).find(
+                              (candidate: string) => candidate.toLowerCase() === name.toLowerCase(),
+                          ) ?? name)
+                        : name;
+
+                environment[key] = value;
+            }
+
             this.process = new SpawnedProcess(
                 executable,
                 buildPqTestArgs(this.definition),
-                { cwd: workingDirectory, timeout: 0 },
+                {
+                    cwd: workingDirectory,
+                    env: environment,
+                    timeout: 0,
+                },
                 {
                     stdinStr:
                         this.definition.stdinStr ??
@@ -100,7 +115,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
 
             const result: ProcessExit = await this.process.deferred$;
 
-            if (result.exitCode === 0) {
+            if (result.exitCode === 0 && result.stdout.trim().length > 0) {
                 const payload: unknown = JSON.parse(result.stdout);
                 const error: string = inferAnyGeneralErrorString(payload);
 
@@ -155,7 +170,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
             this.scope,
             this.definition.label ?? this.definition.operation,
             "pqtest",
-            new vscode.ProcessExecution(executable, args, { cwd: workingDirectory }),
+            new vscode.ProcessExecution(executable, args, { ...this.definition.options, cwd: workingDirectory }),
             [],
         );
 

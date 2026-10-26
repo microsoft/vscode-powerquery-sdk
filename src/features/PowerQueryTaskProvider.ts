@@ -13,6 +13,7 @@ import { buildPqTestArgs, IPQTestService } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
+import { hasQueryFileArguments } from "../utils/pqTestQueryDocuments";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PqTestTaskTerminal } from "./PqTestTaskTerminal";
 
@@ -246,6 +247,8 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
             taskDef.operation === "test-connection" ||
             taskDef.operation === "refresh-credential" ||
             taskDef.pathToQueryFile !== undefined ||
+            taskDef.settingsFile !== undefined ||
+            hasQueryFileArguments(taskDef.additionalArgs ?? []) ||
             taskDef.stdinStr !== undefined ||
             taskDef.credentialTemplate !== undefined
                 ? new vscode.CustomExecution((resolvedDefinition: vscode.TaskDefinition) =>
@@ -258,7 +261,7 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
                           ),
                       ),
                   )
-                : new vscode.ProcessExecution(executablePath, args);
+                : new vscode.ProcessExecution(executablePath, args, taskDef.options);
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(

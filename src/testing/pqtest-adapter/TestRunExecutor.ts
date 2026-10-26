@@ -11,12 +11,13 @@
  */
 
 import * as path from "path";
+import { TextDecoder } from "util";
 import * as vscode from "vscode";
 
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { ensureQueryDocumentSaved } from "../../utils/queryDocuments";
+import { ensureQueryDocumentsSaved } from "../../utils/queryDocuments";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
@@ -87,10 +88,19 @@ export class TestRunExecutor {
         );
 
         try {
-            for (const item of this.testItems) {
-                // eslint-disable-next-line no-await-in-loop
-                await ensureQueryDocumentSaved(item.uri?.fsPath);
+            const queryFiles: vscode.Uri[] = this.testItems
+                .map((item: vscode.TestItem) => item.uri)
+                .filter((uri: vscode.Uri | undefined): uri is vscode.Uri => uri !== undefined);
+
+            const settings: { ParameterQueryFilePath?: unknown } = JSON.parse(
+                new TextDecoder().decode(await vscode.workspace.fs.readFile(this.settingsFile)),
+            ) as { ParameterQueryFilePath?: unknown };
+
+            if (typeof settings.ParameterQueryFilePath === "string" && settings.ParameterQueryFilePath.length > 0) {
+                queryFiles.push(vscode.Uri.file(path.resolve(workingDirectory, settings.ParameterQueryFilePath)));
             }
+
+            await ensureQueryDocumentsSaved(queryFiles);
 
             // Step 1: Determine which extension(s) to use based on precedence rules
             const extensions: string | string[] | undefined = await determineExtensionsForTests(
@@ -138,6 +148,8 @@ export class TestRunExecutor {
                 outputChannel: this.outputChannel,
                 cancellationToken: this.cancellationToken,
             });
+
+            await ensureQueryDocumentsSaved(queryFiles);
 
             const resultsStream: NodeJS.ReadableStream = await processRunner.run();
 

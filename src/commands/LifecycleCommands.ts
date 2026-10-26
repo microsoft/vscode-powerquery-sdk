@@ -1487,7 +1487,7 @@ export class LifecycleCommands implements IDisposable {
                 progress.report({ increment: 0 });
 
                 try {
-                    result = await this.pqTestService.RunTestBattery(pathToQueryFile?.fsPath);
+                    result = await this.pqTestService.RunTestBattery(pathToQueryFile);
 
                     this.outputChannel.appendInfoLine(
                         resolveI18nTemplate("PQSdk.lifecycle.command.run.test.result", {

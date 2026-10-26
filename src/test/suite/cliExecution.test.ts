@@ -13,11 +13,13 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as sinon from "sinon";
+import { Readable } from "stream";
 import { setImmediate } from "timers";
 import * as vscode from "vscode";
 
 import { PowerQueryTaskDefinition } from "../../common/PowerQueryTask";
 import { IPQTestService } from "../../common/PQTestService";
+import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { PowerQueryTaskProvider } from "../../features/PowerQueryTaskProvider";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
@@ -31,6 +33,8 @@ import {
 import { PqTestExecutableTaskQueue } from "../../pqTestConnector/PqTestExecutableTaskQueue";
 import { inferAnyGeneralErrorString } from "../../pqTestConnector/PqTestTaskUtils";
 import * as taskUtils from "../../pqTestConnector/PqTestTaskUtils";
+import { TestRunExecutor } from "../../testing/pqtest-adapter/TestRunExecutor";
+import * as testSettingsUtils from "../../testing/pqtest-adapter/utils/testSettingsUtils";
 import { findExecutable } from "../../utils/executables";
 import { ensureQueryDocumentSaved } from "../../utils/queryDocuments";
 
@@ -63,7 +67,10 @@ suite("CLI-only execution", () => {
         fs.rmSync(directory, { recursive: true, force: true });
     });
 
-    function mockDocument(options: Partial<vscode.TextDocument> = {}): vscode.TextDocument {
+    function mockDocument(
+        options: Partial<vscode.TextDocument> = {},
+        precedingDocuments: vscode.TextDocument[] = [],
+    ): vscode.TextDocument {
         const document: vscode.TextDocument = {
             uri: vscode.Uri.file(path.join(directory, "hidden.query.pq")),
             isDirty: true,
@@ -72,7 +79,7 @@ suite("CLI-only execution", () => {
             ...options,
         } as vscode.TextDocument;
 
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => [document]);
+        sandbox.stub(vscode.workspace, "textDocuments").get(() => [...precedingDocuments, document]);
 
         return document;
     }
@@ -109,6 +116,30 @@ suite("CLI-only execution", () => {
         assert.ok(prompt.notCalled);
         assert.ok((document.save as sinon.SinonStub).notCalled);
     });
+
+    for (const dirty of [false, true]) {
+        test(`Git revision documents cannot shadow a ${dirty ? "dirty" : "clean"} local query`, async () => {
+            const revision = {
+                uri: vscode.Uri.file(path.join(directory, "hidden.query.pq")).with({
+                    scheme: "git",
+                    query: '{"ref":"HEAD"}',
+                }),
+                isDirty: false,
+                isUntitled: false,
+            } as vscode.TextDocument;
+
+            const document = mockDocument({ isDirty: dirty }, [revision]);
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+
+            if (dirty) {
+                await assert.rejects(ensureQueryDocumentSaved(document.uri), /cancelled/i);
+                assert.ok(prompt.calledOnce);
+            } else {
+                await ensureQueryDocumentSaved(document.uri);
+                assert.ok(prompt.notCalled);
+            }
+        });
+    }
 
     test("Save and Run saves the target even when its editor is not visible", async () => {
         const save = sandbox.stub().callsFake(() => {
@@ -153,6 +184,14 @@ suite("CLI-only execution", () => {
 
         await assert.rejects(ensureQueryDocumentSaved(document.uri.fsPath), /local file/);
         assert.ok((document.save as sinon.SinonStub).notCalled);
+    });
+
+    test("untitled query URIs are rejected before resolving paths against the execution directory", async () => {
+        const document = mockDocument({ uri: vscode.Uri.parse("untitled:Untitled-1"), isUntitled: true });
+
+        await assert.rejects(ensureQueryDocumentSaved(document.uri, directory), /local file/);
+        assert.ok((document.save as sinon.SinonStub).notCalled);
+        await ensureQueryDocumentSaved("Untitled-1", directory);
     });
 
     test("saving another document is never required", async () => {
@@ -343,6 +382,35 @@ suite("CLI-only execution", () => {
         assert.ok(!fs.existsSync(path.join(directory, "PQServiceHost.exe")));
     });
 
+    for (const stdout of ["", " \r\n"]) {
+        test(`tasks with suppressed stdout ${JSON.stringify(stdout)} retain the successful process exit`, async () => {
+            const settingsFile = path.join(directory, "skip-output.json");
+            fs.writeFileSync(settingsFile, JSON.stringify({ SkipOutput: true }));
+            const originalSpawn = childProcess.spawn.bind(childProcess);
+
+            sandbox.stub(childProcess, "spawn").callsFake(() =>
+                originalSpawn(process.execPath, ["-e", `process.stdout.write(${JSON.stringify(stdout)});`], {
+                    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+                }),
+            );
+
+            const terminal = new PqTestTaskTerminal({
+                type: PowerQueryTaskProvider.TaskType,
+                operation: "run-test",
+                settingsFile,
+            });
+
+            let exitCode: number | undefined;
+
+            terminal.onDidClose(code => {
+                exitCode = code;
+            });
+
+            await terminal.open(undefined);
+            assert.strictEqual(exitCode, 0);
+        });
+    }
+
     test("query tasks propagate structured failures even when the process exits successfully", async () => {
         stubCli({ Status: "Failure", Message: "Query failed" });
 
@@ -402,6 +470,270 @@ suite("CLI-only execution", () => {
         assert.strictEqual(exitCode, 1);
         assert.ok(spawn.notCalled);
         assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
+    });
+
+    for (const form of [
+        "query argument",
+        "equals query argument",
+        "settings argument",
+        "equals settings argument",
+        "settings property",
+        "settings directory",
+    ]) {
+        for (const accept of [false, true]) {
+            test(`${form} ${accept ? "saves dirty query inputs" : "cancels execution when saving is declined"}`, async () => {
+                const settingsDirectory = path.join(directory, "settings");
+                fs.mkdirSync(settingsDirectory);
+
+                const queryPath =
+                    form.startsWith("settings") || form.startsWith("equals settings")
+                        ? path.join(settingsDirectory, "hidden.query.pq")
+                        : path.join(directory, "hidden.query.pq");
+
+                let queryDirty = true;
+                let parameterDirty = true;
+                const usesSettings = form.includes("settings");
+
+                const parameter = {
+                    uri: vscode.Uri.file(path.join(settingsDirectory, "parameters.pq")),
+                    isUntitled: false,
+                    get isDirty(): boolean {
+                        return parameterDirty;
+                    },
+                    save: sandbox.stub().callsFake(() => {
+                        parameterDirty = false;
+
+                        return Promise.resolve(true);
+                    }) as vscode.TextDocument["save"],
+                } as vscode.TextDocument;
+
+                const document = mockDocument({ uri: vscode.Uri.file(queryPath) }, usesSettings ? [parameter] : []);
+                sandbox.stub(document, "isDirty").get(() => queryDirty);
+
+                (document.save as sinon.SinonStub).callsFake(() => {
+                    queryDirty = false;
+
+                    return Promise.resolve(true);
+                });
+
+                fs.writeFileSync(
+                    path.join(settingsDirectory, "batch.json"),
+                    `\uFEFF${JSON.stringify({
+                        QueryFilePath: form === "settings directory" ? "." : "hidden.query.pq",
+                        ParameterQueryFilePath: "parameters.pq",
+                    })}`,
+                );
+
+                const definition: PowerQueryTaskDefinition = {
+                    type: PowerQueryTaskProvider.TaskType,
+                    operation: "run-test",
+                    options: { cwd: directory },
+                };
+
+                const argumentsByForm: Record<string, string[]> = {
+                    "query argument": ["--queryFile", "hidden.query.pq"],
+                    "equals query argument": ["--queryFile=hidden.query.pq"],
+                    "settings argument": ["--settingsFile", "settings\\batch.json"],
+                    "equals settings argument": ["--settingsFile=settings\\batch.json"],
+                    "settings directory": ["--settingsFile", "settings\\batch.json"],
+                };
+
+                const configured: PowerQueryTaskDefinition =
+                    form === "settings property"
+                        ? { ...definition, settingsFile: "settings\\batch.json" }
+                        : {
+                              ...definition,
+                              additionalArgs: argumentsByForm[form],
+                          };
+
+                const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+                prompt.resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+                const spawn = stubCli([{ Status: "Passed" }]);
+                const terminal = new PqTestTaskTerminal(configured);
+                let exitCode: number | undefined;
+
+                terminal.onDidClose(code => {
+                    exitCode = code;
+                });
+
+                await terminal.open(undefined);
+                assert.strictEqual(exitCode, accept ? 0 : 1);
+                assert.strictEqual(spawn.callCount, accept ? 1 : 0);
+
+                if (accept) {
+                    assert.ok((document.save as sinon.SinonStub).calledOnce);
+                    assert.strictEqual(prompt.callCount, usesSettings ? 2 : 1);
+
+                    if (usesSettings) {
+                        assert.ok((parameter.save as sinon.SinonStub).calledOnce);
+                    }
+                } else {
+                    assert.ok((document.save as sinon.SinonStub).notCalled);
+                }
+            });
+        }
+    }
+
+    for (const invalidSettings of ["missing", "invalid JSON"]) {
+        test(`argument-based ${invalidSettings} settings report failure without launching PQTest`, async () => {
+            if (invalidSettings === "invalid JSON") {
+                fs.writeFileSync(path.join(directory, "batch.json"), "{");
+            }
+
+            const spawn = sandbox.stub(childProcess, "spawn");
+
+            const terminal = new PqTestTaskTerminal({
+                type: PowerQueryTaskProvider.TaskType,
+                operation: "run-test",
+                options: { cwd: directory },
+                additionalArgs: ["--settingsFile", "batch.json"],
+            });
+
+            let output = "";
+            let exitCode: number | undefined;
+
+            terminal.onDidWrite(text => {
+                output += text;
+            });
+
+            terminal.onDidClose(code => {
+                exitCode = code;
+            });
+
+            await terminal.open(undefined);
+            assert.strictEqual(exitCode, 1);
+            assert.ok(output.length > 0);
+            assert.ok(spawn.notCalled);
+        });
+    }
+
+    for (const additionalArgs of [
+        ["--queryFile", "hidden.query.pq"],
+        ["--queryFile=hidden.query.pq"],
+        ["--settingsFile", "batch.json"],
+        ["--settingsFile=batch.json"],
+    ]) {
+        test(`saved native tasks cannot bypass the save guard through ${additionalArgs.join(" ")}`, async () => {
+            const document = mockDocument();
+
+            fs.writeFileSync(path.join(directory, "batch.json"), JSON.stringify({ QueryFilePath: "hidden.query.pq" }));
+
+            sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+            const nativeTask = sandbox.stub(vscode.tasks, "executeTask");
+
+            const provider = new PowerQueryTaskProvider({
+                pqTestReady: true,
+                pqTestFullPath: executable,
+            } as IPQTestService);
+
+            const definition: PowerQueryTaskDefinition = {
+                type: PowerQueryTaskProvider.TaskType,
+                operation: "run-compare",
+                additionalArgs,
+                options: { cwd: directory },
+            };
+
+            const cancellation = new vscode.CancellationTokenSource();
+
+            try {
+                const resolved = await provider.resolveTask(
+                    new vscode.Task(definition, vscode.TaskScope.Workspace, "guard arguments", "pqtest"),
+                    cancellation.token,
+                );
+
+                assert.ok(resolved?.execution instanceof vscode.CustomExecution);
+                const terminal = new PqTestTaskTerminal(definition);
+                let exitCode: number | undefined;
+
+                terminal.onDidClose(code => {
+                    exitCode = code;
+                });
+
+                await terminal.open(undefined);
+                assert.strictEqual(exitCode, 1);
+                assert.ok(nativeTask.notCalled);
+                assert.ok((document.save as sinon.SinonStub).notCalled);
+            } finally {
+                cancellation.dispose();
+            }
+        });
+    }
+
+    for (const operation of ["run-test", "set-credential"]) {
+        test(`${operation} save guards resolve relative queries against options.cwd`, async () => {
+            const document = mockDocument({ uri: vscode.Uri.file(path.join(directory, "tests", "hidden.query.pq")) });
+            sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+            const spawn = sandbox.stub(childProcess, "spawn");
+            const executeTask = sandbox.stub(vscode.tasks, "executeTask");
+
+            const terminal = new PqTestTaskTerminal(
+                {
+                    type: PowerQueryTaskProvider.TaskType,
+                    operation,
+                    workingDirectory: directory,
+                    options: { cwd: "tests" },
+                    pathToQueryFile: "hidden.query.pq",
+                    additionalArgs: operation === "set-credential" ? ["--interactive"] : undefined,
+                },
+                executable,
+                directory,
+            );
+
+            let exitCode: number | undefined;
+
+            terminal.onDidClose(code => {
+                exitCode = code;
+            });
+
+            await terminal.open(undefined);
+            assert.strictEqual(exitCode, 1);
+            assert.ok(spawn.notCalled);
+            assert.ok(executeTask.notCalled);
+            assert.ok((document.save as sinon.SinonStub).notCalled);
+        });
+    }
+
+    test("spawned query tasks apply options.cwd and merge options.env with inherited variables", async () => {
+        const testsDirectory = path.join(directory, "tests");
+        fs.mkdirSync(testsDirectory);
+        fs.writeFileSync(path.join(testsDirectory, "task.query.pq"), "1");
+        sandbox.stub(process, "env").value({ ...process.env, PQSDK_TEST_TASK_OPTION: "inherited" });
+        const variableName = process.platform === "win32" ? "pqsdk_test_task_option" : "PQSDK_TEST_TASK_OPTION";
+        const originalSpawn = childProcess.spawn.bind(childProcess);
+
+        const spawn = sandbox
+            .stub(childProcess, "spawn")
+            .callsFake((_command, _args, options) =>
+                originalSpawn(
+                    process.execPath,
+                    [
+                        "-e",
+                        "const ok = process.env.PQSDK_TEST_TASK_OPTION === 'configured' && process.env.PATH !== undefined && require('fs').existsSync('task.query.pq'); process.stdout.write(JSON.stringify({ Status: ok ? 'Success' : 'Failure', Message: 'Task options not applied' }));",
+                    ],
+                    { ...options, env: { ...options?.env, ELECTRON_RUN_AS_NODE: "1" } },
+                ),
+            );
+
+        const terminal = new PqTestTaskTerminal(
+            {
+                type: PowerQueryTaskProvider.TaskType,
+                operation: "run-test",
+                pathToQueryFile: "task.query.pq",
+                options: { cwd: "tests", env: { [variableName]: "configured" } },
+            },
+            executable,
+            directory,
+        );
+
+        let exitCode: number | undefined;
+
+        terminal.onDidClose(code => {
+            exitCode = code;
+        });
+
+        await terminal.open(undefined);
+        assert.strictEqual(exitCode, 0);
+        assert.strictEqual(spawn.firstCall.args[2]?.cwd, testsDirectory);
     });
 
     for (const operation of [
@@ -666,7 +998,17 @@ suite("CLI-only execution", () => {
                 assert.ok((document.save as sinon.SinonStub).calledOnce);
                 assert.ok(task.execution.args.includes("--interactive"));
                 nativeTask = task;
-                task.execution = new vscode.ProcessExecution(node, ["-e", "process.exit(7)"]);
+                assert.strictEqual(task.execution.options?.cwd, directory);
+                assert.strictEqual(task.execution.options?.env?.PQSDK_TEST_TASK_OPTION, "native");
+
+                task.execution = new vscode.ProcessExecution(
+                    node,
+                    [
+                        "-e",
+                        `process.exit(process.env.PQSDK_TEST_TASK_OPTION === 'native' && process.cwd().toLowerCase() === ${JSON.stringify(directory.toLowerCase())} ? 0 : 7);`,
+                    ],
+                    task.execution.options,
+                );
             }
 
             return originalExecuteTask(task);
@@ -687,6 +1029,7 @@ suite("CLI-only execution", () => {
                         operation: "set-credential",
                         pathToQueryFile: document.uri.fsPath,
                         additionalArgs: ["--interactive"],
+                        options: { cwd: directory, env: { PQSDK_TEST_TASK_OPTION: "native" } },
                         label: "CLI guarded interactive credential",
                     },
                     vscode.TaskScope.Workspace,
@@ -697,7 +1040,7 @@ suite("CLI-only execution", () => {
             );
 
             assert.ok(task?.execution instanceof vscode.CustomExecution);
-            await assert.rejects(PowerQueryTaskProvider.executeTask(task), /failed or was cancelled/);
+            await PowerQueryTaskProvider.executeTask(task);
             assert.ok(nativeTask);
         } finally {
             cancellation.dispose();
@@ -921,6 +1264,123 @@ suite("CLI-only execution", () => {
         }
     });
 
+    test("saved tasks.json options survive resolution and VS Code substitutes their variables", async () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        assert.ok(folder);
+        const taskDirectory = fs.mkdtempSync(path.join(folder.uri.fsPath, "pq-sdk-cli-options-"));
+        fs.writeFileSync(path.join(taskDirectory, "batch.json"), JSON.stringify({ QueryFilePath: "task.query.pq" }));
+        const configuration = vscode.workspace.getConfiguration("tasks", folder.uri);
+        const previousTasks = configuration.inspect<unknown[]>("tasks")?.workspaceFolderValue;
+        const previousVersion = configuration.inspect<string>("version")?.workspaceFolderValue;
+        const configPath = path.join(folder.uri.fsPath, ".vscode", "tasks.json");
+        const configExisted = fs.existsSync(configPath);
+        const configDirectoryExisted = fs.existsSync(path.dirname(configPath));
+        const spawn = stubCli([{ Status: "Passed", Output: [{ Result: 42 }] }]);
+
+        const provider = new PowerQueryTaskProvider({
+            pqTestReady: true,
+            pqTestFullPath: executable,
+        } as IPQTestService);
+
+        sandbox.stub(provider, "provideTasks").resolves([]);
+        const registration = vscode.tasks.registerTaskProvider(PowerQueryTaskProvider.TaskType, provider);
+        const cancellation = new vscode.CancellationTokenSource();
+        const originalOpen = PqTestTaskTerminal.prototype.open;
+        let output = "";
+
+        sandbox.stub(PqTestTaskTerminal.prototype, "open").callsFake(async function (
+            this: PqTestTaskTerminal,
+            dimensions: vscode.TerminalDimensions | undefined,
+        ): Promise<void> {
+            const subscription = this.onDidWrite(text => {
+                output += text;
+            });
+
+            try {
+                await originalOpen.call(this, dimensions);
+            } finally {
+                subscription.dispose();
+            }
+        });
+
+        try {
+            await configuration.update("version", "2.0.0", vscode.ConfigurationTarget.WorkspaceFolder);
+
+            await configuration.update(
+                "tasks",
+                [
+                    {
+                        type: PowerQueryTaskProvider.TaskType,
+                        operation: "run-test",
+                        label: "CLI saved task options",
+                        additionalArgs: ["--queryFile", "task.query.pq"],
+                        settingsFile: `\${workspaceFolder}\\${path.basename(taskDirectory)}\\batch.json`,
+                        pathToConnector: "connector.mez",
+                        options: {
+                            cwd: `\${workspaceFolder}\\${path.basename(taskDirectory)}`,
+                            env: { PQSDK_TEST_TASK_OPTION: "${workspaceFolder}" },
+                        },
+                        problemMatcher: [],
+                    },
+                ],
+                vscode.ConfigurationTarget.WorkspaceFolder,
+            );
+
+            const tasks = await vscode.tasks.fetchTasks({ type: PowerQueryTaskProvider.TaskType });
+            const task = tasks.find(candidate => candidate.name === "CLI saved task options");
+
+            assert.ok(
+                task,
+                `The saved Power Query task must be discovered; found ${tasks.map(candidate => candidate.name).join(", ")}`,
+            );
+
+            const resolved = await provider.resolveTask(task, cancellation.token);
+            assert.ok(resolved);
+
+            await PowerQueryTaskProvider.executeTask(resolved).then(undefined, error => {
+                assert.fail(`${String(error)}; task output: ${output}; CLI launches: ${spawn.callCount}`);
+            });
+
+            assert.ok(spawn.calledOnce);
+
+            assert.strictEqual(
+                path.resolve(spawn.firstCall.args[2]?.cwd as string).toLowerCase(),
+                taskDirectory.toLowerCase(),
+            );
+
+            assert.strictEqual(
+                spawn.firstCall.args[2]?.env?.PQSDK_TEST_TASK_OPTION?.toLowerCase(),
+                folder.uri.fsPath.toLowerCase(),
+            );
+
+            assert.ok(spawn.firstCall.args[1]?.includes("task.query.pq"));
+            assert.ok(spawn.firstCall.args[1]?.includes("connector.mez"));
+            assert.ok(spawn.firstCall.args[1]?.includes("--settingsFile"));
+
+            assert.ok(
+                spawn.firstCall.args[1]?.some(
+                    (arg: string) => arg.toLowerCase() === path.join(taskDirectory, "batch.json").toLowerCase(),
+                ),
+            );
+        } finally {
+            registration.dispose();
+            cancellation.dispose();
+            await configuration.update("tasks", previousTasks, vscode.ConfigurationTarget.WorkspaceFolder);
+            await configuration.update("version", previousVersion, vscode.ConfigurationTarget.WorkspaceFolder);
+
+            if (!configExisted && fs.existsSync(configPath)) {
+                fs.unlinkSync(configPath);
+            }
+
+            if (!configDirectoryExisted && fs.existsSync(path.dirname(configPath))) {
+                fs.rmdirSync(path.dirname(configPath));
+            }
+
+            fs.unlinkSync(path.join(taskDirectory, "batch.json"));
+            fs.rmdirSync(taskDirectory);
+        }
+    });
+
     test("credential-template tasks send only the template to the CLI standard input", async () => {
         const originalSpawn = childProcess.spawn.bind(childProcess);
 
@@ -991,6 +1451,96 @@ suite("CLI-only execution", () => {
             assert.strictEqual(spawn.firstCall.args[0], executable);
             assert.ok(command.calledOnce);
             assert.deepStrictEqual(command.firstCall.args[1], result);
+        } finally {
+            task.dispose();
+        }
+    });
+
+    for (const workingDirectory of ["explicit", "executable directory"]) {
+        for (const accept of [false, true]) {
+            test(`run/debug ${accept ? "saves" : "rejects"} settings parameter queries using the ${workingDirectory}`, async () => {
+                const document = mockDocument({ uri: vscode.Uri.file(path.join(directory, "parameters.pq")) });
+
+                (document.save as sinon.SinonStub).callsFake(() => {
+                    sandbox.stub(document, "isDirty").get(() => false);
+
+                    return Promise.resolve(true);
+                });
+
+                fs.writeFileSync(
+                    path.join(directory, "debug.json"),
+                    JSON.stringify({ ParameterQueryFilePath: "parameters.pq" }),
+                );
+
+                const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+                prompt.resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+                sandbox.stub(vscode.commands, "executeCommand").resolves();
+                const spawn = stubCli([{ Status: "Passed", Output: [] }]);
+                const task = new PqTestExecutableOnceTask();
+
+                const exited = new Promise<void>(resolve => {
+                    task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+                });
+
+                try {
+                    await task.run(path.join(directory, "launch.query.pq"), {
+                        operation: "run-test",
+                        workingDirectory: workingDirectory === "explicit" ? directory : undefined,
+                        additionalArgs: ["--settingsFile", "debug.json"],
+                    });
+
+                    await exited;
+                    assert.strictEqual(spawn.callCount, accept ? 1 : 0);
+                    assert.ok(prompt.calledOnce);
+                    assert.strictEqual((document.save as sinon.SinonStub).callCount, accept ? 1 : 0);
+
+                    if (accept) {
+                        assert.strictEqual(spawn.firstCall.args[2]?.cwd, directory);
+                    }
+                } finally {
+                    task.dispose();
+                }
+            });
+        }
+    }
+
+    test("run/debug rechecks settings parameter queries dirtied during executable readiness", async () => {
+        const document = mockDocument({
+            uri: vscode.Uri.file(path.join(directory, "parameters.pq")),
+            isDirty: false,
+        });
+
+        fs.writeFileSync(
+            path.join(directory, "debug.json"),
+            JSON.stringify({ ParameterQueryFilePath: "parameters.pq" }),
+        );
+
+        const readiness = ExtensionConfigurations.getPqTestExecutablePath as sinon.SinonStub;
+
+        readiness.callsFake(() => {
+            sandbox.stub(document, "isDirty").get(() => true);
+
+            return Promise.resolve(undefined);
+        });
+
+        sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+        const spawn = sandbox.stub(childProcess, "spawn");
+        const task = new PqTestExecutableOnceTask();
+
+        const exited = new Promise<void>(resolve => {
+            task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+        });
+
+        try {
+            await task.run(path.join(directory, "launch.query.pq"), {
+                operation: "run-test",
+                workingDirectory: directory,
+                additionalArgs: ["--settingsFile", "debug.json"],
+            });
+
+            await exited;
+            assert.ok(readiness.calledOnce);
+            assert.ok(spawn.notCalled);
         } finally {
             task.dispose();
         }
@@ -1076,6 +1626,37 @@ suite("CLI-only execution", () => {
             context.subscriptions.forEach(disposable => disposable.dispose());
         }
     });
+
+    for (const explicitTarget of [false, true]) {
+        test(`lifecycle query execution rejects an untitled ${explicitTarget ? "URI" : "active document"} before building`, async () => {
+            const document = mockDocument({
+                uri: vscode.Uri.parse("untitled:Untitled-1"),
+                isUntitled: true,
+                languageId: "powerquery",
+            });
+
+            sandbox.stub(vscode.window, "activeTextEditor").get(() => ({ document }) as vscode.TextEditor);
+            sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
+            sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => undefined);
+            const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+            const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+            const output = sandbox.createStubInstance(PqSdkOutputChannel);
+            const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+            const spawn = sandbox.stub(childProcess, "spawn");
+
+            try {
+                await assert.rejects(queue.RunTestBattery(explicitTarget ? document.uri : undefined), /local file/);
+                assert.ok(spawn.notCalled);
+                assert.ok((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).notCalled);
+                assert.ok((document.save as sinon.SinonStub).notCalled);
+            } finally {
+                queue.dispose();
+                bus.dispose();
+                output.dispose();
+                context.subscriptions.forEach(disposable => disposable.dispose());
+            }
+        });
+    }
 
     for (const save of [false, true]) {
         test(`queued queries preserve serialization when the deferred save is ${save ? "accepted" : "declined"}`, async () => {
@@ -1181,4 +1762,169 @@ suite("CLI-only execution", () => {
             "",
         );
     });
+
+    for (const accept of [true, false]) {
+        test(`Test Explorer revalidates the whole query set when an earlier query changes during another save prompt (${accept ? "save" : "cancel"})`, async () => {
+            const settingsFile = vscode.Uri.file(path.join(directory, "batch.testsettings.json"));
+            fs.writeFileSync(settingsFile.fsPath, "{}");
+            const controller = vscode.tests.createTestController("cli-save-batch", "CLI save batch");
+            const cancellation = new vscode.CancellationTokenSource();
+            let firstDirty = false;
+            let secondDirty = true;
+
+            const first = {
+                uri: vscode.Uri.file(path.join(directory, "first.query.pq")),
+                isUntitled: false,
+                get isDirty(): boolean {
+                    return firstDirty;
+                },
+                save: sandbox.stub().callsFake(() => {
+                    firstDirty = false;
+
+                    return Promise.resolve(true);
+                }) as vscode.TextDocument["save"],
+            } as vscode.TextDocument;
+
+            const second = {
+                uri: vscode.Uri.file(path.join(directory, "second.query.pq")),
+                isUntitled: false,
+                get isDirty(): boolean {
+                    return secondDirty;
+                },
+                save: sandbox.stub().callsFake(() => {
+                    secondDirty = false;
+
+                    return Promise.resolve(true);
+                }) as vscode.TextDocument["save"],
+            } as vscode.TextDocument;
+
+            sandbox.stub(vscode.workspace, "textDocuments").get(() => [first, second]);
+            sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+
+            prompt.onFirstCall().callsFake(() => {
+                firstDirty = true;
+
+                return Promise.resolve(extensionI18n["PQSdk.query.saveAndRun"]);
+            });
+
+            prompt.onSecondCall().resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+            sandbox.stub(testSettingsUtils, "determineExtensionsForTests").resolves(undefined);
+
+            sandbox.stub(testSettingsUtils, "buildIntermediateResultsArgs").callsFake(() => {
+                if (accept) {
+                    firstDirty = true;
+                    prompt.onThirdCall().resolves(extensionI18n["PQSdk.query.saveAndRun"]);
+                }
+
+                return Promise.resolve([]);
+            });
+
+            const run = sandbox.stub(SpawnedProcessStreaming.prototype, "run").callsFake(() => {
+                assert.strictEqual(firstDirty, false);
+                assert.strictEqual(secondDirty, false);
+
+                return Promise.resolve(Readable.from(['runStart:{"tests":[]}\nrunEnd:{"passed":0,"failed":0}\n']));
+            });
+
+            const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+
+            const executor = new TestRunExecutor(
+                executable,
+                settingsFile,
+                testRun,
+                sandbox.createStubInstance(PqSdkOutputChannel),
+                cancellation.token,
+            );
+
+            executor.addTestItem(controller.createTestItem("first", "first", first.uri));
+            executor.addTestItem(controller.createTestItem("second", "second", second.uri));
+
+            try {
+                if (accept) {
+                    await executor.execute();
+                    assert.ok(run.calledOnce);
+                    assert.strictEqual(prompt.callCount, 3);
+                    assert.strictEqual((first.save as sinon.SinonStub).callCount, 2);
+                } else {
+                    await assert.rejects(executor.execute(), /cancelled/i);
+                    assert.ok(run.notCalled);
+                    assert.strictEqual(prompt.callCount, 2);
+                }
+            } finally {
+                testRun.end();
+                controller.dispose();
+                cancellation.dispose();
+            }
+        });
+    }
+
+    for (const { accept, bom } of [
+        { accept: false, bom: false },
+        { accept: true, bom: false },
+        { accept: false, bom: true },
+        { accept: true, bom: true },
+    ]) {
+        test(`Test Explorer ${accept ? "saves" : "rejects"} a dirty parameter query resolved relative to its ${bom ? "BOM-prefixed" : "UTF-8"} settings file`, async () => {
+            const settingsFile = vscode.Uri.file(path.join(directory, "batch.testsettings.json"));
+
+            fs.writeFileSync(
+                settingsFile.fsPath,
+                `${bom ? "\uFEFF" : ""}${JSON.stringify({ ParameterQueryFilePath: "parameters.pq" })}`,
+            );
+
+            const controller = vscode.tests.createTestController("cli-save-parameters", "CLI save parameters");
+            const cancellation = new vscode.CancellationTokenSource();
+            const document = mockDocument({ uri: vscode.Uri.file(path.join(directory, "parameters.pq")) });
+
+            (document.save as sinon.SinonStub).callsFake(() => {
+                sandbox.stub(document, "isDirty").get(() => false);
+
+                return Promise.resolve(true);
+            });
+
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+            prompt.resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+            sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+            sandbox.stub(testSettingsUtils, "determineExtensionsForTests").resolves(undefined);
+            sandbox.stub(testSettingsUtils, "buildIntermediateResultsArgs").resolves([]);
+
+            const run = sandbox
+                .stub(SpawnedProcessStreaming.prototype, "run")
+                .resolves(Readable.from(['runStart:{"tests":[]}\nrunEnd:{"passed":0,"failed":0}\n']));
+
+            const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+
+            const executor = new TestRunExecutor(
+                executable,
+                settingsFile,
+                testRun,
+                sandbox.createStubInstance(PqSdkOutputChannel),
+                cancellation.token,
+            );
+
+            executor.addTestItem(
+                controller.createTestItem("query", "query", vscode.Uri.file(path.join(directory, "test.query.pq"))),
+            );
+
+            try {
+                if (accept) {
+                    await executor.execute();
+                    assert.ok(run.calledOnce);
+                    assert.ok((document.save as sinon.SinonStub).calledOnce);
+                } else {
+                    await assert.rejects(executor.execute(), /cancelled/i);
+                    assert.ok(run.notCalled);
+                    assert.ok((document.save as sinon.SinonStub).notCalled);
+                }
+
+                assert.ok(prompt.calledOnce);
+                assert.ok(String(prompt.firstCall.args[0]).includes("parameters.pq"));
+            } finally {
+                testRun.end();
+                controller.dispose();
+                cancellation.dispose();
+            }
+        });
+    }
 });
