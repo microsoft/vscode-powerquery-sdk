@@ -18,7 +18,7 @@ import { setImmediate } from "timers";
 import * as vscode from "vscode";
 
 import { PowerQueryTaskDefinition } from "../../common/PowerQueryTask";
-import { IPQTestService } from "../../common/PQTestService";
+import { CreateAuthState, IPQTestService } from "../../common/PQTestService";
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { PowerQueryTaskProvider } from "../../features/PowerQueryTaskProvider";
@@ -36,6 +36,7 @@ import * as taskUtils from "../../pqTestConnector/PqTestTaskUtils";
 import { TestRunExecutor } from "../../testing/pqtest-adapter/TestRunExecutor";
 import * as testSettingsUtils from "../../testing/pqtest-adapter/utils/testSettingsUtils";
 import { findExecutable } from "../../utils/executables";
+import { ensurePqTestQueryDocumentsSaved } from "../../utils/pqTestQueryDocuments";
 import { ensureQueryDocumentSaved } from "../../utils/queryDocuments";
 
 suite("CLI-only execution", () => {
@@ -107,6 +108,180 @@ suite("CLI-only execution", () => {
                 ),
             );
     }
+
+    for (const kind of ["Key", "UsernamePassword"]) {
+        test(`${kind} credentials round-trip quotes, backslashes and control characters through CLI stdin`, async () => {
+            sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
+            const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+            const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+            const output = sandbox.createStubInstance(PqSdkOutputChannel);
+            const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+            const value = 'EXAMPLE\\alice"\\n\n\t';
+
+            const state: CreateAuthState = {
+                DataSourceKind: "FakeConnector",
+                AuthenticationKind: kind,
+                PathToQueryFile: path.join(directory, "fake.query.pq"),
+                $$KEY$$: value,
+                $$USERNAME$$: value,
+                $$PASSWORD$$: value,
+            };
+
+            const expectedProperties = kind === "Key" ? { Key: value } : { Username: value, Password: value };
+
+            const originalSpawn = childProcess.spawn.bind(childProcess);
+
+            sandbox
+                .stub(childProcess, "spawn")
+                .callsFake(() =>
+                    originalSpawn(
+                        process.execPath,
+                        [
+                            "-e",
+                            `let input = ''; process.stdin.on('data', chunk => input += chunk); process.stdin.on('end', () => { const payload = JSON.parse(input); require('assert').deepStrictEqual(payload.AuthenticationProperties, ${JSON.stringify(expectedProperties)}); process.stdout.write(JSON.stringify({Status: 'Success'})); });`,
+                        ],
+                        { env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } },
+                    ),
+                );
+
+            try {
+                const result = await queue.SetCredentialFromCreateAuthState(state);
+                assert.strictEqual(result.Status, "Success");
+            } finally {
+                queue.dispose();
+                bus.dispose();
+                context.subscriptions.forEach(disposable => disposable.dispose());
+            }
+        });
+    }
+
+    for (const saveLater of [false, true]) {
+        test(`directory save validation includes queries opened during another save prompt (${saveLater ? "save" : "cancel"})`, async () => {
+            const newlyOpened: vscode.TextDocument[] = [];
+            const first = mockDocument({}, newlyOpened);
+
+            const later = {
+                ...first,
+                uri: vscode.Uri.file(path.join(directory, "later.query.pq")),
+                save: sandbox.stub().callsFake(() => {
+                    sandbox.stub(later, "isDirty").get(() => false);
+
+                    return Promise.resolve(true);
+                }),
+            };
+
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+
+            prompt.onFirstCall().callsFake(() => {
+                newlyOpened.push(later);
+
+                return Promise.resolve(extensionI18n["PQSdk.query.saveAndRun"]);
+            });
+
+            prompt.onSecondCall().resolves(saveLater ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+
+            (first.save as sinon.SinonStub).callsFake(() => {
+                sandbox.stub(first, "isDirty").get(() => false);
+
+                return Promise.resolve(true);
+            });
+
+            const validation = ensurePqTestQueryDocumentsSaved(["run-compare", "--queryFile", "."], directory);
+
+            if (saveLater) {
+                await validation;
+                assert.ok(later.save.calledOnce);
+            } else {
+                await assert.rejects(validation, /cancelled/i);
+                assert.ok(later.save.notCalled);
+            }
+
+            assert.strictEqual(prompt.callCount, 2);
+        });
+    }
+
+    for (const operation of ["run-test", "run-compare"]) {
+        for (const stdout of ["", "  \n"]) {
+            test(`${operation} run/debug accepts ${stdout ? "whitespace" : "empty"} stdout without reporting a JSON error`, async () => {
+                const originalSpawn = childProcess.spawn.bind(childProcess);
+
+                sandbox.stub(childProcess, "spawn").callsFake(() =>
+                    originalSpawn(process.execPath, ["-e", `process.stdout.write(${JSON.stringify(stdout)});`], {
+                        env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+                    }),
+                );
+
+                const command = sandbox.stub(vscode.commands, "executeCommand").resolves();
+                const task = new PqTestExecutableOnceTask();
+                const errors: string[] = [];
+
+                task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.onOutput, (category, value) => {
+                    if (category === "stdError") {
+                        errors.push(value);
+                    }
+                });
+
+                const exited = new Promise<void>(resolve => {
+                    task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+                });
+
+                try {
+                    await task.run(path.join(directory, "query.pq"), { operation });
+                    await exited;
+                    assert.deepStrictEqual(errors, []);
+                    assert.ok(command.notCalled);
+                } finally {
+                    task.dispose();
+                }
+            });
+        }
+    }
+
+    test("Test Explorer cancellation during a save prompt prevents process launch", async () => {
+        const document = mockDocument();
+        const settingsFile = vscode.Uri.file(path.join(directory, "cancel.testsettings.json"));
+        fs.writeFileSync(settingsFile.fsPath, "{}");
+        const controller = vscode.tests.createTestController("cli-cancel-save", "CLI cancel save");
+        const cancellation = new vscode.CancellationTokenSource();
+        const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+        const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+
+        prompt.callsFake(() => {
+            cancellation.cancel();
+
+            return Promise.resolve(extensionI18n["PQSdk.query.saveAndRun"]);
+        });
+
+        (document.save as sinon.SinonStub).callsFake(() => {
+            sandbox.stub(document, "isDirty").get(() => false);
+
+            return Promise.resolve(true);
+        });
+
+        sandbox.stub(testSettingsUtils, "determineExtensionsForTests").resolves(undefined);
+        sandbox.stub(testSettingsUtils, "buildIntermediateResultsArgs").resolves([]);
+        const run = sandbox.stub(SpawnedProcessStreaming.prototype, "run");
+
+        const executor = new TestRunExecutor(
+            executable,
+            settingsFile,
+            testRun,
+            sandbox.createStubInstance(PqSdkOutputChannel),
+            cancellation.token,
+        );
+
+        executor.addTestItem(controller.createTestItem("query", "query", document.uri));
+
+        try {
+            await executor.execute();
+            assert.ok(prompt.calledOnce);
+            assert.ok(run.notCalled);
+        } finally {
+            testRun.end();
+            controller.dispose();
+            cancellation.dispose();
+        }
+    });
 
     test("clean files do not prompt or save", async () => {
         const document = mockDocument({ isDirty: false });

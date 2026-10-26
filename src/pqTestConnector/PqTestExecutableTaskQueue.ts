@@ -560,24 +560,22 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         let theAuthKind: string = createAuthState.AuthenticationKind;
 
         if (theAuthKind.toLowerCase() === "key") {
-            payloadStr = `{
-                "AuthenticationKind": "Key",
-                "AuthenticationProperties": {
-                    "Key": "${createAuthState.$$KEY$$!}"
-                },
-                "PrivacySetting": "None",
-                "Permissions": []
-            }`;
+            payloadStr = JSON.stringify({
+                AuthenticationKind: "Key",
+                AuthenticationProperties: { Key: createAuthState.$$KEY$$! },
+                PrivacySetting: "None",
+                Permissions: [],
+            });
         } else if (theAuthKind.toLowerCase() === "usernamepassword") {
-            payloadStr = `{
-                "AuthenticationKind": "UsernamePassword",
-                "AuthenticationProperties": {
-                    "Username": "${createAuthState.$$USERNAME$$!}",
-                    "Password": "${createAuthState.$$PASSWORD$$!}"
+            payloadStr = JSON.stringify({
+                AuthenticationKind: "UsernamePassword",
+                AuthenticationProperties: {
+                    Username: createAuthState.$$USERNAME$$!,
+                    Password: createAuthState.$$PASSWORD$$!,
                 },
-                "PrivacySetting": "None",
-                "Permissions": []
-            }`;
+                PrivacySetting: "None",
+                Permissions: [],
+            });
         } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
             additionalArgs.unshift("--interactive");
         } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {

@@ -198,6 +198,10 @@ export class PqTestExecutableOnceTask implements IDisposable {
             if (typeof processExit.exitCode === "number" && processExit.exitCode === 0) {
                 this.handleOutputStr(spawnProcess.stdOut);
 
+                if (!spawnProcess.stdOut.trim()) {
+                    return undefined;
+                }
+
                 // dump result to the web view if any result found
                 if (task.operation === "run-test") {
                     try {

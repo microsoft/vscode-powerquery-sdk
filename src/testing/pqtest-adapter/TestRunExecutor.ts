@@ -151,6 +151,12 @@ export class TestRunExecutor {
 
             await ensureQueryDocumentsSaved(queryFiles);
 
+            if (this.cancellationToken.isCancellationRequested) {
+                this.state = ExecutionState.Cancelled;
+
+                return;
+            }
+
             const resultsStream: NodeJS.ReadableStream = await processRunner.run();
 
             // Step 6: Create the result parser and updater
