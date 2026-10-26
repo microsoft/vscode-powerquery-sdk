@@ -24,6 +24,7 @@ export function hasQueryFileArguments(args: readonly string[]): boolean {
 export async function ensurePqTestQueryDocumentsSaved(
     args: readonly string[],
     workingDirectory: string,
+    knownQueryFiles: readonly vscode.Uri[] = [],
 ): Promise<void> {
     const queries: string[] = [];
     const settingsFiles: string[] = [];
@@ -74,7 +75,10 @@ export async function ensurePqTestQueryDocumentsSaved(
         });
 
     do {
-        const queryFiles: vscode.Uri[] = queries.map((query: string) => vscode.Uri.file(query));
+        const queryFiles: vscode.Uri[] = [
+            ...knownQueryFiles,
+            ...queries.map((query: string) => vscode.Uri.file(query)),
+        ];
 
         // QueryFilePath can name a test directory rather than an individual query.
         queryFiles.push(

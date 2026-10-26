@@ -2035,6 +2035,95 @@ suite("CLI-only execution", () => {
         });
     }
 
+    for (const { filtered, accept, duringSetup } of [
+        { filtered: false, accept: false, duringSetup: false },
+        { filtered: false, accept: true, duringSetup: false },
+        { filtered: false, accept: false, duringSetup: true },
+        { filtered: false, accept: true, duringSetup: true },
+        { filtered: true, accept: false, duringSetup: false },
+    ]) {
+        test(`Test Explorer validates queries added after discovery (filtered=${filtered}, save=${accept}, duringSetup=${duringSetup})`, async () => {
+            const settingsDirectory = path.join(directory, "settings");
+            const queryDirectory = path.join(directory, "queries");
+            fs.mkdirSync(settingsDirectory);
+            fs.mkdirSync(queryDirectory);
+            const settingsFile = vscode.Uri.file(path.join(settingsDirectory, "batch.testsettings.json"));
+            fs.writeFileSync(settingsFile.fsPath, JSON.stringify({ QueryFilePath: "..\\queries" }));
+            const controller = vscode.tests.createTestController("cli-refresh-queries", "CLI refresh queries");
+            const cancellation = new vscode.CancellationTokenSource();
+            const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+
+            const executor = new TestRunExecutor(
+                executable,
+                settingsFile,
+                testRun,
+                sandbox.createStubInstance(PqSdkOutputChannel),
+                cancellation.token,
+            );
+
+            executor.addTestItem(
+                controller.createTestItem(
+                    "discovered",
+                    "discovered",
+                    vscode.Uri.file(path.join(queryDirectory, "discovered.query.pq")),
+                ),
+            );
+
+            let queryDirty = !duringSetup;
+
+            const document = mockDocument({
+                uri: vscode.Uri.file(path.join(queryDirectory, "new.query.pq")),
+            });
+
+            sandbox.stub(document, "isDirty").get(() => queryDirty);
+            fs.writeFileSync(document.uri.fsPath, "1");
+
+            (document.save as sinon.SinonStub).callsFake(() => {
+                queryDirty = false;
+
+                return Promise.resolve(true);
+            });
+
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+            prompt.resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+            sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+            sandbox.stub(testSettingsUtils, "determineExtensionsForTests").resolves(undefined);
+
+            sandbox.stub(testSettingsUtils, "buildIntermediateResultsArgs").callsFake(() => {
+                if (duringSetup) {
+                    queryDirty = true;
+                }
+
+                return Promise.resolve([]);
+            });
+
+            const run = sandbox.stub(SpawnedProcessStreaming.prototype, "run").callsFake(() => {
+                assert.strictEqual(document.isDirty, filtered);
+
+                return Promise.resolve(Readable.from(['runStart:{"tests":[]}\nrunEnd:{"passed":0,"failed":0}\n']));
+            });
+
+            try {
+                const execution = executor.execute(filtered ? ["--testFilter", "discovered.query.pq"] : undefined);
+
+                if (filtered || accept) {
+                    await execution;
+                    assert.ok(run.calledOnce);
+                    assert.strictEqual(prompt.callCount, filtered ? 0 : 1);
+                    assert.strictEqual((document.save as sinon.SinonStub).callCount, filtered ? 0 : 1);
+                } else {
+                    await assert.rejects(execution, /cancelled/i);
+                    assert.ok(run.notCalled);
+                    assert.ok(prompt.calledOnce);
+                }
+            } finally {
+                testRun.end();
+                controller.dispose();
+                cancellation.dispose();
+            }
+        });
+    }
+
     for (const { accept, bom } of [
         { accept: false, bom: false },
         { accept: true, bom: false },

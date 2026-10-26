@@ -17,6 +17,7 @@ import * as vscode from "vscode";
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
+import { ensurePqTestQueryDocumentsSaved } from "../../utils/pqTestQueryDocuments";
 import { ensureQueryDocumentsSaved } from "../../utils/queryDocuments";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
@@ -100,7 +101,23 @@ export class TestRunExecutor {
                 queryFiles.push(vscode.Uri.file(path.resolve(workingDirectory, settings.ParameterQueryFilePath)));
             }
 
-            await ensureQueryDocumentsSaved(queryFiles);
+            const hasTestFilter: boolean = (additionalArgs ?? []).some(
+                (arg: string) => arg === "--testFilter" || arg.startsWith("--testFilter="),
+            );
+
+            const ensureRunQueriesSaved = async (): Promise<void> => {
+                if (hasTestFilter) {
+                    await ensureQueryDocumentsSaved(queryFiles);
+                } else {
+                    await ensurePqTestQueryDocumentsSaved(
+                        ["--settingsFile", this.settingsFile.fsPath],
+                        workingDirectory,
+                        queryFiles,
+                    );
+                }
+            };
+
+            await ensureRunQueriesSaved();
 
             // Step 1: Determine which extension(s) to use based on precedence rules
             const extensions: string | string[] | undefined = await determineExtensionsForTests(
@@ -149,7 +166,7 @@ export class TestRunExecutor {
                 cancellationToken: this.cancellationToken,
             });
 
-            await ensureQueryDocumentsSaved(queryFiles);
+            await ensureRunQueriesSaved();
 
             if (this.cancellationToken.isCancellationRequested) {
                 this.state = ExecutionState.Cancelled;
