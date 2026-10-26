@@ -16,6 +16,7 @@ import * as vscode from "vscode";
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
+import { ensureQueryDocumentSaved } from "../../utils/queryDocuments";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
@@ -86,6 +87,11 @@ export class TestRunExecutor {
         );
 
         try {
+            for (const item of this.testItems) {
+                // eslint-disable-next-line no-await-in-loop
+                await ensureQueryDocumentSaved(item.uri?.fsPath);
+            }
+
             // Step 1: Determine which extension(s) to use based on precedence rules
             const extensions: string | string[] | undefined = await determineExtensionsForTests(
                 this.settingsFile.fsPath,

@@ -34,7 +34,7 @@ function protectManagedToolsLocation(toolsLocation: string | undefined): string 
         : toolsLocation;
 }
 
-async function protectManagedToolsLocationAsync(
+export async function protectManagedToolsLocationAsync(
     toolsLocation: string | undefined,
     token?: vscode.CancellationToken,
 ): Promise<string | undefined> {
@@ -326,17 +326,6 @@ export const ExtensionConfigurations = {
             // adaptability of a deprecated config item
             config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestQueryFileLocation)
         );
-    },
-    get featureUseServiceHost(): boolean {
-        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
-        );
-
-        const result: boolean | undefined = config.get(
-            ExtensionConstants.ConfigNames.PowerQuerySdk.properties.featureUseServiceHost,
-        );
-
-        return Boolean(result);
     },
     get testSettingsFiles(): string | string[] | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(

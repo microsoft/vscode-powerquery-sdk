@@ -18,8 +18,9 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
-import { formatArguments } from "./PqTestTaskUtils";
+import { formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
 // eslint-disable-next-line @typescript-eslint/typedef
 export const PqTestExecutableOnceTaskQueueEvents = {
@@ -44,6 +45,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
     public readonly eventBus: DisposableEventEmitter<PqTestExecutableOnceTaskEventTypes>;
     protected _disposables: Array<IDisposable> = [];
+    private process?: SpawnedProcess;
+    private disposed: boolean = false;
     private readonly readinessCancellation: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
 
     constructor() {
@@ -120,10 +123,22 @@ export class PqTestExecutableOnceTask implements IDisposable {
         try {
             task = this.populateTestTaskPayload(program, task);
             this._pathToQueryFile = task.pathToQueryFile;
+            await ensureQueryDocumentSaved(task.pathToQueryFile);
+
+            if (this.disposed) {
+                return undefined;
+            }
+
             // do fork one process and execute the task
             const pqTestExeFullPath: string = await resolvePqTestExecutablePath(this.readinessCancellation.token);
 
             if (this.readinessCancellation.token.isCancellationRequested) {
+                return undefined;
+            }
+
+            await ensureQueryDocumentSaved(task.pathToQueryFile);
+
+            if (this.disposed) {
                 return undefined;
             }
 
@@ -161,6 +176,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
                 },
             );
 
+            this.process = spawnProcess;
+
             let processExit: ProcessExit = {
                 stdout: "",
                 stderr: "",
@@ -184,14 +201,26 @@ export class PqTestExecutableOnceTask implements IDisposable {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const result: any = JSON.parse(spawnProcess.stdOut);
 
+                        const error: string = inferAnyGeneralErrorString(result);
+
+                        if (error) {
+                            this.handleErrorStr(error);
+
+                            return undefined;
+                        }
+
                         if (result) {
                             void vscode.commands.executeCommand(
                                 PqTestResultViewPanel.UpdateResultWebViewCommand,
                                 result,
                             );
                         }
-                    } catch {
-                        // noop
+                    } catch (error: unknown) {
+                        this.handleErrorStr(
+                            resolveI18nTemplate("PQSdk.taskQueue.error.failedToParseJsonOutput", {
+                                error: String(error),
+                            }),
+                        );
                     }
                 }
 
@@ -200,6 +229,13 @@ export class PqTestExecutableOnceTask implements IDisposable {
                     try {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const result: any = JSON.parse(spawnProcess.stdOut);
+                        const error: string = inferAnyGeneralErrorString(result);
+
+                        if (error) {
+                            this.handleErrorStr(error);
+
+                            return undefined;
+                        }
 
                         return result;
                     } catch (e) {
@@ -239,6 +275,8 @@ export class PqTestExecutableOnceTask implements IDisposable {
     }
 
     public dispose = (): void => {
+        this.disposed = true;
+        this.process?.cpStream?.kill();
         this.readinessCancellation.cancel();
         this.readinessCancellation.dispose();
 

@@ -19,7 +19,7 @@ This repository contains the `PowerQuery.vscode-powerquery-sdk` extension. It su
 The extension depends on:
 
 - `PowerQuery.vscode-powerquery` for the M language service.
-- `Microsoft.PowerQuery.SdkTools` for tools such as `PQTest.exe`, `PQServiceHost.exe`, and `MakePQX.exe`.
+- `Microsoft.PowerQuery.SdkTools` for tools such as `PQTest.exe` and `MakePQX.exe`.
 
 The SDK tools are Windows-only. Use Windows-compatible paths, process handling, and test environments for functionality that invokes them.
 
@@ -28,7 +28,7 @@ The SDK tools are Windows-only. Use Windows-compatible paths, process handling, 
 - `src/extension.ts` is the composition root. Keep activation focused on constructing services, registering VS Code integrations, and adding disposables to `ExtensionContext.subscriptions`.
 - `src/commands/` contains command orchestration and extracted command handlers. Prefer adding focused handlers or services instead of expanding `LifecycleCommands`.
 - `src/common/PQTestService.ts` defines the shared PQTest contracts.
-- `src/pqTestConnector/` contains the executable and service-host implementations of those contracts. Keep behavior consistent across implementations when both support an operation.
+- `src/pqTestConnector/` contains the CLI implementations of those contracts. The retired service-host setting must never select an execution backend.
 - `src/testing/pqtest-adapter/` implements VS Code Test Explorer discovery and execution.
 - `src/services/` contains reusable wrappers around file system, UI, localization, and project-management behavior. Depend on abstractions from `src/testing/abstractions/` where testability requires it.
 - `src/panels/` hosts extension-side webview integration.
@@ -100,7 +100,7 @@ Use the smallest relevant command first. `npm test` runs both unit and VS Code i
 
 Before considering a change complete:
 
-1. Verify all affected call sites and implementations, especially both PQTest backends and both sides of webview messaging.
+1. Verify all affected CLI execution paths and both sides of webview messaging.
 2. Add or update the smallest test that would fail without the change.
 3. Run the targeted compile, lint, and test commands for the files changed.
 4. Update directly affected documentation and localization resources.

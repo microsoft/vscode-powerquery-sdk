@@ -32,6 +32,8 @@ import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { convertStringToInteger } from "../utils/numbers";
 import { pidIsRunning } from "../utils/pids";
+import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
@@ -89,6 +91,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private lastPqRelatedFileTouchedDate: Date = new Date(0);
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
+    private checkingQueryDocument: boolean = false;
     protected _disposables: Array<IDisposable> = [];
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
@@ -257,6 +260,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     private async doCheckPidAndDequeueOneTaskIfAny(): Promise<void> {
+        if (this.checkingQueryDocument) {
+            return;
+        }
+
         const pidNumber: number | undefined = this.doSeizePQTestPidFromLockFile();
 
         if (typeof pidNumber !== "number" && this.pqTestFullPath) {
@@ -264,6 +271,27 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             const pendingTask: PqTestExecutableTask | undefined = this.pendingTasks.shift();
 
             if (pendingTask) {
+                this.checkingQueryDocument = true;
+
+                try {
+                    await ensureQueryDocumentSaved(pendingTask.pathToQueryFile, this.pqTestLocation || undefined);
+                } catch (error: unknown) {
+                    pendingTask.reject(error instanceof Error ? error : String(error));
+                    this.checkingQueryDocument = false;
+                    void this.doCheckPidAndDequeueOneTaskIfAny();
+
+                    return;
+                }
+
+                this.checkingQueryDocument = false;
+
+                // Another extension host may have started a process while the save prompt was open.
+                if (!this.pqTestFullPath || typeof this.doSeizePQTestPidFromLockFile() === "number") {
+                    this.pendingTasks.unshift(pendingTask);
+
+                    return;
+                }
+
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
                 const processArgs: string[] = buildPqTestArgs(pendingTask);
@@ -381,7 +409,16 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
+    private async doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
+        await ensureQueryDocumentSaved(task.pathToQueryFile, this.pqTestLocation || undefined);
+
+        if (!this.pqTestReady) {
+            this.pqTestFullPath = await resolvePqTestExecutablePath();
+            this.pqTestLocation = path.dirname(this.pqTestFullPath);
+            this.pqTestReady = true;
+            await ensureQueryDocumentSaved(task.pathToQueryFile, this.pqTestLocation);
+        }
+
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -593,9 +630,6 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
-
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
         const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
@@ -611,6 +645,9 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             pathToQueryFile = configPQTestQueryFileLocation;
         }
 
+        await ensureQueryDocumentSaved(pathToQueryFile, this.pqTestLocation || undefined);
+        await this.ExecuteBuildTaskAndAwaitIfNeeded();
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.doEnqueueOneTask<any>({
             operation: "run-test",
@@ -620,13 +657,19 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     public async TestConnection(): Promise<GenericResult> {
+        const pathToQueryFile: string | undefined = resolveSubstitutedValues(
+            ExtensionConfigurations.DefaultQueryFileLocation,
+        );
+
+        await ensureQueryDocumentSaved(pathToQueryFile, this.pqTestLocation || undefined);
+
         // maybe we need to execute the build task before evaluating.
         await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
         return this.doEnqueueOneTask<GenericResult>({
             operation: "test-connection",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            pathToQueryFile,
         });
     }
 }
