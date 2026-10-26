@@ -30,7 +30,9 @@ export async function ensureQueryDocumentSaved(
     const resolvedQueryFile: string = normalizePath(path.resolve(workingDirectory, queryPath));
 
     const document: vscode.TextDocument | undefined = vscode.workspace.textDocuments.find(
-        (candidate: vscode.TextDocument) => normalizePath(candidate.uri.fsPath) === resolvedQueryFile,
+        (candidate: vscode.TextDocument) =>
+            (candidate.uri.scheme === "file" || candidate.isUntitled) &&
+            normalizePath(candidate.uri.fsPath) === resolvedQueryFile,
     );
 
     if (!document) {
@@ -60,4 +62,24 @@ export async function ensureQueryDocumentSaved(
     if (!(await document.save()) || document.isDirty) {
         throw new Error(resolveI18nTemplate("PQSdk.query.saveFailed", { queryFile: queryPath }));
     }
+}
+
+export async function ensureQueryDocumentsSaved(queryFiles: readonly vscode.Uri[]): Promise<void> {
+    do {
+        for (const queryFile of queryFiles) {
+            // eslint-disable-next-line no-await-in-loop
+            await ensureQueryDocumentSaved(queryFile);
+        }
+    } while (
+        vscode.workspace.textDocuments.some(
+            (document: vscode.TextDocument) =>
+                document.uri.scheme === "file" &&
+                document.isDirty &&
+                queryFiles.some((queryFile: vscode.Uri) =>
+                    process.platform === "win32"
+                        ? document.uri.fsPath.toLowerCase() === queryFile.fsPath.toLowerCase()
+                        : document.uri.fsPath === queryFile.fsPath,
+                ),
+        )
+    );
 }
