@@ -10,6 +10,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Deprecated `powerquery.sdk.features.useServiceHost`. The setting is ignored and can be removed; no informational notice or reload prompt is shown.
 - Query commands, query tasks, and run/debug now require saving dirty query documents before execution. Untitled queries must first be saved to a local file.
 - A new service host will be introduced in the future.
+- Increased the maximum Recommended SDK Tools NuGet package version to `2.170.x`.
 
 ## v0.7.4
 
