@@ -2035,6 +2035,131 @@ suite("CLI-only execution", () => {
         });
     }
 
+    for (const { accept, timing, equals } of [
+        { accept: true, timing: "before execution", equals: false },
+        { accept: false, timing: "before execution", equals: false },
+        { accept: true, timing: "during prompt", equals: false },
+        { accept: false, timing: "during prompt", equals: false },
+        { accept: true, timing: "during setup", equals: true },
+        { accept: false, timing: "during setup", equals: true },
+    ]) {
+        test(`Test Explorer folder filters refresh matching queries (${timing}, save=${accept})`, async () => {
+            const settingsDirectory = path.join(directory, "settings");
+            const queryDirectory = path.join(directory, "queries");
+            fs.mkdirSync(settingsDirectory);
+            fs.mkdirSync(queryDirectory);
+            fs.mkdirSync(path.join(queryDirectory, "selected"));
+            fs.mkdirSync(path.join(queryDirectory, "selected", "nested"));
+            const settingsFile = vscode.Uri.file(path.join(settingsDirectory, "batch.testsettings.json"));
+            fs.writeFileSync(settingsFile.fsPath, JSON.stringify({ QueryFilePath: "..\\queries" }));
+            const controller = vscode.tests.createTestController("cli-folder-queries", "CLI folder queries");
+            const cancellation = new vscode.CancellationTokenSource();
+            const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+
+            const executor = new TestRunExecutor(
+                executable,
+                settingsFile,
+                testRun,
+                sandbox.createStubInstance(PqSdkOutputChannel),
+                cancellation.token,
+            );
+
+            let firstDirty = timing === "during prompt";
+            let laterDirty = timing !== "during setup";
+
+            const first = {
+                uri: vscode.Uri.file(path.join(queryDirectory, "selected", "discovered.query.pq")),
+                get isDirty(): boolean {
+                    return firstDirty;
+                },
+                save: sandbox.stub().callsFake(() => {
+                    firstDirty = false;
+
+                    return Promise.resolve(true);
+                }),
+            } as unknown as vscode.TextDocument;
+
+            executor.addTestItem(controller.createTestItem("discovered", "discovered", first.uri));
+
+            const later = {
+                uri: vscode.Uri.file(path.join(queryDirectory, "selected", "nested", "new.query.pq")),
+                get isDirty(): boolean {
+                    return laterDirty;
+                },
+                save: sandbox.stub().callsFake(() => {
+                    laterDirty = false;
+
+                    return Promise.resolve(true);
+                }),
+            } as unknown as vscode.TextDocument;
+
+            fs.writeFileSync(later.uri.fsPath, "1");
+
+            const sibling = {
+                uri: vscode.Uri.file(path.join(queryDirectory, "selected-sibling", "excluded.query.pq")),
+                isDirty: true,
+                save: sandbox.stub(),
+            } as unknown as vscode.TextDocument;
+
+            const documents = timing === "during prompt" ? [first, sibling] : [first, sibling, later];
+            sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+            const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+
+            prompt.callsFake((message: string) => {
+                if (message.includes("discovered.query.pq")) {
+                    documents.push(later);
+
+                    return Promise.resolve(extensionI18n["PQSdk.query.saveAndRun"]);
+                }
+
+                assert.ok(message.includes("new.query.pq"));
+
+                return Promise.resolve(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
+            });
+
+            sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+            sandbox.stub(testSettingsUtils, "determineExtensionsForTests").resolves(undefined);
+
+            sandbox.stub(testSettingsUtils, "buildIntermediateResultsArgs").callsFake(() => {
+                if (timing === "during setup") {
+                    laterDirty = true;
+                }
+
+                return Promise.resolve([]);
+            });
+
+            const run = sandbox.stub(SpawnedProcessStreaming.prototype, "run").callsFake(() => {
+                assert.strictEqual(firstDirty, false);
+                assert.strictEqual(laterDirty, false);
+
+                return Promise.resolve(Readable.from(['runStart:{"tests":[]}\nrunEnd:{"passed":0,"failed":0}\n']));
+            });
+
+            try {
+                const filter = "selected/**/*.query.pq";
+
+                const execution = executor.execute(equals ? [`--testFilter=${filter}`] : ["--testFilter", filter]);
+
+                if (accept) {
+                    await execution;
+                    assert.ok(run.calledOnce);
+                    assert.ok((later.save as sinon.SinonStub).calledOnce);
+                } else {
+                    await assert.rejects(execution, /cancelled/i);
+                    assert.ok(run.notCalled);
+                    assert.ok((later.save as sinon.SinonStub).notCalled);
+                }
+
+                assert.ok((sibling.save as sinon.SinonStub).notCalled);
+                assert.strictEqual(prompt.callCount, timing === "during prompt" ? 2 : 1);
+            } finally {
+                testRun.end();
+                controller.dispose();
+                cancellation.dispose();
+            }
+        });
+    }
+
     for (const { filtered, accept, duringSetup } of [
         { filtered: false, accept: false, duringSetup: false },
         { filtered: false, accept: true, duringSetup: false },
