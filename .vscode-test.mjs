@@ -1,5 +1,6 @@
 import { defineConfig } from "@vscode/test-cli";
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,27 +8,21 @@ const external = process.env.PQSDK_TEST_EXTERNAL === "1";
 const nugetPath = process.env.PQSDK_TEST_NUGET_PATH;
 const nugetFeed = process.env.PQSDK_TEST_NUGET_FEED;
 const root = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+require("ts-node").register({ transpileOnly: true, project: path.join(root, "tsconfig.json") });
+const { resolveLocalSdkTools } = require("./src/utils/localSdkTools");
 let workspaceFolder = "./out/test/testFixture";
 
-if (process.env.PQSDK_TEST_TOOLS_PATH !== undefined) {
-    const tools = process.env.PQSDK_TEST_TOOLS_PATH;
-
-    if (
-        !tools.trim() ||
-        !path.isAbsolute(tools) ||
-        !["PQTest.exe", "MakePQX.exe"].every(executable =>
-            fs.statSync(path.join(tools, executable), { throwIfNoEntry: false })?.isFile(),
-        )
-    ) {
-        throw new Error(
-            "PQSDK_TEST_TOOLS_PATH must be an absolute tools directory containing PQTest.exe and MakePQX.exe.",
-        );
-    }
+if (
+    external &&
+    (process.env.PQSDK_TEST_TOOLS_PATH !== undefined || process.env.PQSDK_TEST_TOOLS_AUTODISCOVER === "1")
+) {
+    throw new Error(
+        "Unset PQSDK_TEST_TOOLS_PATH and PQSDK_TEST_TOOLS_AUTODISCOVER when running real feed acquisition tests.",
+    );
 }
 
-if (external && process.env.PQSDK_TEST_TOOLS_PATH !== undefined) {
-    throw new Error("Unset PQSDK_TEST_TOOLS_PATH when running real feed acquisition tests.");
-}
+const toolsPath = resolveLocalSdkTools();
 
 if ((nugetPath !== undefined || nugetFeed !== undefined || external) && (!nugetPath || !nugetFeed)) {
     throw new Error("Set both PQSDK_TEST_NUGET_PATH and PQSDK_TEST_NUGET_FEED to test an approved package feed.");
@@ -77,7 +72,8 @@ export default defineConfig({
     ],
     env: {
         NODE_ENV: "test",
-        PQSDK_TEST_TOOLS_PATH: process.env.PQSDK_TEST_TOOLS_PATH,
+        PQSDK_TEST_TOOLS_PATH: toolsPath,
+        PQSDK_TEST_TOOLS_AUTODISCOVER: process.env.PQSDK_TEST_TOOLS_AUTODISCOVER,
         PQSDK_TEST_EXTERNAL: process.env.PQSDK_TEST_EXTERNAL,
     },
     mocha: {

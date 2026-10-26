@@ -33,7 +33,7 @@ suite("Local SDK Tools development override", () => {
         root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-local-host-"));
         fs.writeFileSync(path.join(root, "PQTest.exe"), "");
         fs.writeFileSync(path.join(root, "MakePQX.exe"), "");
-        initializeLocalSdkTools(true, root);
+        initializeLocalSdkTools(true, { PQSDK_TEST_TOOLS_PATH: root });
         sandbox.stub(vscode.workspace, "getConfiguration").throws(new Error("Must not read or write saved settings"));
         sandbox.stub(NugetHttpService.prototype, "getSortedPackageReleasedVersions").throws(new Error("No HTTP"));
         sandbox.stub(NugetHttpService.prototype, "downloadAndExtractNugetPackage").throws(new Error("No HTTP"));

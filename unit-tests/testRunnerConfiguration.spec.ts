@@ -31,6 +31,7 @@ describe("Isolated SDK test runner configuration", () => {
 
         for (const key of [
             "PQSDK_TEST_TOOLS_PATH",
+            "PQSDK_TEST_TOOLS_AUTODISCOVER",
             "PQSDK_TEST_NUGET_PATH",
             "PQSDK_TEST_NUGET_FEED",
             "PQSDK_TEST_EXTERNAL",
@@ -74,6 +75,30 @@ describe("Isolated SDK test runner configuration", () => {
         const result = load({ PQSDK_TEST_TOOLS_PATH: root, PQSDK_TEST_EXTERNAL: "1" });
         expect(result.status).not.to.equal(0);
         expect(result.stderr).to.contain("Unset PQSDK_TEST_TOOLS_PATH");
+    });
+
+    it("discovers a cached package before launch and forwards the resolved tools path", () => {
+        const tools = path.join(root, "microsoft.powerquery.sdktools", "2.160.4", "tools");
+        fs.mkdirSync(tools, { recursive: true });
+        fs.writeFileSync(path.join(tools, "PQTest.exe"), "");
+        fs.writeFileSync(path.join(tools, "MakePQX.exe"), "");
+        const result = load({ PQSDK_TEST_TOOLS_AUTODISCOVER: "1", NUGET_PACKAGES: root });
+        expect(result.status, result.stderr).to.equal(0);
+        const config = JSON.parse(result.stdout);
+        expect(config.env.PQSDK_TEST_TOOLS_PATH).to.equal(tools);
+        expect(config.env.PQSDK_TEST_TOOLS_AUTODISCOVER).to.equal("1");
+    });
+
+    it("fails discovery before launching VS Code when the cache has no SDK Tools", () => {
+        const result = load({ PQSDK_TEST_TOOLS_AUTODISCOVER: "1", NUGET_PACKAGES: root });
+        expect(result.status).not.to.equal(0);
+        expect(result.stderr).to.contain("No NuGet download will be attempted");
+    });
+
+    it("rejects autodiscovery combined with real acquisition testing", () => {
+        const result = load({ PQSDK_TEST_TOOLS_AUTODISCOVER: "1", PQSDK_TEST_EXTERNAL: "1" });
+        expect(result.status).not.to.equal(0);
+        expect(result.stderr).to.contain("Unset PQSDK_TEST_TOOLS_PATH and PQSDK_TEST_TOOLS_AUTODISCOVER");
     });
 
     it("writes feed settings only into the ignored test workspace before activation", () => {

@@ -64,7 +64,7 @@ After saving the settings, run **Power query: Update PQ SDK Tools** from the Com
 
 Do not put passwords or tokens in feed URLs, shared workspace settings, or source control. Use your organization's approved credential flow, and remove sensitive information before sharing diagnostic output.
 
-For extension development and local integration tests, `PQSDK_TEST_TOOLS_PATH` can select an already extracted SDK Tools directory without any SDK package requests. See [local testing without nuget.org](TESTING.md#local-testing-without-nugetorg) for the override and isolated internal-feed test configuration. This development/test-only override does not affect installed production extensions.
+For extension development and local integration tests, `PQSDK_TEST_TOOLS_PATH` can select an already extracted SDK Tools directory, or `PQSDK_TEST_TOOLS_AUTODISCOVER=1` can find the latest stable SDK Tools in your NuGet global packages cache, without any SDK package requests. See [local testing without nuget.org](TESTING.md#local-testing-without-nugetorg) for the overrides and isolated internal-feed test configuration. These development/test-only overrides do not affect installed production extensions.
 
 ## Developer Guide
 
