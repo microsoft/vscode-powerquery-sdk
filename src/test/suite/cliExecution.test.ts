@@ -43,6 +43,7 @@ suite("CLI-only execution", () => {
     let directory: string;
     let executable: string;
     let directExecutable: string | undefined;
+    let documentCollection: sinon.SinonStub;
 
     setup(() => {
         sandbox = sinon.createSandbox();
@@ -50,6 +51,23 @@ suite("CLI-only execution", () => {
         executable = path.join(directory, "PQTest.exe");
         directExecutable = undefined;
         fs.writeFileSync(executable, "");
+
+        const originalDocuments: (() => readonly vscode.TextDocument[]) | undefined = Object.getOwnPropertyDescriptor(
+            vscode.workspace,
+            "textDocuments",
+        )?.get;
+
+        assert.ok(originalDocuments);
+
+        // Earlier UI suites can leave dirty editors open; only expose this test's real documents.
+        documentCollection = sandbox.stub(vscode.workspace, "textDocuments").get(() =>
+            originalDocuments.call(vscode.workspace).filter(document => {
+                const relativePath = path.relative(directory, document.uri.fsPath);
+
+                return !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
+            }),
+        );
+
         sandbox.stub(ExtensionConfigurations, "PQTestLocation").get(() => directory);
         sandbox.stub(ExtensionConfigurations, "pqTestExecutablePath").get(() => directExecutable);
         sandbox.stub(ExtensionConfigurations, "getPQTestLocation").resolves(directory);
@@ -79,7 +97,7 @@ suite("CLI-only execution", () => {
             ...options,
         } as vscode.TextDocument;
 
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => [...precedingDocuments, document]);
+        documentCollection.get(() => [...precedingDocuments, document]);
 
         return document;
     }
@@ -267,7 +285,7 @@ suite("CLI-only execution", () => {
             savedDocument("remote.pq", "custom"),
         ];
 
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+        documentCollection.get(() => documents);
         const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
         prompt.resolves(extensionI18n["PQSdk.query.saveAndRun"]);
 
@@ -282,7 +300,7 @@ suite("CLI-only execution", () => {
 
     test("Save All ignores unrelated untitled and non-file documents without prompting", async () => {
         const documents = [savedDocument("untitled", "untitled"), savedDocument("history.pq", "git")];
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+        documentCollection.get(() => documents);
         const prompt = sandbox.stub(vscode.window, "showWarningMessage");
 
         await ensureFileBackedDocumentsSaved();
@@ -319,7 +337,7 @@ suite("CLI-only execution", () => {
 
     test("declining Save All leaves every document unchanged", async () => {
         const documents = [savedDocument("connector.pq"), savedDocument("README.md")];
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+        documentCollection.get(() => documents);
         sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
 
         await assert.rejects(ensureFileBackedDocumentsSaved(), /cancelled/i);
@@ -347,7 +365,7 @@ suite("CLI-only execution", () => {
         const third = savedDocument("opened-during-prompt.md");
         const fourth = savedDocument("opened-during-save.pq");
         documents.push(first, second);
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+        documentCollection.get(() => documents);
         const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
 
         prompt.callsFake(() => {
@@ -372,7 +390,7 @@ suite("CLI-only execution", () => {
 
     test("concurrent execution preflights share one Save All decision", async () => {
         const document = savedDocument("connector.pq");
-        sandbox.stub(vscode.workspace, "textDocuments").get(() => [document]);
+        documentCollection.get(() => [document]);
         const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
         let decide: (value: string | undefined) => void = () => {};
 
@@ -2083,7 +2101,7 @@ suite("CLI-only execution", () => {
                 savedDocument("README.md"),
             ];
 
-            sandbox.stub(vscode.workspace, "textDocuments").get(() => documents);
+            documentCollection.get(() => documents);
             const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
             prompt.resolves(accept ? extensionI18n["PQSdk.query.saveAndRun"] : undefined);
             sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
