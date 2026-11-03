@@ -6,7 +6,7 @@ All notable changes to the "vscode-powerquery-sdk" extension.
 
 - Removed: The experimental `PQServiceHost` backend. All operations now use `PQTest.exe`. A new service host will be introduced in the future.
 - Deprecated: `powerquery.sdk.features.useServiceHost` setting. The setting is ignored and can be removed.
-- Changed: Query commands, query tasks, and run/debug now require saving dirty query documents before execution. Untitled queries must first be saved to a local file.
+- Changed: PQTest commands, tasks, Test Explorer runs, and run/debug now offer "Save All and Run" before execution when any file-backed documents have unsaved changes. Declining or a failed save cancels execution. Unrelated untitled documents are left alone; an untitled query selected for execution must first be saved to a local file.
 - Changed: Increased the maximum Recommended SDK Tools NuGet package version to `2.170.x`.
 
 ## v0.7.4

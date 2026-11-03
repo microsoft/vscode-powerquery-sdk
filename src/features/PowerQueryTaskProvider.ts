@@ -13,7 +13,6 @@ import { buildPqTestArgs, IPQTestService } from "../common/PQTestService";
 import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
-import { hasQueryFileArguments } from "../utils/pqTestQueryDocuments";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 import { PqTestTaskTerminal } from "./PqTestTaskTerminal";
 
@@ -240,28 +239,17 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         executablePath: string,
         scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace,
     ): vscode.Task {
-        const args: string[] = buildPqTestArgs(taskDef);
-
-        const execution: vscode.ProcessExecution | vscode.CustomExecution =
-            taskDef.operation === "run-test" ||
-            taskDef.operation === "test-connection" ||
-            taskDef.operation === "refresh-credential" ||
-            taskDef.pathToQueryFile !== undefined ||
-            taskDef.settingsFile !== undefined ||
-            hasQueryFileArguments(taskDef.additionalArgs ?? []) ||
-            taskDef.stdinStr !== undefined ||
-            taskDef.credentialTemplate !== undefined
-                ? new vscode.CustomExecution((resolvedDefinition: vscode.TaskDefinition) =>
-                      Promise.resolve(
-                          new PqTestTaskTerminal(
-                              resolvedDefinition as PowerQueryTaskDefinition,
-                              executablePath,
-                              typeof scope === "object" ? scope.uri.fsPath : undefined,
-                              scope,
-                          ),
-                      ),
-                  )
-                : new vscode.ProcessExecution(executablePath, args, taskDef.options);
+        const execution: vscode.CustomExecution = new vscode.CustomExecution(
+            (resolvedDefinition: vscode.TaskDefinition) =>
+                Promise.resolve(
+                    new PqTestTaskTerminal(
+                        resolvedDefinition as PowerQueryTaskDefinition,
+                        executablePath,
+                        typeof scope === "object" ? scope.uri.fsPath : undefined,
+                        scope,
+                    ),
+                ),
+        );
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(

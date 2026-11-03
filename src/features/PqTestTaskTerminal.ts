@@ -14,7 +14,7 @@ import { ProcessExit, SpawnedProcess } from "../common/SpawnedProcess";
 import { protectManagedToolsLocationAsync } from "../constants/PowerQuerySdkConfiguration";
 import { inferAnyGeneralErrorString } from "../pqTestConnector/PqTestTaskUtils";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
-import { ensurePqTestQueryDocumentsSaved } from "../utils/pqTestQueryDocuments";
+import { ensureFileBackedDocumentsSaved } from "../utils/queryDocuments";
 import { getFirstWorkspaceFolder } from "../utils/vscodes";
 
 export class PqTestTaskTerminal implements vscode.Pseudoterminal {
@@ -61,7 +61,7 @@ export class PqTestTaskTerminal implements vscode.Pseudoterminal {
                 this.definition.options?.cwd ?? this.definition.workingDirectory ?? workspaceDirectory,
             );
 
-            await ensurePqTestQueryDocumentsSaved(buildPqTestArgs(this.definition), workingDirectory);
+            await ensureFileBackedDocumentsSaved();
 
             if (this.closed) {
                 return;

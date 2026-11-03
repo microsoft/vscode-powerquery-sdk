@@ -23,6 +23,12 @@ What you can do with this extension:
 - Leverage syntax highlighting and intellisense for writing M script
 - Manage your workspace settings and other project-level configurations
 
+### Saving before execution
+
+Before PQTest commands, tasks, Test Explorer runs, or run/debug execute, the SDK offers **Save All and Run** if any file-backed documents have unsaved changes. This saves all modified local files, including connector sources, query and parameter files, settings, and unrelated files. Choosing **Cancel**, dismissing the prompt, or a failed save prevents execution.
+
+Untitled and other non-file documents are not saved by this action. An untitled query selected for execution must first be saved to a local file.
+
 ## Developer Guide
 
 ### Testing Architecture

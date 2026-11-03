@@ -239,9 +239,19 @@ suite("SDK package readiness consumers", () => {
     test("CLI debug shutdown cancels pending package readiness", async () => {
         const { session, spawn } = createDebugSession();
 
+        const toolsRequested = new Promise<void>(resolve => {
+            getTools.callsFake((token?: vscode.CancellationToken) => {
+                const pending = protection.getProtectedLocationAsync(cache, tools, token);
+                resolve();
+
+                return pending;
+            });
+        });
+
         const launching: Promise<void> = session.launch();
         session.finishConfiguration();
         await launching;
+        await toolsRequested;
 
         await assertWaiting(protection.waitForPending());
         sinon.assert.notCalled(spawn);

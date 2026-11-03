@@ -16,7 +16,7 @@ import * as vscode from "vscode";
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { ensurePqTestQueryDocumentsSaved } from "../../utils/pqTestQueryDocuments";
+import { ensureFileBackedDocumentsSaved } from "../../utils/queryDocuments";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
@@ -87,19 +87,7 @@ export class TestRunExecutor {
         );
 
         try {
-            const queryFiles: vscode.Uri[] = this.testItems
-                .map((item: vscode.TestItem) => item.uri)
-                .filter((uri: vscode.Uri | undefined): uri is vscode.Uri => uri !== undefined);
-
-            const ensureRunQueriesSaved = async (): Promise<void> => {
-                await ensurePqTestQueryDocumentsSaved(
-                    ["--settingsFile", this.settingsFile.fsPath, ...(additionalArgs ?? [])],
-                    workingDirectory,
-                    queryFiles,
-                );
-            };
-
-            await ensureRunQueriesSaved();
+            await ensureFileBackedDocumentsSaved();
 
             // Step 1: Determine which extension(s) to use based on precedence rules
             const extensions: string | string[] | undefined = await determineExtensionsForTests(
@@ -148,7 +136,7 @@ export class TestRunExecutor {
                 cancellationToken: this.cancellationToken,
             });
 
-            await ensureRunQueriesSaved();
+            await ensureFileBackedDocumentsSaved();
 
             if (this.cancellationToken.isCancellationRequested) {
                 this.state = ExecutionState.Cancelled;
