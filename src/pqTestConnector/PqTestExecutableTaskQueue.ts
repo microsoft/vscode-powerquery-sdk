@@ -33,7 +33,7 @@ import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { convertStringToInteger } from "../utils/numbers";
 import { pidIsRunning } from "../utils/pids";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
-import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
+import { ensureQueryDocumentSaved, prepareWithSavedDocuments } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
@@ -48,6 +48,7 @@ type PqTestExecutableTaskQueueEventTypes = ExtractEventTypes<typeof PqTestExecut
  * Internal interface within the module, we need not cast members as readonly
  */
 interface PqTestExecutableTask extends PQTestTask {
+    buildBeforeExecution: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolve: (res: any) => void;
     reject: (reason: Error | string) => void;
@@ -275,6 +276,21 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
                 try {
                     await ensureQueryDocumentSaved(pendingTask.pathToQueryFile, this.pqTestLocation || undefined);
+
+                    if (pendingTask.buildBeforeExecution) {
+                        let buildChecked: boolean = false;
+
+                        await prepareWithSavedDocuments(() => {
+                            if (buildChecked) {
+                                // A build can write its .mez after a save but still contain the earlier source.
+                                this.lastPqRelatedFileTouchedDate = new Date();
+                            }
+
+                            buildChecked = true;
+
+                            return this.ExecuteBuildTaskAndAwaitIfNeeded();
+                        });
+                    }
                 } catch (error: unknown) {
                     pendingTask.reject(error instanceof Error ? error : String(error));
                     this.checkingQueryDocument = false;
@@ -409,7 +425,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
+    private async doEnqueueOneTask<T = any>(task: PQTestTask, buildBeforeExecution: boolean = false): Promise<T> {
         await ensureQueryDocumentSaved(task.pathToQueryFile, this.pqTestLocation || undefined);
 
         if (!this.pqTestReady) {
@@ -420,6 +436,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
 
         const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
+        theTask.buildBeforeExecution = buildBeforeExecution;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result: Promise<T> = new Promise<T>((resolve: (value: T) => void, reject: (reason?: any) => void) => {
@@ -644,14 +661,16 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         }
 
         await ensureQueryDocumentSaved(queryFile, this.pqTestLocation || undefined);
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
-            operation: "run-test",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: typeof queryFile === "string" ? queryFile : queryFile.fsPath,
-        });
+        return this.doEnqueueOneTask<any>(
+            {
+                operation: "run-test",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: typeof queryFile === "string" ? queryFile : queryFile.fsPath,
+            },
+            true,
+        );
     }
 
     public async TestConnection(): Promise<GenericResult> {
@@ -661,13 +680,13 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
         await ensureQueryDocumentSaved(pathToQueryFile, this.pqTestLocation || undefined);
 
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
-
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "test-connection",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile,
-        });
+        return this.doEnqueueOneTask<GenericResult>(
+            {
+                operation: "test-connection",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile,
+            },
+            true,
+        );
     }
 }

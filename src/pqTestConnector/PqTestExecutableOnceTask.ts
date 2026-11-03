@@ -18,8 +18,7 @@ import { ExtensionConfigurations } from "../constants/PowerQuerySdkConfiguration
 import { resolveI18nTemplate } from "../i18n/extension";
 import { PqTestResultViewPanel } from "../panels/PqTestResultViewPanel";
 import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
-import { ensurePqTestQueryDocumentsSaved } from "../utils/pqTestQueryDocuments";
-import { ensureQueryDocumentSaved } from "../utils/queryDocuments";
+import { ensureFileBackedDocumentsSaved, ensureQueryDocumentSaved } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
@@ -128,10 +127,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
             const processArgs: string[] = buildPqTestArgs(task);
 
-            if (task.workingDirectory) {
-                await ensurePqTestQueryDocumentsSaved(processArgs, task.workingDirectory);
-            }
-
             if (this.disposed) {
                 return undefined;
             }
@@ -145,7 +140,7 @@ export class PqTestExecutableOnceTask implements IDisposable {
 
             const workingDir: string = task.workingDirectory ?? path.dirname(pqTestExeFullPath);
 
-            await ensurePqTestQueryDocumentsSaved(processArgs, workingDir);
+            await ensureFileBackedDocumentsSaved();
 
             if (this.disposed) {
                 return undefined;
