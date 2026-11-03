@@ -1655,6 +1655,108 @@ suite("CLI-only execution", () => {
         }
     });
 
+    for (const operation of ["run-test", "test-connection"]) {
+        for (const duringBuild of ["dirty", "saved", "cancelled"]) {
+            test(`${operation} rechecks queued builds when connector edits are ${duringBuild} during rebuilding`, async () => {
+                const clock = sandbox.useFakeTimers({ now: 1000, toFake: ["Date"] });
+                const source = vscode.Uri.file(path.join(directory, "connector.pq"));
+                fs.writeFileSync(source.fsPath, "1");
+                const document = await vscode.workspace.openTextDocument(source);
+                sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
+                sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => "test.query.pq");
+                const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+                const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+                const output = sandbox.createStubInstance(PqSdkOutputChannel);
+                const pidFile = path.join(directory, PqTestExecutableTaskQueue.ExecutablePidLockFileName);
+                fs.writeFileSync(pidFile, String(process.pid));
+                const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+                const spawn = stubCli([]);
+                const prompt: sinon.SinonStub = sandbox.stub(vscode.window, "showWarningMessage");
+                prompt.resolves(extensionI18n["PQSdk.query.saveAndRun"]);
+
+                if (duringBuild === "cancelled") {
+                    prompt.onSecondCall().resolves(undefined);
+                }
+
+                let finishBuild: () => void = () => {};
+
+                const buildFinished = new Promise<void>(resolve => {
+                    finishBuild = resolve;
+                });
+
+                let notifyBuilding: () => void = () => {};
+
+                const building = new Promise<void>(resolve => {
+                    notifyBuilding = resolve;
+                });
+
+                const builtSources: string[] = [];
+
+                (taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).callsFake(
+                    async (_location: string, lastTouched: Date) => {
+                        builtSources.push(fs.readFileSync(source.fsPath, "utf8"));
+
+                        if (builtSources.length === 1) {
+                            notifyBuilding();
+                            await buildFinished;
+                            clock.setSystemTime(3000);
+                        } else {
+                            assert.strictEqual(lastTouched.getTime(), 3000);
+                        }
+                    },
+                );
+
+                try {
+                    const query =
+                        operation === "run-test" ? queue.RunTestBattery("test.query.pq") : queue.TestConnection();
+
+                    const completed = duringBuild === "cancelled" ? assert.rejects(query, /cancelled/i) : query;
+                    await new Promise<void>(resolve => setImmediate(resolve));
+                    assert.deepStrictEqual(builtSources, []);
+                    const queuedEdit = new vscode.WorkspaceEdit();
+                    queuedEdit.insert(source, new vscode.Position(0, 0), "2");
+                    assert.ok(await vscode.workspace.applyEdit(queuedEdit));
+                    fs.writeFileSync(pidFile, "");
+                    await building;
+                    assert.deepStrictEqual(builtSources, ["21"]);
+
+                    const next = queue.ListCredentials();
+                    await new Promise<void>(resolve => setImmediate(resolve));
+                    assert.ok(spawn.notCalled);
+                    const buildEdit = new vscode.WorkspaceEdit();
+                    buildEdit.insert(source, new vscode.Position(0, 0), "3");
+                    clock.setSystemTime(2000);
+                    assert.ok(await vscode.workspace.applyEdit(buildEdit));
+
+                    if (duringBuild === "saved") {
+                        assert.ok(await document.save());
+                    }
+
+                    finishBuild();
+                    await completed;
+                    await next;
+
+                    if (duringBuild === "cancelled") {
+                        assert.strictEqual(spawn.callCount, 1);
+                        assert.deepStrictEqual(builtSources, ["21"]);
+                    } else {
+                        assert.strictEqual(spawn.callCount, 2);
+                        assert.ok(spawn.firstCall.args[1]?.includes(operation));
+                        assert.deepStrictEqual(builtSources, ["21", "321"]);
+                    }
+
+                    assert.ok(spawn.lastCall.args[1]?.includes("list-credential"));
+                } finally {
+                    finishBuild();
+                    await document.save();
+                    queue.dispose();
+                    bus.dispose();
+                    context.subscriptions.forEach(disposable => disposable.dispose());
+                }
+            });
+        }
+    }
+
     for (const workingDirectory of ["explicit", "executable directory"]) {
         for (const accept of [false, true]) {
             test(`run/debug ${accept ? "saves" : "rejects"} settings parameter queries using the ${workingDirectory}`, async () => {
@@ -2049,6 +2151,131 @@ suite("CLI-only execution", () => {
             testRun.end();
             controller.dispose();
             cancellation.dispose();
+        }
+    });
+
+    for (const stage of ["extensions", "intermediate results"]) {
+        for (const saveDuringSetup of [false, true]) {
+            test(`Test Explorer recomputes arguments after settings are ${saveDuringSetup ? "saved" : "dirtied"} during ${stage} setup`, async () => {
+                const settingsFile = vscode.Uri.file(path.join(directory, "batch.testsettings.json"));
+                fs.writeFileSync(settingsFile.fsPath, JSON.stringify({ IntermediateTestResultsFolder: "old-results" }));
+                const document = await vscode.workspace.openTextDocument(settingsFile);
+                sandbox.stub(ExtensionConfigurations, "TestExtensionPaths").get(() => "old.mez");
+                chooseSave();
+                let edited = false;
+
+                const editSettings = async (): Promise<void> => {
+                    if (edited) {
+                        return;
+                    }
+
+                    edited = true;
+                    const edit = new vscode.WorkspaceEdit();
+
+                    edit.replace(
+                        settingsFile,
+                        new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)),
+                        JSON.stringify({
+                            ExtensionPaths: ["new.mez"],
+                            IntermediateTestResultsFolder: "new-results",
+                        }),
+                    );
+
+                    assert.ok(await vscode.workspace.applyEdit(edit));
+
+                    if (saveDuringSetup) {
+                        assert.ok(await document.save());
+                    }
+                };
+
+                const determineExtensions = testSettingsUtils.determineExtensionsForTests;
+
+                const determine = sandbox
+                    .stub(testSettingsUtils, "determineExtensionsForTests")
+                    .callsFake(async (...args) => {
+                        const result = await determineExtensions(...args);
+
+                        if (stage === "extensions") {
+                            await editSettings();
+                        }
+
+                        return result;
+                    });
+
+                const buildArgs = testSettingsUtils.buildIntermediateResultsArgs;
+
+                const intermediate = sandbox
+                    .stub(testSettingsUtils, "buildIntermediateResultsArgs")
+                    .callsFake(async (...args) => {
+                        const result = await buildArgs(...args);
+
+                        if (stage === "intermediate results") {
+                            await editSettings();
+                        }
+
+                        return result;
+                    });
+
+                const originalSpawn = childProcess.spawn.bind(childProcess);
+                const spawn = sandbox.stub(childProcess, "spawn").callThrough().withArgs(executable);
+
+                spawn.callsFake(() =>
+                    originalSpawn(
+                        process.execPath,
+                        ["-e", 'process.stdout.write(\'runStart:{"tests":[]}\\nrunEnd:{"passed":0,"failed":0}\\n\');'],
+                        { env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } },
+                    ),
+                );
+
+                const controller = vscode.tests.createTestController("cli-stable-settings", "CLI stable settings");
+                const cancellation = new vscode.CancellationTokenSource();
+                const testRun = controller.createTestRun(new vscode.TestRunRequest([]));
+
+                const executor = new TestRunExecutor(
+                    executable,
+                    settingsFile,
+                    testRun,
+                    sandbox.createStubInstance(PqSdkOutputChannel),
+                    cancellation.token,
+                );
+
+                try {
+                    await executor.execute(["--testFilter", "selected.query.pq"]);
+                    assert.ok(spawn.calledOnce);
+                    const args: readonly string[] = spawn.firstCall.args[1];
+                    assert.ok(!args.includes("--extension"));
+                    assert.ok(!args.includes("old.mez"));
+                    assert.strictEqual(args[args.indexOf("--intermediateTestResultsFolder") + 1], "new-results");
+                    assert.strictEqual(args[args.indexOf("--testFilter") + 1], "selected.query.pq");
+                    assert.strictEqual(determine.callCount, 2);
+                    assert.strictEqual(intermediate.callCount, 2);
+                    assert.ok(!document.isDirty);
+                } finally {
+                    await document.save();
+                    testRun.end();
+                    controller.dispose();
+                    cancellation.dispose();
+                }
+            });
+        }
+    }
+
+    test("localized Save All prompts do not require a queryFile substitution", () => {
+        const localesDirectory = path.resolve(__dirname, "..", "..", "..", "..", "localize", "i18n");
+        const locales = fs.readdirSync(localesDirectory);
+
+        assert.ok(locales.length > 0);
+
+        for (const locale of locales) {
+            const translations: Record<string, string> = JSON.parse(
+                fs.readFileSync(path.join(localesDirectory, locale, "extension.json"), "utf8"),
+            );
+
+            for (const key of ["saveAndRun", "saveRequired", "executionCancelled"]) {
+                const value = translations[`PQSdk.query.${key}`];
+                assert.ok(value, `${locale}: missing ${key}`);
+                assert.ok(!value.includes("{"), `${locale}: ${key} still requires substitution`);
+            }
         }
     });
 

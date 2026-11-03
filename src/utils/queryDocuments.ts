@@ -59,6 +59,41 @@ export function ensureFileBackedDocumentsSaved(): Promise<void> {
     return pendingSave;
 }
 
+export async function prepareWithSavedDocuments<T>(prepare: () => Promise<T>): Promise<T> {
+    let changed: boolean;
+    let result: T;
+
+    do {
+        // eslint-disable-next-line no-await-in-loop
+        await ensureFileBackedDocumentsSaved();
+        changed = false;
+
+        const markChanged = (document: vscode.TextDocument): void => {
+            if (document.uri.scheme === "file") {
+                changed = true;
+            }
+        };
+
+        const changes: vscode.Disposable = vscode.workspace.onDidChangeTextDocument(
+            (event: vscode.TextDocumentChangeEvent) => markChanged(event.document),
+        );
+
+        const saves: vscode.Disposable = vscode.workspace.onDidSaveTextDocument(markChanged);
+
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            result = await prepare();
+            // eslint-disable-next-line no-await-in-loop
+            await ensureFileBackedDocumentsSaved();
+        } finally {
+            changes.dispose();
+            saves.dispose();
+        }
+    } while (changed);
+
+    return result;
+}
+
 export async function ensureQueryDocumentSaved(
     queryFile: string | vscode.Uri | undefined,
     workingDirectory: string = process.cwd(),

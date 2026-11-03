@@ -16,7 +16,7 @@ import * as vscode from "vscode";
 import { SpawnedProcessStreaming } from "../../common/SpawnedProcessStreaming";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
-import { ensureFileBackedDocumentsSaved } from "../../utils/queryDocuments";
+import { prepareWithSavedDocuments } from "../../utils/queryDocuments";
 import { PqTestCommandBuilder } from "./helpers/PqTestCommandBuilder";
 import { PqTestResultEventType, PqTestResultParser } from "./helpers/PqTestResultParser";
 import { TestResultUpdater } from "./helpers/TestResultUpdater";
@@ -87,21 +87,32 @@ export class TestRunExecutor {
         );
 
         try {
-            await ensureFileBackedDocumentsSaved();
+            const args: string[] = await prepareWithSavedDocuments(async (): Promise<string[]> => {
+                const extensions: string | string[] | undefined = await determineExtensionsForTests(
+                    this.settingsFile.fsPath,
+                    this.outputChannel,
+                );
 
-            // Step 1: Determine which extension(s) to use based on precedence rules
-            const extensions: string | string[] | undefined = await determineExtensionsForTests(
-                this.settingsFile.fsPath,
-                this.outputChannel,
-            );
+                const intermediateResultsArgs: string[] = await buildIntermediateResultsArgs(
+                    this.settingsFile.fsPath,
+                    this.outputChannel,
+                );
 
-            // Step 2: Build intermediate results arguments
-            const intermediateResultsArgs: string[] = await buildIntermediateResultsArgs(
-                this.settingsFile.fsPath,
-                this.outputChannel,
-            );
+                const commandBuilder: PqTestCommandBuilder = new PqTestCommandBuilder(
+                    "run-compare",
+                    this.settingsFile,
+                    extensions,
+                );
 
-            // Step 3: Build the lookup map for test items
+                return commandBuilder.buildArgs([...intermediateResultsArgs, ...(additionalArgs || [])]);
+            });
+
+            if (this.cancellationToken.isCancellationRequested) {
+                this.state = ExecutionState.Cancelled;
+
+                return;
+            }
+
             const runItemsMap: Map<string, vscode.TestItem> = new Map<string, vscode.TestItem>();
 
             this.testItems.forEach((item: vscode.TestItem) => {
@@ -111,18 +122,6 @@ export class TestRunExecutor {
                 }
             });
 
-            // Step 4: Build the command using PqTestCommandBuilder
-            const commandBuilder: PqTestCommandBuilder = new PqTestCommandBuilder(
-                "run-compare",
-                this.settingsFile,
-                extensions,
-            );
-
-            const allAdditionalArgs: string[] = [...intermediateResultsArgs, ...(additionalArgs || [])];
-
-            const args: string[] = commandBuilder.buildArgs(allAdditionalArgs);
-
-            // Step 5: Execute the process using SpawnedProcessStreaming
             this.outputChannel.appendInfoLine(
                 resolveI18nTemplate("PQSdk.testAdapter.executor.executingCommand", {
                     exePath: this.pqTestPath,
@@ -136,21 +135,11 @@ export class TestRunExecutor {
                 cancellationToken: this.cancellationToken,
             });
 
-            await ensureFileBackedDocumentsSaved();
-
-            if (this.cancellationToken.isCancellationRequested) {
-                this.state = ExecutionState.Cancelled;
-
-                return;
-            }
-
             const resultsStream: NodeJS.ReadableStream = await processRunner.run();
 
-            // Step 6: Create the result parser and updater
             const resultParser: PqTestResultParser = new PqTestResultParser(this.outputChannel);
             const resultUpdater: TestResultUpdater = new TestResultUpdater(this.testRun, this.outputChannel);
 
-            // Step 7: Implement the state machine
             // Consume the event stream from the parser
             for await (const event of resultParser.parseStream(resultsStream, this.cancellationToken)) {
                 let currentTest: vscode.TestItem | undefined = undefined;

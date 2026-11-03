@@ -27,6 +27,8 @@ What you can do with this extension:
 
 Before PQTest commands, tasks, Test Explorer runs, or run/debug execute, the SDK offers **Save All and Run** if any file-backed documents have unsaved changes. This saves all modified local files, including connector sources, query and parameter files, settings, and unrelated files. Choosing **Cancel**, dismissing the prompt, or a failed save prevents execution.
 
+Automatic connector builds run after queued commands reach the front of the queue. If files change during a build or Test Explorer setup, the SDK saves again and refreshes the build or settings-derived arguments before launching PQTest.
+
 Untitled and other non-file documents are not saved by this action. An untitled query selected for execution must first be saved to a local file.
 
 ## Developer Guide
