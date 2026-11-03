@@ -524,6 +524,8 @@ suite("CLI-only execution", () => {
                 if (definition.operation !== "msbuild" && definition.operation !== "compile") {
                     assert.ok(task.execution instanceof vscode.CustomExecution);
                     assert.ok(resolved?.execution instanceof vscode.CustomExecution);
+                } else {
+                    assert.ok(task.execution instanceof vscode.ProcessExecution);
                 }
             }
         });
@@ -1283,6 +1285,22 @@ suite("CLI-only execution", () => {
         await assert.rejects(PowerQueryTaskProvider.executeTask(task), /Cannot start compiler/);
         assert.ok(taskDisposed.calledOnce);
         assert.ok(processDisposed.calledOnce);
+    });
+
+    test("provided MakePQX builds remain native and do not enter the PQTest save preflight", async () => {
+        const document = mockDocument();
+        const prompt = sandbox.stub(vscode.window, "showWarningMessage");
+        const task = PowerQueryTaskProvider.buildMakePQXCompileTask(directory);
+        assert.ok(task.execution instanceof vscode.ProcessExecution);
+        assert.strictEqual(task.execution.process, path.join(directory, "MakePQX.exe"));
+        assert.deepStrictEqual(task.execution.args, ["compile"]);
+        const node = findExecutable("node", [".exe", ""]);
+        assert.ok(node);
+        task.execution = new vscode.ProcessExecution(node, ["-e", "process.exit(0)"]);
+
+        await PowerQueryTaskProvider.executeTask(task);
+        assert.ok(prompt.notCalled);
+        assert.ok((document.save as sinon.SinonStub).notCalled);
     });
 
     for (const exitCode of [0, 7]) {

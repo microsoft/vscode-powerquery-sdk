@@ -239,17 +239,19 @@ export class PowerQueryTaskProvider implements vscode.TaskProvider {
         executablePath: string,
         scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace,
     ): vscode.Task {
-        const execution: vscode.CustomExecution = new vscode.CustomExecution(
-            (resolvedDefinition: vscode.TaskDefinition) =>
-                Promise.resolve(
-                    new PqTestTaskTerminal(
-                        resolvedDefinition as PowerQueryTaskDefinition,
-                        executablePath,
-                        typeof scope === "object" ? scope.uri.fsPath : undefined,
-                        scope,
-                    ),
-                ),
-        );
+        const execution: vscode.ProcessExecution | vscode.CustomExecution =
+            taskDef.operation === "compile"
+                ? new vscode.ProcessExecution(executablePath, buildPqTestArgs(taskDef))
+                : new vscode.CustomExecution((resolvedDefinition: vscode.TaskDefinition) =>
+                      Promise.resolve(
+                          new PqTestTaskTerminal(
+                              resolvedDefinition as PowerQueryTaskDefinition,
+                              executablePath,
+                              typeof scope === "object" ? scope.uri.fsPath : undefined,
+                              scope,
+                          ),
+                      ),
+                  );
 
         // TODO: Include problem matcher
         const vscTask: vscode.Task = new vscode.Task(
