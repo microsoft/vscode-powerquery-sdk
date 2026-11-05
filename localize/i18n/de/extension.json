@@ -6,6 +6,7 @@
   "PQSdk.query.saveRequired": "PQTest.exe führt gespeicherte Dateien aus. Vor der Ausführung alle geänderten lokalen Dateien speichern, auch nicht zugehörige Dateien? Unbenannte Dokumente werden nicht gespeichert.",
   "PQSdk.query.executionCancelled": "Ausführung abgebrochen. Vor der Ausführung müssen alle geänderten lokalen Dateien gespeichert werden.",
   "PQSdk.query.saveFailed": "Ausführung abgebrochen, da {queryFile} nicht gespeichert werden konnte.",
+  "PQSdk.query.configurationNotApplied": "Die Ausführung wurde abgebrochen, weil Visual Studio Code die gespeicherten Einstellungen in {queryFile} nicht angewendet hat. Überprüfen Sie die Einstellungsdatei, und versuchen Sie es erneut.",
   "PQSdk.query.saveToFile": "Speichern Sie {queryFile} in einer lokalen Datei, bevor Sie die Datei mit PQTest.exe ausführen.",
   "PQSdk.common.open.file": "{fileName} öffnen",
   "PQSdk.common.logLevel.Debug": "Debuggen",

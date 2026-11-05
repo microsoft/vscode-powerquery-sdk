@@ -6,6 +6,7 @@
   "PQSdk.query.saveRequired": "PQTest.exe exécute les fichiers enregistrés. Enregistrer tous les fichiers locaux modifiés, y compris les fichiers sans rapport, avant l’exécution ? Les documents sans titre ne seront pas enregistrés.",
   "PQSdk.query.executionCancelled": "Exécution annulée. Tous les fichiers locaux modifiés doivent être enregistrés avant l’exécution.",
   "PQSdk.query.saveFailed": "Exécution annulée car {queryFile} n’a pas pu être enregistré.",
+  "PQSdk.query.configurationNotApplied": "Exécution annulée car Visual Studio Code n’a pas appliqué les paramètres enregistrés dans {queryFile}. Vérifiez le fichier de paramètres et réessayez.",
   "PQSdk.query.saveToFile": "Enregistrez {queryFile} dans un fichier local avant de l’exécuter avec PQTest.exe.",
   "PQSdk.common.open.file": "Ouvrir {fileName}",
   "PQSdk.common.logLevel.Debug": "Déboguer",

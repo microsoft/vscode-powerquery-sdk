@@ -82,7 +82,7 @@ suite("CLI-only execution", () => {
 
     teardown(() => {
         sandbox.restore();
-        fs.rmSync(directory, { recursive: true, force: true });
+        fs.rmSync(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     });
 
     function mockDocument(
@@ -155,6 +155,7 @@ suite("CLI-only execution", () => {
             const state: CreateAuthState = {
                 DataSourceKind: "FakeConnector",
                 AuthenticationKind: kind,
+                PathToConnectorFile: path.join(directory, "selected.mez"),
                 PathToQueryFile: path.join(directory, "fake.query.pq"),
                 $$KEY$$: value,
                 $$USERNAME$$: value,
@@ -165,7 +166,7 @@ suite("CLI-only execution", () => {
 
             const originalSpawn = childProcess.spawn.bind(childProcess);
 
-            sandbox
+            const spawn = sandbox
                 .stub(childProcess, "spawn")
                 .callsFake(() =>
                     originalSpawn(
@@ -180,8 +181,14 @@ suite("CLI-only execution", () => {
                 );
 
             try {
-                const result = await queue.SetCredentialFromCreateAuthState(state);
+                const pending = queue.SetCredentialFromCreateAuthState(state);
+                state.PathToConnectorFile = path.join(directory, "different.mez");
+                state.PathToQueryFile = path.join(directory, "different.query.pq");
+                const result = await pending;
                 assert.strictEqual(result.Status, "Success");
+                const args = spawn.firstCall.args[1];
+                assert.strictEqual(args?.[args.indexOf("--extension") + 1], path.join(directory, "selected.mez"));
+                assert.strictEqual(args?.[args.indexOf("--queryFile") + 1], path.join(directory, "fake.query.pq"));
             } finally {
                 queue.dispose();
                 bus.dispose();
@@ -463,6 +470,111 @@ suite("CLI-only execution", () => {
         await ensureQueryDocumentSaved(document.uri.fsPath);
         assert.ok(save.calledOnce);
     });
+
+    for (const layer of ["workspace", "folder", "workspace file", "removed", "unchanged", "timeout"]) {
+        test(`Save All synchronizes saved SDK settings with the ${layer} configuration`, async () => {
+            const folder: vscode.WorkspaceFolder = { uri: vscode.Uri.file(directory), name: "test", index: 0 };
+            const workspaceFile = vscode.Uri.file(path.join(directory, "test.code-workspace"));
+            const multiRoot = layer === "folder" || layer === "workspace file";
+            sandbox.stub(vscode.workspace, "workspaceFolders").get(() => [folder]);
+            sandbox.stub(vscode.workspace, "workspaceFile").get(() => (multiRoot ? workspaceFile : undefined));
+            let current: Record<string, unknown> = { defaultExtension: "A.mez", test: { extensionPaths: ["A.mez"] } };
+
+            const inspect = sandbox.stub().callsFake(() => ({
+                key: "powerquery.sdk",
+                workspaceValue: layer === "folder" ? { defaultExtension: "workspace.mez" } : current,
+                workspaceFolderValue: layer === "folder" ? current : undefined,
+            }));
+
+            const configuration: vscode.WorkspaceConfiguration = { ...vscode.workspace.getConfiguration(), inspect };
+            sandbox.stub(vscode.workspace, "getConfiguration").returns(configuration);
+            const events = new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
+            const subscribe = sandbox.stub(vscode.workspace, "onDidChangeConfiguration").callsFake(events.event);
+            const removed = layer === "removed" || layer === "unchanged";
+
+            const settings = `{
+                // Workspace configuration supports comments and trailing commas.
+                ${removed ? "" : '"powerquery.sdk.defaultExtension": "B.mez", "powerquery.sdk.test.extensionPaths": ["B.mez"],'}
+            }`;
+
+            let dirty = true;
+
+            const document = mockDocument({
+                uri:
+                    layer === "workspace file"
+                        ? workspaceFile
+                        : vscode.Uri.joinPath(folder.uri, ".vscode", "settings.json"),
+                getText: () => (layer === "workspace file" ? `{"folders": [], "settings": ${settings}}` : settings),
+                save: sandbox.stub().callsFake(() => {
+                    dirty = false;
+
+                    return Promise.resolve(true);
+                }),
+            });
+
+            sandbox.stub(document, "isDirty").get(() => dirty);
+            chooseSave();
+
+            if (layer === "unchanged") {
+                current = {};
+            }
+
+            const clock =
+                layer === "timeout" ? sandbox.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] }) : undefined;
+
+            let completed = false;
+
+            const pending = ensureFileBackedDocumentsSaved().then(() => {
+                completed = true;
+            });
+
+            const rejected = layer === "timeout" ? assert.rejects(pending, /has not applied/) : undefined;
+
+            try {
+                await new Promise<void>(resolve => setImmediate(resolve));
+
+                if (layer === "unchanged") {
+                    await pending;
+                    assert.ok(subscribe.notCalled);
+
+                    return;
+                }
+
+                assert.ok(!completed);
+                assert.ok(subscribe.calledOnce);
+                const disposed = sandbox.spy(subscribe.firstCall.returnValue, "dispose");
+
+                if (clock) {
+                    await clock.tickAsync(10_000);
+                    await rejected;
+                    assert.ok(disposed.calledOnce);
+                    assert.ok(!completed);
+                    await ensureFileBackedDocumentsSaved();
+
+                    return;
+                }
+
+                current = { defaultExtension: "B.mez", test: { extensionPaths: ["A.mez"] } };
+                events.fire({ affectsConfiguration: () => true });
+                await new Promise<void>(resolve => setImmediate(resolve));
+                assert.ok(!completed);
+                current = removed ? {} : { defaultExtension: "B.mez", test: { extensionPaths: ["B.mez"] } };
+                events.fire({ affectsConfiguration: () => true });
+                await pending;
+                assert.ok(completed);
+                assert.ok(disposed.calledOnce);
+                const inspectionCount = inspect.callCount;
+                events.fire({ affectsConfiguration: () => true });
+                assert.strictEqual(inspect.callCount, inspectionCount);
+            } finally {
+                if (clock) {
+                    await clock.runAllAsync();
+                }
+
+                events.dispose();
+            }
+        });
+    }
 
     test("dismissal cancels without saving", async () => {
         const document = mockDocument();
@@ -1690,6 +1802,289 @@ suite("CLI-only execution", () => {
             task.dispose();
         }
     });
+
+    for (const execution of ["run/debug", "test-connection", "run-test"]) {
+        test(`${execution} uses refreshed paths from saved workspace settings`, async () => {
+            const folder = vscode.workspace.workspaceFolders?.[0];
+            assert.ok(folder);
+            const configuration = vscode.workspace.getConfiguration("powerquery.sdk");
+            const originalConnector = configuration.inspect<string>("defaultExtension")?.workspaceValue;
+            const originalQuery = configuration.inspect<string>("defaultQueryFile")?.workspaceValue;
+            const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+            const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+            const output = sandbox.createStubInstance(PqSdkOutputChannel);
+            const task = new PqTestExecutableOnceTask();
+            let queue: PqTestExecutableTaskQueue | undefined;
+
+            try {
+                await configuration.update("defaultExtension", "A.mez", vscode.ConfigurationTarget.Workspace);
+                await configuration.update("defaultQueryFile", "old.query.pq", vscode.ConfigurationTarget.Workspace);
+
+                const document = await vscode.workspace.openTextDocument(
+                    vscode.Uri.joinPath(folder.uri, ".vscode", "settings.json"),
+                );
+
+                documentCollection.get(() => [document]);
+                sandbox.stub(vscode.window, "activeTextEditor").get(() => undefined);
+                const text = document.getText();
+                const edit = new vscode.WorkspaceEdit();
+
+                edit.replace(
+                    document.uri,
+                    new vscode.Range(document.positionAt(0), document.positionAt(text.length)),
+                    text.replace('"A.mez"', '"B.mez"').replace('"old.query.pq"', '"new.query.pq"'),
+                );
+
+                assert.ok(await vscode.workspace.applyEdit(edit));
+                assert.ok(document.isDirty);
+                chooseSave();
+                sandbox.stub(vscode.commands, "executeCommand").resolves();
+                const spawn = stubCli([]);
+
+                if (execution === "run/debug") {
+                    const exited = new Promise<void>(resolve => {
+                        task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+                    });
+
+                    await task.run(path.join(directory, "selected.query.pq"), { operation: "run-test" });
+                    await exited;
+                } else {
+                    queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+
+                    if (execution === "run-test") {
+                        await queue.RunTestBattery();
+                    } else {
+                        await queue.TestConnection();
+                    }
+                }
+
+                assert.ok(!document.isDirty);
+                assert.ok(spawn.calledOnce);
+                const args = spawn.firstCall.args[1];
+                assert.strictEqual(args?.[args.indexOf("--extension") + 1], "B.mez");
+
+                if (execution !== "run/debug") {
+                    assert.strictEqual(args?.[args.indexOf("--queryFile") + 1], "new.query.pq");
+                }
+            } finally {
+                task.dispose();
+                queue?.dispose();
+                bus.dispose();
+                context.subscriptions.forEach(disposable => disposable.dispose());
+                await configuration.update("defaultExtension", originalConnector, vscode.ConfigurationTarget.Workspace);
+                await configuration.update("defaultQueryFile", originalQuery, vscode.ConfigurationTarget.Workspace);
+            }
+        });
+    }
+
+    for (const operation of ["run-test", "test-connection"] as const) {
+        for (const saveStage of ["initial save", "readiness"]) {
+            test(`${operation} run/debug refreshes the configured connector after ${saveStage}`, async () => {
+                let connector = "A.mez";
+                let dirty = saveStage === "initial save";
+
+                const document = mockDocument({
+                    uri: vscode.Uri.file(path.join(directory, ".vscode", "settings.json")),
+                });
+
+                sandbox.stub(document, "isDirty").get(() => dirty);
+                sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => connector);
+
+                (document.save as sinon.SinonStub).callsFake(() => {
+                    connector = "B.mez";
+                    dirty = false;
+
+                    return Promise.resolve(true);
+                });
+
+                if (saveStage === "readiness") {
+                    (ExtensionConfigurations.getPqTestExecutablePath as sinon.SinonStub).callsFake(() => {
+                        dirty = true;
+
+                        return Promise.resolve(undefined);
+                    });
+                }
+
+                chooseSave();
+                sandbox.stub(vscode.commands, "executeCommand").resolves();
+                const spawn = stubCli([]);
+                const task = new PqTestExecutableOnceTask();
+                const program = path.join(directory, "selected.query.pq");
+
+                const exited = new Promise<void>(resolve => {
+                    task.eventBus.on(PqTestExecutableOnceTaskQueueEvents.processExited, resolve);
+                });
+
+                try {
+                    await task.run(program, { operation, additionalArgs: ["--testFilter", "selected.query.pq"] });
+                    await exited;
+                    assert.ok(spawn.calledOnce);
+                    const args = spawn.firstCall.args[1];
+                    assert.strictEqual(args?.[args.indexOf("--extension") + 1], "B.mez");
+                    assert.strictEqual(args?.[args.indexOf("--queryFile") + 1], program);
+                    assert.ok(args?.includes("--testFilter"));
+                } finally {
+                    task.dispose();
+                }
+            });
+        }
+    }
+
+    for (const operation of [
+        "run-test",
+        "test-connection",
+        "refresh-credential",
+        "credential-template",
+        "info",
+        "set-credential",
+    ]) {
+        const builds = operation === "run-test" || operation === "test-connection";
+
+        for (const saveStage of ["enqueue", "dequeue", ...(builds ? ["build"] : [])]) {
+            test(`${operation} refreshes configuration-derived inputs after the ${saveStage} save`, async () => {
+                let connector = "A.mez";
+                let query = "old.query.pq";
+                let dirty = saveStage === "enqueue";
+
+                const document = mockDocument({
+                    uri: vscode.Uri.file(path.join(directory, ".vscode", "settings.json")),
+                });
+
+                sandbox.stub(document, "isDirty").get(() => dirty);
+                sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => connector);
+                sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => query);
+                sandbox.stub(vscode.window, "activeTextEditor").get(() => undefined);
+
+                (document.save as sinon.SinonStub).callsFake(() => {
+                    connector = "B.mez";
+                    query = "new.query.pq";
+                    dirty = false;
+
+                    return Promise.resolve(true);
+                });
+
+                if (saveStage === "build") {
+                    (taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).callsFake(() => {
+                        dirty = true;
+
+                        return Promise.resolve();
+                    });
+                }
+
+                chooseSave();
+                const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+                const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+                const output = sandbox.createStubInstance(PqSdkOutputChannel);
+                const pidFile = path.join(directory, PqTestExecutableTaskQueue.ExecutablePidLockFileName);
+
+                if (saveStage === "dequeue") {
+                    fs.writeFileSync(pidFile, String(process.pid));
+                }
+
+                const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+                const spawn = stubCli([]);
+
+                try {
+                    let pending: Promise<unknown>;
+
+                    switch (operation) {
+                        case "run-test":
+                            pending = queue.RunTestBattery();
+                            break;
+                        case "test-connection":
+                            pending = queue.TestConnection();
+                            break;
+                        case "refresh-credential":
+                            pending = queue.RefreshCredential();
+                            break;
+                        case "credential-template":
+                            pending = queue.GenerateCredentialTemplate();
+                            break;
+                        case "info":
+                            pending = queue.DisplayExtensionInfo();
+                            break;
+                        case "set-credential":
+                            pending = queue.SetCredential("{}");
+                            break;
+                        default:
+                            throw new Error(`Unexpected operation: ${operation}`);
+                    }
+
+                    if (saveStage === "dequeue") {
+                        await new Promise<void>(resolve => setImmediate(resolve));
+                        assert.ok(spawn.notCalled);
+                        dirty = true;
+                        fs.writeFileSync(pidFile, "");
+                    }
+
+                    await pending;
+                    assert.ok(spawn.calledOnce);
+                    const args = spawn.firstCall.args[1];
+                    assert.strictEqual(args?.[args.indexOf("--extension") + 1], "B.mez");
+
+                    if (operation !== "info") {
+                        assert.strictEqual(args?.[args.indexOf("--queryFile") + 1], "new.query.pq");
+                    }
+
+                    assert.strictEqual((taskUtils.executeBuildTaskAndAwaitIfNeeded as sinon.SinonStub).called, builds);
+                } finally {
+                    queue.dispose();
+                    bus.dispose();
+                    context.subscriptions.forEach(disposable => disposable.dispose());
+                }
+            });
+        }
+    }
+
+    for (const selection of ["explicit", "active"]) {
+        test(`queued execution preserves the ${selection} query when saving changes the configured default`, async () => {
+            let query = "old.query.pq";
+            let dirty = false;
+            const selectedQuery = vscode.Uri.file(path.join(directory, "selected.query.pq"));
+            const document = mockDocument();
+            sandbox.stub(document, "isDirty").get(() => dirty);
+            sandbox.stub(ExtensionConfigurations, "DefaultExtensionLocation").get(() => undefined);
+            sandbox.stub(ExtensionConfigurations, "DefaultQueryFileLocation").get(() => query);
+
+            sandbox
+                .stub(vscode.window, "activeTextEditor")
+                .get(() =>
+                    selection === "active" ? { document: { uri: selectedQuery, languageId: "powerquery" } } : undefined,
+                );
+
+            (document.save as sinon.SinonStub).callsFake(() => {
+                query = "new.query.pq";
+                dirty = false;
+
+                return Promise.resolve(true);
+            });
+
+            chooseSave();
+            const context = { extensionPath: directory, subscriptions: [] as vscode.Disposable[] };
+            const bus = new GlobalEventBus(context as vscode.ExtensionContext);
+            const output = sandbox.createStubInstance(PqSdkOutputChannel);
+            const pidFile = path.join(directory, PqTestExecutableTaskQueue.ExecutablePidLockFileName);
+            fs.writeFileSync(pidFile, String(process.pid));
+            const queue = new PqTestExecutableTaskQueue(context as vscode.ExtensionContext, bus, output);
+            const spawn = stubCli([]);
+
+            try {
+                const pending = queue.RunTestBattery(selection === "explicit" ? selectedQuery : undefined);
+                await new Promise<void>(resolve => setImmediate(resolve));
+                assert.ok(spawn.notCalled);
+                dirty = true;
+                fs.writeFileSync(pidFile, "");
+                await pending;
+                assert.ok(spawn.calledOnce);
+                const args = spawn.firstCall.args[1];
+                assert.strictEqual(args?.[args.indexOf("--queryFile") + 1], selectedQuery.fsPath);
+            } finally {
+                queue.dispose();
+                bus.dispose();
+                context.subscriptions.forEach(disposable => disposable.dispose());
+            }
+        });
+    }
 
     for (const operation of ["run-test", "test-connection"]) {
         for (const duringBuild of ["dirty", "saved", "cancelled"]) {
