@@ -35,7 +35,7 @@ describe("NugetCommandService unit tests (offline)", () => {
                     "data",
                     Buffer.from("Microsoft.PowerQuery.SdkTools 2.110.2\nMicrosoft.PowerQuery.SdkTools 2.109.1\n"),
                 );
-                child.emit("exit", 0, null);
+                child.emit("close", 0, null);
             });
 
             return child;

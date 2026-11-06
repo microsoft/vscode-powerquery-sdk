@@ -53,6 +53,14 @@ smallest directory containing them rather than the workspace root. Invalid setti
 are reported in the Test Explorer and the Power Query SDK output channel, not in
 error popups.
 
+### Saving before execution
+
+Before PQTest commands, tasks, Test Explorer runs, or run/debug execute, the SDK offers **Save All and Run** if any file-backed documents have unsaved changes. This saves all modified local files, including connector sources, query and parameter files, settings, and unrelated files. Choosing **Cancel**, dismissing the prompt, or a failed save prevents execution.
+
+Automatic connector builds run after queued commands reach the front of the queue. If files change during a build or Test Explorer setup, the SDK saves again and refreshes the build or settings-derived arguments before launching PQTest. After saving workspace settings, the SDK waits for VS Code to apply the SDK configuration changes. Configuration-derived connector and query paths are refreshed after preparation; explicitly selected queries remain selected.
+
+Untitled and other non-file documents are not saved by this action. An untitled query selected for execution must first be saved to a local file.
+
 ## Developer Guide
 
 ### Testing Architecture
@@ -61,13 +69,13 @@ This extension uses a modern, comprehensive testing approach designed for reliab
 
 #### Test Types
 
-- **Unit Tests** (152 tests): Pure business logic testing with no external dependencies
+- **Unit Tests**: Pure business logic testing with no external dependencies
     - Property-based testing for validation logic
     - Performance testing with automated thresholds
     - Edge case and boundary condition testing
     - Service logic testing with dependency injection
 
-- **Integration Tests** (13 tests): VS Code API integration testing
+- **Integration Tests**: VS Code API integration testing
     - Extension loading and command registration
     - Schema management and validation
     - File system operations in VS Code context

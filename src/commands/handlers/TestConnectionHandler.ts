@@ -38,6 +38,11 @@ export class TestConnectionHandler
     public async execute(_params: TestConnectionParams): Promise<CommandResult<TestConnectionResult>> {
         try {
             const result: GenericResult = await this.pqTestService.TestConnection();
+
+            if (result.Status === "Failure") {
+                return { success: false, error: result.Message || JSON.stringify(result) };
+            }
+
             const formattedOutput: string = this.prettifyJson(result);
 
             return {

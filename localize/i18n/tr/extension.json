@@ -1,6 +1,13 @@
 {
   "PQSdk.common.enable": "Etkinleştir",
   "PQSdk.common.cancel": "İptal",
+  "PQSdk.taskProvider.taskFailed": "{taskName} görevi başarısız oldu veya iptal edildi.",
+  "PQSdk.query.saveAndRun": "Tümünü Kaydet ve Çalıştır",
+  "PQSdk.query.saveRequired": "PQTest.exe kaydedilmiş dosyaları çalıştırır. Çalıştırmadan önce ilgisiz dosyalar dahil değiştirilmiş tüm yerel dosyalar kaydedilsin mi? Başlıksız belgeler kaydedilmez.",
+  "PQSdk.query.executionCancelled": "Yürütme iptal edildi. Çalıştırmadan önce değiştirilmiş tüm yerel dosyalar kaydedilmelidir.",
+  "PQSdk.query.saveFailed": "{queryFile} kaydedilemediği için yürütme iptal edildi.",
+  "PQSdk.query.configurationNotApplied": "Visual Studio Code, {queryFile} dosyasına kaydedilen ayarları uygulamadığı için yürütme iptal edildi. Ayarlar dosyasını denetleyip yeniden deneyin.",
+  "PQSdk.query.saveToFile": "PQTest.exe ile çalıştırmadan önce {queryFile} dosyasını yerel bir dosyaya kaydedin.",
   "PQSdk.common.open.file": "{fileName} dosyasını aç",
   "PQSdk.common.logLevel.Debug": "Hata Ayıkla",
   "PQSdk.common.logLevel.Trace": "İzle",
