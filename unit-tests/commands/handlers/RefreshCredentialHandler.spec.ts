@@ -84,9 +84,9 @@ describe("RefreshCredentialHandler", () => {
             const result: CommandResult<RefreshCredentialResult> = await handler.execute({});
 
             // Assert
-            expect(result.success).to.equal(true); // Handler succeeded, but refresh failed
-            expect(result.data!.result.Status).to.equal("Failure");
-            expect(result.data!.formattedOutput).to.contain("Failure");
+            expect(result.success).to.equal(false);
+            expect(result.data).to.equal(undefined);
+            expect(result.error).to.equal("Refresh failed");
         });
 
         it("should return error result when service throws Error", async () => {

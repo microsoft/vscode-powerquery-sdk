@@ -1,6 +1,13 @@
 {
   "PQSdk.common.enable": "Włącz",
   "PQSdk.common.cancel": "Anuluj",
+  "PQSdk.taskProvider.taskFailed": "Zadanie {taskName} nie powiodło się lub zostało anulowane.",
+  "PQSdk.query.saveAndRun": "Zapisz wszystko i uruchom",
+  "PQSdk.query.saveRequired": "PQTest.exe uruchamia zapisane pliki. Czy przed uruchomieniem zapisać wszystkie zmodyfikowane pliki lokalne, w tym pliki niepowiązane? Dokumenty bez tytułu nie zostaną zapisane.",
+  "PQSdk.query.executionCancelled": "Anulowano wykonywanie. Przed uruchomieniem należy zapisać wszystkie zmodyfikowane pliki lokalne.",
+  "PQSdk.query.saveFailed": "Anulowano wykonywanie, ponieważ nie można zapisać {queryFile}.",
+  "PQSdk.query.configurationNotApplied": "Anulowano wykonywanie, ponieważ program Visual Studio Code nie zastosował ustawień zapisanych w pliku {queryFile}. Sprawdź plik ustawień i spróbuj ponownie.",
+  "PQSdk.query.saveToFile": "Zapisz {queryFile} w pliku lokalnym przed uruchomieniem go za pomocą PQTest.exe.",
   "PQSdk.common.open.file": "Otwórz plik {fileName}",
   "PQSdk.common.logLevel.Debug": "Debuguj",
   "PQSdk.common.logLevel.Trace": "Ślad",

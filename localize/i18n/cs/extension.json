@@ -1,6 +1,13 @@
 {
   "PQSdk.common.enable": "Povolit",
   "PQSdk.common.cancel": "Storno",
+  "PQSdk.taskProvider.taskFailed": "Úloha {taskName} selhala nebo byla zrušena.",
+  "PQSdk.query.saveAndRun": "Uložit vše a spustit",
+  "PQSdk.query.saveRequired": "PQTest.exe spouští uložené soubory. Chcete před spuštěním uložit všechny změněné místní soubory, včetně nesouvisejících souborů? Dokumenty bez názvu nebudou uloženy.",
+  "PQSdk.query.executionCancelled": "Spuštění bylo zrušeno. Před spuštěním je nutné uložit všechny změněné místní soubory.",
+  "PQSdk.query.saveFailed": "Spuštění bylo zrušeno, protože soubor {queryFile} se nepodařilo uložit.",
+  "PQSdk.query.configurationNotApplied": "Spuštění bylo zrušeno, protože Visual Studio Code nepoužil uložené nastavení v souboru {queryFile}. Zkontrolujte soubor nastavení a zkuste to znovu.",
+  "PQSdk.query.saveToFile": "Před spuštěním pomocí PQTest.exe uložte {queryFile} do místního souboru.",
   "PQSdk.common.open.file": "Otevřít soubor {fileName}",
   "PQSdk.common.logLevel.Debug": "Ladit",
   "PQSdk.common.logLevel.Trace": "Trasování",

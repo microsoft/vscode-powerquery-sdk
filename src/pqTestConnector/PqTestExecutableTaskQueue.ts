@@ -32,6 +32,8 @@ import { extensionI18n, resolveI18nTemplate } from "../i18n/extension";
 import { nugetPackageProtection } from "../utils/NugetPackageProtection";
 import { convertStringToInteger } from "../utils/numbers";
 import { pidIsRunning } from "../utils/pids";
+import { resolvePqTestExecutablePath } from "../utils/pqTestPath";
+import { ensureQueryDocumentSaved, prepareWithSavedDocuments } from "../utils/queryDocuments";
 import { resolveSubstitutedValues } from "../utils/vscodes";
 import { executeBuildTaskAndAwaitIfNeeded, formatArguments, inferAnyGeneralErrorString } from "./PqTestTaskUtils";
 
@@ -43,9 +45,11 @@ export const PqTestExecutableTaskQueueEvents = {
 type PqTestExecutableTaskQueueEventTypes = ExtractEventTypes<typeof PqTestExecutableTaskQueueEvents>;
 
 /**
- * Internal interface within the module, we need not cast members as readonly
+ * Deferred task inputs and completion callbacks for one queued operation.
  */
-interface PqTestExecutableTask extends PQTestTask {
+interface PqTestExecutableTask {
+    getTask: () => PQTestTask;
+    buildBeforeExecution: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolve: (res: any) => void;
     reject: (reason: Error | string) => void;
@@ -89,6 +93,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     private lastPqRelatedFileTouchedDate: Date = new Date(0);
     private onPQTestExecutablePidChangedFsWatcher: FSWatcher | undefined = undefined;
     private pendingTasks: PqTestExecutableTask[] = [];
+    private checkingQueryDocument: boolean = false;
     protected _disposables: Array<IDisposable> = [];
     pqTestReady: boolean = false;
     pqTestLocation: string = "";
@@ -257,6 +262,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     private async doCheckPidAndDequeueOneTaskIfAny(): Promise<void> {
+        if (this.checkingQueryDocument) {
+            return;
+        }
+
         const pidNumber: number | undefined = this.doSeizePQTestPidFromLockFile();
 
         if (typeof pidNumber !== "number" && this.pqTestFullPath) {
@@ -264,9 +273,51 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             const pendingTask: PqTestExecutableTask | undefined = this.pendingTasks.shift();
 
             if (pendingTask) {
+                this.checkingQueryDocument = true;
+                let task: PQTestTask;
+
+                try {
+                    await ensureQueryDocumentSaved(
+                        pendingTask.getTask().pathToQueryFile,
+                        this.pqTestLocation || undefined,
+                    );
+
+                    if (pendingTask.buildBeforeExecution) {
+                        let buildChecked: boolean = false;
+
+                        await prepareWithSavedDocuments(() => {
+                            if (buildChecked) {
+                                // A build can write its .mez after a save but still contain the earlier source.
+                                this.lastPqRelatedFileTouchedDate = new Date();
+                            }
+
+                            buildChecked = true;
+
+                            return this.ExecuteBuildTaskAndAwaitIfNeeded();
+                        });
+                    }
+
+                    task = pendingTask.getTask();
+                } catch (error: unknown) {
+                    pendingTask.reject(error instanceof Error ? error : String(error));
+                    this.checkingQueryDocument = false;
+                    void this.doCheckPidAndDequeueOneTaskIfAny();
+
+                    return;
+                }
+
+                this.checkingQueryDocument = false;
+
+                // Another extension host may have started a process while the save prompt was open.
+                if (!this.pqTestFullPath || typeof this.doSeizePQTestPidFromLockFile() === "number") {
+                    this.pendingTasks.unshift(pendingTask);
+
+                    return;
+                }
+
                 // do fork one process and execute the task
                 const pqTestExeFullPath: string = this.pqTestFullPath;
-                const processArgs: string[] = buildPqTestArgs(pendingTask);
+                const processArgs: string[] = buildPqTestArgs(task);
 
                 this.outputChannel.appendInfoLine(
                     resolveI18nTemplate("PQSdk.taskQueue.info.taskFound", {
@@ -280,13 +331,13 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                     processArgs,
                     { cwd: this.pqTestLocation },
                     {
-                        stdinStr: pendingTask.stdinStr,
+                        stdinStr: task.stdinStr,
                         onSpawned: (childProcess: ChildProcess): void => {
                             this.doWritePid(`${childProcess.pid}`);
 
                             this.outputChannel.appendTraceLine(
                                 resolveI18nTemplate("PQSdk.taskQueue.info.taskBegan", {
-                                    operation: pendingTask.operation,
+                                    operation: task.operation,
                                     pid: `${childProcess.pid}`,
                                 }),
                             );
@@ -312,7 +363,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
                 this.outputChannel.appendTraceLine(
                     resolveI18nTemplate("PQSdk.taskQueue.info.taskFinished", {
-                        operation: pendingTask.operation,
+                        operation: task.operation,
                         pid: `${spawnProcess.pid}`,
                     }),
                 );
@@ -356,9 +407,9 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                             ),
                         );
                     } else {
-                        if (pendingTask.operation === "info") {
+                        if (task.operation === "info") {
                             this.currentExtensionInfos.emit(resultJson);
-                        } else if (pendingTask.operation === "list-credential") {
+                        } else if (task.operation === "list-credential") {
                             this.currentCredentials.emit(resultJson);
                         }
 
@@ -367,7 +418,7 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
                 } else {
                     this.outputChannel.appendErrorLine(
                         resolveI18nTemplate("PQSdk.taskQueue.info.taskExitAbnormally", {
-                            operation: pendingTask.operation,
+                            operation: task.operation,
                             pid: `${spawnProcess.pid}`,
                             exitCode: `${processExit.exitCode}`,
                             stdErr: `${processExit.stderr ?? processExit.stdout}`,
@@ -381,18 +432,26 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private doEnqueueOneTask<T = any>(task: PQTestTask): Promise<T> {
-        const theTask: PqTestExecutableTask = task as PqTestExecutableTask;
+    private async doEnqueueOneTask<T = any>(
+        task: PQTestTask | (() => PQTestTask),
+        buildBeforeExecution: boolean = false,
+    ): Promise<T> {
+        const getTask: () => PQTestTask = typeof task === "function" ? task : (): PQTestTask => task;
+        await ensureQueryDocumentSaved(getTask().pathToQueryFile, this.pqTestLocation || undefined);
+
+        if (!this.pqTestReady) {
+            this.pqTestFullPath = await resolvePqTestExecutablePath();
+            this.pqTestLocation = path.dirname(this.pqTestFullPath);
+            this.pqTestReady = true;
+            await ensureQueryDocumentSaved(getTask().pathToQueryFile, this.pqTestLocation);
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result: Promise<T> = new Promise<T>((resolve: (value: T) => void, reject: (reason?: any) => void) => {
-            theTask.resolve = resolve;
-            theTask.reject = reject;
+            this.pendingTasks.push({ getTask, buildBeforeExecution, resolve, reject });
+
+            void this.doCheckPidAndDequeueOneTaskIfAny();
         });
-
-        this.pendingTasks.push(theTask);
-
-        void this.doCheckPidAndDequeueOneTaskIfAny();
 
         return result;
     }
@@ -481,10 +540,10 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
 
     public DisplayExtensionInfo(): Promise<ExtensionInfo[]> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
+        return this.doEnqueueOneTask<any>(() => ({
             operation: "info",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-        });
+        }));
     }
 
     public ListCredentials(): Promise<Credential[]> {
@@ -497,22 +556,22 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public GenerateCredentialTemplate(): Promise<any[]> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
+        return this.doEnqueueOneTask<any>(() => ({
             operation: "credential-template",
             // additionalArgs: [`--authentication-kind ${authenticationKind}`],
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
             pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-        });
+        }));
     }
 
     public SetCredential(payloadStr: string): Promise<GenericResult> {
-        return this.doEnqueueOneTask<GenericResult>({
+        return this.doEnqueueOneTask<GenericResult>(() => ({
             operation: "set-credential",
             // additionalArgs: [`${JSON.stringify(payload)}`],
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
             pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
             stdinStr: payloadStr,
-        });
+        }));
     }
 
     public SetCredentialFromCreateAuthState(createAuthState: CreateAuthState): Promise<GenericResult> {
@@ -523,24 +582,22 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
         let theAuthKind: string = createAuthState.AuthenticationKind;
 
         if (theAuthKind.toLowerCase() === "key") {
-            payloadStr = `{
-                "AuthenticationKind": "Key",
-                "AuthenticationProperties": {
-                    "Key": "${createAuthState.$$KEY$$!}"
-                },
-                "PrivacySetting": "None",
-                "Permissions": []
-            }`;
+            payloadStr = JSON.stringify({
+                AuthenticationKind: "Key",
+                AuthenticationProperties: { Key: createAuthState.$$KEY$$! },
+                PrivacySetting: "None",
+                Permissions: [],
+            });
         } else if (theAuthKind.toLowerCase() === "usernamepassword") {
-            payloadStr = `{
-                "AuthenticationKind": "UsernamePassword",
-                "AuthenticationProperties": {
-                    "Username": "${createAuthState.$$USERNAME$$!}",
-                    "Password": "${createAuthState.$$PASSWORD$$!}"
+            payloadStr = JSON.stringify({
+                AuthenticationKind: "UsernamePassword",
+                AuthenticationProperties: {
+                    Username: createAuthState.$$USERNAME$$!,
+                    Password: createAuthState.$$PASSWORD$$!,
                 },
-                "PrivacySetting": "None",
-                "Permissions": []
-            }`;
+                PrivacySetting: "None",
+                Permissions: [],
+            });
         } else if (theAuthKind.toLowerCase() === "oauth" || theAuthKind.toLowerCase() === "aad") {
             additionalArgs.unshift("--interactive");
         } else if (theAuthKind.toLowerCase() === "implicit" || theAuthKind.toLowerCase() === "anonymous") {
@@ -572,61 +629,59 @@ export class PqTestExecutableTaskQueue implements IPQTestService, IDisposable {
             additionalArgs = undefined;
         }
 
-        return this.doEnqueueOneTask<GenericResult>({
+        const pathToConnectorFile: string | undefined = createAuthState.PathToConnectorFile;
+        const pathToQueryFile: string = createAuthState.PathToQueryFile;
+
+        return this.doEnqueueOneTask<GenericResult>(() => ({
             operation: "set-credential",
             additionalArgs,
             pathToConnector:
-                createAuthState.PathToConnectorFile ||
-                resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(createAuthState.PathToQueryFile),
+                pathToConnectorFile || resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+            pathToQueryFile: resolveSubstitutedValues(pathToQueryFile),
             stdinStr: payloadStr,
-        });
+        }));
     }
 
     public RefreshCredential(): Promise<GenericResult> {
-        return this.doEnqueueOneTask<GenericResult>({
+        return this.doEnqueueOneTask<GenericResult>(() => ({
             operation: "refresh-credential",
             pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
             pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-        });
+        }));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async RunTestBattery(pathToQueryFile: string = ""): Promise<any> {
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
-
+    public async RunTestBattery(queryFile: string | vscode.Uri = ""): Promise<any> {
         const activeTextEditor: TextEditor | undefined = vscode.window.activeTextEditor;
 
-        const configPQTestQueryFileLocation: string | undefined = resolveSubstitutedValues(
-            ExtensionConfigurations.DefaultQueryFileLocation,
-        );
-
         // todo maybe we could export this lang id to from the lang svc extension
-        if (!pathToQueryFile && activeTextEditor?.document.languageId === "powerquery") {
-            pathToQueryFile = activeTextEditor.document.uri.fsPath;
+        if (!queryFile && activeTextEditor?.document.languageId === "powerquery") {
+            queryFile = activeTextEditor.document.uri;
         }
 
-        if (!pathToQueryFile && configPQTestQueryFileLocation) {
-            pathToQueryFile = configPQTestQueryFileLocation;
-        }
+        await ensureQueryDocumentSaved(queryFile, this.pqTestLocation || undefined);
+        const selectedQueryFile: string = typeof queryFile === "string" ? queryFile : queryFile.fsPath;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.doEnqueueOneTask<any>({
-            operation: "run-test",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile,
-        });
+        return this.doEnqueueOneTask<any>(
+            () => ({
+                operation: "run-test",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile:
+                    selectedQueryFile || resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            }),
+            true,
+        );
     }
 
-    public async TestConnection(): Promise<GenericResult> {
-        // maybe we need to execute the build task before evaluating.
-        await this.ExecuteBuildTaskAndAwaitIfNeeded();
-
-        return this.doEnqueueOneTask<GenericResult>({
-            operation: "test-connection",
-            pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
-            pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
-        });
+    public TestConnection(): Promise<GenericResult> {
+        return this.doEnqueueOneTask<GenericResult>(
+            () => ({
+                operation: "test-connection",
+                pathToConnector: resolveSubstitutedValues(ExtensionConfigurations.DefaultExtensionLocation),
+                pathToQueryFile: resolveSubstitutedValues(ExtensionConfigurations.DefaultQueryFileLocation),
+            }),
+            true,
+        );
     }
 }

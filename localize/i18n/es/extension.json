@@ -1,6 +1,13 @@
 {
   "PQSdk.common.enable": "Habilitar",
   "PQSdk.common.cancel": "Cancelar",
+  "PQSdk.taskProvider.taskFailed": "La tarea {taskName} falló o se canceló.",
+  "PQSdk.query.saveAndRun": "Guardar todo y ejecutar",
+  "PQSdk.query.saveRequired": "PQTest.exe ejecuta archivos guardados. ¿Guardar todos los archivos locales modificados, incluidos los no relacionados, antes de ejecutar? Los documentos sin título no se guardarán.",
+  "PQSdk.query.executionCancelled": "Ejecución cancelada. Debe guardar todos los archivos locales modificados antes de ejecutar.",
+  "PQSdk.query.saveFailed": "Se canceló la ejecución porque no se pudo guardar {queryFile}.",
+  "PQSdk.query.configurationNotApplied": "Se canceló la ejecución porque Visual Studio Code no ha aplicado la configuración guardada en {queryFile}. Compruebe el archivo de configuración e inténtelo de nuevo.",
+  "PQSdk.query.saveToFile": "Guarde {queryFile} en un archivo local antes de ejecutarlo con PQTest.exe.",
   "PQSdk.common.open.file": "Abrir {fileName}",
   "PQSdk.common.logLevel.Debug": "Depurar",
   "PQSdk.common.logLevel.Trace": "Seguimiento",

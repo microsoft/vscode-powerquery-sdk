@@ -68,10 +68,10 @@ describe("NugetHttpService unit tests (offline)", () => {
         expect(bounded.map(version => version.toString())).to.deep.equal(["2.110.1", "2.110.2"]);
     });
 
-    it("includes the configured SDK Tools maximum but excludes newer patch and minor versions", async () => {
-        get.resolves({ data: { versions: ["2.161.0", "2.160.3", "2.160.2", "2.160.1"] } });
+    it("includes all patches through the configured SDK Tools maximum but excludes newer minor versions", async () => {
+        get.resolves({ data: { versions: ["3.0.0", "2.171.0", "2.170.999", "2.170.1", "2.170.0", "2.169.5"] } });
 
-        expect(ExtensionConstants.MaximumPqTestNugetVersion).to.equal("2.160.2");
+        expect(ExtensionConstants.MaximumPqTestNugetVersion).to.equal("2.170.x");
 
         const bounded = await service.getSortedPackageReleasedVersions(TestConstants.SdkPackageName, {
             maximumNugetVersion: NugetVersions.createFromFuzzyVersionString(
@@ -79,7 +79,12 @@ describe("NugetHttpService unit tests (offline)", () => {
             ),
         });
 
-        expect(bounded.map(version => version.toString())).to.deep.equal(["2.160.1", "2.160.2"]);
+        expect(bounded.map(version => version.toString())).to.deep.equal([
+            "2.169.5",
+            "2.170.0",
+            "2.170.1",
+            "2.170.999",
+        ]);
     });
 
     it("downloads a mocked package stream and extracts the real ZIP locally", async () => {

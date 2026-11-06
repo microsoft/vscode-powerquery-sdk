@@ -1,6 +1,13 @@
 {
   "PQSdk.common.enable": "Enable",
   "PQSdk.common.cancel": "Cancel",
+  "PQSdk.taskProvider.taskFailed": "Task {taskName} failed or was cancelled.",
+  "PQSdk.query.saveAndRun": "Save All and Run",
+  "PQSdk.query.saveRequired": "PQTest.exe runs saved files. Save all modified local files, including unrelated files, before running? Untitled documents will not be saved.",
+  "PQSdk.query.executionCancelled": "Execution cancelled. All modified file-backed documents must be saved before running.",
+  "PQSdk.query.saveFailed": "Execution cancelled because {queryFile} could not be saved.",
+  "PQSdk.query.configurationNotApplied": "Execution cancelled because Visual Studio Code has not applied the saved settings in {queryFile}. Check the settings file and try again.",
+  "PQSdk.query.saveToFile": "Save {queryFile} to a local file before running it with PQTest.exe.",
   "PQSdk.common.open.file": "Open {fileName}",
   "PQSdk.common.logLevel.Debug": "Debug",
   "PQSdk.common.logLevel.Trace": "Trace",
@@ -258,4 +265,3 @@
   "PQSdk.testAdapter.cleanup.entryDeleteFailed": "Failed to delete {entryPath}: {errorMessage}",
   "PQSdk.testAdapter.cleanup.completed": "Cleaned up {count} old intermediate test result(s) from {folderPath}"
 }
-

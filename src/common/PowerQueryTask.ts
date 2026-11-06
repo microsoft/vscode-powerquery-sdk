@@ -28,4 +28,6 @@ export interface PQTestTask extends PowerQueryTask {
     readonly workingDirectory?: string;
 }
 
-export interface PowerQueryTaskDefinition extends PQTestTask, vscode.TaskDefinition {}
+export interface PowerQueryTaskDefinition extends PQTestTask, vscode.TaskDefinition {
+    readonly options?: vscode.ProcessExecutionOptions;
+}
