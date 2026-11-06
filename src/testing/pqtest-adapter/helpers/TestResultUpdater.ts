@@ -69,7 +69,8 @@ export class TestResultUpdater {
         if (result.status === TestStatus.Passed) {
             this.testRun.passed(testItem, durationMs);
         } else if (result.status === TestStatus.Failed) {
-            const failedMessage: vscode.TestMessage = new vscode.TestMessage(
+            const failedMessage: vscode.TestMessage = this.createTestMessage(
+                result,
                 result.reason || extensionI18n["PQSdk.testAdapter.updater.testFailed"],
             );
 
@@ -82,20 +83,25 @@ export class TestResultUpdater {
 
             this.testRun.failed(testItem, failedMessage, durationMs);
         } else if (result.status === TestStatus.Error) {
-            const errorMessage: string =
-                result.error?.message || extensionI18n["PQSdk.testAdapter.updater.unknownError"];
-
-            const testMessage: vscode.TestMessage = new vscode.TestMessage(errorMessage);
-
-            // Optionally include error details in the message
-            if (result.error?.details) {
-                testMessage.message +=
-                    extensionI18n["PQSdk.testAdapter.updater.errorDetailsPrefix"] +
-                    JSON.stringify(result.error.details, null, 2);
-            }
+            const testMessage: vscode.TestMessage = this.createTestMessage(
+                result,
+                extensionI18n["PQSdk.testAdapter.updater.unknownError"],
+            );
 
             this.testRun.errored(testItem, testMessage, durationMs);
         }
+    }
+
+    private createTestMessage(result: TestResult, fallbackMessage: string): vscode.TestMessage {
+        const testMessage: vscode.TestMessage = new vscode.TestMessage(result.error?.message || fallbackMessage);
+
+        if (result.error?.details) {
+            testMessage.message +=
+                extensionI18n["PQSdk.testAdapter.updater.errorDetailsPrefix"] +
+                JSON.stringify(result.error.details, null, 2);
+        }
+
+        return testMessage;
     }
 
     /**
