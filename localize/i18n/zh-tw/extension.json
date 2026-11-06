@@ -6,6 +6,7 @@
   "PQSdk.query.saveRequired": "PQTest.exe 會執行已儲存的檔案。是否在執行前儲存所有已修改的本機檔案，包括無關檔案？未命名的文件不會被儲存。",
   "PQSdk.query.executionCancelled": "已取消執行。必須先儲存所有已修改的本機檔案才能執行。",
   "PQSdk.query.saveFailed": "因為無法儲存 {queryFile}，已取消執行。",
+  "PQSdk.query.configurationNotApplied": "因為 Visual Studio Code 尚未套用 {queryFile} 中儲存的設定，已取消執行。請檢查設定檔案，然後再試一次。",
   "PQSdk.query.saveToFile": "使用 PQTest.exe 執行之前，請將 {queryFile} 儲存至本機檔案。",
   "PQSdk.common.open.file": "開啟 {fileName}",
   "PQSdk.common.logLevel.Debug": "偵錯",

@@ -125,8 +125,6 @@ export class PqTestExecutableOnceTask implements IDisposable {
             this._pathToQueryFile = task.pathToQueryFile;
             await ensureQueryDocumentSaved(task.pathToQueryFile);
 
-            const processArgs: string[] = buildPqTestArgs(task);
-
             if (this.disposed) {
                 return undefined;
             }
@@ -145,6 +143,9 @@ export class PqTestExecutableOnceTask implements IDisposable {
             if (this.disposed) {
                 return undefined;
             }
+
+            task = this.populateTestTaskPayload(program, task);
+            const processArgs: string[] = buildPqTestArgs(task);
 
             this.handleTaskCreated();
 

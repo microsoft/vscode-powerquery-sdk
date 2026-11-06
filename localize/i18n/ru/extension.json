@@ -6,6 +6,7 @@
   "PQSdk.query.saveRequired": "PQTest.exe выполняет сохраненные файлы. Сохранить все измененные локальные файлы, включая не связанные с запуском, перед выполнением? Документы без названия не будут сохранены.",
   "PQSdk.query.executionCancelled": "Выполнение отменено. Перед выполнением необходимо сохранить все измененные локальные файлы.",
   "PQSdk.query.saveFailed": "Выполнение отменено, поскольку не удалось сохранить {queryFile}.",
+  "PQSdk.query.configurationNotApplied": "Выполнение отменено, поскольку Visual Studio Code не применил параметры, сохраненные в {queryFile}. Проверьте файл параметров и повторите попытку.",
   "PQSdk.query.saveToFile": "Сохраните {queryFile} в локальный файл перед выполнением с помощью PQTest.exe.",
   "PQSdk.common.open.file": "Открыть {fileName}",
   "PQSdk.common.logLevel.Debug": "Отладка",

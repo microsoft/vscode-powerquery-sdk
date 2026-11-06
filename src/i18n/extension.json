@@ -6,6 +6,7 @@
   "PQSdk.query.saveRequired": "PQTest.exe runs saved files. Save all modified local files, including unrelated files, before running? Untitled documents will not be saved.",
   "PQSdk.query.executionCancelled": "Execution cancelled. All modified file-backed documents must be saved before running.",
   "PQSdk.query.saveFailed": "Execution cancelled because {queryFile} could not be saved.",
+  "PQSdk.query.configurationNotApplied": "Execution cancelled because Visual Studio Code has not applied the saved settings in {queryFile}. Check the settings file and try again.",
   "PQSdk.query.saveToFile": "Save {queryFile} to a local file before running it with PQTest.exe.",
   "PQSdk.common.open.file": "Open {fileName}",
   "PQSdk.common.logLevel.Debug": "Debug",

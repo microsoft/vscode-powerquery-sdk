@@ -6,6 +6,7 @@
   "PQSdk.query.saveRequired": "PQTest.exe는 저장된 파일을 실행합니다. 실행하기 전에 관련 없는 파일을 포함하여 수정된 모든 로컬 파일을 저장하시겠습니까? 제목 없는 문서는 저장되지 않습니다.",
   "PQSdk.query.executionCancelled": "실행이 취소되었습니다. 실행하기 전에 수정된 모든 로컬 파일을 저장해야 합니다.",
   "PQSdk.query.saveFailed": "{queryFile}을(를) 저장할 수 없어 실행이 취소되었습니다.",
+  "PQSdk.query.configurationNotApplied": "Visual Studio Code가 {queryFile}에 저장된 설정을 적용하지 않아 실행이 취소되었습니다. 설정 파일을 확인하고 다시 시도하세요.",
   "PQSdk.query.saveToFile": "PQTest.exe로 실행하기 전에 {queryFile}을(를) 로컬 파일에 저장하세요.",
   "PQSdk.common.open.file": "{fileName} 열기",
   "PQSdk.common.logLevel.Debug": "디버그",
