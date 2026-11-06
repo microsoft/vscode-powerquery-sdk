@@ -1,13 +1,16 @@
 //@ts-check
-/** @typedef import('webpack').WebpackConfig **/
+/** @typedef {import("webpack").Configuration} WebpackConfig */
 
 "use strict";
 
 const path = require("path");
-const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
+/**
+ * @param {Record<string, unknown> | undefined} env
+ * @param {{ mode?: string }} argv
+ * @returns {WebpackConfig}
+ */
 module.exports = function (env, argv) {
-    /** @type WebpackConfig */
     return {
         target: "node", // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
         mode: argv.mode === "production" ? "production" : "development", // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
@@ -30,11 +33,6 @@ module.exports = function (env, argv) {
         resolve: {
             // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
             extensions: [".ts", ".js"],
-            plugins: [
-                new TsconfigPathsPlugin({
-                    configFile: path.join(__dirname, "tsconfig.json"),
-                }),
-            ],
         },
         module: {
             rules: [

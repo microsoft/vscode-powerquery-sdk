@@ -6,8 +6,15 @@
  */
 
 import * as assert from "assert";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import * as vscode from "vscode";
 
+import { NugetCommandService } from "../../common/nuget/NugetCommandService";
+import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
+import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
+import * as localSdkTools from "../../utils/localSdkTools";
 import { Commands } from "../TestConstants";
 import * as TestUtils from "../TestUtils";
 
@@ -63,31 +70,57 @@ suite("Command Integration Tests", () => {
         }
     });
 
-    test("should execute SeizePqTestCommand without errors", async () => {
+    test("registers the SDK update command without contacting a package feed", async () => {
+        const commands = await vscode.commands.getCommands(true);
+        assert.ok(commands.includes(Commands.SeizePqTestCommand));
+    });
+
+    const localTest = process.env.PQSDK_TEST_TOOLS_PATH ? test : test.skip;
+
+    localTest("reuses local tools for the registered update command without changing saved settings", async () => {
+        const config = vscode.workspace.getConfiguration("powerquery.sdk");
+        const previousLocation = config.inspect("tools.location");
+        const previousVersion = config.inspect("tools.version");
+
+        assert.strictEqual(
+            await vscode.commands.executeCommand(Commands.SeizePqTestCommand),
+            path.normalize(process.env.PQSDK_TEST_TOOLS_PATH!),
+        );
+
+        assert.deepStrictEqual(config.inspect("tools.location"), previousLocation);
+        assert.deepStrictEqual(config.inspect("tools.version"), previousVersion);
+    });
+
+    const externalTest = process.env.PQSDK_TEST_EXTERNAL === "1" ? test : test.skip;
+
+    externalTest("[External] acquires SDK Tools from the configured feed", async () => {
+        assert.ok(!localSdkTools.getLocalSdkToolsLocation(), "Unset PQSDK_TEST_TOOLS_PATH for real acquisition tests");
+        const executable = ExtensionConfigurations.nugetPath;
+        const feed = ExtensionConfigurations.nugetFeed;
+        assert.ok(executable && feed, "Configure both nugetPath and nugetFeed for real acquisition tests");
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-feed-test-"));
+        const service = new NugetCommandService(root);
+
         try {
-            await vscode.commands.executeCommand(Commands.SeizePqTestCommand);
-            assert.ok(true, "SeizePqTestCommand executed successfully");
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-
-            // Tool acquisition may fail in test environment due to network or permissions
-            const acceptableErrors = [
-                "command not found",
-                "download failed",
-                "network error",
-                "permission denied",
-                "command failed",
-            ];
-
-            const isAcceptableError = acceptableErrors.some(acceptable =>
-                errorMessage.toLowerCase().includes(acceptable.toLowerCase()),
+            const versions = await service.getSortedPackageReleasedVersions(
+                executable,
+                feed,
+                ExtensionConstants.PublicMsftPqSdkToolsNugetName,
             );
 
-            if (!isAcceptableError) {
-                throw error;
-            }
+            assert.ok(versions.length, "The configured feed must contain SDK Tools");
 
-            assert.ok(true, `Tool acquisition command exists: ${errorMessage}`);
+            assert.ok(
+                await service.downloadAndExtractNugetPackage(
+                    executable,
+                    feed,
+                    ExtensionConstants.PublicMsftPqSdkToolsNugetName,
+                    versions[versions.length - 1].toString(),
+                ),
+                "Acquisition must produce PQTest.exe",
+            );
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
         }
     });
 

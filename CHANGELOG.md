@@ -2,6 +2,11 @@
 
 All notable changes to the "vscode-powerquery-sdk" extension.
 
+## v0.8.1
+
+- Fixed: Improved error message and guidance when public nuget.org feed is unreachable.
+- Changed: Renamed the SDK Tools update command to "Update PQ SDK Tools".
+
 ## v0.8.0
 
 - Removed: The experimental `PQServiceHost` backend. All operations now use `PQTest.exe`. A new service host will be introduced in the future.
