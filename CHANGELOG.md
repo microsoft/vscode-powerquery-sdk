@@ -4,12 +4,8 @@ All notable changes to the "vscode-powerquery-sdk" extension.
 
 ## v0.8.1
 
-- Added: Actionable SDK Tools download failure guidance for blocked feeds, authenticated proxies, and other network issues, with actions to configure NuGet, open troubleshooting, or show detailed Output diagnostics.
-- Added: README guidance for configuring `powerquery.sdk.externals.nugetFeed` and `powerquery.sdk.externals.nugetPath` with organization-approved or local package feeds.
-- Added: Development/test-only `PQSDK_TEST_TOOLS_PATH` and `PQSDK_TEST_TOOLS_AUTODISCOVER` overrides to reuse local SDK Tools without package requests, plus isolated opt-in internal-feed acquisition tests.
+- Fixed: Improved error message and guidance when public nuget.org feed is unreachable.
 - Changed: Renamed the SDK Tools update command to "Update PQ SDK Tools".
-- Fixed: TypeScript and webpack configuration diagnostics that interfered with extension development.
-- Fixed: Focused integration test runs now preserve command-line test filters.
 
 ## v0.8.0
 
