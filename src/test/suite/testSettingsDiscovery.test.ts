@@ -252,6 +252,76 @@ suite("Test settings discovery", () => {
         assert.strictEqual(await isTestSettingsExcluded(uri("tests/other.testsettings.json")), false);
     });
 
+    test("a failed conditional exclusion skips only its settings file and logs its path", async () => {
+        settings = uri("tests").fsPath;
+        directoryStat();
+        filesExclude = { "**/*.testsettings.json": { when: "$(basename).pq" } };
+        const inaccessible: vscode.Uri = uri("tests/inaccessible.testsettings.json");
+        const included: vscode.Uri = uri("tests/included.testsettings.json");
+        findFiles.resolves([inaccessible, included]);
+
+        stat.withArgs(sinon.match((fileUri: vscode.Uri) => fileUri.fsPath.endsWith(".pq"))).rejects(
+            vscode.FileSystemError.FileNotFound(),
+        );
+
+        stat.withArgs(
+            sinon.match((fileUri: vscode.Uri) => fileUri.fsPath.endsWith("inaccessible.testsettings.pq")),
+        ).rejects(vscode.FileSystemError.NoPermissions());
+
+        assert.deepStrictEqual(
+            (await getTestSettingsFileUris(output)).map((fileUri: vscode.Uri) => fileUri.fsPath),
+            [included.fsPath],
+        );
+
+        sinon.assert.calledOnce(output.appendDebugLine as sinon.SinonStub);
+        assert.ok((output.appendDebugLine as sinon.SinonStub).firstCall.args[0].includes(inaccessible.fsPath));
+        assert.strictEqual(showError.callCount, 0);
+    });
+
+    test("real directory search preserves literal commas and brace alternatives in exclusions", async () => {
+        const directory: vscode.Uri = uri("comma-settings-regression");
+
+        const relativePaths: string[] = [
+            "generated,archive/excluded.testsettings.json",
+            "archive/included.testsettings.json",
+            "generated/included.testsettings.json",
+            "cache/excluded.testsettings.json",
+            "temp/excluded.testsettings.json",
+        ];
+
+        settings = directory.fsPath;
+
+        filesExclude = {
+            "comma-settings-regression/generated,archive": true,
+            "comma-settings-regression/{cache,temp}": true,
+        };
+
+        directoryStat();
+        findFiles.restore();
+
+        try {
+            for (const relativePath of relativePaths) {
+                const file: vscode.Uri = vscode.Uri.joinPath(directory, relativePath);
+
+                await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(file, ".."));
+
+                await vscode.workspace.fs.writeFile(file, Buffer.from("{}"));
+            }
+
+            const result: vscode.Uri[] = await getTestSettingsFileUris(output);
+
+            assert.deepStrictEqual(
+                result.map((fileUri: vscode.Uri) => fileUri.fsPath).sort(),
+                relativePaths
+                    .filter(relativePath => relativePath.endsWith("/included.testsettings.json"))
+                    .map(relativePath => vscode.Uri.joinPath(directory, relativePath).fsPath)
+                    .sort(),
+            );
+        } finally {
+            await vscode.workspace.fs.delete(directory, { recursive: true });
+        }
+    });
+
     test("exclusions beginning with a hash are literal patterns, not comments", async () => {
         filesExclude = { "#generated": true };
 

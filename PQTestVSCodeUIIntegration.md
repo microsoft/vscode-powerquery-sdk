@@ -109,6 +109,8 @@ Discovery searches only the paths configured in `powerquery.sdk.test.settingsFil
 
 Explicitly configured settings files bypass these exclusions and are used directly without a recursive search, including when recreated within a watched directory. For large or cloud-synced workspaces, configure individual settings files or the smallest directory containing them rather than the workspace root.
 
+If a conditional exclusion's sibling check fails, only the affected settings file is skipped. The output channel records the file path and error; unrelated settings files remain discoverable.
+
 > **Terminology:**
 > - **Discover/Rediscover**: Scanning settings files to find and list available tests.
 > - **Refresh**: Manually or automatically updating the test list.

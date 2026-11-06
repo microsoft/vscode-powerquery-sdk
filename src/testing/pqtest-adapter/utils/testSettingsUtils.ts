@@ -65,7 +65,20 @@ export async function getTestSettingsFileUris(outputChannel?: PqSdkOutputChannel
 
                 // eslint-disable-next-line no-await-in-loop -- Filter each directory before continuing
                 const included: boolean[] = await Promise.all(
-                    files.map(async (uri: vscode.Uri) => !(await isTestSettingsExcluded(uri))),
+                    files.map(async (uri: vscode.Uri) => {
+                        try {
+                            return !(await isTestSettingsExcluded(uri));
+                        } catch (error) {
+                            outputChannel?.appendDebugLine(
+                                resolveI18nTemplate("PQSdk.testAdapter.error.accessingSettingsPath", {
+                                    settingsPath: uri.fsPath,
+                                    errorMessage: error instanceof Error ? error.message : String(error),
+                                }),
+                            );
+
+                            return false;
+                        }
+                    }),
                 );
 
                 files.forEach((uri: vscode.Uri, index: number) => {

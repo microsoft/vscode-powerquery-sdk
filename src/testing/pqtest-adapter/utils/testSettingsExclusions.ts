@@ -5,7 +5,7 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { minimatch } from "minimatch";
+import { braceExpand, minimatch } from "minimatch";
 import * as path from "path";
 import * as vscode from "vscode";
 
@@ -18,6 +18,23 @@ function getExcludes(uri: vscode.Uri): Excludes {
     };
 }
 
+function escapeLiteralCommas(pattern: string): string {
+    let inCharacterClass: boolean = false;
+    let escaped: string = "";
+
+    for (const character of pattern) {
+        if (character === "[") {
+            inCharacterClass = true;
+        } else if (character === "]") {
+            inCharacterClass = false;
+        }
+
+        escaped += character === "," && !inCharacterClass ? "[,]" : character;
+    }
+
+    return escaped;
+}
+
 /**
  * Anchor exclusions to the workspace, not the configured search directory.
  * Include descendants so excluded directory names also prune recursive searches.
@@ -27,7 +44,14 @@ export function getTestSettingsExcludePattern(uri: vscode.Uri): vscode.RelativeP
 
     const patterns: string[] = Object.entries(getExcludes(uri))
         .filter(([, value]: [string, boolean | { when: string }]) => value === true)
-        .flatMap(([pattern]: [string, boolean | { when: string }]) => [pattern, `${pattern}/**`]);
+        .flatMap(([pattern]: [string, boolean | { when: string }]) =>
+            // VS Code's combined glob cannot safely nest brace alternatives.
+            braceExpand(pattern).flatMap((expanded: string) => {
+                const escaped: string = escapeLiteralCommas(expanded);
+
+                return [escaped, `${escaped}/**`];
+            }),
+        );
 
     return patterns.length > 0 ? new vscode.RelativePattern(root, `{${patterns.join(",")}}`) : null;
 }
