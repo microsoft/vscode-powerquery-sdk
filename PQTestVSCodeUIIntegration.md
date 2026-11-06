@@ -48,12 +48,14 @@ To enable the Test Explorer to find and run your tests, you need to configure sp
     * **Workspace Settings** (for project-specific paths): Open the Command Palette (**Ctrl+Shift+P** or **Cmd+Shift+P**), type **Preferences: Open Workspace Settings (JSON)** and select it.
     * **User Settings** (for global paths): Open the Command Palette, type **Preferences: Open User Settings (JSON)** and select it.
 
-2. Add the following configurations. Note that **relative paths are resolved relative to the workspace folder**.
+2. Add the following configurations. Note that **relative paths in VS Code settings are resolved relative to the first workspace folder**.
 
+   * `powerquery.sdk.test.enabled`: Enables the Test Explorer integration (default: `true`). Reload the VS Code window after changing it. See [Disabling the integration](#disabling-the-integration).
    * `powerquery.sdk.test.settingsFiles`: Path(s) to your `.testsettings.json` file(s) or a directory containing them. Accepts:
-     * A string path to a directory (all valid `.testsettings.json` files inside will be used)
+     * A string path to a directory (searched recursively, honoring `files.exclude` and `search.exclude`)
      * A string path to a single test settings file
      * An array of string paths to individual test settings files/directory containing them
+     * Supports VS Code variable substitution (e.g., `${workspaceFolder}`)
    * `powerquery.sdk.test.extensionPaths`: Path(s) to your connector file(s) (`.mez` files). Accepts:
      * A string path to a single connector file
      * An array of string paths to multiple connector files
@@ -66,9 +68,25 @@ To enable the Test Explorer to find and run your tests, you need to configure sp
        "powerquery.sdk.tools.version": "2.150.4"
        ```
 
-   > You can use variables like `${workspaceFolder}` to make paths relative to your project root. Relative paths in `settings.json` are resolved relative to the workspace root.
+   > You can use variables like `${workspaceFolder}` to make paths relative to your project root. Without `powerquery.sdk.test.settingsFiles`, the extension does not search for or watch test settings.
 
 3. Set up connector credentials as described [here](https://learn.microsoft.com/en-us/power-query/power-query-sdk-vs-code#set-credential).
+
+### Disabling the integration
+
+To disable the SDK's Test Explorer integration, set:
+
+```json
+{
+    "powerquery.sdk.test.enabled": false
+}
+```
+
+Reload the VS Code window after changing this setting. When disabled, the SDK does not register its test controller or Test UI commands, discover or watch test settings, or run Test UI results cleanup. Connector commands, query evaluation, and debugging remain available.
+
+### Saving before test execution
+
+Test Explorer runs offer **Save All and Run** when file-backed documents have unsaved changes, including files unrelated to the selected tests. Canceling, dismissing the prompt, or a failed save prevents execution. Files changed during test setup are saved and settings-derived arguments are refreshed before PQTest runs. See [Saving before execution](README.md#saving-before-execution) for the shared command, task, and debugging behavior.
 
 
 ### About `.testsettings.json` (Test Settings File)
@@ -84,6 +102,12 @@ During test execution, this file is passed to PQTest using the `--settingsFile` 
 ### Test Discovery & Auto-Sync
 
 The extension provides both manual and automatic ways to keep your Test Explorer in sync with your project.
+
+#### Discovery scope and exclusions
+
+Discovery searches only the paths configured in `powerquery.sdk.test.settingsFiles`, not the entire workspace. Configured directories are searched recursively, honoring workspace-relative `files.exclude` and `search.exclude` patterns, including conditional sibling exclusions. Directory watcher creation events use the same exclusions without repeating discovery.
+
+Explicitly configured settings files bypass these exclusions and are used directly without a recursive search, including when recreated within a watched directory. For large or cloud-synced workspaces, configure individual settings files or the smallest directory containing them rather than the workspace root.
 
 > **Terminology:**
 > - **Discover/Rediscover**: Scanning settings files to find and list available tests.
@@ -113,7 +137,7 @@ The extension automatically watches specific files and configurations to keep th
 The `powerquery.sdk.test.settingsFiles` configuration determines the scope of what the extension monitors. Changes to this setting or the files it references will trigger automatic updates.
 
 **1. Configuration Changes**
-*   **Trigger:** Modifying the `powerquery.sdk.test.settingsFiles` configuration in VS Code settings.
+*   **Trigger:** Modifying `powerquery.sdk.test.settingsFiles`, `files.exclude`, or `search.exclude` in VS Code settings.
 *   **Action:** A full test reset is triggered. All tests are cleared, and valid `.testsettings.json` files are rediscovered based on the updated path(s). 
 
 **2. Test Settings File Changes**
@@ -198,6 +222,7 @@ To save disk space, the extension automatically deletes old test results from th
 
 ### Logging & Troubleshooting
 
+- Invalid, missing, or out-of-workspace test settings are skipped or reported on their Test Explorer item, with debug diagnostics in the `Power Query SDK` output channel rather than error popups. A settings file must contain valid JSON with a non-empty string `QueryFilePath` pointing to an existing directory or `.query.pq` file.
 - Extension logs are available in the `Power Query SDK` output channel. For unexpected behaviors, look for the `PQTest run-compare` entry in the logs to verify the command arguments and execution. This helps identify whether the issue is with the extension (e.g. incorrect paths) or PQTest itself.
 
    *Sample log output showing the PQTest execution command.*
@@ -218,5 +243,5 @@ To save disk space, the extension automatically deletes old test results from th
 
    - **PQTest.exe not found:** Ensure the `powerquery.sdk.tools.location` setting points to the correct absolute path of the PQTest installation folder.
    - **Invalid QueryFilePath:** Ensure `QueryFilePath` in your settings file points to a directory or `.query.pq` file.
-   - **No tests found:** Ensure `QueryFilePath` points to a valid directory.
+   - **No tests found:** Ensure the integration is enabled, `powerquery.sdk.test.settingsFiles` includes the settings file or its directory, and `QueryFilePath` points to a valid directory or `.query.pq` file. For directory discovery, check `files.exclude` and `search.exclude`.
    - **Expanding a settings file does nothing:** Use the "Refresh Tests" command (refresh icon inline with a settings item) to refresh tests.

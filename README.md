@@ -25,35 +25,14 @@ What you can do with this extension:
 
 ## Test discovery
 
-The VS Code Test Explorer integration is enabled by default. To disable it, set:
+Discover and run connector tests in the VS Code Test Explorer by configuring
+`powerquery.sdk.test.settingsFiles`. The integration is enabled by default; set
+`powerquery.sdk.test.enabled` to `false` and reload the window to disable it.
 
-```json
-{
-    "powerquery.sdk.test.enabled": false
-}
-```
+See the [Test Explorer integration guide](PQTestVSCodeUIIntegration.md) for setup,
+scoped discovery and exclusions, automatic refresh, results, and troubleshooting.
 
-Reload the VS Code window after changing this setting. When disabled, the SDK does
-not register its test controller or Test UI commands, discover or watch test settings,
-or run Test UI results cleanup. Connector commands, query evaluation, and debugging
-remain available.
-
-Set `powerquery.sdk.test.settingsFiles` to a `.testsettings.json` file, a directory,
-or an array of file and directory paths. Relative paths are resolved from the first
-workspace folder; `${workspaceFolder}` is also supported.
-
-Without this setting, the extension does not search for or watch test settings.
-Configured directories are searched recursively, honoring `search.exclude` and
-`files.exclude`, including conditional sibling exclusions. Directory watcher events
-use the same exclusions without repeating discovery. Explicitly configured files
-are used directly, without a recursive search or search exclusions.
-
-For large or cloud-synced workspaces, configure individual settings files or the
-smallest directory containing them rather than the workspace root. Invalid settings
-are reported in the Test Explorer and the Power Query SDK output channel, not in
-error popups.
-
-### Saving before execution
+## Saving before execution
 
 Before PQTest commands, tasks, Test Explorer runs, or run/debug execute, the SDK offers **Save All and Run** if any file-backed documents have unsaved changes. This saves all modified local files, including connector sources, query and parameter files, settings, and unrelated files. Choosing **Cancel**, dismissing the prompt, or a failed save prevents execution.
 
