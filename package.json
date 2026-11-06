@@ -8,7 +8,7 @@
     "homepage": "https://github.com/microsoft/vscode-powerquery-sdk#readme",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/microsoft/vscode-powerquery-sdk.git"
+        "url": "https://github.com/microsoft/vscode-powerquery-sdk.git"
     },
     "issues": {
         "url": "https://github.com/microsoft/vscode-powerquery-sdk/issues"
@@ -528,7 +528,7 @@
         "postinstall": "npm run install:pq-test-result-view",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "test": "npm run test:unit-test && npm run test:e2e",
-        "test:e2e": "npm run compile-tests && vscode-test",
+        "test:e2e": "npm run compile && npm run compile-tests && vscode-test",
         "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter ./mochaReporter.js --reporter-option output=test-results.xml",
         "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter ./mochaReporter.js --reporter-option output=test-results.xml",
         "test-ui": "vscode-test",

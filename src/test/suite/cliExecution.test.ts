@@ -1821,7 +1821,7 @@ suite("CLI-only execution", () => {
                 await configuration.update("defaultQueryFile", "old.query.pq", vscode.ConfigurationTarget.Workspace);
 
                 const document = await vscode.workspace.openTextDocument(
-                    vscode.Uri.joinPath(folder.uri, ".vscode", "settings.json"),
+                    vscode.workspace.workspaceFile ?? vscode.Uri.joinPath(folder.uri, ".vscode", "settings.json"),
                 );
 
                 documentCollection.get(() => [document]);

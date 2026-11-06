@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "baseUrl": ".",
         "module": "commonjs",   // TODO: should this be "Node16"?
         "target": "ES2020",
         "lib": ["ES2020"],

@@ -14,6 +14,7 @@ import { ExtensionConstants } from "../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../features/PqSdkOutputChannel";
 import { GlobalEventBus, GlobalEvents } from "../GlobalEventBus";
 import { debounce } from "../utils/debounce";
+import { getLocalSdkToolsLocation } from "../utils/localSdkTools";
 import { nugetPackageProtection, NugetPackageProtectionPendingError } from "../utils/NugetPackageProtection";
 import { cleanupNugetPackages } from "../utils/nugetPackageRetention";
 import { NugetVersions } from "../utils/NugetVersions";
@@ -82,6 +83,10 @@ export class PqSdkNugetPackageService {
             minimumNugetVersion?: NugetVersions;
         } = {},
     ): Promise<string | undefined> {
+        if (getLocalSdkToolsLocation()) {
+            return undefined;
+        }
+
         let sortedNugetVersions: NugetVersions[];
 
         if (ExtensionConfigurations.externalsVersionTag === "Recommended") {
@@ -150,6 +155,10 @@ export class PqSdkNugetPackageService {
     }
 
     private protectConfiguredPackages(): string | undefined {
+        if (getLocalSdkToolsLocation()) {
+            return getLocalSdkToolsLocation();
+        }
+
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
         let toolsLocation: string | undefined = ExtensionConfigurations.PQTestLocation;
 
@@ -175,11 +184,19 @@ export class PqSdkNugetPackageService {
     }
 
     public async waitForConfiguredPackages(): Promise<void> {
+        if (getLocalSdkToolsLocation()) {
+            return;
+        }
+
         this.protectConfiguredPackages();
         await nugetPackageProtection.waitForPending();
     }
 
     public cleanupUnusedPackages(): Promise<void> {
+        if (getLocalSdkToolsLocation()) {
+            return Promise.resolve();
+        }
+
         return cleanupNugetPackages(
             path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder),
             this.protectConfiguredPackages(),
@@ -189,6 +206,12 @@ export class PqSdkNugetPackageService {
     }
 
     public async updatePqSdkFromNuget(maybeNextVersion: string | undefined): Promise<string | undefined> {
+        const localTools: string | undefined = getLocalSdkToolsLocation();
+
+        if (localTools) {
+            return path.join(localTools, "PQTest.exe");
+        }
+
         const baseNugetFolder: string = path.resolve(this.vscExtCtx.extensionPath, ExtensionConstants.NugetBaseFolder);
 
         if (!fs.existsSync(baseNugetFolder)) {
