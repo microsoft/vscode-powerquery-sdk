@@ -23,7 +23,16 @@ What you can do with this extension:
 - Leverage syntax highlighting and intellisense for writing M script
 - Manage your workspace settings and other project-level configurations
 
-### Saving before execution
+## Test discovery
+
+Discover and run connector tests in the VS Code Test Explorer by configuring
+`powerquery.sdk.test.settingsFiles`. The integration is enabled by default; set
+`powerquery.sdk.test.enabled` to `false` and reload the window to disable it.
+
+See the [Test Explorer integration guide](PQTestVSCodeUIIntegration.md) for setup,
+scoped discovery and exclusions, automatic refresh, results, and troubleshooting.
+
+## Saving before execution
 
 Before PQTest commands, tasks, Test Explorer runs, or run/debug execute, the SDK offers **Save All and Run** if any file-backed documents have unsaved changes. This saves all modified local files, including connector sources, query and parameter files, settings, and unrelated files. Choosing **Cancel**, dismissing the prompt, or a failed save prevents execution.
 

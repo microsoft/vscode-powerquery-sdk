@@ -12,6 +12,7 @@
 
 import * as vscode from "vscode";
 
+import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
@@ -38,9 +39,21 @@ const DELAY_BEFORE_SINGLE_CHILD_REVEAL_MS: number = 400;
  */
 let isRefreshInProgress: boolean = false;
 
+export function registerTestAdapter(
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
+    outputChannel: PqSdkOutputChannel,
+): void {
+    if (!ExtensionConfigurations.testEnabled) {
+        return;
+    }
+
+    const controller: vscode.TestController = registerTestController(context, outputChannel);
+    registerCommands(context, controller, outputChannel);
+}
+
 // https://code.visualstudio.com/api/extension-guides/testing#additional-contribution-points
 export function registerCommands(
-    context: vscode.ExtensionContext,
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
     controller: vscode.TestController,
     outputChannel: PqSdkOutputChannel,
 ): void {
@@ -72,7 +85,7 @@ export function registerCommands(
  * Creates and registers the test controller for VS Code Test Explorer
  */
 export function registerTestController(
-    context: vscode.ExtensionContext,
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
     outputChannel: PqSdkOutputChannel,
 ): vscode.TestController {
     const controller: vscode.TestController = vscode.tests.createTestController(

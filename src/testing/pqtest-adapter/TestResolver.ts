@@ -91,7 +91,7 @@ export async function resolveTestItem(
     let testPath: string;
 
     try {
-        testPath = await getTestPathFromSettings(settingsFileUri.fsPath);
+        testPath = await getTestPathFromSettings(settingsFileUri.fsPath, undefined, undefined, outputChannel);
     } catch (err: unknown) {
         // eslint-disable-next-line require-atomic-updates -- Error assignment is intentional
         item.error = resolveI18nTemplate("PQSdk.testResolver.failedToReadTestDirectory", {

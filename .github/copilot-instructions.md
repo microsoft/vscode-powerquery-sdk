@@ -12,6 +12,12 @@ Use these instructions for changes to the Power Query SDK extension for Visual S
 - Do not edit generated output such as `dist/`, `out/`, `webviewDist/`, packaged VSIX files, or installed dependencies.
 - Do not update package versions or `CHANGELOG.md` unless the task is release-related or changes end-user behavior.
 
+## Changelog Maintenance
+
+- Prefix each `CHANGELOG.md` entry with `Added:`, `Changed:`, `Deprecated:`, `Removed:`, `Fixed:`, or `Security:`.
+- Keep entries brief and focused on the user-visible change.
+- Use a `## [Unreleased]` section when a change is not accompanied by a version bump. When bumping the version, move the corresponding entries into that version's section.
+
 ## Repository Overview
 
 This repository contains the `PowerQuery.vscode-powerquery-sdk` extension. It supports Power Query custom connector development, including project creation, connector builds, credential management, query execution, test discovery, and result display.
