@@ -13,6 +13,8 @@ The project uses a **unit-first testing philosophy** with the following hierarch
 
 ### Local testing without nuget.org
 
+`npm run test:e2e` rebuilds both the extension bundle and the integration tests before launching VS Code, so fresh checkouts and source changes do not use a missing or stale extension bundle.
+
 Use an extracted SDK Tools package obtained from an organization-approved feed. Keep the entire `tools` directory together, including `PQTest.exe`, `MakePQX.exe`, and their dependencies:
 
 ```powershell
