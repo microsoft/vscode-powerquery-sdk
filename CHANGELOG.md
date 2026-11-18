@@ -4,7 +4,7 @@ All notable changes to the "vscode-powerquery-sdk" extension.
 
 ## [Unreleased]
 
-- Added: `powerquery.sdk.test.enabled` can disable the VS Code Test Explorer integration. Reload the window after changing it.
+- Added: `powerquery.sdk.test.enabled` can disable the VS Code Test Explorer integration. Changing it prompts you to reload the window.
 - Fixed: Removed recursive workspace-wide test-settings activation searches.
 - Fixed: Invalid or missing test settings now log diagnostics instead of displaying error popups.
 - Fixed: Rapid settings-file creation and deletion no longer leave stale Test Explorer entries or retained watcher listeners.

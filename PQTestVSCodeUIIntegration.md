@@ -82,7 +82,7 @@ To disable the SDK's Test Explorer integration, set:
 }
 ```
 
-Reload the VS Code window after changing this setting. When disabled, the SDK does not register its test controller or Test UI commands, discover or watch test settings, or run Test UI results cleanup. Connector commands, query evaluation, and debugging remain available.
+Reload the VS Code window after changing this setting; the extension prompts you with a **Reload Window** action when the change requires it. When disabled, the SDK does not register its test controller or Test UI commands, discover or watch test settings, or run Test UI results cleanup. Connector commands, query evaluation, and debugging remain available.
 
 ### Saving before test execution
 

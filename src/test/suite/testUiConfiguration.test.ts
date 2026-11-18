@@ -9,12 +9,14 @@
 
 import * as assert from "assert";
 import * as sinon from "sinon";
+import { setImmediate } from "timers";
 import * as vscode from "vscode";
 
 import manifest from "../../../package.json";
 import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
+import { extensionI18n } from "../../i18n/extension";
 import { registerTestAdapter } from "../../testing/pqtest-adapter/TestController";
 import { TestWatcherManager } from "../../testing/pqtest-adapter/TestWatcherManager";
 import * as cleanupUtils from "../../testing/pqtest-adapter/utils/cleanupUtils";
@@ -30,6 +32,15 @@ suite("Test UI configuration", () => {
     let initializeWatchers: sinon.SinonStub;
     let initializeCleanup: sinon.SinonStub;
     let cleanup: sinon.SinonStub;
+    let configurationListeners: ((event: vscode.ConfigurationChangeEvent) => unknown)[];
+    let showInformation: sinon.SinonStub;
+    let executeCommand: sinon.SinonStub;
+
+    function changeConfiguration(section: string): void {
+        for (const listener of configurationListeners) {
+            listener({ affectsConfiguration: (affected: string): boolean => affected === section });
+        }
+    }
 
     setup(() => {
         sandbox = sinon.createSandbox();
@@ -46,6 +57,18 @@ suite("Test UI configuration", () => {
         initializeWatchers = sandbox.stub(TestWatcherManager.prototype, "initialize").resolves();
         initializeCleanup = sandbox.stub(cleanupUtils, "initializeCleanupTimer");
         cleanup = sandbox.stub(cleanupUtils, "cleanupOldIntermediateResults").resolves();
+        configurationListeners = [];
+
+        sandbox
+            .stub(vscode.workspace, "onDidChangeConfiguration")
+            .callsFake((listener: (event: vscode.ConfigurationChangeEvent) => unknown) => {
+                configurationListeners.push(listener);
+
+                return new vscode.Disposable(() => {});
+            });
+
+        showInformation = sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+        executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves(undefined);
 
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
@@ -81,7 +104,59 @@ suite("Test UI configuration", () => {
         sinon.assert.notCalled(initializeWatchers);
         sinon.assert.notCalled(initializeCleanup);
         sinon.assert.notCalled(cleanup);
-        assert.strictEqual(context.subscriptions.length, 0);
+        assert.strictEqual(context.subscriptions.length, 1, "only the reload prompt listener is registered");
+    });
+
+    for (const enabledAtActivation of [false, true]) {
+        const change: string = enabledAtActivation ? "disabling" : "enabling";
+
+        test(`${change} Test UI after activation prompts for a reload and reloads on request`, async () => {
+            enabled = enabledAtActivation;
+            registerTestAdapter(context, output);
+            showInformation.resolves(extensionI18n["PQSdk.testAdapter.reloadWindow"]);
+
+            enabled = !enabledAtActivation;
+            changeConfiguration("powerquery.sdk.test.enabled");
+            await new Promise<void>((resolve: () => void) => setImmediate(resolve));
+
+            sinon.assert.calledOnceWithExactly(
+                showInformation,
+                enabledAtActivation
+                    ? extensionI18n["PQSdk.testAdapter.testEnabledReloadRequired.disabled"]
+                    : extensionI18n["PQSdk.testAdapter.testEnabledReloadRequired.enabled"],
+                extensionI18n["PQSdk.testAdapter.reloadWindow"],
+            );
+
+            sinon.assert.calledOnceWithExactly(executeCommand, "workbench.action.reloadWindow");
+        });
+    }
+
+    test("dismissing the reload prompt does not reload the window", async () => {
+        enabled = false;
+        registerTestAdapter(context, output);
+
+        enabled = true;
+        changeConfiguration("powerquery.sdk.test.enabled");
+        await new Promise<void>((resolve: () => void) => setImmediate(resolve));
+
+        sinon.assert.calledOnce(showInformation);
+        sinon.assert.notCalled(executeCommand);
+    });
+
+    test("unrelated settings and a return to the activation value do not prompt for a reload", () => {
+        enabled = false;
+        registerTestAdapter(context, output);
+
+        changeConfiguration("powerquery.sdk.test.settingsFiles");
+        sinon.assert.notCalled(showInformation);
+
+        enabled = true;
+        changeConfiguration("powerquery.sdk.test.enabled");
+        sinon.assert.calledOnce(showInformation);
+
+        enabled = false;
+        changeConfiguration("powerquery.sdk.test.enabled");
+        sinon.assert.calledOnce(showInformation);
     });
 
     for (const setting of [undefined, true]) {

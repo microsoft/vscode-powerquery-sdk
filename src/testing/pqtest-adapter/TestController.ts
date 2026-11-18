@@ -43,12 +43,57 @@ export function registerTestAdapter(
     context: Pick<vscode.ExtensionContext, "subscriptions">,
     outputChannel: PqSdkOutputChannel,
 ): void {
-    if (!ExtensionConfigurations.testEnabled) {
+    const enabledAtActivation: boolean = ExtensionConfigurations.testEnabled;
+
+    // Register before the early return so enabling a disabled integration also prompts for a reload.
+    registerTestEnabledReloadPrompt(context, enabledAtActivation);
+
+    if (!enabledAtActivation) {
         return;
     }
 
     const controller: vscode.TestController = registerTestController(context, outputChannel);
     registerCommands(context, controller, outputChannel);
+}
+
+/**
+ * Prompts for a window reload when powerquery.sdk.test.enabled no longer matches its value at activation,
+ * because the Test Explorer integration is only registered during activation.
+ */
+function registerTestEnabledReloadPrompt(
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
+    enabledAtActivation: boolean,
+): void {
+    const configKey: string = `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testEnabled}`;
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+            if (!event.affectsConfiguration(configKey)) {
+                return;
+            }
+
+            const enabled: boolean = ExtensionConfigurations.testEnabled;
+
+            if (enabled !== enabledAtActivation) {
+                void promptToReloadWindow(enabled);
+            }
+        }),
+    );
+}
+
+async function promptToReloadWindow(enabled: boolean): Promise<void> {
+    const reloadWindow: string = extensionI18n["PQSdk.testAdapter.reloadWindow"];
+
+    const selection: string | undefined = await vscode.window.showInformationMessage(
+        enabled
+            ? extensionI18n["PQSdk.testAdapter.testEnabledReloadRequired.enabled"]
+            : extensionI18n["PQSdk.testAdapter.testEnabledReloadRequired.disabled"],
+        reloadWindow,
+    );
+
+    if (selection === reloadWindow) {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }
 }
 
 // https://code.visualstudio.com/api/extension-guides/testing#additional-contribution-points
