@@ -53,6 +53,7 @@ if (nugetPath && nugetFeed) {
 
 export default defineConfig({
     files: "out/src/test/suite/**/*.test.js",
+    version: "1.146.0",
     workspaceFolder,
     extensionDevelopmentPath: "./",
     installExtensions: ["PowerQuery.vscode-powerquery"],
