@@ -539,9 +539,10 @@
     },
     "dependencies": {
         "axios": "^1.12.0",
+        "braces": "^3.0.3",
         "jsonc-parser": "^3.3.1",
-        "minimatch": "^10.2.6",
-        "node-stream-zip": "^1.15.0"
+        "node-stream-zip": "^1.15.0",
+        "picomatch": "^4.0.7"
     },
     "overrides": {
         "diff": "8.0.3",
@@ -549,9 +550,11 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.16.0",
+        "@types/braces": "^3.0.5",
         "@types/chai": "^4.3.12",
         "@types/mocha": "^10.0.6",
         "@types/node": "^20.14.8",
+        "@types/picomatch": "^4.0.3",
         "@types/sinon": "^10.0.20",
         "@types/vinyl-fs": "^3.0.8",
         "@types/vscode": "^1.95.0",
@@ -572,7 +575,6 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.1.2",
         "mocha": "^12.0.3",
-        "picomatch": "^2.3.2",
         "prettier": "^3.6.2",
         "rimraf": "^6.0.1",
         "sinon": "^17.0.1",

@@ -235,6 +235,23 @@ suite("Test settings discovery", () => {
         assert.strictEqual(await isTestSettingsExcluded(uri("tests/.cache/sample.testsettings.json")), true);
     });
 
+    test("exclusion matching preserves literal punctuation and negated character classes", async () => {
+        filesExclude = {
+            "tests/build(1)": true,
+            "tests/a|b": true,
+            "tests/!generated": true,
+            "tests/[!a]cache": true,
+        };
+
+        for (const folder of ["build(1)", "a|b", "!generated", "bcache"]) {
+            assert.strictEqual(await isTestSettingsExcluded(uri(`tests/${folder}/sample.testsettings.json`)), true);
+        }
+
+        for (const folder of ["build1", "a", "generated", "acache", "[!a]cache"]) {
+            assert.strictEqual(await isTestSettingsExcluded(uri(`tests/${folder}/sample.testsettings.json`)), false);
+        }
+    });
+
     test("conditional exclusions check a sibling without excluding unrelated settings", async () => {
         filesExclude = { "**/*.testsettings.json": { when: "$(basename).pq" } };
         const sibling: vscode.Uri = uri("tests/sample.testsettings.pq");

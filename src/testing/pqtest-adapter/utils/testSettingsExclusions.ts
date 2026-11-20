@@ -5,8 +5,9 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-import { braceExpand, minimatch } from "minimatch";
+import braces from "braces";
 import * as path from "path";
+import picomatch from "picomatch";
 import * as vscode from "vscode";
 
 type Excludes = Record<string, boolean | { when: string }>;
@@ -46,7 +47,7 @@ export function getTestSettingsExcludePattern(uri: vscode.Uri): vscode.RelativeP
         .filter(([, value]: [string, boolean | { when: string }]) => value === true)
         .flatMap(([pattern]: [string, boolean | { when: string }]) =>
             // VS Code's combined glob cannot safely nest brace alternatives.
-            braceExpand(pattern).flatMap((expanded: string) => {
+            braces.expand(pattern).flatMap((expanded: string) => {
                 const escaped: string = escapeLiteralCommas(expanded);
 
                 return [escaped, `${escaped}/**`];
@@ -81,16 +82,25 @@ export async function isTestSettingsExcluded(uri: vscode.Uri): Promise<boolean> 
             continue;
         }
 
+        // VS Code globs treat parentheses and pipes as literal filename characters.
+        const matchPattern: string = pattern.replace(/\\.|[()|]/g, (token: string) =>
+            token.length === 1 ? `\\${token}` : token,
+        );
+
+        // Avoid picomatch's exact-string shortcut for filenames containing glob characters.
+        const matcher: RegExp = picomatch.makeRe(matchPattern, {
+            dot: true,
+            nonegate: true,
+            noextglob: true,
+            posix: true,
+            literalBrackets: false,
+            regex: false,
+            windows: false,
+            nocase: process.platform === "win32",
+        });
+
         for (const relativeCandidate of candidates) {
-            if (
-                !minimatch(relativeCandidate, pattern, {
-                    dot: true,
-                    nonegate: true,
-                    nocomment: true,
-                    noext: true,
-                    nocase: process.platform === "win32",
-                })
-            ) {
+            if (!matcher.test(relativeCandidate)) {
                 continue;
             }
 
