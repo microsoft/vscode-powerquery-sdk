@@ -336,6 +336,13 @@ export const ExtensionConfigurations = {
             config?.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.deprecatedPqTestQueryFileLocation)
         );
     },
+    get testEnabled(): boolean {
+        const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
+            ExtensionConstants.ConfigNames.PowerQuerySdk.name,
+        );
+
+        return config.get(ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testEnabled, true);
+    },
     get testSettingsFiles(): string | string[] | undefined {
         const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
             ExtensionConstants.ConfigNames.PowerQuerySdk.name,
