@@ -38,6 +38,14 @@ interface TestGroup {
     childItems: vscode.TestItem[];
 }
 
+/**
+ * Test filter arguments and the child items they cover.
+ */
+interface TestFilterResult {
+    filterArgs: string[];
+    filteredItems: vscode.TestItem[];
+}
+
 export class TestRunCoordinator {
     constructor(
         private readonly request: vscode.TestRunRequest,
@@ -243,9 +251,12 @@ export class TestRunCoordinator {
         if (!settingsItem.uri) return;
 
         // Generate test filter arguments
-        const testFilterArgs: string[] = await this.generateTestFilters(group.childItems, settingsItem);
+        const { filterArgs, filteredItems }: TestFilterResult = await this.generateTestFilters(
+            group.childItems,
+            settingsItem,
+        );
 
-        if (testFilterArgs.length === 0) {
+        if (filterArgs.length === 0) {
             this.outputChannel.appendInfoLine(
                 resolveI18nTemplate("PQSdk.testAdapter.coordinator.noValidTestFiltersGenerated", {
                     settingsFilePath: settingsItem.uri.fsPath,
@@ -264,8 +275,8 @@ export class TestRunCoordinator {
             this.cancellationToken,
         );
 
-        // Add only the leaf test items from the child items to the executor
-        group.childItems.forEach((childItem: vscode.TestItem) => {
+        // Add only leaf items covered by a filter so execution errors don't overwrite filter errors
+        filteredItems.forEach((childItem: vscode.TestItem) => {
             const leafItems: vscode.TestItem[] = getLeafNodes(childItem);
 
             leafItems.forEach((leafItem: vscode.TestItem) => {
@@ -274,7 +285,7 @@ export class TestRunCoordinator {
         });
 
         // Run with test filter arguments
-        await executor.execute(testFilterArgs);
+        await executor.execute(filterArgs);
     }
 
     /**
@@ -399,13 +410,19 @@ export class TestRunCoordinator {
 
     /**
      * Generates test filter arguments for a group of child test items.
+     * Leaf items of children whose filter cannot be generated are marked as errored in the test run.
      *
      * @param childItems - Array of child test items to generate filters for
      * @param settingsItem - The settings file item that defines the base QueryFilePath
-     * @returns Array of command-line arguments for test filtering (--testFilter path1 --testFilter path2 ...)
+     * @returns Command-line arguments for test filtering (--testFilter path1 --testFilter path2 ...)
+     * and the child items they cover
      */
-    private async generateTestFilters(childItems: vscode.TestItem[], settingsItem: vscode.TestItem): Promise<string[]> {
+    private async generateTestFilters(
+        childItems: vscode.TestItem[],
+        settingsItem: vscode.TestItem,
+    ): Promise<TestFilterResult> {
         const filterArgs: string[] = [];
+        const filteredItems: vscode.TestItem[] = [];
 
         for (const childItem of childItems) {
             if (!childItem.uri) {
@@ -431,6 +448,7 @@ export class TestRunCoordinator {
                 }
 
                 filterArgs.push("--testFilter", relativePath);
+                filteredItems.push(childItem);
             } catch (error) {
                 const errorMessage: string = error instanceof Error ? error.message : String(error);
 
@@ -446,10 +464,16 @@ export class TestRunCoordinator {
                         filePath: childItem.uri.fsPath,
                     }),
                 );
+
+                // Report the failure in Test Explorer because the user explicitly requested this run.
+                getLeafNodes(childItem).forEach((leafItem: vscode.TestItem) => {
+                    this.testRun.errored(leafItem, new vscode.TestMessage(errorMessage));
+                });
+
                 // Continue with other test items
             }
         }
 
-        return filterArgs;
+        return { filterArgs, filteredItems };
     }
 }

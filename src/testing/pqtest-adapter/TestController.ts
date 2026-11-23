@@ -12,6 +12,7 @@
 
 import * as vscode from "vscode";
 
+import { ExtensionConfigurations } from "../../constants/PowerQuerySdkConfiguration";
 import { ExtensionConstants } from "../../constants/PowerQuerySdkExtension";
 import { PqSdkOutputChannel } from "../../features/PqSdkOutputChannel";
 import { extensionI18n, resolveI18nTemplate } from "../../i18n/extension";
@@ -38,9 +39,66 @@ const DELAY_BEFORE_SINGLE_CHILD_REVEAL_MS: number = 400;
  */
 let isRefreshInProgress: boolean = false;
 
+export function registerTestAdapter(
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
+    outputChannel: PqSdkOutputChannel,
+): void {
+    const enabledAtActivation: boolean = ExtensionConfigurations.testEnabled;
+
+    // Register before the early return so enabling a disabled integration also prompts for a reload.
+    registerTestEnabledReloadPrompt(context, enabledAtActivation);
+
+    if (!enabledAtActivation) {
+        return;
+    }
+
+    const controller: vscode.TestController = registerTestController(context, outputChannel);
+    registerCommands(context, controller, outputChannel);
+}
+
+/**
+ * Prompts for a window reload when powerquery.sdk.test.enabled no longer matches its value at activation,
+ * because the Test Explorer integration is only registered during activation.
+ */
+function registerTestEnabledReloadPrompt(
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
+    enabledAtActivation: boolean,
+): void {
+    const configKey: string = `${ExtensionConstants.ConfigNames.PowerQuerySdk.name}.${ExtensionConstants.ConfigNames.PowerQuerySdk.properties.testEnabled}`;
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+            if (!event.affectsConfiguration(configKey)) {
+                return;
+            }
+
+            const enabled: boolean = ExtensionConfigurations.testEnabled;
+
+            if (enabled !== enabledAtActivation) {
+                void promptToReloadWindow(enabled);
+            }
+        }),
+    );
+}
+
+async function promptToReloadWindow(enabled: boolean): Promise<void> {
+    const reloadWindow: string = extensionI18n["PQSdk.testAdapter.reloadWindow"];
+
+    const selection: string | undefined = await vscode.window.showInformationMessage(
+        enabled
+            ? extensionI18n["PQSdk.testAdapter.testEnabledReloadRequired.enabled"]
+            : extensionI18n["PQSdk.testAdapter.testEnabledReloadRequired.disabled"],
+        reloadWindow,
+    );
+
+    if (selection === reloadWindow) {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }
+}
+
 // https://code.visualstudio.com/api/extension-guides/testing#additional-contribution-points
 export function registerCommands(
-    context: vscode.ExtensionContext,
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
     controller: vscode.TestController,
     outputChannel: PqSdkOutputChannel,
 ): void {
@@ -72,7 +130,7 @@ export function registerCommands(
  * Creates and registers the test controller for VS Code Test Explorer
  */
 export function registerTestController(
-    context: vscode.ExtensionContext,
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
     outputChannel: PqSdkOutputChannel,
 ): vscode.TestController {
     const controller: vscode.TestController = vscode.tests.createTestController(
