@@ -32,8 +32,8 @@ Save every existing entry under `## [Unreleased]` before editing. When preparing
 those entries verbatim, preserving text and order, into a `## v<version>` section. Flag questionable
 entries for review instead of rewriting or silently dropping them.
 
-Review every commit and diff from the previous release tag through `HEAD`. Inspect the associated pull
-request or implementation when a title does not establish consumer impact. Add a missing entry for
+Review every commit and diff from the baseline confirmed in step 2 through `HEAD`. Inspect the
+associated pull request or implementation when a title does not establish consumer impact. Add a missing entry for
 observable changes to extension commands and settings, PQTest behavior, Test Explorer and webview
 behavior, packaging, runtime requirements, security, or compatibility.
 
