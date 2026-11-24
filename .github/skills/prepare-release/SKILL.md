@@ -72,7 +72,7 @@ npm audit --audit-level=high
 npm run compile
 npm run build
 npm run lint
-npx tsc -p tsconfig.configs.json
+npx tsc -p tsconfig.json --noEmit
 npm run test:unit-test:no-external
 npm run vsix
 ```

@@ -4,8 +4,8 @@
     "description": "The web view for pqtest results",
     "scripts": {
         "clean": "rimraf ../../webviewDist/pq-test-result-view",
-        "start": "ts-node --project ../../tsconfig.configs.json scripts/start.ts",
-        "build": "npm run clean && ts-node --project ../../tsconfig.configs.json ../../node_modules/webpack-cli/bin/cli.js --config config/webpack.prod.ts",
+        "start": "ts-node --project ../../tsconfig.json scripts/start.ts",
+        "build": "npm run clean && ts-node --project ../../tsconfig.json ../../node_modules/webpack-cli/bin/cli.js --config config/webpack.prod.ts",
         "lint": "eslint src --config eslint.config.ts",
         "audit": "npm audit"
     },

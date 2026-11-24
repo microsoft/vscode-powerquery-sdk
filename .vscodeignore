@@ -29,5 +29,4 @@ pqTest.pid
 **/test-results.xml
 **/*.mjs
 mochaReporterConfig.json
-tsconfig.configs.json
 .node-version
