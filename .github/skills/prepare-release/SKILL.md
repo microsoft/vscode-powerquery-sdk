@@ -14,7 +14,11 @@ lockfile.
 ## Establish the release
 
 1. Check the worktree status and preserve unrelated changes.
-2. Find the latest reachable `v<SemVer>` release tag. Use its target as the change-review baseline.
+2. Find the latest reachable `v<SemVer>` release tag and the newest version heading in `CHANGELOG.md`.
+   Confirm that their versions agree and that the tag points to a commit appropriate for that release.
+   If they disagree, identify the commit for the latest recorded release and use a confirmed
+   `v<version>` tag or release commit as the change-review baseline; do not silently audit from an
+   older tag.
 3. Use the version supplied by the user. Otherwise increment the current root package patch version.
 4. Confirm the target is valid SemVer, is greater than the current version, and has no local or remote
    `v<version>` tag.
@@ -67,8 +71,7 @@ Use the repository's preparation sequence:
 
 ```powershell
 npm ci
-npm audit --omit=dev --audit-level=low
-npm audit --audit-level=high
+npm run audit
 npm run compile
 npm run build
 npm run lint
@@ -81,9 +84,8 @@ Run `npm test` as well when the environment supports the VS Code Electron test h
 Tools. Report unavailable external or Windows-only validation as a blocker rather than treating it as a
 pass.
 
-Require the production dependency audit to complete with zero vulnerabilities at every severity.
-Require the full audit to have no high or critical vulnerabilities, and review and report lower-severity
-development-only findings. Do not run `npm audit fix` during release preparation.
+Require the audit to complete with zero vulnerabilities at low severity and above, matching the
+release workflow. Do not run `npm audit fix` during release preparation.
 
 An audit service, registry, authentication, rate-limit, or network error is not a clean audit. Report
 the blocker and rerun through the approved registry.
