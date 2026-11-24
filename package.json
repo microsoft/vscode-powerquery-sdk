@@ -13,6 +13,9 @@
     "issues": {
         "url": "https://github.com/microsoft/vscode-powerquery-sdk/issues"
     },
+    "workspaces": [
+        "webviews/pq-test-result-view"
+    ],
     "engines": {
         "node": "^22.13.0 || >=24",
         "vscode": "^1.100.0"
@@ -513,24 +516,22 @@
         ]
     },
     "scripts": {
-        "audit": "npm audit --audit-level=low && npm --prefix webviews/pq-test-result-view audit --audit-level=low",
+        "audit": "npm audit --audit-level=low",
         "build": "npm run build:pq-test-result-view",
-        "build:pq-test-result-view": "cd webviews/pq-test-result-view && npm run build",
+        "build:pq-test-result-view": "npm run build --workspace pq-test-result-view",
         "clean": "ts-node scripts/clean.ts",
         "code-install": "ts-node scripts/install.ts",
         "compile": "webpack --mode development",
         "compile-tests": "rimraf out && tsc -p . --outDir out && npm run copy:test-fixtures",
         "copy:i18n": "ts-node scripts/addI18n.ts",
-        "copy:test-fixtures": "node -e \"const fs=require('fs'); const path=require('path'); const src=path.join('src','test','testFixture'); const dest=path.join('out','test','testFixture'); if(fs.existsSync(src)){fs.mkdirSync(path.dirname(dest), {recursive:true}); fs.cpSync(src, dest, {recursive:true}); console.log('Copied test fixtures to out directory');}\"",
-        "install:pq-test-result-view": "cd webviews/pq-test-result-view && (npm ci --legacy-peer-deps || npm install --legacy-peer-deps)",
+        "copy:test-fixtures": "ts-node scripts/copyTestFixtures.ts",
         "lint": "eslint src --config eslint.config.js",
         "package": "npm run clean && npm run build && webpack --mode production && npm run copy:i18n",
-        "postinstall": "npm run install:pq-test-result-view",
         "pretest": "rimraf out && npm run compile-tests && npm run compile && npm run lint",
         "test": "npm run test:unit-test && npm run test:e2e",
         "test:e2e": "npm run compile && npm run compile-tests && vscode-test",
-        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter ./mochaReporter.js --reporter-option output=test-results.xml",
-        "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter ./mochaReporter.js --reporter-option output=test-results.xml",
+        "test:unit-test": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" --reporter ./mochaReporter.ts --reporter-option output=test-results.xml",
+        "test:unit-test:no-external": "mocha -r ts-node/register -s 0 \"./unit-tests/**/*.spec.ts\" -i --fgrep \"[External]\" --reporter ./mochaReporter.ts --reporter-option output=test-results.xml",
         "test-ui": "vscode-test",
         "vsix": "npx @vscode/vsce@latest package --target win32-x64",
         "vscode:prepublish": "npm run package",

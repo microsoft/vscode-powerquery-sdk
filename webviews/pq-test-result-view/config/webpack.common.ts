@@ -5,17 +5,20 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-const webpack = require("webpack");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
-const paths = require("./paths");
-const getClientEnvironment = require("./env");
-const env = getClientEnvironment();
+import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import * as webpack from "webpack";
+import type { Configuration } from "webpack";
 
-module.exports = {
-    entry: "./src/index.ts",
+import getClientEnvironment from "./env";
+import paths, { moduleFileExtensions } from "./paths";
+
+const environment = getClientEnvironment();
+
+const config: Configuration = {
+    entry: paths.appIndexJs,
     resolve: {
-        extensions: paths.moduleFileExtensions,
+        extensions: moduleFileExtensions,
         alias: {
             vscode: false,
             "react/jsx-dev-runtime": "react/jsx-dev-runtime.js",
@@ -49,10 +52,12 @@ module.exports = {
         ],
     },
     plugins: [
-        new webpack.DefinePlugin(env.stringified),
+        new webpack.DefinePlugin(environment.stringified),
         new HtmlWebpackPlugin({
-            template: "./public/index.html",
+            template: paths.appHtml,
         }),
         new ForkTsCheckerWebpackPlugin(),
     ],
 };
+
+export default config;

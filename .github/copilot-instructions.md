@@ -17,6 +17,10 @@ Use these instructions for changes to the Power Query SDK extension for Visual S
 - Prefix each `CHANGELOG.md` entry with `Added:`, `Changed:`, `Deprecated:`, `Removed:`, `Fixed:`, or `Security:`.
 - Keep entries brief and focused on the user-visible change.
 - Use a `## [Unreleased]` section when a change is not accompanied by a version bump. When bumping the version, move the corresponding entries into that version's section.
+- Before release preparation, review all commits and diffs since the previous release tag and add entries for observable extension, SDK Tools, packaging, security, runtime, and compatibility changes.
+- Preserve existing `Unreleased` entries verbatim and in order when moving them into a release section. Do not silently drop, combine, or rewrite them.
+- Exclude tests, CI, documentation, refactoring, code style, development tooling, and dependency-only maintenance from `CHANGELOG.md` unless the change affects consumers.
+- For newly authored entries, finish the text with the applicable pull request reference as `(#<number>)`.
 
 ## Repository Overview
 
@@ -38,7 +42,7 @@ The SDK tools are Windows-only. Use Windows-compatible paths, process handling, 
 - `src/testing/pqtest-adapter/` implements VS Code Test Explorer discovery and execution.
 - `src/services/` contains reusable wrappers around file system, UI, localization, and project-management behavior. Depend on abstractions from `src/testing/abstractions/` where testability requires it.
 - `src/panels/` hosts extension-side webview integration.
-- `webviews/pq-test-result-view/` is a separate React application with its own dependencies and build configuration.
+- `webviews/pq-test-result-view/` is an npm workspace containing a separate React application. Runtime dependencies stay in the workspace; shared development dependencies and the single lockfile belong at the root.
 - `src/constants/PowerQuerySdkExtension.ts`, `src/constants/PowerQuerySdkConfiguration.ts`, and `package.json` are authoritative for identifiers, supported SDK versions, settings, commands, and npm scripts. Do not duplicate volatile values in documentation or tests without a specific reason.
 
 ## TypeScript and VS Code Conventions
@@ -84,12 +88,13 @@ Use the smallest relevant command first. `npm test` runs both unit and VS Code i
 - **Run Extension [Dev Mode]** uses `Develop_Extensions`, currently both `Watch_VSC_PQ_SDK` and `Dev_PQTest_Result_WebView` (`npm start` from `webviews/pq-test-result-view/`). Wait for both initial compilations and verify that the webview development server is responsive. Preserve `WEBVIEW_DEV_MODE=true` from the launch configuration.
 - **Extension UI Tests** uses `npm: compile-tests`. The separate `tasks: watch-tests` task also starts the extension watcher, webview development server, and root `npm run watch-tests`; wait for all three to be ready when using that task.
 - Keep required watchers and servers running while the debugging session uses them. Reuse ready tasks in this worktree rather than starting duplicates, and stop processes started solely for a completed validation.
-- Check the Problems panel and task output for the files changed, not just the root build result. `npm run lint` scans only `src`; explicitly lint changed unit tests with `npx eslint <changed-test-paths> --config eslint.config.js`. For changes to `webpack.config.js`, also run `npx tsc --allowJs --checkJs --noEmit --strict --skipLibCheck --target ES2020 --module commonjs webpack.config.js` to catch editor-visible JSDoc and JavaScript type errors.
+- Keep configuration and build-script implementations in TypeScript. Minimal JavaScript loader files may remain when a tool requires JavaScript or ESM entrypoints. Validate them with `npx tsc -p tsconfig.configs.json`.
+- Check the Problems panel and task output for the files changed, not just the root build result. `npm run lint` scans only `src`; explicitly lint changed unit tests with `npx eslint <changed-test-paths> --config eslint.config.js`.
 - Fix errors before launch; do not bypass a failed prelaunch task with **Debug Anyway** or claim that an Extension Development Host was tested when only compilation was checked. If a task cannot run, report the blocker.
 
 ## Webview Changes
 
-- Treat `webviews/pq-test-result-view/` as a separate package. Its dependencies belong in its own `package.json`.
+- Treat `webviews/pq-test-result-view/` as a workspace package. Keep its runtime and workspace-specific dependencies in its `package.json`; declare shared development tooling only at the root.
 - Keep extension-to-webview messages compatible on both sides. Update message types, producers, consumers, and tests together.
 - Follow the existing React 17 and Fluent UI patterns; do not introduce a second UI framework.
 - For webview-only validation, run `npm run lint` and `npm run build` from `webviews/pq-test-result-view/`.

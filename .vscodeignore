@@ -27,3 +27,5 @@ pqTest.pid
 **/*.mjs
 mochaReporterConfig.json
 eslint.config.js
+tsconfig.configs.json
+.node-version
