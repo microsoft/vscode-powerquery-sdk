@@ -5,31 +5,23 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-"use strict";
+import * as fs from "fs";
+import * as path from "path";
 
-const path = require("path");
-const fs = require("fs");
+const appDirectory: string = fs.realpathSync(process.cwd());
+const resolveApp = (relativePath: string): string => path.resolve(appDirectory, relativePath);
 
-// Make sure any symlinks in the project folder are resolved:
-// https://github.com/facebook/create-react-app/issues/637
-const appDirectory = fs.realpathSync(process.cwd());
-const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
+export const moduleFileExtensions: string[] = [".js", ".jsx", ".ts", ".tsx", ".css"];
 
-const moduleFileExtensions = [".js", ".jsx", ".ts", ".tsx", ".css"];
+const resolveModule = (resolveFunction: (relativePath: string) => string, filePath: string): string => {
+    const extension: string | undefined = moduleFileExtensions.find(current =>
+        fs.existsSync(resolveFunction(`${filePath}${current}`)),
+    );
 
-// Resolve file paths in the same order as webpack
-const resolveModule = (resolveFn, filePath) => {
-    const extension = moduleFileExtensions.find(extension => fs.existsSync(resolveFn(`${filePath}.${extension}`)));
-
-    if (extension) {
-        return resolveFn(`${filePath}.${extension}`);
-    }
-
-    return resolveFn(`${filePath}.js`);
+    return extension ? resolveFunction(`${filePath}${extension}`) : resolveFunction(`${filePath}.js`);
 };
 
-// config after eject: we're in ./config/
-module.exports = {
+const paths = {
     dotenv: resolveApp(".env"),
     appPath: resolveApp("."),
     appBuild: resolveApp("../../webviewDist/pq-test-result-view"),
@@ -47,4 +39,4 @@ module.exports = {
     swSrc: resolveModule(resolveApp, "src/service-worker"),
 };
 
-module.exports.moduleFileExtensions = moduleFileExtensions;
+export default paths;

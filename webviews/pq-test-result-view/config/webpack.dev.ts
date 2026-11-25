@@ -5,20 +5,16 @@
  * LICENSE file in the root of this projects source tree.
  */
 
-"use strict";
+import * as path from "path";
+import CopyPlugin from "copy-webpack-plugin";
+import type { Configuration } from "webpack";
+import { merge } from "webpack-merge";
 
-// Do this as the first thing so that any code reading it knows the right env.
-process.env.BABEL_ENV = "development";
-process.env.NODE_ENV = "development";
+import "./environment.development";
+import paths from "./paths";
+import commonConfig from "./webpack.common";
 
-const path = require("path");
-const CopyPlugin = require("copy-webpack-plugin");
-const { merge } = require("webpack-merge");
-
-const commonConfig = require("./webpack.common");
-const paths = require("./paths");
-
-const devConfig = {
+const developmentConfig: Configuration = {
     mode: "development",
     devtool: "eval-source-map",
     output: {
@@ -33,4 +29,4 @@ const devConfig = {
     ],
 };
 
-module.exports = merge(commonConfig, devConfig);
+export default merge(commonConfig, developmentConfig);

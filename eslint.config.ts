@@ -1,22 +1,34 @@
-const js = require("@eslint/js");
-const typescript = require("@typescript-eslint/eslint-plugin");
-const typescriptParser = require("@typescript-eslint/parser");
-const prettierPlugin = require("eslint-plugin-prettier");
-const securityPlugin = require("eslint-plugin-security");
-const licenseHeaderPlugin = require("eslint-plugin-license-header");
-const simpleImportSort = require("eslint-plugin-simple-import-sort");
-const prettierConfig = require("eslint-config-prettier");
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the MIT license found in the
+ * LICENSE file in the root of this projects source tree.
+ */
 
-module.exports = [
-    // Global ignores
+import js from "@eslint/js";
+import type { ESLint, Linter } from "eslint";
+import prettierConfig from "eslint-config-prettier";
+import prettierPlugin from "eslint-plugin-prettier";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+
+interface RecommendedPlugin extends ESLint.Plugin {
+    configs: {
+        recommended: {
+            rules: Linter.RulesRecord;
+        };
+    };
+}
+
+const licenseHeaderPlugin: ESLint.Plugin = require("eslint-plugin-license-header");
+const securityPlugin: RecommendedPlugin = require("eslint-plugin-security");
+const typescript: RecommendedPlugin = require("@typescript-eslint/eslint-plugin");
+const typescriptParser: Linter.Parser = require("@typescript-eslint/parser");
+
+const config: Linter.Config[] = [
     {
         ignores: ["dist/**", "out/**", "node_modules/**", "webviewDist/**", "*.vsix", "*.min.js", "*.d.ts"],
     },
-
-    // Base configuration for all files
     js.configs.recommended,
-
-    // TypeScript configuration
     {
         files: ["**/*.ts"],
         languageOptions: {
@@ -56,8 +68,6 @@ module.exports = [
             ...typescript.configs.recommended.rules,
             ...securityPlugin.configs.recommended.rules,
             ...prettierConfig.rules,
-
-            // Custom TypeScript rules
             "@typescript-eslint/no-inferrable-types": "off",
             "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
             "@typescript-eslint/typedef": [
@@ -82,18 +92,10 @@ module.exports = [
             "@typescript-eslint/prefer-namespace-keyword": "error",
             "@typescript-eslint/switch-exhaustiveness-check": "error",
             "@typescript-eslint/unified-signatures": "error",
-
-            // Prettier rules
             "prettier/prettier": ["error"],
-
-            // Security rules
             "security/detect-non-literal-fs-filename": "off",
             "security/detect-object-injection": "off",
-
-            // License header rules
             "license-header/header": ["error", "./resources/license-header.js"],
-
-            // Core ESLint rules
             "array-callback-return": "error",
             "arrow-body-style": ["error", "as-needed"],
             "constructor-super": "error",
@@ -199,8 +201,6 @@ module.exports = [
             "valid-typeof": "error",
         },
     },
-
-    // Test-specific configuration
     {
         files: ["src/test/**/*.ts"],
         languageOptions: {
@@ -226,8 +226,6 @@ module.exports = [
             "@typescript-eslint/no-namespace": "off",
         },
     },
-
-    // Unit tests configuration
     {
         files: ["unit-tests/**/*.ts"],
         languageOptions: {
@@ -265,8 +263,6 @@ module.exports = [
             "prefer-const": "off",
         },
     },
-
-    // JavaScript files configuration
     {
         files: ["**/*.js"],
         languageOptions: {
@@ -285,3 +281,5 @@ module.exports = [
         },
     },
 ];
+
+export default config;

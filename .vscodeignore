@@ -15,8 +15,11 @@ webviews/**
 media/**
 .eslintignore
 .gitignore
+.prettierrc
 .yarnrc
-webpack.config.js
+*.vsix
+package-lock.json
+CODE_OF_CONDUCT.md
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/.eslintrc.json
@@ -26,4 +29,4 @@ pqTest.pid
 **/test-results.xml
 **/*.mjs
 mochaReporterConfig.json
-eslint.config.js
+.node-version
