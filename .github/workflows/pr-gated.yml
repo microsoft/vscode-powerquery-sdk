@@ -17,6 +17,9 @@ jobs:
                   cache: "npm"
             - run: node -v
             - run: npm ci
+            - name: release dependency audit
+              continue-on-error: true
+              run: npm run audit
             - run: npm run test:unit-test
             - run: npm run vsix
             - name: retry 5 times e2e test cases
